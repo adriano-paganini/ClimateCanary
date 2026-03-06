@@ -1,0 +1,164 @@
+\documentclass{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\setlength{\parindent}{0pt}
+
+\titleformat{\section}{\large\bfseries}{}{0em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries}{}{0em}{}
+
+\begin{document}
+
+\begin{center}
+    {\LARGE \textbf{ClimateCanary Use Case Descriptions}}\\[0.5em]
+    {\large PS Software Engineering SS2026}
+\end{center}
+
+\vspace{1em}
+
+\section*{Use Case 01: View Climate Data -- Own Office}
+
+\textbf{Actors:} Employee, Department Manager, Senior Management 
+
+\textbf{Basic Flow:}
+\begin{enumerate}
+    \item User navigates to the \textit{My Office} view in the webapp
+    \item System verifies the user is assigned to an office room
+    \item System calculates current room occupancy ... how exactly?
+    \item Occupancy $\geq 5$: System fetches current measurements for temperature, humidity and air quality
+    \item System displays live current value based on the system defined interval measurements for all three metrics
+    \item User selects a time range (day/week/month)
+    \item System fetches historical measurements data for the selected range and renders a chart
+    \item Configured threshold limits are shown as reference lines in the chart .... and past violations highlighted(?)
+    \item If a treshold violation is currently active, a warning banner (?) is shown with tips to mitigate the warning (?)
+\end{enumerate}
+
+\textbf{Alternative Flows:}
+\begin{itemize}
+    \item \textbf{Occupancy $<$ 5:} System does not load any measurement data and displays the message: \textit{"Climate data for this room is currently unavailable due to not meeting minimum occupancy requirement}
+    \item \textbf{No data for selected time range:} Display message \dots
+    \item \textbf{Sensor station or Raspberry Pi offline:} Display latest known data with an info warning that systems are currently not operational?
+\end{itemize}
+
+\textbf{Business Classes:} Room / OfficeRoom (r), Absence (r), ClimateTip(r/c)
+\vspace{1em}
+
+\section*{Use Case 02: View Climate Data -- Common Areas}
+
+\textbf{Actors:} Employee, Department Manager, Senior Management 
+
+\textbf{Basic Flow:}
+\begin{enumerate}
+    \item
+    \item
+    \item 
+\end{enumerate}
+
+\textbf{Alternative Flows:}
+\begin{itemize}
+    \item if applicable ? e.g. no data available (privacy regulations)
+\end{itemize}
+
+\textbf{Business Classes:}
+\vspace{1em}
+
+\section*{Use Case 03: View Climate Data -- Department Scope}
+
+\textbf{Actors:} Employee, Department Manager, Senior Management 
+
+\textbf{Basic Flow:}
+\begin{enumerate}
+    \item
+    \item
+    \item 
+\end{enumerate}
+
+\textbf{Alternative Flows:}
+\begin{itemize}
+    \item if applicable ? e.g. no data available (privacy regulations)
+\end{itemize}
+
+\textbf{Business Classes:}
+\vspace{1em}
+
+
+\section*{Use Case 04: View Climate Data -- Company Dashboard}
+
+\textbf{Actors:} Employee, Department Manager, Senior Management 
+
+\textbf{Basic Flow:}
+\begin{enumerate}
+    \item
+    \item
+    \item 
+\end{enumerate}
+
+\textbf{Alternative Flows:}
+\begin{itemize}
+    \item if applicable ? e.g. no data available (privacy regulations)
+\end{itemize}
+
+\textbf{Business Classes:}
+\vspace{1em}
+
+\section*{Use Case 05: View Climate Data -- Building Scope}
+
+\textbf{Actors:} Employee, Department Manager, Senior Management 
+
+\textbf{Basic Flow:}
+\begin{enumerate}
+    \item
+    \item
+    \item 
+\end{enumerate}
+
+\textbf{Alternative Flows:}
+\begin{itemize}
+    \item if applicable ? e.g. no data available (privacy regulations)
+\end{itemize}
+
+\textbf{Business Classes:}
+\vspace{1em}
+
+
+\section*{Use Case 06: Threshold Alert}
+
+\textbf{Actors:} Employee, Department Manager, Senior Management 
+
+\textbf{Basic Flow:}
+\begin{enumerate}
+    \item
+    \item
+    \item 
+\end{enumerate}
+
+\textbf{Alternative Flows:}
+\begin{itemize}
+    \item if applicable ? e.g. no data available (privacy regulations)
+\end{itemize}
+
+\textbf{Business Classes:}
+\vspace{1em}
+
+\section*{Use Case 07: Configure Treshold Settings}
+
+\textbf{Actors:} Employee, Department Manager, Senior Management 
+
+\textbf{Basic Flow:}
+\begin{enumerate}
+    \item
+    \item
+    \item 
+\end{enumerate}
+
+\textbf{Alternative Flows:}
+\begin{itemize}
+    \item if applicable ? e.g. no data available (privacy regulations)
+\end{itemize}
+
+\textbf{Business Classes:}
+\vspace{1em}
+
+
+
+\end{document}
