@@ -3,68 +3,68 @@
 left to right direction
 skinparam packageStyle rectangle
 
-actor "Employee" as EMP
-actor "Department Manager" as DM
-actor "Senior Management" as SM
-actor "Building Administrator" as BA
-actor "System Administrator" as SA
+actor "Mitarbeiter" as EMP
+actor "Abteilungsleiter" as DM
+actor "Geschäftsführung" as SM
+actor "Hausverwalter" as BA
+actor "Systemadministrator" as SA
 
 EMP <|-- DM
 
-package "Authentication" {
-    usecase "Log in / Log out" as UC_AUTH
+package "Authentifizierung" {
+    usecase "Anmelden / Abmelden" as UC_AUTH
 }
 
-package "Measurement Data Access\n" {
-    usecase "View current measurements\n(own office – if min. occupancy ≥5 met)" as UC_OWN_CURR
-    usecase "View historical data own office\n(full granularity, day/week/month)" as UC_OWN_HIST
-    usecase "View current measurements\n(common areas of own department)" as UC_CA_CURR
-    usecase "View historical data\n(common areas, full granularity)" as UC_CA_HIST
-    usecase "View room historical data\n(office rooms – reduced granularity/above minimum occupancy)\n(e.g. Daily averages)" as UC_DEPT_HIST
-    usecase "View room historical data\n(common areas – full granularity)" as UC_DEPT_CA
-    usecase "View all rooms – full granularity\n(no user-room assignment visible)" as UC_ALL_ROOMS
-    usecase "View aggregated company-wide\ndashboard (dept. level only)" as UC_COMPANY
-    usecase "View trend indicators\n(dept. & company level)" as UC_TRENDS
-}
-
-
-package "Threshold Violations\n" {
-    usecase "Receive real-time alert +\nread improvement tip (own office)" as UC_ALERT_OWN
-    usecase "View active & historical violations\nper room (department scope)" as UC_VIOL_DEPT
-    usecase "View violation count & frequency\nper department (anonymized,\nnot traceable to individual rooms)" as UC_VIOL_MGMT
-    usecase "View active & historical violations\nall rooms (building scope)" as UC_VIOL_BA
-    usecase "Configure thresholds per room\n(temperature / humidity / air quality)" as UC_THRESH_CFG
-    usecase "Manage improvement tips for violations" as UC_TIPS
+package "Zugriff auf Messdaten\n" {
+    usecase "Aktuelle Messungen anzeigen\n(eigenes Büro – wenn min. Belegung ≥5 erreicht)" as UC_OWN_CURR
+    usecase "Historische Daten eigenes Büro anzeigen\n(volle Granularität, Tag/Woche/Monat)" as UC_OWN_HIST
+    usecase "Aktuelle Messungen anzeigen\n(gemeinsame Bereiche der eigenen Abteilung)" as UC_CA_CURR
+    usecase "Historische Daten anzeigen\n(gemeinsame Bereiche, volle Granularität)" as UC_CA_HIST
+    usecase "Historische Raumdaten anzeigen\n(Büro-Räume – reduzierte Granularität / über Mindestbelegung)\n(z.B. Tagesdurchschnitte)" as UC_DEPT_HIST
+    usecase "Historische Raumdaten anzeigen\n(gemeinsame Bereiche – volle Granularität)" as UC_DEPT_CA
+    usecase "Alle Räume anzeigen – volle Granularität\n(keine Nutzer-Raum-Zuordnung sichtbar)" as UC_ALL_ROOMS
+    usecase "Aggregiertes unternehmensweites Dashboard anzeigen\n(nur Abteilungsebene)" as UC_COMPANY
+    usecase "Trendindikatoren anzeigen\n(Abteilungs- & Unternehmensebene)" as UC_TRENDS
 }
 
 
-package "Absence Management\n" {
-    usecase "Manage own absence" as UC_ABS_OWN
-    usecase "View department absences\n(to verify min. occupancy)" as UC_ABS_DEPT
+package "Grenzwertverletzungen\n" {
+    usecase "Echtzeitalarm + Verbesserungstip lesen\n(eigenes Büro)" as UC_ALERT_OWN
+    usecase "Aktive & historische Verletzungen anzeigen\npro Raum (Abteilungsbereich)" as UC_VIOL_DEPT
+    usecase "Anzahl & Häufigkeit von Verletzungen anzeigen\npro Abteilung (anonymisiert, nicht auf einzelne Räume zurückführbar)" as UC_VIOL_MGMT
+    usecase "Aktive & historische Verletzungen anzeigen\nalle Räume (Gebäudebereich)" as UC_VIOL_BA
+    usecase "Grenzwerte pro Raum konfigurieren\n(Temperatur / Luftfeuchtigkeit / Luftqualität)" as UC_THRESH_CFG
+    usecase "Verbesserungstipps für Verletzungen verwalten" as UC_TIPS
 }
 
 
-package "Hardware and Building Management\n" {
-    usecase "Register building, departments & rooms" as UC_BUILDING
-    usecase "Register Raspberry Pi\n" as UC_REG_RPI
-    usecase "Register sensor station\n" as UC_REG_SS
-    usecase "Assign sensor station to Raspberry Pi" as UC_ASSIGN_SS
-    usecase "Setup and configure devices for rooms" as UC_SETUP_DEV
+package "Abwesenheitsmanagement\n" {
+    usecase "Eigene Abwesenheit verwalten" as UC_ABS_OWN
+    usecase "Abwesenheiten der Abteilung anzeigen\n(um Mindestbelegung zu prüfen)" as UC_ABS_DEPT
 }
 
 
-package "User Management\n" {
-    usecase "Create / edit / delete users" as UC_USR_MGMT
-    usecase "Assign roles to users" as UC_ROLE_ASSIGN
-    usecase "Assign users to rooms" as UC_ROOM_ASSIGN
+package "Hardware- und Gebäudeverwaltung\n" {
+    usecase "Gebäude, Abteilungen & Räume registrieren" as UC_BUILDING
+    usecase "Raspberry Pi registrieren\n" as UC_REG_RPI
+    usecase "Sensorstation registrieren\n" as UC_REG_SS
+    usecase "Sensorstation Raspberry Pi zuweisen" as UC_ASSIGN_SS
+    usecase "Geräte für Räume einrichten und konfigurieren" as UC_SETUP_DEV
+}
+
+
+package "Benutzerverwaltung\n" {
+    usecase "Benutzer erstellen / bearbeiten / löschen" as UC_USR_MGMT
+    usecase "Rollen zu Benutzern zuweisen" as UC_ROLE_ASSIGN
+    usecase "Benutzer Räumen zuweisen" as UC_ROOM_ASSIGN
 }
 
 EMP --> UC_AUTH
 BA  --> UC_AUTH
 SA  --> UC_AUTH
 
-'The following section assigns the use cases to the roles. UC is an abbreviation for "Use Case"
-'Employee
+' Zuweisung der Anwendungsfälle zu Rollen
+' Mitarbeiter
 EMP --> UC_OWN_CURR
 EMP --> UC_OWN_HIST
 EMP --> UC_CA_CURR
@@ -72,24 +72,24 @@ EMP --> UC_CA_HIST
 EMP --> UC_ALERT_OWN
 EMP --> UC_ABS_OWN
 
-'Department Manager 
+' Abteilungsleiter
 DM  --> UC_DEPT_HIST
 DM  --> UC_DEPT_CA
 DM  --> UC_VIOL_DEPT
 DM  --> UC_ABS_DEPT
 
-'Senior Management 
+' Geschäftsführung
 SM  --> UC_COMPANY
 SM  --> UC_TRENDS
 SM  --> UC_VIOL_MGMT
 
-'Building Administrator
+' Hausverwalter
 BA  --> UC_ALL_ROOMS
 BA  --> UC_VIOL_BA
 BA  --> UC_THRESH_CFG
 BA  --> UC_TIPS
 
-'System Administrator
+' Systemadministrator
 SA  --> UC_BUILDING
 SA  --> UC_REG_RPI
 SA  --> UC_REG_SS
