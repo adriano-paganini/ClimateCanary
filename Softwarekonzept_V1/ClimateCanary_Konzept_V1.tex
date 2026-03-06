@@ -1,0 +1,408 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[ngerman]{babel}
+\usepackage{geometry}
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{hyperref}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage[]{graphicx}
+
+\geometry{margin=2.5cm}
+
+\title{\textbf{Softwarekonzept V1}\\
+\large ClimateCanary -- Raumklima Analyse für Firmen\\
+PS Software Engineering SS2026}
+\date{Deadline: 12.03.2026}
+\author{
+  Maria Kuhn \and Fabienne Schedler \and Emma Danko \and Prahbdip Singh \and Adriano Paganini
+}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Systemüberblick}
+
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=0.8\textwidth]{images/system_architecture}
+	\caption{System architecture draft}
+	\label{fig:system-architecture}
+\end{figure}
+
+\subsection{Zielsetzung}
+\begin{itemize}
+  \item ClimateCanary ist ein IoT-basiertes Monitoring-System, das Unternehmen eine kontinuierliche und automatisierte Überwachung des Raumklimas in Bürogebäuden ermöglicht.
+  \item Das System erfasst Temperatur, Luftfeuchtigkeit und Luftqualität in Echtzeit und stellt diese Daten rollenabhängig in einer zentralen Webanwendung dar.
+  \item Kurzfristiges Ziel: Mitarbeiter:innen und Verwaltung sollen jederzeit informiert sein, wenn Raumklimawerte kritische Grenzwerte über- oder unterschreiten, und können entsprechend reagieren.
+  \item Mittelfristiges Ziel: Langfristige Auswertungen der gesammelten Daten sollen als Entscheidungsgrundlage für gezielte Maßnahmen zur Raumklimaverbesserung dienen (z.B. Anschaffung von Klimaanlagen, Luftreinigern).
+  \item Langfristiges Ziel (außerhalb des aktuellen Projektumfangs): Automatische Steuerung von Heizung, Jalousien und Fenstern auf Basis der gesammelten Klimadaten.
+\end{itemize}
+
+\subsection{Zielgruppe}
+\begin{itemize}
+  \item Primäre Zielgruppe sind mittelständische bis große Unternehmen mit mehreren Büroräumen und Allgemeinflächen.
+  \item Das System richtet sich an alle Mitarbeiter:innen eines Unternehmens, die das Raumklima an ihrem Arbeitsplatz überwachen möchten.
+  \item Zusätzlich adressiert es Abteilungsleitungen, das höhere Management sowie die Gebäude- und Systemadministration, die das System konfigurieren und übergreifend auswerten.
+\end{itemize}
+
+\subsection{Benutzer und Rollen}
+\begin{itemize}
+  \item \textbf{Mitarbeiter:in}: Überwacht das Raumklima am eigenen Arbeitsplatz und in Allgemeinflächen der eigenen Abteilung. Verwaltet eigene Abwesenheiten.
+  \item \textbf{Abteilungsleitung}: Erhält eine Übersicht über alle Räume der eigenen Abteilung in reduzierter Datengranularität. Sieht Abwesenheiten der Mitarbeiter:innen.
+  \item \textbf{Höheres Management}: Sieht firmenweite, aggregierte und anonymisierte Übersichten und Trendindikatoren. Kein Zugriff auf raumgenaue Daten.
+  \item \textbf{Gebäudeadministration}: Sieht alle Raumklimadaten aller Räume, konfiguriert Grenzwerte und verwaltet Raumklima-Tipps. Kein Zugriff auf Userdaten.
+  \item \textbf{Systemadministration}: Verwaltet Benutzer, Gebäudestruktur und Geräte (Raspberry Pis, Sensorstationen). Kein Zugriff auf Messdaten.
+\end{itemize}
+
+\subsection{Kernfunktionalitäten}
+\begin{itemize}
+  \item Automatische Erfassung von Temperatur, Luftfeuchtigkeit und Luftqualität durch Arduino-Sensorstationen.
+  \item Übertragung der Messdaten via Bluetooth Low Energy (BLE) an einen raumgebundenen Raspberry Pi.
+  \item Lokal am Raspberry Pi: Grenzwertprüfung, datenschutzkonforme Zwischenspeicherung, Weiterleitung an den zentralen Webserver.
+  \item Visuelle Rückmeldung direkt an der Sensorstation: LED-Ampel und LCD-Display mit aktuellen Werten, Warnungen und Tipps.
+  \item Zentrale Webanwendung mit rollenabhängigen Ansichten, Verlaufsdiagrammen, Grenzwertwarnungen und Konfigurationsoptionen.
+  \item Datenschutzkonforme Datenhaltung: Bürodaten werden nur bei Mindestbelegung von 5 Personen persistent gespeichert.
+  \item Abwesenheitssystem zur Pflege von Urlaub, Krankheit etc., das automatisch die Datenschutzprüfung beeinflusst.
+\end{itemize}
+
+\section{Use Case Diagramm}
+
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=0.7\textwidth]{images/use_cases}
+	\caption{Uses cases draft}
+	\label{fig:use-cases}
+\end{figure}
+
+\textit{Das Use Case Diagramm befindet sich als separates Mermaid-Diagramm im GitLab Wiki (Datei: \texttt{usecase\_diagram.mermaid}).}
+
+\subsection{Akteure}
+
+\begin{itemize}
+  \item \textbf{Mitarbeiter:in} -- Basisrolle; hat Zugriff auf eigenes Büro und Allgemeinflächen der Abteilung.
+  \item \textbf{Abteilungsleitung} -- Erbt Rechte der Mitarbeiter:in; zusätzlich Abteilungsübersicht.
+  \item \textbf{Höheres Management} -- Nur firmenweite, aggregierte Sicht; keine Raumdetails.
+  \item \textbf{Gebäudeadministration} -- Vollzugriff auf Raumklimadaten und Konfiguration; kein Zugriff auf Userdaten.
+  \item \textbf{Systemadministration} -- Vollzugriff auf Benutzer- und Geräteverwaltung; kein Zugriff auf Messdaten.
+  \item \textbf{Raspberry Pi} -- Technischer Akteur; übermittelt Messdaten und empfängt Konfigurationsupdates.
+  \item \textbf{Sensorstation (Arduino)} -- Technischer Akteur; misst und zeigt Daten an; empfängt Warnstatus.
+\end{itemize}
+
+\subsection{Übersicht der Use Cases}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{lX}
+  \toprule
+  \textbf{Akteur} & \textbf{Use Cases} \\
+  \midrule
+  Mitarbeiter:in & Raumklima eigenes Büro einsehen (wenn Belegung $\geq$ 5), Allgemeinflächen einsehen, Grenzwarnungen einsehen, Abwesenheit eintragen/verwalten \\
+  Abteilungsleitung & + Abteilungsübersicht einsehen, Büros (Tagesdurchschnitte) einsehen, Abwesenheiten Abteilung einsehen, Grenzwertverletzungen Abteilung einsehen \\
+  Management & Firmen-Dashboard einsehen, Trendindikatoren einsehen, anonymisierte Verletzungsstatistiken einsehen \\
+  Gebäudeadmin & Alle Raumdaten einsehen, Grenzwerte konfigurieren, Raumklima-Tipps verwalten \\
+  Systemadmin & Benutzer verwalten, Gebäudestruktur verwalten, Geräte anlegen und zuweisen \\
+  \bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Use Case Beschreibungen}
+
+\subsection{UC-01: Raumklimadaten eigenes Büro einsehen}
+
+\begin{itemize}
+  \item \textbf{Akteur}: Mitarbeiter:in
+  \item \textbf{Vorbedingung}: Nutzer:in ist eingeloggt und einem Büroraum zugeordnet. Mindestens 5 Personen des Raums sind aktuell anwesend (keine Abwesenheit erfasst).
+  \item \textbf{Normalablauf}:
+    \begin{enumerate}
+      \item Nutzer:in öffnet die Raumansicht des eigenen Büros.
+      \item System prüft die aktuelle Belegung des Raums.
+      \item System zeigt aktuelle Messwerte (Temperatur, Luftfeuchtigkeit, Luftqualität) und Verlaufsdiagramme (Tages-/Wochen-/Monatsansicht) an.
+      \item Konfigurierte Grenzwerte sind als Referenzlinien in den Diagrammen sichtbar.
+      \item Aktive Grenzwertwarnungen werden prominent angezeigt, inkl. Raumklima-Tipps.
+    \end{enumerate}
+  \item \textbf{Alternativablauf -- Mindestbelegung nicht erfüllt}:
+    \begin{enumerate}
+      \item System erkennt, dass die Belegung unter 5 Personen liegt.
+      \item System zeigt Hinweis: ``Keine Daten verfügbar -- Datenschutzbedingungen nicht erfüllt.''
+      \item Keine Messdaten werden angezeigt.
+    \end{enumerate}
+  \item \textbf{Alternativablauf -- Verbindungsausfall}:
+    \begin{enumerate}
+      \item Für einen bestimmten Zeitraum fehlen Messdaten (z.B. Raspberry Pi offline).
+      \item System markiert Lücken in den Verlaufsdiagrammen deutlich (z.B. grau hinterlegte Bereiche).
+    \end{enumerate}
+\end{itemize}
+
+\subsection{UC-02: Raumklimadaten Allgemeinflächen einsehen}
+
+\begin{itemize}
+  \item \textbf{Akteur}: Mitarbeiter:in, Abteilungsleitung
+  \item \textbf{Vorbedingung}: Nutzer:in ist eingeloggt und einer Abteilung zugeordnet.
+  \item \textbf{Normalablauf}:
+    \begin{enumerate}
+      \item Nutzer:in wählt eine Allgemeinfläche (Konferenzraum, Aufenthaltsraum etc.) der eigenen Abteilung aus.
+      \item System zeigt aktuelle Messwerte und Verlaufsdiagramme in voller Granularität an.
+      \item Keine Datenschutzeinschränkungen -- Daten sind immer verfügbar.
+    \end{enumerate}
+\end{itemize}
+
+\subsection{UC-03: Abteilungsübersicht einsehen}
+
+\begin{itemize}
+  \item \textbf{Akteur}: Abteilungsleitung
+  \item \textbf{Vorbedingung}: Nutzer:in ist als Abteilungsleitung eingeloggt.
+  \item \textbf{Normalablauf}:
+    \begin{enumerate}
+      \item Abteilungsleitung öffnet die Abteilungsübersicht.
+      \item System zeigt eine vergleichende Darstellung aller Räume der Abteilung (aktuelle Messwerte, Anzahl aktiver Warnungen).
+      \item Für Büros oberhalb der Mindestbelegung: Verlaufsansichten in reduzierter Granularität (Tagesdurchschnitte).
+      \item Für Allgemeinflächen: Verlaufsansichten in voller Granularität.
+      \item Aktive und vergangene Grenzwertverletzungen auf Raumebene sind einsehbar.
+    \end{enumerate}
+\end{itemize}
+
+\subsection{UC-04: Grenzwertwarnung -- Auslösung und Anzeige}
+
+\begin{itemize}
+  \item \textbf{Akteur}: Raspberry Pi (technisch), Mitarbeiter:in / Abteilungsleitung (sichtbar)
+  \item \textbf{Vorbedingung}: Grenzwerte sind für den betroffenen Raum konfiguriert. Sensorstation ist aktiv und verbunden.
+  \item \textbf{Normalablauf}:
+    \begin{enumerate}
+      \item Raspberry Pi empfängt Messdaten von der Sensorstation.
+      \item Raspberry Pi prüft Messwerte gegen konfigurierte Grenzwerte mit Noise-Filter (kein Auslösen bei kurzfristigen Ausreißern).
+      \item Bei bestätigter Grenzwertüberschreitung: Raspberry Pi setzt Warnstatus und sendet diesen an die Sensorstation und die Webapp.
+      \item Sensorstation: LED wechselt auf Rot, Display zeigt Warnmodus mit Hinweis und Tipp.
+      \item Webapp: Warnung wird prominent für alle Nutzer:innen des betroffenen Raums angezeigt, inkl. konfiguriertem Raumklima-Tipp.
+      \item Abteilungsleitung sieht Warnung in der Abteilungsübersicht.
+    \end{enumerate}
+  \item \textbf{Alternativablauf -- Warnung aufheben}:
+    \begin{enumerate}
+      \item Messwerte kehren dauerhaft in den Normalbereich zurück.
+      \item Raspberry Pi hebt Warnstatus auf und informiert Sensorstation und Webapp.
+      \item LED wechselt auf Grün, Warnmeldung in der Webapp verschwindet. Vergangene Verletzung bleibt historisch gespeichert.
+    \end{enumerate}
+  \item \textbf{Designentscheidung}: Eine Grenzwertwarnung wird erst ausgelöst, wenn ein Grenzwert über einen konfigurierbaren Zeitraum (z.B. 3 aufeinanderfolgende Messungen) überschritten wird. Dadurch werden kurzfristige Ereignisse (Fenster kurz öffnen, Atemstoß auf Sensor) gefiltert.
+\end{itemize}
+
+\subsection{UC-05: Grenzwerte konfigurieren}
+
+\begin{itemize}
+  \item \textbf{Akteur}: Gebäudeadministration
+  \item \textbf{Vorbedingung}: Nutzer:in ist als Gebäudeadmin eingeloggt. Raum und Sensorstation sind im System angelegt.
+  \item \textbf{Normalablauf}:
+    \begin{enumerate}
+      \item Gebäudeadmin öffnet die Konfigurationsansicht eines Raums.
+      \item Admin setzt oder ändert obere Grenzwerte für Temperatur, Luftfeuchtigkeit und Luftqualität. Untere Grenzwerte sind optional.
+      \item System speichert die neuen Grenzwerte in der PostgreSQL-Datenbank.
+      \item System informiert den zuständigen Raspberry Pi über die Änderung per REST-Benachrichtigung.
+      \item Raspberry Pi ruft die aktualisierten Grenzwerte ab und speichert sie lokal in der SQLite-Datenbank.
+    \end{enumerate}
+\end{itemize}
+
+\subsection{UC-06: Abwesenheit eintragen}
+
+\begin{itemize}
+  \item \textbf{Akteur}: Mitarbeiter:in
+  \item \textbf{Vorbedingung}: Nutzer:in ist eingeloggt und einem Büroraum zugeordnet.
+  \item \textbf{Normalablauf}:
+    \begin{enumerate}
+      \item Mitarbeiter:in trägt eine Abwesenheit (Urlaub, Krankheit, etc.) stunden- oder tageweise ein.
+      \item System prüft, ob durch diese Abwesenheit die Mindestbelegung (5 Personen) im Büroraum unterschritten wird.
+      \item Wenn ja: System informiert den zuständigen Raspberry Pi. Ab diesem Zeitpunkt werden keine Messdaten für diesen Raum persistent gespeichert oder übertragen.
+      \item Wenn nein: Keine Änderung am Datenspeicherverhalten.
+    \end{enumerate}
+\end{itemize}
+
+\subsection{UC-07: Geräte anlegen und konfigurieren}
+
+\begin{itemize}
+  \item \textbf{Akteur}: Systemadministration
+  \item \textbf{Vorbedingung}: Nutzer:in ist als Systemadmin eingeloggt. Gebäudestruktur (Gebäude, Abteilungen, Räume) ist bereits angelegt.
+  \item \textbf{Normalablauf}:
+    \begin{enumerate}
+      \item Systemadmin legt ein neues Raspberry Pi-Objekt an. System generiert automatisch eine eindeutige ID.
+      \item Systemadmin ordnet den Raspberry Pi einem Raum zu.
+      \item Systemadmin legt eine neue Sensorstation an. System generiert automatisch eine eindeutige ID.
+      \item Systemadmin ordnet die Sensorstation dem Raspberry Pi zu.
+      \item Die generierten IDs werden für die physische Konfiguration der Geräte verwendet (hardcoded auf Arduino, conf.yaml auf Raspberry Pi).
+    \end{enumerate}
+\end{itemize}
+
+\section{Klassendiagramm V1}
+
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=0.3\textwidth]{images/class_diagram}
+	\caption{Class diagram draft}
+	\label{fig:class-diagram}
+\end{figure}
+
+\textit{Das vollständige Klassendiagramm befindet sich als separates Mermaid-Diagramm im GitLab Wiki (Datei: \texttt{class\_diagram\_v1.mermaid}).}
+
+\subsection{Klassenbeschreibungen}
+
+\begin{itemize}
+  \item \textbf{User} -- Repräsentiert einen Systembenutzer. Attribute: id, name, email, passwordHash, role. Assoziationen: gehört einer Abteilung an, ist einem Büroraum zugeordnet, hat Abwesenheiten.
+  \item \textbf{Role} -- Enum: EMPLOYEE, DEPARTMENT\_LEAD, MANAGEMENT, BUILDING\_ADMIN, SYSTEM\_ADMIN.
+  \item \textbf{Absence} -- Repräsentiert eine Abwesenheit eines Users. Attribute: id, userId, startDate, endDate, type (URLAUB, KRANKHEIT, KARENZ, etc.).
+  \item \textbf{Building} -- Repräsentiert ein Gebäude. Attribute: id, name, address. Enthält Abteilungen.
+  \item \textbf{Department} -- Repräsentiert eine Abteilung. Attribute: id, name, buildingId. Enthält Räume und User.
+  \item \textbf{Room} -- Repräsentiert einen Raum. Attribute: id, name, type (OFFICE / COMMON\_AREA), departmentId, minOccupancy (default: 5 für Büroräume). Assoziationen: hat einen Raspberry Pi, hat Grenzwerte, hat Messdaten.
+  \item \textbf{RaspberryPi} -- Repräsentiert einen Raspberry Pi. Attribute: id (generiert), roomId, ipAddress, status. Assoziationen: hat Sensorstationen, hat Grenzwerte (lokal gespiegelt).
+  \item \textbf{SensorStation} -- Repräsentiert eine Sensorstation (Arduino). Attribute: id (generiert, hardcoded auf Arduino), raspberryPiId, status.
+  \item \textbf{Measurement} -- Repräsentiert einen Messdatenpunkt. Attribute: id, sensorStationId, timestamp, temperature, humidity, airQuality. Wird nur bei erfüllter Datenschutzbedingung persistent gespeichert.
+  \item \textbf{Threshold} -- Repräsentiert Grenzwerte für einen Raum. Attribute: id, roomId, metric (TEMPERATURE / HUMIDITY / AIR\_QUALITY), upperBound, lowerBound (optional).
+  \item \textbf{ThresholdViolation} -- Repräsentiert eine aktive oder historische Grenzwertverletzung. Attribute: id, roomId, thresholdId, startTime, endTime (null wenn noch aktiv), metric, value.
+  \item \textbf{ClimateHint} -- Repräsentiert einen Raumklima-Tipp. Attribute: id, metric, condition, hintText. Wird bei Grenzwertverletzungen angezeigt.
+
+\end{itemize}
+
+\subsection{Wichtige Assoziationen}
+\begin{itemize}
+  \item \texttt{Building} $1$ -- $*$ \texttt{Department}: Ein Gebäude hat mehrere Abteilungen.
+  \item \texttt{Department} $1$ -- $*$ \texttt{Room}: Eine Abteilung hat mehrere Räume.
+  \item \texttt{Department} $1$ -- $*$ \texttt{User}: Eine Abteilung hat mehrere User.
+  \item \texttt{Room} $1$ -- $0..1$ \texttt{RaspberryPi}: Ein Raum hat maximal einen Raspberry Pi.
+  \item \texttt{RaspberryPi} $1$ -- $*$ \texttt{SensorStation}: Ein Raspberry Pi kann mehrere Sensorstationen verwalten (im Prototyp: eine).
+  \item \texttt{SensorStation} $1$ -- $*$ \texttt{Measurement}: Eine Sensorstation produziert viele Messdaten.
+  \item \texttt{Room} $1$ -- $*$ \texttt{Threshold}: Ein Raum hat Grenzwerte pro Messgröße.
+  \item \texttt{User} $1$ -- $*$ \texttt{Absence}: Ein User kann mehrere Abwesenheiten haben.
+\end{itemize}
+
+\subsection{Löschen von Daten}
+\begin{itemize}
+  \item Wird ein User gelöscht, werden seine Abwesenheiten ebenfalls gelöscht (CASCADE).
+  \item Wird eine Sensorstation gelöscht, werden ihre Messdaten ebenfalls gelöscht (CASCADE). Historische Grenzwertverletzungen bleiben erhalten (roomId Referenz bleibt bestehen).
+  \item Wird ein Raum gelöscht, werden alle zugehörigen Messdaten, Grenzwerte und Grenzwertverletzungen gelöscht (CASCADE).
+  \item Wird ein Raspberry Pi aus einem Raum entfernt, bleiben historische Messdaten erhalten; der Raspberry Pi-Eintrag bleibt im System, bis er explizit gelöscht wird.
+  \item Messdaten, die aufgrund der Datenschutzbedingung (Mindestbelegung) nicht gespeichert wurden, existieren nie persistent -- sie müssen also nicht gelöscht werden.
+\end{itemize}
+
+\section{GUI Prototyp}
+
+\textit{Der vollständige GUI Prototyp (Mockups) befindet sich als separates Dokument im GitLab Wiki. Hier folgt eine textuelle Beschreibung der Kernansichten.}
+
+\subsection{Login}
+\begin{itemize}
+  \item Einfache Login-Maske mit E-Mail und Passwort.
+  \item Nach Login: Weiterleitung auf rollenabhängiges Dashboard.
+\end{itemize}
+
+\subsection{Dashboard (Mitarbeiter:in)}
+\begin{itemize}
+  \item Übersichtskacheln: Eigenes Büro (aktuelle Temperatur, Luftfeuchtigkeit, Luftqualität) + Allgemeinflächen der Abteilung.
+  \item Prominente Warnanzeige wenn aktive Grenzwertverletzung im eigenen Büro vorhanden.
+  \item Hinweisbox wenn Bürodaten wegen Datenschutz nicht verfügbar sind.
+  \item Navigation zu: Verlaufsansicht, Abwesenheitsverwaltung.
+\end{itemize}
+
+\subsection{Verlaufsansicht (Raumdetails)}
+
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=0.7\textwidth]{images/liniendiagramm_beispiel}
+	\caption{Liniendiagramm random Beispiel}
+	\label{fig:liniendiagramm}
+\end{figure}
+
+\begin{itemize}
+  \item Liniendiagramm für Temperatur, Luftfeuchtigkeit, Luftqualität über wählbaren Zeitraum (Tag / Woche / Monat).
+  \item Grenzwerte als horizontale Referenzlinien eingeblendet.
+  \item Vergangene Grenzwertverletzungen farblich markiert.
+  \item Datenlücken (Datenschutz, Ausfall) klar als graue Bereiche gekennzeichnet.
+  \item Granularität abhängig von Rolle (Mitarbeiter: Rohdaten; Abteilungsleitung: Tagesdurchschnitte für Büros).
+\end{itemize}
+
+\subsection{Dashboard (Abteilungsleitung)}
+\begin{itemize}
+  \item Rasteransicht aller Räume der Abteilung mit aktuellen Messwerten und Warnstatus.
+  \item Anzahl aktiver Grenzwertverletzungen pro Raum.
+  \item Verlinkung zu Raumdetailansicht mit reduzierter Granularität für Büros.
+\end{itemize}
+
+\subsection{Dashboard (Höheres Management)}
+\begin{itemize}
+  \item Firmenweites Dashboard: Aggregierte Werte nach Abteilungen.
+  \item Balkendiagramm: Anzahl Grenzwertverletzungen pro Abteilung (anonymisiert).
+  \item Trendlinie über Wochen/Monate.
+\end{itemize}
+
+\subsection{Konfigurationsansicht (Gebäudeadmin)}
+\begin{itemize}
+  \item Liste aller Räume mit aktuellen Grenzwerten.
+  \item Inline-Bearbeitung der Grenzwerte pro Raum und Messgröße.
+  \item Tipp-Verwaltung: Liste, Erstellen, Bearbeiten, Löschen von Raumklima-Tipps.
+\end{itemize}
+
+\subsection{Gerätemanagement (Systemadmin)}
+\begin{itemize}
+  \item Übersicht aller Raspberry Pis und Sensorstationen mit Status (Online/Offline).
+  \item Anlegen neuer Geräte inkl. automatisch generierter ID.
+  \item Zuweisung von Sensorstationen zu Raspberry Pis und Räumen.
+  \item Benutzerverwaltung: Nutzer:innen anlegen, Rollen zuweisen, Räumen zuordnen.
+\end{itemize}
+
+\section{Projektplan}
+
+\subsection{Verantwortlichkeiten}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{lX}
+  \toprule
+  \textbf{Person} & \textbf{Zuständigkeit} \\
+  \midrule
+  Maria Kuhn      & Arduino-Entwicklung (C/C++, BLE-Protokoll), Frontend (React/TS) \\
+  Fabienne Schedler & Frontend (React/TS, PrimeReact, GUI-Prototyp, Mobile-First) \\
+  Emma Danko      & Raspberry Pi (Python, BLE Central, SQLite), Backend (Spring Boot) \\
+  Prahbdip Singh  & Raspberry Pi (Python, REST-Schnittstellen, Docker), Backend (Spring Boot, PostgreSQL) \\
+  Adriano Paganini & Arduino-Entwicklung (C/C++, Display/LED/Buttons), Backend (Spring Boot, API Design) \\
+  \midrule
+  \textbf{Alle} & Softwarekonzept, Testing, Dokumentation, Code Review \\
+  \bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Meilensteine und Zeitplan}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{llX}
+  \toprule
+  \textbf{Datum} & \textbf{Meilenstein} & \textbf{Inhalt} \\
+  \midrule
+  12.03.2026 & \textbf{Konzept V1} & Systemüberblick, Use Cases, Klassendiagramm V1, GUI Prototyp, Projektplan \\
+  19.03.2026 & \textbf{Konzept V2} & Sequenzdiagramme, API Dokumentation, Ausfallssicherheit, Klassendiagramm V2 \\
+  27.03.2026 & \textbf{Konzept Final} & Überarbeitetes Gesamtkonzept nach Feedback \\
+  \midrule
+  KW 14--15  & \textbf{M1: Hardware Setup} & Arduino + Sensoren funktionsfähig; BLE-Übertragung zum RPi; Raspberry Pi OS + Docker eingerichtet \\
+  KW 16--17  & \textbf{M2: Backend Grundgerüst} & Spring Boot Skeleton aufgesetzt; PostgreSQL Datenbankschema implementiert; Basis-REST-API (OpenAPI); Login/Rollen \\
+  KW 18--19  & \textbf{M3: Datenfluss End-to-End} & Kompletter Datenfluss Arduino $\to$ RPi $\to$ Backend funktionsfähig; Grenzwertberechnung am RPi; Datenschutzlogik \\
+  KW 20--21  & \textbf{M4: Frontend + Warnungen} & Rollenabhängige Dashboards; Verlaufsdiagramme; Grenzwertwarnungen in Webapp und auf Sensorstation \\
+  KW 22--23  & \textbf{M5: Ausfallssicherheit + Testing} & Ausfallszenarien abgesichert; SonarQube integriert; $\geq$ 65\% Testabdeckung \\
+  KW 24      & \textbf{M6: Finalisierung} & Bugfixes; Dokumentation vollständig; finale Abgabe (18.06.2026) \\
+  \bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Inkrementelle Entwicklung}
+\begin{itemize}
+  \item Wir entwickeln das System in zwei parallelen Tracks: \textbf{Hardware-Track} (Arduino + Raspberry Pi) und \textbf{Software-Track} (Backend + Frontend).
+  \item Beide Tracks werden ab M3 integriert.
+  \item Jede Woche wird im Team eine kurze Sync-Session abgehalten, um Fortschritte und Blocker zu besprechen.
+  \item GitLab wird für Issues, Merge Requests und Code Review genutzt. Das Wiki enthält alle Konzept-Dokumente.
+  \item SonarQube wird ab Beginn der Backend-Entwicklung (KW 14) integriert, nicht erst kurz vor der Abgabe.
+\end{itemize}
+
+\subsection{Zusätzliche Aufgaben}
+\begin{itemize}
+  \item Zwischenbericht: Einplanen in KW 18 (nach M3).
+  \item Abschlussbericht: Einplanen in KW 23--24.
+  \item Präsentation: Vorbereitung in KW 24.
+  \item Testdaten: Realistische Testdaten für alle Rollen und Szenarien werden in KW 20 erstellt.
+\end{itemize}
+
+\end{document}
