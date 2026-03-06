@@ -1,0 +1,102 @@
+@startuml ClimateCanary_UseCases
+
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Employee" as EMP
+actor "Department Manager" as DM
+actor "Senior Management" as SM
+actor "Building Administrator" as BA
+actor "System Administrator" as SA
+
+EMP <|-- DM
+
+package "Authentication" {
+    usecase "Log in / Log out" as UC_AUTH
+}
+
+package "Measurement Data Access\n" {
+    usecase "View current measurements\n(own office – if min. occupancy ≥5 met)" as UC_OWN_CURR
+    usecase "View historical data own office\n(full granularity, day/week/month)" as UC_OWN_HIST
+    usecase "View current measurements\n(common areas of own department)" as UC_CA_CURR
+    usecase "View historical data\n(common areas, full granularity)" as UC_CA_HIST
+    usecase "View room historical data\n(office rooms – reduced granularity/above minimum occupancy)\n(e.g. Daily averages)" as UC_DEPT_HIST
+    usecase "View room historical data\n(common areas – full granularity)" as UC_DEPT_CA
+    usecase "View all rooms – full granularity\n(no user-room assignment visible)" as UC_ALL_ROOMS
+    usecase "View aggregated company-wide\ndashboard (dept. level only)" as UC_COMPANY
+    usecase "View trend indicators\n(dept. & company level)" as UC_TRENDS
+}
+
+
+package "Threshold Violations\n" {
+    usecase "Receive real-time alert +\nread improvement tip (own office)" as UC_ALERT_OWN
+    usecase "View active & historical violations\nper room (department scope)" as UC_VIOL_DEPT
+    usecase "View violation count & frequency\nper department (anonymized,\nnot traceable to individual rooms)" as UC_VIOL_MGMT
+    usecase "View active & historical violations\nall rooms (building scope)" as UC_VIOL_BA
+    usecase "Configure thresholds per room\n(temperature / humidity / air quality)" as UC_THRESH_CFG
+    usecase "Manage improvement tips for violations" as UC_TIPS
+}
+
+
+package "Absence Management\n" {
+    usecase "Manage own absence" as UC_ABS_OWN
+    usecase "View department absences\n(to verify min. occupancy)" as UC_ABS_DEPT
+}
+
+
+package "Hardware and Building Management\n" {
+    usecase "Register building, departments & rooms" as UC_BUILDING
+    usecase "Register Raspberry Pi\n" as UC_REG_RPI
+    usecase "Register sensor station\n" as UC_REG_SS
+    usecase "Assign sensor station to Raspberry Pi" as UC_ASSIGN_SS
+    usecase "Setup and configure devices for rooms" as UC_SETUP_DEV
+}
+
+
+package "User Management\n" {
+    usecase "Create / edit / delete users" as UC_USR_MGMT
+    usecase "Assign roles to users" as UC_ROLE_ASSIGN
+    usecase "Assign users to rooms" as UC_ROOM_ASSIGN
+}
+
+EMP --> UC_AUTH
+BA  --> UC_AUTH
+SA  --> UC_AUTH
+
+'The following section assigns the use cases to the roles. UC is an abbreviation for "Use Case"
+'Employee
+EMP --> UC_OWN_CURR
+EMP --> UC_OWN_HIST
+EMP --> UC_CA_CURR
+EMP --> UC_CA_HIST
+EMP --> UC_ALERT_OWN
+EMP --> UC_ABS_OWN
+
+'Department Manager 
+DM  --> UC_DEPT_HIST
+DM  --> UC_DEPT_CA
+DM  --> UC_VIOL_DEPT
+DM  --> UC_ABS_DEPT
+
+'Senior Management 
+SM  --> UC_COMPANY
+SM  --> UC_TRENDS
+SM  --> UC_VIOL_MGMT
+
+'Building Administrator
+BA  --> UC_ALL_ROOMS
+BA  --> UC_VIOL_BA
+BA  --> UC_THRESH_CFG
+BA  --> UC_TIPS
+
+'System Administrator
+SA  --> UC_BUILDING
+SA  --> UC_REG_RPI
+SA  --> UC_REG_SS
+SA  --> UC_ASSIGN_SS
+SA  --> UC_USR_MGMT
+SA  --> UC_ROLE_ASSIGN
+SA  --> UC_ROOM_ASSIGN
+SA  --> UC_SETUP_DEV
+
+@enduml
