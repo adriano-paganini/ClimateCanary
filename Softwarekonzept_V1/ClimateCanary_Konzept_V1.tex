@@ -232,33 +232,43 @@ PS Software Engineering SS2026}
       \item Die generierten IDs werden für die physische Konfiguration der Geräte verwendet (hardcoded auf Arduino, conf.yaml auf Raspberry Pi).
     \end{enumerate}
 \end{itemize}
-
+\newpage
 \section{Klassendiagramm V1}
 
 \begin{figure}[h!]
 	\centering
-	\includegraphics[width=0.3\textwidth]{images/class_diagram}
-	\caption{Class diagram draft}
-	\label{fig:class-diagram}
+	\includegraphics[width=0.8\textwidth]{images/climate-canary-webapp-backend.png}
+	\caption{Class diagram V1}
+	\label{fig:climate-canary-webapp-backend}
 \end{figure}
 
-\textit{Das vollständige Klassendiagramm befindet sich als separates Mermaid-Diagramm im GitLab Wiki (Datei: \texttt{class\_diagram\_v1.mermaid}).}
+\textit{Das vollständige Klassendiagramm befindet sich als separates Draw.io im GitLab Wiki (Datei: \texttt{climate-canary-webapp-backend.drawio}).}
 
 \subsection{Klassenbeschreibungen}
 
 \begin{itemize}
-  \item \textbf{User} -- Repräsentiert einen Systembenutzer. Attribute: id, name, email, passwordHash, role. Assoziationen: gehört einer Abteilung an, ist einem Büroraum zugeordnet, hat Abwesenheiten.
+  \item \textbf{ViolationStatus} -- Enum: ACTIVE, RESOLVED.
   \item \textbf{Role} -- Enum: EMPLOYEE, DEPARTMENT\_LEAD, MANAGEMENT, BUILDING\_ADMIN, SYSTEM\_ADMIN.
-  \item \textbf{Absence} -- Repräsentiert eine Abwesenheit eines Users. Attribute: id, userId, startDate, endDate, type (URLAUB, KRANKHEIT, KARENZ, etc.).
-  \item \textbf{Building} -- Repräsentiert ein Gebäude. Attribute: id, name, address. Enthält Abteilungen.
-  \item \textbf{Department} -- Repräsentiert eine Abteilung. Attribute: id, name, buildingId. Enthält Räume und User.
-  \item \textbf{Room} -- Repräsentiert einen Raum. Attribute: id, name, type (OFFICE / COMMON\_AREA), departmentId, minOccupancy (default: 5 für Büroräume). Assoziationen: hat einen Raspberry Pi, hat Grenzwerte, hat Messdaten.
-  \item \textbf{RaspberryPi} -- Repräsentiert einen Raspberry Pi. Attribute: id (generiert), roomId, ipAddress, status. Assoziationen: hat Sensorstationen, hat Grenzwerte (lokal gespiegelt).
-  \item \textbf{SensorStation} -- Repräsentiert eine Sensorstation (Arduino). Attribute: id (generiert, hardcoded auf Arduino), raspberryPiId, status.
-  \item \textbf{Measurement} -- Repräsentiert einen Messdatenpunkt. Attribute: id, sensorStationId, timestamp, temperature, humidity, airQuality. Wird nur bei erfüllter Datenschutzbedingung persistent gespeichert.
-  \item \textbf{Threshold} -- Repräsentiert Grenzwerte für einen Raum. Attribute: id, roomId, metric (TEMPERATURE / HUMIDITY / AIR\_QUALITY), upperBound, lowerBound (optional).
-  \item \textbf{ThresholdViolation} -- Repräsentiert eine aktive oder historische Grenzwertverletzung. Attribute: id, roomId, thresholdId, startTime, endTime (null wenn noch aktiv), metric, value.
-  \item \textbf{ClimateHint} -- Repräsentiert einen Raumklima-Tipp. Attribute: id, metric, condition, hintText. Wird bei Grenzwertverletzungen angezeigt.
+  \item \textbf{AbsenceType} -- Enum: HOLIDAY, SICKNESS, PARENTAL\_LEAVE, OTHER.
+  \item \textbf{AbsenceStatus} -- Enum: PLANNED, APPROVED, REJECTED, CANCELLED.
+  \item \textbf{RoomType} -- Enum: OFFICE, COMMON\_AREA, OTHER.
+  \item \textbf{DeviceStatus} -- Enum: ONLINE, OFFLINE, MAINTENANCE.
+  \item \textbf{Metric} -- Enum: TEMPERATURE, HUMIDITY, AIR\_QUALITY.
+
+  
+  \item \textbf{User} -- Repräsentiert einen Systembenutzer.\\Attribute: id, firstName, lastName, email, passwordHash, role, departmentIds, roomId.\\Assoziationen: gehört einer oder mehreren Abteilungen an, ist einem Büroraum zugeordnet, hat Abwesenheiten.
+  \\\small{Designentscheidung: Ein User kann mehreren Abteilungen angehören, um beispielsweise Management- oder Gebäudeadministrationsrollen zu ermöglichen, die Zugriff auf mehrere Abteilungen benötigen.}
+  \item \textbf{Absence} -- Repräsentiert eine Abwesenheit eines Users.\\Attribute: id, userId, startDate, endDate, absenceType, absenceStatus.\\Assoziationen: referenziert einen User.
+  \item \textbf{Building} -- Repräsentiert ein Gebäude.\\Attribute: id, name, addressId.\\Assoziationen: hat eine Addresse, wird von mehreren Abteilungen und Räumen referenziert.
+  \item \textbf{Address} -- Repräsentiert eine Adresse.\\Attribute: id, country, zipCode, city, street, houseNumber, extra.\\Assoziationen: wird von einem Gebäude referenziert.
+  \item \textbf{Department} -- Repräsentiert eine Abteilung.\\Attribute: id, name, buildingId.\\Assoziationen: gehört zu einem Gebäude, wird von mehreren Räumen und Usern referenziert.
+  \item \textbf{Room} -- Repräsentiert einen Raum.\\Attribute: id, name, roomType, departmentId, minOccupancy (default: 5 für Büroräume), raspberryPiId.\\Assoziationen: hat einen Raspberry Pi, wird von Grenzwerten, Grenzwertüberschreitungen und einem RaspberryPi referenziert.
+  \item \textbf{RaspberryPi} -- Repräsentiert einen Raspberry Pi.\\Attribute: id (generiert), roomId, ipAddress, deviceStatus, sensorStationIds.\\Assoziationen: hat Sensorstationenen, Grenzwerte werden über die Raumzuweisung verwaltet.
+  \item \textbf{SensorStation} -- Repräsentiert eine Sensorstation (Arduino).\\Attribute: id (generiert, hardcoded auf Arduino), raspberryPiId, deviceStatus.\\Assoziationen: gehört zu einem Raspberry Pi, wird von Messunge und einem RaspberryPi referenziert.
+  \item \textbf{Measurement} -- Repräsentiert einen Messdatenpunkt.\\Attribute: id, sensorStationId, timestamp, temperature, humidity, airQuality.\\Assoziationen: referenziert eine Sensorstation, wird von ThresholdViolation referenziert. (Wird nur bei erfüllter Datenschutzbedingung persistent gespeichert.)
+  \item \textbf{Threshold} -- Repräsentiert Grenzwerte für einen Raum.\\Attribute: id, roomId, metric, upperBound, lowerBound (optional).\\Assoziationen: referenziert einen Raum, wird von ThresholdViolation referenziert, hat mehrere ClimateHints.
+  \item \textbf{ThresholdViolation} -- Repräsentiert eine aktive oder historische Grenzwertverletzung.\\Attribute: id, roomId, thresholdId, startTime, endTime (null wenn noch aktiv), metric, value, violationStatus, measurementIds.\\Assoziationen: referenziert einen Raum und einen Threshold und mehrere Messungen.\\\small{Designentscheidung: mehrere Measurements müssen herangezogen werden, um kurze Extremwerte zu filtern. Eine Verletzung wird erst bestätigt, wenn z.B. 3 aufeinanderfolgende Messungen den Grenzwert überschreiten.}
+  \item \textbf{ClimateHint} -- Repräsentiert einen Raumklima-Tipp.\\Attribute: id, metric, hintText.\\Assoziationen: wird von einem oder mehreren Threshholds referenziert. (Wird bei Grenzwertverletzungen angezeigt.)
 
 \end{itemize}
 

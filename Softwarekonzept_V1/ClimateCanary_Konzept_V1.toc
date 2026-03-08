@@ -15,20 +15,20 @@
 \contentsline {subsection}{\numberline {3.5}UC-05: Grenzwerte konfigurieren}{8}{subsection.3.5}%
 \contentsline {subsection}{\numberline {3.6}UC-06: Abwesenheit eintragen}{8}{subsection.3.6}%
 \contentsline {subsection}{\numberline {3.7}UC-07: Geräte anlegen und konfigurieren}{9}{subsection.3.7}%
-\contentsline {section}{\numberline {4}Klassendiagramm V1}{9}{section.4}%
-\contentsline {subsection}{\numberline {4.1}Klassenbeschreibungen}{10}{subsection.4.1}%
-\contentsline {subsection}{\numberline {4.2}Wichtige Assoziationen}{10}{subsection.4.2}%
-\contentsline {subsection}{\numberline {4.3}Löschen von Daten}{11}{subsection.4.3}%
-\contentsline {section}{\numberline {5}GUI Prototyp}{11}{section.5}%
-\contentsline {subsection}{\numberline {5.1}Login}{11}{subsection.5.1}%
-\contentsline {subsection}{\numberline {5.2}Dashboard (Mitarbeiter:in)}{11}{subsection.5.2}%
-\contentsline {subsection}{\numberline {5.3}Verlaufsansicht (Raumdetails)}{12}{subsection.5.3}%
-\contentsline {subsection}{\numberline {5.4}Dashboard (Abteilungsleitung)}{12}{subsection.5.4}%
-\contentsline {subsection}{\numberline {5.5}Dashboard (Höheres Management)}{12}{subsection.5.5}%
-\contentsline {subsection}{\numberline {5.6}Konfigurationsansicht (Gebäudeadmin)}{12}{subsection.5.6}%
-\contentsline {subsection}{\numberline {5.7}Gerätemanagement (Systemadmin)}{13}{subsection.5.7}%
-\contentsline {section}{\numberline {6}Projektplan}{13}{section.6}%
-\contentsline {subsection}{\numberline {6.1}Verantwortlichkeiten}{13}{subsection.6.1}%
-\contentsline {subsection}{\numberline {6.2}Meilensteine und Zeitplan}{14}{subsection.6.2}%
-\contentsline {subsection}{\numberline {6.3}Inkrementelle Entwicklung}{14}{subsection.6.3}%
-\contentsline {subsection}{\numberline {6.4}Zusätzliche Aufgaben}{15}{subsection.6.4}%
+\contentsline {section}{\numberline {4}Klassendiagramm V1}{10}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Klassenbeschreibungen}{11}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Wichtige Assoziationen}{12}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Löschen von Daten}{12}{subsection.4.3}%
+\contentsline {section}{\numberline {5}GUI Prototyp}{13}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Login}{13}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Dashboard (Mitarbeiter:in)}{13}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Verlaufsansicht (Raumdetails)}{13}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}Dashboard (Abteilungsleitung)}{14}{subsection.5.4}%
+\contentsline {subsection}{\numberline {5.5}Dashboard (Höheres Management)}{14}{subsection.5.5}%
+\contentsline {subsection}{\numberline {5.6}Konfigurationsansicht (Gebäudeadmin)}{14}{subsection.5.6}%
+\contentsline {subsection}{\numberline {5.7}Gerätemanagement (Systemadmin)}{14}{subsection.5.7}%
+\contentsline {section}{\numberline {6}Projektplan}{15}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Verantwortlichkeiten}{15}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Meilensteine und Zeitplan}{16}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}Inkrementelle Entwicklung}{16}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}Zusätzliche Aufgaben}{17}{subsection.6.4}%
