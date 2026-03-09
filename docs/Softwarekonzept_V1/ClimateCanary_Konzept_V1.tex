@@ -14,6 +14,7 @@
 \geometry{margin=2.5cm}
 
 \title{\textbf{Softwarekonzept V1}\\
+
 \large ClimateCanary -- Raumklima Analyse für Firmen\\
 
 PS Software Engineering SS2026}
@@ -124,7 +125,6 @@ PS Software Engineering SS2026}
 \end{center}
 
 \section{Use Case Beschreibungen}
-
 \subsection{UC-01: Raumklimadaten eigenes Büro einsehen}
 
 \begin{itemize}
@@ -151,6 +151,7 @@ PS Software Engineering SS2026}
     \end{enumerate}
 \end{itemize}
 
+\vspace{0.5em}
 \subsection{UC-02: Raumklimadaten Allgemeinflächen einsehen}
 
 \begin{itemize}
@@ -164,6 +165,7 @@ PS Software Engineering SS2026}
     \end{enumerate}
 \end{itemize}
 
+\vspace{0.5em}
 \subsection{UC-03: Abteilungsübersicht einsehen}
 
 \begin{itemize}
@@ -179,6 +181,7 @@ PS Software Engineering SS2026}
     \end{enumerate}
 \end{itemize}
 
+\vspace{0.5em}
 \subsection{UC-04: Grenzwertwarnung -- Auslösung und Anzeige}
 
 \begin{itemize}
@@ -202,6 +205,7 @@ PS Software Engineering SS2026}
   \item \textbf{Designentscheidung}: Eine Grenzwertwarnung wird erst ausgelöst, wenn ein Grenzwert über einen konfigurierbaren Zeitraum (z.B. 3 aufeinanderfolgende Messungen) überschritten wird. Dadurch werden kurzfristige Ereignisse (Fenster kurz öffnen, Atemstoß auf Sensor) gefiltert.
 \end{itemize}
 
+\vspace{0.5em}
 \subsection{UC-05: Grenzwerte konfigurieren}
 
 \begin{itemize}
@@ -217,6 +221,7 @@ PS Software Engineering SS2026}
     \end{enumerate}
 \end{itemize}
 
+\vspace{0.5em}
 \subsection{UC-06: Abwesenheit eintragen}
 
 \begin{itemize}
@@ -231,6 +236,7 @@ PS Software Engineering SS2026}
     \end{enumerate}
 \end{itemize}
 
+\vspace{0.5em}
 \subsection{UC-07: Geräte anlegen und konfigurieren}
 
 \begin{itemize}
@@ -251,7 +257,7 @@ PS Software Engineering SS2026}
 \begin{figure}[h!]
 	\centering
 	\includegraphics[width=0.8\textwidth]{images/climate-canary-webapp-backend.png}
-	\caption{Class diagram V1}
+	\caption{Klassendiagramm V1}
 	\label{fig:climate-canary-webapp-backend}
 \end{figure}
 
@@ -323,15 +329,6 @@ PS Software Engineering SS2026}
   \item Hinweisbox wenn Bürodaten wegen Datenschutz nicht verfügbar sind.
   \item Navigation zu: Verlaufsansicht, Abwesenheitsverwaltung.
 \end{itemize}
-
-\subsection{Verlaufsansicht (Raumdetails)}
-
-\begin{figure}[h!]
-	\centering
-	\includegraphics[width=0.7\textwidth]{images/liniendiagramm_beispiel}
-	\caption{Liniendiagramm random Beispiel}
-	\label{fig:liniendiagramm}
-\end{figure}
 
 \begin{itemize}
   \item Liniendiagramm für Temperatur, Luftfeuchtigkeit, Luftqualität über wählbaren Zeitraum (Tag / Woche / Monat).
