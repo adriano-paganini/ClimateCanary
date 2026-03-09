@@ -101,11 +101,20 @@ PS Software Engineering SS2026}
   \toprule
   \textbf{Akteur} & \textbf{Use Cases} \\
   \midrule
-  Mitarbeiter:in & Raumklima eigenes Büro einsehen (wenn Belegung $\geq$ 5), Allgemeinflächen einsehen, Grenzwarnungen einsehen, Abwesenheit eintragen/verwalten \\
-  Abteilungsleitung & + Abteilungsübersicht einsehen, Büros (Tagesdurchschnitte) einsehen, Abwesenheiten Abteilung einsehen, Grenzwertverletzungen Abteilung einsehen \\
-  Management & Firmen-Dashboard einsehen, Trendindikatoren einsehen, anonymisierte Verletzungsstatistiken einsehen \\
-  Gebäudeadmin & Alle Raumdaten einsehen, Grenzwerte konfigurieren, Raumklima-Tipps verwalten \\
-  Systemadmin & Benutzer verwalten, Gebäudestruktur verwalten, Geräte anlegen und zuweisen \\
+  Mitarbeiter:in &
+  Anmelden/Abmelden, aktuelle Messungen des eigenen Büros einsehen (nur bei Mindestbelegung $\geq$ 5), historische Daten des eigenen Büros einsehen, aktuelle und historische Messungen gemeinsamer Bereiche der eigenen Abteilung einsehen, Echtzeitalarme und Verbesserungstipps bei Grenzwertverletzungen lesen, eigene Abwesenheiten verwalten \\
+
+  Abteilungsleitung &
+  Historische Raumdaten von Büro-Räumen der Abteilung einsehen (reduzierte Granularität, z.\,B. Tagesdurchschnitte), historische Daten gemeinsamer Bereiche einsehen, aktive und historische Grenzwertverletzungen pro Raum im Abteilungsbereich einsehen, Abwesenheiten der Abteilung einsehen \\
+
+  Geschäftsführung &
+  Aggregiertes unternehmensweites Dashboard einsehen (auf Abteilungsebene), Trendindikatoren für Abteilungen und Unternehmen einsehen, anonymisierte Statistiken zu Grenzwertverletzungen pro Abteilung einsehen \\
+
+  Hausverwalter &
+  Alle Raumdaten mit voller Granularität einsehen (ohne Nutzer-Raum-Zuordnung), aktive und historische Grenzwertverletzungen aller Räume einsehen, Grenzwerte für Temperatur, Luftfeuchtigkeit und Luftqualität konfigurieren, Verbesserungstipps für Grenzwertverletzungen verwalten \\
+
+  Systemadministrator &
+  Gebäude, Abteilungen und Räume registrieren und verwalten, Raspberry Pis registrieren, Sensorstationen registrieren, Sensorstationen Raspberry Pis zuweisen, Geräte für Räume konfigurieren, Benutzer erstellen/bearbeiten/löschen, Rollen zuweisen, Benutzer Räumen zuweisen \\
   \bottomrule
 \end{tabularx}
 \end{center}
