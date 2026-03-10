@@ -33,47 +33,96 @@ PS Software Engineering SS2026}
 
 \section{Systemüberblick}
 
-\begin{figure}[h!]
-	\centering
-	\includegraphics[width=0.8\textwidth]{images/system_architecture}
-	\caption{System Architecture Draft}
-	\label{fig:system-architecture}
-\end{figure}
+ClimateCanary überwacht das Raumklima in Bürogebäuden über ein dreischichtiges
+IoT-System: Sensorstationen (Arduino) messen kontinuierlich und übertragen die Daten
+per BLE an einen Raspberry Pi pro Raum, der die Grenzwertlogik lokal ausführt und
+Daten datenschutzkonform an ein zentrales Spring Boot Backend weiterleitet. Nutzer
+sehen die Daten rollenabhängig in einer React-Webanwendung.
+
+\textbf{Wichtige Details:}
+\begin{itemize}
+	\item \textbf{BLE-Kopplung ist exklusiv:} Nach der ersten erfolgreichen BLE-Verbindung
+	koppelt sich der Arduino ausschließlich mit \emph{einem} Raspberry Pi -- andere
+	Geräte werden abgewiesen. Die Arduino-ID wird vom Systemadmin generiert und
+	hardcoded auf dem Gerät hinterlegt.
+	
+	\item \textbf{Datenschutz gilt nur für Büroräume:} Die 5-Personen-Mindestbelegungsregel
+	gilt ausschließlich für Büroräume (\texttt{RoomType.OFFICE}). Allgemeinflächen
+	(\texttt{COMMON\_AREA}) haben keinerlei Einschränkungen -- dort wird immer gespeichert.
+	
+	\item \textbf{Transiente Verarbeitung ist immer erlaubt:} Auch wenn die Mindestbelegung
+	unterschritten ist, darf der Raspberry Pi Messdaten für die Grenzwertberechnung
+	kurzfristig im Speicher halten -- er darf sie nur nicht persistent in SQLite speichern
+	oder ans Backend übertragen.
+	
+	\item \textbf{Grenzwertverletzungen brauchen einen Noise-Filter:} Eine Warnung darf
+	erst ausgelöst werden, wenn der Grenzwert über mehrere aufeinanderfolgende Messungen
+	überschritten wird (konfigurierbar). Einzelne Ausreißer sollen keine Warnung erzeugen.
+	
+	\item \textbf{Raspberry Pi hat keinen eigenen REST-Server:} Der RPi betreibt nur einen
+	REST-Client. Konfigurationsänderungen holt er sich selbst per Polling -- die Webapp
+	schickt keine aktiven Benachrichtigungen an den RPi.
+	
+	\item \textbf{Gebäudeadmin und Systemadmin sind strikt getrennt:} Der Hausverwalter
+	sieht Raumklimadaten, aber \emph{niemals} welche User welchem Raum zugeordnet sind.
+	Der Systemadmin sieht Userdaten, aber \emph{niemals} Messdaten. Diese Trennung ist
+	kein Nice-to-have, sondern eine explizite Datenschutzanforderung.
+	
+	\item \textbf{Abteilungsleitung sieht nur Tagesdurchschnitte für Büros:} Die reduzierte
+	Granularität für Büroräume ist eine bewusste Datenschutzentscheidung -- Tagesdurchschnitte
+	verhindern, dass aus Minutenwerten auf das Verhalten einzelner Personen geschlossen
+	werden kann.
+	
+	\item \textbf{Raspberry Pi muss ausfallsicher sein:} Automatischer Neustart nach
+	Stromausfall (Docker restart policy / systemd), Pufferung von Messdaten bei
+	Backend-Ausfall mit Retry-Logik, und Reload der Konfiguration aus der lokalen
+	SQLite-DB ohne Verbindung zum Backend.
+	
+	\item \textbf{Mehrere Teams senden BLE-Pakete:} Da andere Projektteams ebenfalls
+	BLE-Geräte betreiben, muss die eigene Sensorstation in den Advertising-Paketen
+	eindeutig als zum eigenen System gehörend identifizierbar sein.
+	
+	\item \textbf{SonarQube und Tests von Anfang an:} Mindestens 65\% JUnit-Testabdeckung
+	ist eine Abgabebedingung -- SonarQube soll nicht erst kurz vor der Deadline
+	eingebunden werden.
+\end{itemize}
 
 \subsection{Zielsetzung}
 \begin{itemize}
-  \item ClimateCanary ist ein IoT-basiertes Monitoring-System, das Unternehmen eine kontinuierliche und automatisierte Überwachung des Raumklimas in Bürogebäuden ermöglicht.
-  \item Das System erfasst Temperatur, Luftfeuchtigkeit und Luftqualität in Echtzeit und stellt diese Daten rollenabhängig in einer zentralen Webanwendung dar.
-  \item Kurzfristiges Ziel: Mitarbeiter:innen und Verwaltung sollen jederzeit informiert sein, wenn Raumklimawerte kritische Grenzwerte über- oder unterschreiten, und können entsprechend reagieren.
-  \item Mittelfristiges Ziel: Langfristige Auswertungen der gesammelten Daten sollen als Entscheidungsgrundlage für gezielte Maßnahmen zur Raumklimaverbesserung dienen (z.B. Anschaffung von Klimaanlagen, Luftreinigern).
-  \item Langfristiges Ziel (außerhalb des aktuellen Projektumfangs): Automatische Steuerung von Heizung, Jalousien und Fenstern auf Basis der gesammelten Klimadaten.
+	\item ClimateCanary ist ein IoT-basiertes Monitoring-System, das Unternehmen eine kontinuierliche und automatisierte Überwachung des Raumklimas in Bürogebäuden ermöglicht.
+	\item Das System erfasst Temperatur, Luftfeuchtigkeit und Luftqualität in Echtzeit und stellt diese Daten rollenabhängig in einer zentralen Webanwendung dar.
+	\item Kurzfristiges Ziel: Mitarbeiter:innen und Verwaltung sollen jederzeit informiert sein, wenn Raumklimawerte kritische Grenzwerte über- oder unterschreiten, und können entsprechend reagieren.
+	\item Mittelfristiges Ziel: Langfristige Auswertungen der gesammelten Daten sollen als Entscheidungsgrundlage für gezielte Maßnahmen zur Raumklimaverbesserung dienen (z.B. Anschaffung von Klimaanlagen, Luftreinigern).
+	\item Langfristiges Ziel (außerhalb des aktuellen Projektumfangs): Automatische Steuerung von Heizung, Jalousien und Fenstern auf Basis der gesammelten Klimadaten.
 \end{itemize}
 
 \subsection{Zielgruppe}
 \begin{itemize}
-  \item Primäre Zielgruppe sind mittelständische bis große Unternehmen mit mehreren Büroräumen und Allgemeinflächen.
-  \item Das System richtet sich an alle Mitarbeiter:innen eines Unternehmens, die das Raumklima an ihrem Arbeitsplatz überwachen möchten.
-  \item Zusätzlich adressiert es Abteilungsleitungen, das höhere Management sowie die Gebäude- und Systemadministration, die das System konfigurieren und übergreifend auswerten.
+	\item Primäre Zielgruppe sind mittelständische bis große Unternehmen mit mehreren Büroräumen und Allgemeinflächen.
+	\item Das System richtet sich an alle Mitarbeiter:innen eines Unternehmens, die das Raumklima an ihrem Arbeitsplatz überwachen möchten.
+	\item Zusätzlich adressiert es Abteilungsleitungen, das höhere Management sowie die Gebäude- und Systemadministration, die das System konfigurieren und übergreifend auswerten.
 \end{itemize}
 
 \subsection{Benutzer und Rollen}
 \begin{itemize}
-  \item \textbf{Mitarbeiter:in}: Überwacht das Raumklima am eigenen Arbeitsplatz und in Allgemeinflächen der eigenen Abteilung. Verwaltet eigene Abwesenheiten.
-  \item \textbf{Abteilungsleitung}: Erhält eine Übersicht über alle Räume der eigenen Abteilung in reduzierter Datengranularität. Sieht Abwesenheiten der Mitarbeiter:innen.
-  \item \textbf{Höheres Management}: Sieht firmenweite, aggregierte und anonymisierte Übersichten und Trendindikatoren. Kein Zugriff auf raumgenaue Daten.
-  \item \textbf{Gebäudeadministration}: Sieht alle Raumklimadaten aller Räume, konfiguriert Grenzwerte und verwaltet Raumklima-Tipps. Kein Zugriff auf Userdaten.
-  \item \textbf{Systemadministration}: Verwaltet Benutzer, Gebäudestruktur und Geräte (Raspberry Pis, Sensorstationen). Kein Zugriff auf Messdaten.
+	\item \textbf{Mitarbeiter:in}: Überwacht das Raumklima am eigenen Arbeitsplatz und in Allgemeinflächen der eigenen Abteilung. Verwaltet eigene Abwesenheiten.
+	\item \textbf{Abteilungsleitung}: Erbt alle Rechte der Mitarbeiter:in. Erhält zusätzlich eine Übersicht aller Räume der eigenen Abteilung in reduzierter Datengranularität (Tagesdurchschnitte für Büroräume). Sieht Abwesenheiten der Mitarbeiter:innen.
+	\item \textbf{Geschäftsführung}: Sieht firmenweite, aggregierte und anonymisierte Übersichten und Trendindikatoren. Kein Zugriff auf raumgenaue Daten.
+	\item \textbf{Hausverwalter}: Sieht alle Raumklimadaten aller Räume, konfiguriert Grenzwerte und verwaltet Raumklima-Tipps. Kein Zugriff auf Userdaten oder Raumzuweisungen.
+	\item \textbf{Systemadministrator}: Verwaltet Benutzer, Gebäudestruktur und Geräte (Raspberry Pis, Sensorstationen). Kein Zugriff auf Messdaten.
 \end{itemize}
+
+\textit{Wichtig: Hausverwalter und Systemadministrator sind strikt voneinander getrennt -- diese Trennung ist das zentrale Datenschutzmechanismus des Systems. Der Hausverwalter sieht nie, welche User welchem Raum zugeordnet sind.}
 
 \subsection{Kernfunktionalitäten}
 \begin{itemize}
-  \item Automatische Erfassung von Temperatur, Luftfeuchtigkeit und Luftqualität durch Arduino-Sensorstationen.
-  \item Übertragung der Messdaten via Bluetooth Low Energy (BLE) an einen raumgebundenen Raspberry Pi.
-  \item Lokal am Raspberry Pi: Grenzwertprüfung, datenschutzkonforme Zwischenspeicherung, Weiterleitung an den zentralen Webserver.
-  \item Visuelle Rückmeldung direkt an der Sensorstation: LED-Ampel und LCD-Display mit aktuellen Werten, Warnungen und Tipps.
-  \item Zentrale Webanwendung mit rollenabhängigen Ansichten, Verlaufsdiagrammen, Grenzwertwarnungen und Konfigurationsoptionen.
-  \item Datenschutzkonforme Datenhaltung: Bürodaten werden nur bei Mindestbelegung von 5 Personen persistent gespeichert.
-  \item Abwesenheitssystem zur Pflege von Urlaub, Krankheit etc., das automatisch die Datenschutzprüfung beeinflusst.
+	\item Automatische Erfassung von Temperatur, Luftfeuchtigkeit und Luftqualität durch Arduino-Sensorstationen (BME680/688 Sensor).
+	\item Übertragung der Messdaten via Bluetooth Low Energy (BLE) an einen raumgebundenen Raspberry Pi. Das BLE-Protokoll (GATT-Profil) wird selbst definiert; nach der ersten erfolgreichen Verbindung koppelt sich der Arduino ausschließlich mit dem zugewiesenen Raspberry Pi.
+	\item Lokal am Raspberry Pi: Grenzwertprüfung mit Noise-Filter (Hysterese/Zeitfenster), datenschutzkonforme Zwischenspeicherung in SQLite, Weiterleitung an den zentralen Webserver per REST.
+	\item Visuelle Rückmeldung direkt an der Sensorstation: LED-Ampel (Grün/Gelb/Rot) und LCD-Display mit aktuellen Werten, Warnungen und Tipps.
+	\item Zentrale Webanwendung (Spring Boot + React/TypeScript) mit rollenabhängigen Ansichten, Verlaufsdiagrammen, Grenzwertwarnungen und Konfigurationsoptionen.
+	\item Datenschutzkonforme Datenhaltung: Bürodaten werden nur bei Mindestbelegung von 5 Personen persistent gespeichert. Transiente Verarbeitung am Raspberry Pi (z.B. für Grenzwertberechnung) ist immer erlaubt.
+	\item Abwesenheitssystem zur Pflege von Urlaub, Krankheit etc., das automatisch die Datenschutzprüfung beeinflusst und den zuständigen Raspberry Pi benachrichtigt.
 \end{itemize}
 
 \section{Use Case Diagramm}
