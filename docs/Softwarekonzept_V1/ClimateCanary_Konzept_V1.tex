@@ -335,60 +335,63 @@ sehen die Daten rollenabhängig in einer React-Webanwendung.
 	\item Messdaten, die aufgrund der Datenschutzbedingung (Mindestbelegung) nicht gespeichert wurden, existieren nie persistent -- sie müssen also nicht gelöscht werden.
 \end{itemize}
 
+\newpage
 \section{GUI Prototyp}
 
 \textit{Der vollständige GUI Prototyp (Mockups) befindet sich als separates Dokument im GitLab Wiki. Hier folgt eine textuelle Beschreibung der Kernansichten.}
 
 \subsection{Login}
 \begin{itemize}
-  \item Einfache Login-Maske mit E-Mail und Passwort.
-  \item Nach Login: Weiterleitung auf rollenabhängiges Dashboard.
+	\item Einfache Login-Maske mit E-Mail und Passwort.
+	\item Nach Login: Weiterleitung auf rollenabhängiges Dashboard.
 \end{itemize}
 
 \subsection{Dashboard (Mitarbeiter:in)}
 \begin{itemize}
-  \item Übersichtskacheln: Eigenes Büro (aktuelle Temperatur, Luftfeuchtigkeit, Luftqualität) + Allgemeinflächen der Abteilung.
-  \item Prominente Warnanzeige wenn aktive Grenzwertverletzung im eigenen Büro vorhanden.
-  \item Hinweisbox wenn Bürodaten wegen Datenschutz nicht verfügbar sind.
-  \item Navigation zu: Verlaufsansicht, Abwesenheitsverwaltung.
+	\item Übersichtskacheln: Eigenes Büro (aktuelle Temperatur, Luftfeuchtigkeit, Luftqualität) + Allgemeinflächen der Abteilung.
+	\item Prominente Warnanzeige wenn aktive Grenzwertverletzung im eigenen Büro vorhanden, inkl. zugehörigem Raumklima-Tipp.
+	\item Hinweisbox wenn Bürodaten wegen Datenschutz nicht verfügbar sind (Belegung $<$ 5).
+	\item Navigation zu: Verlaufsansicht, Abwesenheitsverwaltung.
 \end{itemize}
 
+\subsection{Verlaufsansicht (Raumdetails)}
 \begin{itemize}
-  \item Liniendiagramm für Temperatur, Luftfeuchtigkeit, Luftqualität über wählbaren Zeitraum (Tag / Woche / Monat).
-  \item Grenzwerte als horizontale Referenzlinien eingeblendet.
-  \item Vergangene Grenzwertverletzungen farblich markiert.
-  \item Datenlücken (Datenschutz, Ausfall) klar als graue Bereiche gekennzeichnet.
-  \item Granularität abhängig von Rolle (Mitarbeiter: Rohdaten; Abteilungsleitung: Tagesdurchschnitte für Büros).
+	\item Liniendiagramm für Temperatur, Luftfeuchtigkeit, Luftqualität über wählbaren Zeitraum (Tag / Woche / Monat).
+	\item Grenzwerte als horizontale Referenzlinien eingeblendet.
+	\item Vergangene Grenzwertverletzungen farblich markiert.
+	\item Datenlücken (Datenschutz, Ausfall) klar als graue Bereiche gekennzeichnet.
+	\item Granularität abhängig von Rolle: Mitarbeiter:in sieht Rohdaten; Abteilungsleitung sieht Tagesdurchschnitte für Büroräume.
 \end{itemize}
 
 \subsection{Dashboard (Abteilungsleitung)}
 \begin{itemize}
-  \item Rasteransicht aller Räume der Abteilung mit aktuellen Messwerten und Warnstatus.
-  \item Anzahl aktiver Grenzwertverletzungen pro Raum.
-  \item Verlinkung zu Raumdetailansicht mit reduzierter Granularität für Büros.
+	\item Rasteransicht aller Räume der Abteilung mit aktuellen Messwerten und Warnstatus.
+	\item Anzahl aktiver Grenzwertverletzungen pro Raum.
+	\item Verlinkung zu Raumdetailansicht mit reduzierter Granularität für Büros.
 \end{itemize}
 
-\subsection{Dashboard (Höheres Management)}
+\subsection{Dashboard (Geschäftsführung)}
 \begin{itemize}
-  \item Firmenweites Dashboard: Aggregierte Werte nach Abteilungen.
-  \item Balkendiagramm: Anzahl Grenzwertverletzungen pro Abteilung (anonymisiert).
-  \item Trendlinie über Wochen/Monate.
+	\item Firmenweites Dashboard: Aggregierte Werte nach Abteilungen -- keine raumgenauen Daten.
+	\item Balkendiagramm: Anzahl Grenzwertverletzungen pro Abteilung (anonymisiert, nicht auf einzelne Räume zurückführbar).
+	\item Trendlinie über Wochen/Monate.
 \end{itemize}
 
-\subsection{Konfigurationsansicht (Gebäudeadmin)}
+\subsection{Konfigurationsansicht (Hausverwalter)}
 \begin{itemize}
-  \item Liste aller Räume mit aktuellen Grenzwerten.
-  \item Inline-Bearbeitung der Grenzwerte pro Raum und Messgröße.
-  \item Tipp-Verwaltung: Liste, Erstellen, Bearbeiten, Löschen von Raumklima-Tipps.
+	\item Liste aller Räume mit aktuellen Grenzwerten.
+	\item Inline-Bearbeitung der Grenzwerte pro Raum und Messgröße.
+	\item Tipp-Verwaltung: Liste, Erstellen, Bearbeiten, Löschen von Raumklima-Tipps.
 \end{itemize}
 
-\subsection{Gerätemanagement (Systemadmin)}
+\subsection{Gerätemanagement (Systemadministrator)}
 \begin{itemize}
-  \item Übersicht aller Raspberry Pis und Sensorstationen mit Status (Online/Offline).
-  \item Anlegen neuer Geräte inkl. automatisch generierter ID.
-  \item Zuweisung von Sensorstationen zu Raspberry Pis und Räumen.
-  \item Benutzerverwaltung: Nutzer:innen anlegen, Rollen zuweisen, Räumen zuordnen.
+	\item Übersicht aller Raspberry Pis und Sensorstationen mit Status (Online/Offline/Maintenance).
+	\item Anlegen neuer Geräte inkl. automatisch generierter ID.
+	\item Zuweisung von Sensorstationen zu Raspberry Pis und Räumen.
+	\item Benutzerverwaltung: Nutzer:innen anlegen, Rollen zuweisen, Räumen zuordnen.
 \end{itemize}
+
 
 \section{Projektplan}
 
@@ -399,11 +402,11 @@ sehen die Daten rollenabhängig in einer React-Webanwendung.
   \toprule
   \textbf{Person} & \textbf{Zuständigkeit} \\
   \midrule
-  Maria Kuhn      & Arduino-Entwicklung (C/C++, BLE-Protokoll), Frontend (React/TS) \\
-  Fabienne Schedler & Frontend (React/TS, PrimeReact, GUI-Prototyp, Mobile-First) \\
-  Emma Danko      & Raspberry Pi (Python, BLE Central, SQLite), Backend (Spring Boot) \\
-  Prahbdip Singh  & Raspberry Pi (Python, REST-Schnittstellen, Docker), Backend (Spring Boot, PostgreSQL) \\
-  Adriano Paganini & Arduino-Entwicklung (C/C++, Display/LED/Buttons), Backend (Spring Boot, API Design) \\
+  Maria Kuhn      & Arduino-Entwicklung (C/C++, Display/LED/Buttons), Frontend (React/TS) \\
+  Fabienne Schedler & Frontend (React/TS, PrimeReact, GUI-Prototyp) \\
+  Emma Danko      & Raspberry Pi (Python, REST-Schnittstellen, BLE Central, SQLite, Docker) \\
+  Prahbdip Singh  & Raspberry Pi (Python, REST-Schnittstellen, BLE Central, SQLite, Docker), Backend \\
+  Adriano Paganini & Arduino-Entwicklung (C/C++, Display/LED/Buttons), Backend \\
   \midrule
   \textbf{Alle} & Softwarekonzept, Testing, Dokumentation, Code Review \\
   \bottomrule
