@@ -163,132 +163,122 @@ sehen die Daten rollenabhängig in einer React-Webanwendung.
 \end{center}
 
 \section{Use Case Beschreibungen}
+
 \subsection{UC-01: Raumklimadaten eigenes Büro einsehen}
-
 \begin{itemize}
-  \item \textbf{Akteur}: Mitarbeiter:in
-  \item \textbf{Vorbedingung}: Nutzer:in ist eingeloggt und einem Büroraum zugeordnet. Mindestens 5 Personen des Raums sind aktuell anwesend (keine Abwesenheit erfasst).
-  \item \textbf{Normalablauf}:
-    \begin{enumerate}
-      \item Nutzer:in öffnet die Raumansicht des eigenen Büros.
-      \item System prüft die aktuelle Belegung des Raums.
-      \item System zeigt aktuelle Messwerte (Temperatur, Luftfeuchtigkeit, Luftqualität) und Verlaufsdiagramme (Tages-/Wochen-/Monatsansicht) an.
-      \item Konfigurierte Grenzwerte sind als Referenzlinien in den Diagrammen sichtbar.
-      \item Aktive Grenzwertwarnungen werden prominent angezeigt, inkl. Raumklima-Tipps.
-    \end{enumerate}
-  \item \textbf{Alternativablauf -- Mindestbelegung nicht erfüllt}:
-    \begin{enumerate}
-      \item System erkennt, dass die Belegung unter 5 Personen liegt.
-      \item System zeigt Hinweis: ``Keine Daten verfügbar -- Datenschutzbedingungen nicht erfüllt.''
-      \item Keine Messdaten werden angezeigt.
-    \end{enumerate}
-  \item \textbf{Alternativablauf -- Verbindungsausfall}:
-    \begin{enumerate}
-      \item Für einen bestimmten Zeitraum fehlen Messdaten (z.B. Raspberry Pi offline).
-      \item System markiert Lücken in den Verlaufsdiagrammen deutlich (z.B. grau hinterlegte Bereiche).
-    \end{enumerate}
+	\item \textbf{Akteur}: Mitarbeiter:in
+	\item \textbf{Vorbedingung}: Nutzer:in ist eingeloggt und einem Büroraum zugeordnet. Mindestens 5 Personen des Raums sind aktuell anwesend (keine Abwesenheit erfasst).
+	\item \textbf{Normalablauf}:
+	\begin{enumerate}
+		\item Nutzer:in öffnet die Raumansicht des eigenen Büros.
+		\item System prüft die aktuelle Belegung des Raums anhand der eingetragenen Abwesenheiten.
+		\item System zeigt aktuelle Messwerte (Temperatur, Luftfeuchtigkeit, Luftqualität) und Verlaufsdiagramme (Tages-/Wochen-/Monatsansicht) an.
+		\item Konfigurierte Grenzwerte sind als Referenzlinien in den Diagrammen sichtbar.
+		\item Aktive Grenzwertwarnungen werden prominent angezeigt, inkl. Raumklima-Tipps.
+	\end{enumerate}
+	\item \textbf{Alternativablauf -- Mindestbelegung nicht erfüllt}:
+	\begin{enumerate}
+		\item System erkennt, dass die Belegung unter 5 Personen liegt.
+		\item System zeigt Hinweis: \glqq Keine Daten verfügbar -- Datenschutzbedingungen nicht erfüllt.\grqq
+		\item Keine Messdaten werden angezeigt.
+	\end{enumerate}
+	\item \textbf{Alternativablauf -- Verbindungsausfall}:
+	\begin{enumerate}
+		\item Für einen bestimmten Zeitraum fehlen Messdaten (z.B. Raspberry Pi offline).
+		\item System markiert Lücken in den Verlaufsdiagrammen deutlich (z.B. grau hinterlegte Bereiche).
+	\end{enumerate}
 \end{itemize}
 
-\vspace{0.5em}
 \subsection{UC-02: Raumklimadaten Allgemeinflächen einsehen}
-
 \begin{itemize}
-  \item \textbf{Akteur}: Mitarbeiter:in, Abteilungsleitung
-  \item \textbf{Vorbedingung}: Nutzer:in ist eingeloggt und einer Abteilung zugeordnet.
-  \item \textbf{Normalablauf}:
-    \begin{enumerate}
-      \item Nutzer:in wählt eine Allgemeinfläche (Konferenzraum, Aufenthaltsraum etc.) der eigenen Abteilung aus.
-      \item System zeigt aktuelle Messwerte und Verlaufsdiagramme in voller Granularität an.
-      \item Keine Datenschutzeinschränkungen -- Daten sind immer verfügbar.
-    \end{enumerate}
+	\item \textbf{Akteur}: Mitarbeiter:in, Abteilungsleitung
+	\item \textbf{Vorbedingung}: Nutzer:in ist eingeloggt und einer Abteilung zugeordnet.
+	\item \textbf{Normalablauf}:
+	\begin{enumerate}
+		\item Nutzer:in wählt eine Allgemeinfläche (Konferenzraum, Aufenthaltsraum etc.) der eigenen Abteilung aus.
+		\item System zeigt aktuelle Messwerte und Verlaufsdiagramme in voller Granularität an.
+		\item Keine Datenschutzeinschränkungen -- Daten sind immer verfügbar.
+	\end{enumerate}
 \end{itemize}
 
-\vspace{0.5em}
 \subsection{UC-03: Abteilungsübersicht einsehen}
-
 \begin{itemize}
-  \item \textbf{Akteur}: Abteilungsleitung
-  \item \textbf{Vorbedingung}: Nutzer:in ist als Abteilungsleitung eingeloggt.
-  \item \textbf{Normalablauf}:
-    \begin{enumerate}
-      \item Abteilungsleitung öffnet die Abteilungsübersicht.
-      \item System zeigt eine vergleichende Darstellung aller Räume der Abteilung (aktuelle Messwerte, Anzahl aktiver Warnungen).
-      \item Für Büros oberhalb der Mindestbelegung: Verlaufsansichten in reduzierter Granularität (Tagesdurchschnitte).
-      \item Für Allgemeinflächen: Verlaufsansichten in voller Granularität.
-      \item Aktive und vergangene Grenzwertverletzungen auf Raumebene sind einsehbar.
-    \end{enumerate}
+	\item \textbf{Akteur}: Abteilungsleitung
+	\item \textbf{Vorbedingung}: Nutzer:in ist als Abteilungsleitung eingeloggt.
+	\item \textbf{Normalablauf}:
+	\begin{enumerate}
+		\item Abteilungsleitung öffnet die Abteilungsübersicht.
+		\item System zeigt eine vergleichende Darstellung aller Räume der Abteilung (aktuelle Messwerte, Anzahl aktiver Warnungen).
+		\item Für Büros oberhalb der Mindestbelegung: Verlaufsansichten in reduzierter Granularität (Tagesdurchschnitte).
+		\item Für Allgemeinflächen: Verlaufsansichten in voller Granularität.
+		\item Aktive und vergangene Grenzwertverletzungen auf Raumebene sind einsehbar.
+	\end{enumerate}
 \end{itemize}
 
-\vspace{0.5em}
 \subsection{UC-04: Grenzwertwarnung -- Auslösung und Anzeige}
-
 \begin{itemize}
-  \item \textbf{Akteur}: Raspberry Pi (technisch), Mitarbeiter:in / Abteilungsleitung (sichtbar)
-  \item \textbf{Vorbedingung}: Grenzwerte sind für den betroffenen Raum konfiguriert. Sensorstation ist aktiv und verbunden.
-  \item \textbf{Normalablauf}:
-    \begin{enumerate}
-      \item Raspberry Pi empfängt Messdaten von der Sensorstation.
-      \item Raspberry Pi prüft Messwerte gegen konfigurierte Grenzwerte mit Noise-Filter (kein Auslösen bei kurzfristigen Ausreißern).
-      \item Bei bestätigter Grenzwertüberschreitung: Raspberry Pi setzt Warnstatus und sendet diesen an die Sensorstation und die Webapp.
-      \item Sensorstation: LED wechselt auf Rot, Display zeigt Warnmodus mit Hinweis und Tipp.
-      \item Webapp: Warnung wird prominent für alle Nutzer:innen des betroffenen Raums angezeigt, inkl. konfiguriertem Raumklima-Tipp.
-      \item Abteilungsleitung sieht Warnung in der Abteilungsübersicht.
-    \end{enumerate}
-  \item \textbf{Alternativablauf -- Warnung aufheben}:
-    \begin{enumerate}
-      \item Messwerte kehren dauerhaft in den Normalbereich zurück.
-      \item Raspberry Pi hebt Warnstatus auf und informiert Sensorstation und Webapp.
-      \item LED wechselt auf Grün, Warnmeldung in der Webapp verschwindet. Vergangene Verletzung bleibt historisch gespeichert.
-    \end{enumerate}
-  \item \textbf{Designentscheidung}: Eine Grenzwertwarnung wird erst ausgelöst, wenn ein Grenzwert über einen konfigurierbaren Zeitraum (z.B. 3 aufeinanderfolgende Messungen) überschritten wird. Dadurch werden kurzfristige Ereignisse (Fenster kurz öffnen, Atemstoß auf Sensor) gefiltert.
+	\item \textbf{Akteur}: Raspberry Pi (technisch), Mitarbeiter:in / Abteilungsleitung (sichtbar)
+	\item \textbf{Vorbedingung}: Grenzwerte sind für den betroffenen Raum konfiguriert. Sensorstation ist aktiv und mit dem Raspberry Pi verbunden.
+	\item \textbf{Normalablauf}:
+	\begin{enumerate}
+		\item Raspberry Pi empfängt Messdaten von der Sensorstation via BLE.
+		\item Raspberry Pi prüft Messwerte gegen konfigurierte Grenzwerte mit Noise-Filter (kein Auslösen bei kurzfristigen Ausreißern).
+		\item Bei bestätigter Grenzwertüberschreitung: Raspberry Pi setzt Warnstatus und übermittelt diesen an die Sensorstation (via BLE) und die Webapp (via REST POST).
+		\item Sensorstation: LED wechselt auf Rot, Display zeigt Warnmodus mit Hinweis und Tipp.
+		\item Webapp: Warnung wird prominent für alle Nutzer:innen des betroffenen Raums angezeigt, inkl. konfiguriertem Raumklima-Tipp.
+		\item Abteilungsleitung sieht Warnung in der Abteilungsübersicht.
+	\end{enumerate}
+	\item \textbf{Alternativablauf -- Warnung aufheben}:
+	\begin{enumerate}
+		\item Messwerte kehren dauerhaft in den Normalbereich zurück.
+		\item Raspberry Pi hebt Warnstatus auf und informiert Sensorstation und Webapp.
+		\item LED wechselt auf Grün, Warnmeldung in der Webapp verschwindet. Vergangene Verletzung bleibt historisch gespeichert (\texttt{violationStatus = RESOLVED}).
+	\end{enumerate}
+	\item \textbf{Designentscheidung}: Eine Grenzwertwarnung wird erst ausgelöst, wenn ein Grenzwert über einen konfigurierbaren Zeitraum (z.B. 3 aufeinanderfolgende Messungen) überschritten wird. Dadurch werden kurzfristige Ereignisse (Fenster kurz öffnen, Atemstoß auf Sensor) herausgefiltert. Die Anzahl der nötigen Messungen ist konfigurierbar und in der SQLite-Datenbank des Raspberry Pi hinterlegt.
 \end{itemize}
 
-\vspace{0.5em}
 \subsection{UC-05: Grenzwerte konfigurieren}
-
 \begin{itemize}
-  \item \textbf{Akteur}: Gebäudeadministration
-  \item \textbf{Vorbedingung}: Nutzer:in ist als Gebäudeadmin eingeloggt. Raum und Sensorstation sind im System angelegt.
-  \item \textbf{Normalablauf}:
-    \begin{enumerate}
-      \item Gebäudeadmin öffnet die Konfigurationsansicht eines Raums.
-      \item Admin setzt oder ändert obere Grenzwerte für Temperatur, Luftfeuchtigkeit und Luftqualität. Untere Grenzwerte sind optional.
-      \item System speichert die neuen Grenzwerte in der PostgreSQL-Datenbank.
-      \item System informiert den zuständigen Raspberry Pi über die Änderung per REST-Benachrichtigung.
-      \item Raspberry Pi ruft die aktualisierten Grenzwerte ab und speichert sie lokal in der SQLite-Datenbank.
-    \end{enumerate}
+	\item \textbf{Akteur}: Hausverwalter
+	\item \textbf{Vorbedingung}: Nutzer:in ist als Hausverwalter eingeloggt. Raum und Sensorstation sind im System angelegt.
+	\item \textbf{Normalablauf}:
+	\begin{enumerate}
+		\item Hausverwalter öffnet die Konfigurationsansicht eines Raums.
+		\item Admin setzt oder ändert obere Grenzwerte für Temperatur, Luftfeuchtigkeit und Luftqualität. Untere Grenzwerte sind optional.
+		\item System speichert die neuen Grenzwerte in der PostgreSQL-Datenbank.
+		\item Der zuständige Raspberry Pi holt sich die aktualisierten Grenzwerte beim nächsten regulären Polling-Intervall selbstständig per GET-Request ab.
+		\item Raspberry Pi speichert die neuen Grenzwerte lokal in der SQLite-Datenbank und wendet sie ab der nächsten Messung an.
+	\end{enumerate}
+	\item \textbf{Designentscheidung}: Der Raspberry Pi fragt Konfigurationsänderungen aktiv per Polling ab -- er betreibt keinen eigenen REST-Server. Das vereinfacht die Implementierung am Edge-Device erheblich. Der Nachteil (leichte Verzögerung bei Konfigurationsänderungen) ist für einen Prototyp akzeptabel.
 \end{itemize}
 
-\vspace{0.5em}
 \subsection{UC-06: Abwesenheit eintragen}
-
 \begin{itemize}
-  \item \textbf{Akteur}: Mitarbeiter:in
-  \item \textbf{Vorbedingung}: Nutzer:in ist eingeloggt und einem Büroraum zugeordnet.
-  \item \textbf{Normalablauf}:
-    \begin{enumerate}
-      \item Mitarbeiter:in trägt eine Abwesenheit (Urlaub, Krankheit, etc.) stunden- oder tageweise ein.
-      \item System prüft, ob durch diese Abwesenheit die Mindestbelegung (5 Personen) im Büroraum unterschritten wird.
-      \item Wenn ja: System informiert den zuständigen Raspberry Pi. Ab diesem Zeitpunkt werden keine Messdaten für diesen Raum persistent gespeichert oder übertragen.
-      \item Wenn nein: Keine Änderung am Datenspeicherverhalten.
-    \end{enumerate}
+	\item \textbf{Akteur}: Mitarbeiter:in
+	\item \textbf{Vorbedingung}: Nutzer:in ist eingeloggt und einem Büroraum zugeordnet.
+	\item \textbf{Normalablauf}:
+	\begin{enumerate}
+		\item Mitarbeiter:in trägt eine Abwesenheit (Urlaub, Krankheit, etc.) stunden- oder tageweise ein.
+		\item System prüft, ob durch diese Abwesenheit die Mindestbelegung (5 Personen) im Büroraum unterschritten wird.
+		\item Wenn ja: Das Backend setzt ein Flag im Raum-Datensatz (\texttt{belowMinOccupancy = true}). Der Raspberry Pi erkennt dies beim nächsten Polling und speichert ab diesem Zeitpunkt keine Messdaten mehr persistent.
+		\item Wenn nein: Keine Änderung am Datenspeicherverhalten.
+	\end{enumerate}
 \end{itemize}
 
-\vspace{0.5em}
 \subsection{UC-07: Geräte anlegen und konfigurieren}
-
 \begin{itemize}
-  \item \textbf{Akteur}: Systemadministration
-  \item \textbf{Vorbedingung}: Nutzer:in ist als Systemadmin eingeloggt. Gebäudestruktur (Gebäude, Abteilungen, Räume) ist bereits angelegt.
-  \item \textbf{Normalablauf}:
-    \begin{enumerate}
-      \item Systemadmin legt ein neues Raspberry Pi-Objekt an. System generiert automatisch eine eindeutige ID.
-      \item Systemadmin ordnet den Raspberry Pi einem Raum zu.
-      \item Systemadmin legt eine neue Sensorstation an. System generiert automatisch eine eindeutige ID.
-      \item Systemadmin ordnet die Sensorstation dem Raspberry Pi zu.
-      \item Die generierten IDs werden für die physische Konfiguration der Geräte verwendet (hardcoded auf Arduino, conf.yaml auf Raspberry Pi).
-    \end{enumerate}
+	\item \textbf{Akteur}: Systemadministrator
+	\item \textbf{Vorbedingung}: Nutzer:in ist als Systemadministrator eingeloggt. Gebäudestruktur (Gebäude, Abteilungen, Räume) ist bereits angelegt.
+	\item \textbf{Normalablauf}:
+	\begin{enumerate}
+		\item Systemadministrator legt ein neues Raspberry Pi-Objekt an. System generiert automatisch eine eindeutige ID.
+		\item Systemadministrator ordnet den Raspberry Pi einem Raum zu.
+		\item Systemadministrator legt eine neue Sensorstation an. System generiert automatisch eine eindeutige ID.
+		\item Systemadministrator ordnet die Sensorstation dem Raspberry Pi zu.
+		\item Die generierten IDs werden für die physische Konfiguration der Geräte verwendet (hardcoded auf Arduino, \texttt{conf.yaml} auf Raspberry Pi).
+	\end{enumerate}
 \end{itemize}
+
 \newpage
 \section{Klassendiagramm V1}
 
