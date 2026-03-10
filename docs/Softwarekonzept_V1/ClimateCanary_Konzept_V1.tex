@@ -125,52 +125,41 @@ sehen die Daten rollenabhängig in einer React-Webanwendung.
 	\item Abwesenheitssystem zur Pflege von Urlaub, Krankheit etc., das automatisch die Datenschutzprüfung beeinflusst und den zuständigen Raspberry Pi benachrichtigt.
 \end{itemize}
 
+\newpage
+
 \section{Use Case Diagramm}
 
-\begin{figure}[h!]
+\begin{figure}[h]
 	\centering
 	\includegraphics[width=0.3\textwidth]{images/Use Case Diagramm}
 	\caption{Use Case Diagramm}
-	\label{fig:use-cases}
 \end{figure}
 
-\textit{Das Use Case Diagramm befindet sich auch als PNG Datei (Datei: \texttt{images/Use Case Diagramm.png}).}
+\textit{Das vollständige Use Case Diagramm befindet sich als separates PNG im \texttt{/images} Ordner (Datei: \texttt{images/Use\_Case\_Diagramm.png}).}
 
 \subsection{Akteure}
-
 \begin{itemize}
-  \item \textbf{Mitarbeiter:in} -- Basisrolle; hat Zugriff auf eigenes Büro und Allgemeinflächen der Abteilung.
-  \item \textbf{Abteilungsleitung} -- Erbt Rechte der Mitarbeiter:in; zusätzlich Abteilungsübersicht.
-  \item \textbf{Höheres Management} -- Nur firmenweite, aggregierte Sicht; keine Raumdetails.
-  \item \textbf{Gebäudeadministration} -- Vollzugriff auf Raumklimadaten und Konfiguration; kein Zugriff auf Userdaten.
-  \item \textbf{Systemadministration} -- Vollzugriff auf Benutzer- und Geräteverwaltung; kein Zugriff auf Messdaten.
-  \item \textbf{Raspberry Pi} -- Technischer Akteur; übermittelt Messdaten und empfängt Konfigurationsupdates.
-  \item \textbf{Sensorstation (Arduino)} -- Technischer Akteur; misst und zeigt Daten an; empfängt Warnstatus.
+	\item \textbf{Mitarbeiter:in} -- Basisrolle; hat Zugriff auf eigenes Büro (bei ausreichender Belegung) und Allgemeinflächen der eigenen Abteilung.
+	\item \textbf{Abteilungsleitung} -- Erbt alle Rechte der Mitarbeiter:in; zusätzlich Abteilungsübersicht mit reduzierter Granularität für Büroräume.
+	\item \textbf{Geschäftsführung} -- Nur firmenweite, aggregierte Sicht auf Abteilungsebene; keine Raumdetails, keine Userdaten.
+	\item \textbf{Hausverwalter} -- Vollzugriff auf Raumklimadaten und Konfiguration; sieht ausdrücklich \emph{keine} Nutzer-Raum-Zuordnungen oder Abwesenheiten.
+	\item \textbf{Systemadministrator} -- Vollzugriff auf Benutzer- und Geräteverwaltung; kein Zugriff auf Messdaten oder Grenzwertkonfiguration.
 \end{itemize}
 
 \subsection{Übersicht der Use Cases}
 
 \begin{center}
-\begin{tabularx}{\textwidth}{lX}
-  \toprule
-  \textbf{Akteur} & \textbf{Use Cases} \\
-  \midrule
-  Mitarbeiter:in &
-  Anmelden/Abmelden, aktuelle Messungen des eigenen Büros einsehen (nur bei Mindestbelegung $\geq$ 5), historische Daten des eigenen Büros einsehen, aktuelle und historische Messungen gemeinsamer Bereiche der eigenen Abteilung einsehen, Echtzeitalarme und Verbesserungstipps bei Grenzwertverletzungen lesen, eigene Abwesenheiten verwalten \\
-
-  Abteilungsleitung &
-  Historische Raumdaten von Büro-Räumen der Abteilung einsehen (reduzierte Granularität, z.\,B. Tagesdurchschnitte), historische Daten gemeinsamer Bereiche einsehen, aktive und historische Grenzwertverletzungen pro Raum im Abteilungsbereich einsehen, Abwesenheiten der Abteilung einsehen \\
-
-  Geschäftsführung &
-  Aggregiertes unternehmensweites Dashboard einsehen (auf Abteilungsebene), Trendindikatoren für Abteilungen und Unternehmen einsehen, anonymisierte Statistiken zu Grenzwertverletzungen pro Abteilung einsehen \\
-
-  Hausverwalter &
-  Alle Raumdaten mit voller Granularität einsehen (ohne Nutzer-Raum-Zuordnung), aktive und historische Grenzwertverletzungen aller Räume einsehen, Grenzwerte für Temperatur, Luftfeuchtigkeit und Luftqualität konfigurieren, Verbesserungstipps für Grenzwertverletzungen verwalten \\
-
-  Systemadministrator &
-  Gebäude, Abteilungen und Räume registrieren und verwalten, Raspberry Pis registrieren, Sensorstationen registrieren, Sensorstationen Raspberry Pis zuweisen, Geräte für Räume konfigurieren, Benutzer erstellen/bearbeiten/löschen, Rollen zuweisen, Benutzer Räumen zuweisen \\
-  \bottomrule
-\end{tabularx}
+	\begin{tabularx}{\textwidth}{lX}
+		\toprule
+		\textbf{Akteur} & \textbf{Use Cases} \\
+		\midrule
+		Mitarbeiter:in & Anmelden/Abmelden, aktuelle Messungen des eigenen Büros einsehen (nur bei Mindestbelegung $\geq$ 5), historische Daten des eigenen Büros einsehen, aktuelle und historische Messungen gemeinsamer Bereiche der eigenen Abteilung einsehen, Echtzeitalarme und Verbesserungstipps bei Grenzwertverletzungen lesen, eigene Abwesenheiten verwalten \\
+		Abteilungsleitung & Historische Raumdaten von Büro-Räumen der Abteilung einsehen (reduzierte Granularität, z.\,B. Tagesdurchschnitte), historische Daten gemeinsamer Bereiche einsehen, aktive und historische Grenzwertverletzungen pro Raum im Abteilungsbereich einsehen, Abwesenheiten der Abteilung einsehen \\
+		Geschäftsführung & Aggregiertes unternehmensweites Dashboard einsehen (auf Abteilungsebene), Trendindikatoren für Abteilungen und Unternehmen einsehen, anonymisierte Statistiken zu Grenzwertverletzungen pro Abteilung einsehen \\
+		Hausverwalter & Alle Raumdaten mit voller Granularität einsehen (ohne Nutzer-Raum-Zuordnung), aktive und historische Grenzwertverletzungen aller Räume einsehen, Grenzwerte für Temperatur, Luftfeuchtigkeit und Luftqualität konfigurieren, Verbesserungstipps für Grenzwertverletzungen verwalten \\
+		Systemadministrator & Gebäude, Abteilungen und Räume registrieren und verwalten, Raspberry Pis registrieren, Sensorstationen registrieren und Raspberry Pis zuweisen, Geräte für Räume konfigurieren, Benutzer erstellen/bearbeiten/löschen, Rollen zuweisen, Benutzer Räumen zuweisen \\
+		\bottomrule
+	\end{tabularx}
 \end{center}
 
 \section{Use Case Beschreibungen}
