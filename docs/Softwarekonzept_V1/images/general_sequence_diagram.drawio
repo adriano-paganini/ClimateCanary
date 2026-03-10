@@ -1,0 +1,160 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.2.5 Chrome/138.0.7204.251 Electron/37.6.1 Safari/537.36" version="28.2.5">
+  <diagram name="Page-1" id="tvOqXCVEiPtcDxfbDD7m">
+    <mxGraphModel dx="2520" dy="1293" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2000" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="-cZupWhRYr2NX8Xu6xyP-25" value="User" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};participant=umlActor;verticalAlign=bottom;labelPosition=center;verticalLabelPosition=top;align=center;size=65;" vertex="1" parent="1">
+          <mxGeometry x="20" y="20" width="35" height="1413" as="geometry" />
+        </mxCell>
+        <mxCell id="-cZupWhRYr2NX8Xu6xyP-26" value="Frontend (React)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="382" y="20" width="150" height="1413" as="geometry" />
+        </mxCell>
+        <mxCell id="-cZupWhRYr2NX8Xu6xyP-27" value="Sensorstation (Arduino)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="582" y="20" width="186" height="1413" as="geometry" />
+        </mxCell>
+        <mxCell id="-cZupWhRYr2NX8Xu6xyP-28" value="Raspberry Pi" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="1011" y="20" width="150" height="1413" as="geometry" />
+        </mxCell>
+        <mxCell id="-cZupWhRYr2NX8Xu6xyP-29" value="Backend (Spring Boot)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="1457" y="20" width="177" height="1413" as="geometry" />
+        </mxCell>
+        <mxCell id="-cZupWhRYr2NX8Xu6xyP-30" value="alt" style="shape=umlFrame;dashed=1;pointerEvents=0;dropTarget=0;strokeColor=#6D6D6D;height=20;width=30;fillColor=#C8C8C8;" vertex="1" parent="1">
+          <mxGeometry x="664" y="364" width="1021" height="454" as="geometry" />
+        </mxCell>
+        <mxCell id="-cZupWhRYr2NX8Xu6xyP-31" value="[Grenzwert OK]" style="text;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;" vertex="1" parent="-cZupWhRYr2NX8Xu6xyP-30">
+          <mxGeometry x="30" width="991" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="-cZupWhRYr2NX8Xu6xyP-32" value="[Grenzwert überschritten (n Messungen)]" style="shape=line;dashed=1;whiteSpace=wrap;verticalAlign=top;labelPosition=center;verticalLabelPosition=middle;align=center;strokeColor=#6D6D6D;" vertex="1" parent="-cZupWhRYr2NX8Xu6xyP-30">
+          <mxGeometry y="190" width="1021" height="3" as="geometry" />
+        </mxCell>
+        <mxCell id="-cZupWhRYr2NX8Xu6xyP-33" value="loop" style="shape=umlFrame;dashed=1;pointerEvents=0;dropTarget=0;strokeColor=#6D6D6D;height=20;width=40;fillColor=#C8C8C8;" vertex="1" parent="1">
+          <mxGeometry x="550" y="95" width="1146" height="733" as="geometry" />
+        </mxCell>
+        <mxCell id="-cZupWhRYr2NX8Xu6xyP-34" value="[Jedes Messintervall]" style="text;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;" vertex="1" parent="-cZupWhRYr2NX8Xu6xyP-33">
+          <mxGeometry x="40" width="1106" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="-cZupWhRYr2NX8Xu6xyP-35" value="Messen (Temp / Humidity / AirQuality)" style="curved=1;endArrow=block;rounded=0;" edge="1" parent="1" source="-cZupWhRYr2NX8Xu6xyP-27" target="-cZupWhRYr2NX8Xu6xyP-27">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="726" y="176" />
+              <mxPoint x="726" y="206" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-cZupWhRYr2NX8Xu6xyP-36" value="BLE: Messwerte senden" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="-cZupWhRYr2NX8Xu6xyP-27" target="-cZupWhRYr2NX8Xu6xyP-28">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="889" y="260" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-cZupWhRYr2NX8Xu6xyP-37" value="Grenzwert prüfen (noise-filter)" style="curved=1;endArrow=block;rounded=0;" edge="1" parent="1" source="-cZupWhRYr2NX8Xu6xyP-28" target="-cZupWhRYr2NX8Xu6xyP-28">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1137" y="314" />
+              <mxPoint x="1137" y="344" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-cZupWhRYr2NX8Xu6xyP-38" value="Daten in SQLite puffern" style="curved=1;endArrow=block;rounded=0;" edge="1" parent="1" source="-cZupWhRYr2NX8Xu6xyP-28" target="-cZupWhRYr2NX8Xu6xyP-28">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1137" y="445" />
+              <mxPoint x="1137" y="475" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-cZupWhRYr2NX8Xu6xyP-39" value="BLE: Status = OK (LED grün)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="-cZupWhRYr2NX8Xu6xyP-28" target="-cZupWhRYr2NX8Xu6xyP-27">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="892" y="529" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-cZupWhRYr2NX8Xu6xyP-40" value="BLE: Status = WARNING (LED rot, Tipp anzeigen)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="-cZupWhRYr2NX8Xu6xyP-28" target="-cZupWhRYr2NX8Xu6xyP-27">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="892" y="630" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-cZupWhRYr2NX8Xu6xyP-41" value="POST /thresholdviolation (Warnung melden)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="-cZupWhRYr2NX8Xu6xyP-28" target="-cZupWhRYr2NX8Xu6xyP-29">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1324" y="684" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-cZupWhRYr2NX8Xu6xyP-42" value="ThresholdViolation anlegen (ACTIVE)" style="curved=1;endArrow=block;rounded=0;" edge="1" parent="1" source="-cZupWhRYr2NX8Xu6xyP-29" target="-cZupWhRYr2NX8Xu6xyP-29">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1596" y="738" />
+              <mxPoint x="1596" y="768" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-cZupWhRYr2NX8Xu6xyP-43" value="POST /measurement (gepufferte Daten)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="-cZupWhRYr2NX8Xu6xyP-28" target="-cZupWhRYr2NX8Xu6xyP-29">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1324" y="872" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-cZupWhRYr2NX8Xu6xyP-44" value="Daten in PostgreSQL speichern" style="curved=1;endArrow=block;rounded=0;" edge="1" parent="1" source="-cZupWhRYr2NX8Xu6xyP-29" target="-cZupWhRYr2NX8Xu6xyP-29">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1596" y="926" />
+              <mxPoint x="1596" y="956" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-cZupWhRYr2NX8Xu6xyP-45" value="GET /room/{id} (Polling: Grenzwerte / Belegungsstatus)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="-cZupWhRYr2NX8Xu6xyP-28" target="-cZupWhRYr2NX8Xu6xyP-29">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1324" y="1010" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-cZupWhRYr2NX8Xu6xyP-46" value="200 OK (RoomDTO mit Grenzwerten / Belegungsstatus)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="-cZupWhRYr2NX8Xu6xyP-29" target="-cZupWhRYr2NX8Xu6xyP-28">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1327" y="1064" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-cZupWhRYr2NX8Xu6xyP-47" value="Dashboard öffnen" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="-cZupWhRYr2NX8Xu6xyP-25" target="-cZupWhRYr2NX8Xu6xyP-26">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="285" y="1118" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-cZupWhRYr2NX8Xu6xyP-48" value="GET /room/{id} (Messdaten anfordern)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="-cZupWhRYr2NX8Xu6xyP-26" target="-cZupWhRYr2NX8Xu6xyP-29">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1010" y="1172" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-cZupWhRYr2NX8Xu6xyP-49" value="200 OK (RoomDTO + aktive Warnungen)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="-cZupWhRYr2NX8Xu6xyP-29" target="-cZupWhRYr2NX8Xu6xyP-26">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1013" y="1226" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-cZupWhRYr2NX8Xu6xyP-50" value="Messdaten + aktive Warnungen anzeigen" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="-cZupWhRYr2NX8Xu6xyP-26" target="-cZupWhRYr2NX8Xu6xyP-25">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="288" y="1280" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-cZupWhRYr2NX8Xu6xyP-51" value="Wenn Belegung &lt; 5: Backend setzt Flag,&#xa;RPi speichert keine Daten persistent" style="fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="1061" y="1300" width="509" height="48" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
