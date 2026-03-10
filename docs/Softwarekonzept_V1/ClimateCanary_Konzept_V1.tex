@@ -249,7 +249,7 @@ sehen die Daten rollenabhängig in einer React-Webanwendung.
 		\item Der zuständige Raspberry Pi holt sich die aktualisierten Grenzwerte beim nächsten regulären Polling-Intervall selbstständig per GET-Request ab.
 		\item Raspberry Pi speichert die neuen Grenzwerte lokal in der SQLite-Datenbank und wendet sie ab der nächsten Messung an.
 	\end{enumerate}
-	\item \textbf{Designentscheidung}: Der Raspberry Pi fragt Konfigurationsänderungen aktiv per Polling ab -- er betreibt keinen eigenen REST-Server. Das vereinfacht die Implementierung am Edge-Device erheblich. Der Nachteil (leichte Verzögerung bei Konfigurationsänderungen) ist für einen Prototyp akzeptabel.
+	\item \textbf{Designentscheidung}: Der Raspberry Pi fragt Konfigurationsänderungen aktiv per Polling ab -- er betreibt keinen eigenen REST-Server. Das vereinfacht die Implementierung am Edge-Device. Der Nachteil (leichte Verzögerung bei Konfigurationsänderungen) ist für einen Prototyp akzeptabel.
 \end{itemize}
 
 \subsection{UC-06: Abwesenheit eintragen}
@@ -282,62 +282,57 @@ sehen die Daten rollenabhängig in einer React-Webanwendung.
 \newpage
 \section{Klassendiagramm V1}
 
-\begin{figure}[h!]
+\begin{figure}[h]
 	\centering
-	\includegraphics[width=0.8\textwidth]{images/climate-canary-webapp-backend.png}
-	\caption{Klassendiagramm V1}
-	\label{fig:climate-canary-webapp-backend}
+	\includegraphics[width=0.7\textwidth]{images/climate-canary-webapp-backend}
+	\caption{Klassendiagramm V1 -- fachliches Modell der Webapp-Backend-Daten}
 \end{figure}
 
-\textit{Das vollständige Klassendiagramm befindet sich als separates Draw.io im GitLab Wiki (Datei: \texttt{climate-canary-webapp-backend.drawio}).}
+\textit{Das vollständige Klassendiagramm befindet sich als Draw.io Datei im GitLab Wiki
+(Datei: \texttt{images/climate-canary-webapp-backend.png}).}
 
 \subsection{Klassenbeschreibungen}
-
 \begin{itemize}
-  \item \textbf{ViolationStatus} -- Enum: ACTIVE, RESOLVED.
-  \item \textbf{Role} -- Enum: EMPLOYEE, DEPARTMENT\_LEAD, MANAGEMENT, BUILDING\_ADMIN, SYSTEM\_ADMIN.
-  \item \textbf{AbsenceType} -- Enum: HOLIDAY, SICKNESS, PARENTAL\_LEAVE, OTHER.
-  \item \textbf{AbsenceStatus} -- Enum: PLANNED, APPROVED, REJECTED, CANCELLED.
-  \item \textbf{RoomType} -- Enum: OFFICE, COMMON\_AREA, OTHER.
-  \item \textbf{DeviceStatus} -- Enum: ONLINE, OFFLINE, MAINTENANCE.
-  \item \textbf{Metric} -- Enum: TEMPERATURE, HUMIDITY, AIR\_QUALITY.
-
-  
-  \item \textbf{User} -- Repräsentiert einen Systembenutzer.\\Attribute: id, firstName, lastName, email, passwordHash, role, departmentIds, roomId.\\Assoziationen: gehört einer oder mehreren Abteilungen an, ist einem Büroraum zugeordnet, hat Abwesenheiten.
-  \\\small{Designentscheidung: Ein User kann mehreren Abteilungen angehören, um beispielsweise Management- oder Gebäudeadministrationsrollen zu ermöglichen, die Zugriff auf mehrere Abteilungen benötigen.}
-  \item \textbf{Absence} -- Repräsentiert eine Abwesenheit eines Users.\\Attribute: id, userId, startDate, endDate, absenceType, absenceStatus.\\Assoziationen: referenziert einen User.
-  \item \textbf{Building} -- Repräsentiert ein Gebäude.\\Attribute: id, name, addressId.\\Assoziationen: hat eine Addresse, wird von mehreren Abteilungen und Räumen referenziert.
-  \item \textbf{Address} -- Repräsentiert eine Adresse.\\Attribute: id, country, zipCode, city, street, houseNumber, extra.\\Assoziationen: wird von einem Gebäude referenziert.
-  \item \textbf{Department} -- Repräsentiert eine Abteilung.\\Attribute: id, name, buildingId.\\Assoziationen: gehört zu einem Gebäude, wird von mehreren Räumen und Usern referenziert.
-  \item \textbf{Room} -- Repräsentiert einen Raum.\\Attribute: id, name, roomType, departmentId, minOccupancy (default: 5 für Büroräume), raspberryPiId.\\Assoziationen: hat einen Raspberry Pi, wird von Grenzwerten, Grenzwertüberschreitungen und einem RaspberryPi referenziert.
-  \item \textbf{RaspberryPi} -- Repräsentiert einen Raspberry Pi.\\Attribute: id (generiert), roomId, ipAddress, deviceStatus, sensorStationIds.\\Assoziationen: hat Sensorstationenen, Grenzwerte werden über die Raumzuweisung verwaltet.
-  \item \textbf{SensorStation} -- Repräsentiert eine Sensorstation (Arduino).\\Attribute: id (generiert, hardcoded auf Arduino), raspberryPiId, deviceStatus.\\Assoziationen: gehört zu einem Raspberry Pi, wird von Messunge und einem RaspberryPi referenziert.
-  \item \textbf{Measurement} -- Repräsentiert einen Messdatenpunkt.\\Attribute: id, sensorStationId, timestamp, temperature, humidity, airQuality.\\Assoziationen: referenziert eine Sensorstation, wird von ThresholdViolation referenziert. (Wird nur bei erfüllter Datenschutzbedingung persistent gespeichert.)
-  \item \textbf{Threshold} -- Repräsentiert Grenzwerte für einen Raum.\\Attribute: id, roomId, metric, upperBound, lowerBound (optional).\\Assoziationen: referenziert einen Raum, wird von ThresholdViolation referenziert, hat mehrere ClimateHints.
-  \item \textbf{ThresholdViolation} -- Repräsentiert eine aktive oder historische Grenzwertverletzung.\\Attribute: id, roomId, thresholdId, startTime, endTime (null wenn noch aktiv), metric, value, violationStatus, measurementIds.\\Assoziationen: referenziert einen Raum und einen Threshold und mehrere Messungen.\\\small{Designentscheidung: mehrere Measurements müssen herangezogen werden, um kurze Extremwerte zu filtern. Eine Verletzung wird erst bestätigt, wenn z.B. 3 aufeinanderfolgende Messungen den Grenzwert überschreiten.}
-  \item \textbf{ClimateHint} -- Repräsentiert einen Raumklima-Tipp.\\Attribute: id, metric, hintText.\\Assoziationen: wird von einem oder mehreren Threshholds referenziert. (Wird bei Grenzwertverletzungen angezeigt.)
-
+	\item \textbf{ViolationStatus} -- Enum: ACTIVE, RESOLVED.
+	\item \textbf{Role} -- Enum: EMPLOYEE, DEPARTMENT\_LEAD, MANAGEMENT, BUILDING\_ADMIN, SYSTEM\_ADMIN.
+	\item \textbf{AbsenceType} -- Enum: HOLIDAY, SICKNESS, PARENTAL\_LEAVE, OTHER.
+	\item \textbf{AbsenceStatus} -- Enum: PLANNED, APPROVED, REJECTED, CANCELLED.
+	\item \textbf{RoomType} -- Enum: OFFICE, COMMON\_AREA, OTHER.
+	\item \textbf{DeviceStatus} -- Enum: ONLINE, OFFLINE, MAINTENANCE.
+	\item \textbf{Metric} -- Enum: TEMPERATURE, HUMIDITY, AIR\_QUALITY.
+	\item \textbf{User} -- Repräsentiert einen Systembenutzer. Attribute: id, firstName, lastName, email, passwordHash, role, departmentIds, roomId. Assoziationen: gehört einer oder mehreren Abteilungen an, ist einem Büroraum zugeordnet, hat Abwesenheiten. \textit{Designentscheidung: Ein User kann mehreren Abteilungen angehören, um z.B. Management- oder Gebäudeadministrationsrollen zu ermöglichen, die Zugriff auf mehrere Abteilungen benötigen.}
+	\item \textbf{Absence} -- Repräsentiert eine Abwesenheit eines Users. Attribute: id, userId, startDate, endDate, absenceType, absenceStatus. Assoziationen: referenziert einen User.
+	\item \textbf{Building} -- Repräsentiert ein Gebäude. Attribute: id, name, addressId. Assoziationen: hat eine Adresse, wird von mehreren Abteilungen referenziert.
+	\item \textbf{Address} -- Repräsentiert eine Adresse. Attribute: id, country, zipCode, city, street, houseNumber, extra.
+	\item \textbf{Department} -- Repräsentiert eine Abteilung. Attribute: id, name, buildingId. Assoziationen: gehört zu einem Gebäude, wird von mehreren Räumen und Usern referenziert.
+	\item \textbf{Room} -- Repräsentiert einen Raum. Attribute: id, name, roomType, departmentId, minOccupancy (default: 5 für Büroräume), raspberryPiId. Assoziationen: hat einen Raspberry Pi, wird von Grenzwerten und Grenzwertüberschreitungen referenziert.
+	\item \textbf{RaspberryPi} -- Repräsentiert einen Raspberry Pi. Attribute: id (generiert), roomId, ipAddress, deviceStatus, sensorStationIds. Assoziationen: hat Sensorstationen; Grenzwerte werden über die Raumzuweisung verwaltet.
+	\item \textbf{SensorStation} -- Repräsentiert eine Sensorstation (Arduino). Attribute: id (generiert, hardcoded auf Arduino), raspberryPiId, deviceStatus. Assoziationen: gehört zu einem Raspberry Pi, wird von Messungen referenziert.
+	\item \textbf{Measurement} -- Repräsentiert einen einzelnen Messdatenpunkt. Attribute: id, sensorStationId, timestamp, temperature, humidity, airQuality. Wird \emph{nur} bei erfüllter Datenschutzbedingung (Mindestbelegung) persistent gespeichert.
+	\item \textbf{Threshold} -- Repräsentiert Grenzwerte für einen Raum pro Messgröße. Attribute: id, roomId, metric, upperBound, lowerBound (optional). \textit{Designentscheidung: Ein oberer Grenzwert ist immer verpflichtend; der untere Grenzwert ist optional und muss im Konzept begründet werden, wenn er weggelassen wird.}
+	\item \textbf{ThresholdViolation} -- Repräsentiert eine aktive oder historische Grenzwertverletzung. Attribute: id, roomId, thresholdId, startTime, endTime (null solange aktiv), metric, value, violationStatus, measurementIds. \textit{Designentscheidung: Mehrere Measurements müssen herangezogen werden, um kurze Extremwerte zu filtern. Eine Verletzung wird erst bestätigt, wenn z.B. 3 aufeinanderfolgende Messungen den Grenzwert überschreiten.}
+	\item \textbf{ClimateHint} -- Repräsentiert einen Raumklima-Tipp. Attribute: id, metric, hintText. Wird bei Grenzwertverletzungen auf dem LCD-Display der Sensorstation und in der Webapp angezeigt. Assoziationen: wird von einem oder mehreren Thresholds referenziert.
 \end{itemize}
 
 \subsection{Wichtige Assoziationen}
 \begin{itemize}
-  \item \texttt{Building} $1$ -- $*$ \texttt{Department}: Ein Gebäude hat mehrere Abteilungen.
-  \item \texttt{Department} $1$ -- $*$ \texttt{Room}: Eine Abteilung hat mehrere Räume.
-  \item \texttt{Department} $1$ -- $*$ \texttt{User}: Eine Abteilung hat mehrere User.
-  \item \texttt{Room} $1$ -- $0..1$ \texttt{RaspberryPi}: Ein Raum hat maximal einen Raspberry Pi.
-  \item \texttt{RaspberryPi} $1$ -- $*$ \texttt{SensorStation}: Ein Raspberry Pi kann mehrere Sensorstationen verwalten (im Prototyp: eine).
-  \item \texttt{SensorStation} $1$ -- $*$ \texttt{Measurement}: Eine Sensorstation produziert viele Messdaten.
-  \item \texttt{Room} $1$ -- $*$ \texttt{Threshold}: Ein Raum hat Grenzwerte pro Messgröße.
-  \item \texttt{User} $1$ -- $*$ \texttt{Absence}: Ein User kann mehrere Abwesenheiten haben.
+	\item \texttt{Building} $1$ -- $*$ \texttt{Department}: Ein Gebäude hat mehrere Abteilungen.
+	\item \texttt{Department} $1$ -- $*$ \texttt{Room}: Eine Abteilung hat mehrere Räume.
+	\item \texttt{Department} $1$ -- $*$ \texttt{User}: Eine Abteilung hat mehrere User.
+	\item \texttt{Room} $1$ -- $0..1$ \texttt{RaspberryPi}: Ein Raum hat maximal einen Raspberry Pi.
+	\item \texttt{RaspberryPi} $1$ -- $*$ \texttt{SensorStation}: Ein Raspberry Pi kann mehrere Sensorstationen verwalten (im Prototyp: eine pro Raum).
+	\item \texttt{SensorStation} $1$ -- $*$ \texttt{Measurement}: Eine Sensorstation produziert viele Messdaten.
+	\item \texttt{Room} $1$ -- $*$ \texttt{Threshold}: Ein Raum hat Grenzwerte pro Messgröße (max. 3: Temperatur, Luftfeuchtigkeit, Luftqualität).
+	\item \texttt{User} $1$ -- $*$ \texttt{Absence}: Ein User kann mehrere Abwesenheiten haben.
 \end{itemize}
 
 \subsection{Löschen von Daten}
 \begin{itemize}
-  \item Wird ein User gelöscht, werden seine Abwesenheiten ebenfalls gelöscht (CASCADE).
-  \item Wird eine Sensorstation gelöscht, werden ihre Messdaten ebenfalls gelöscht (CASCADE). Historische Grenzwertverletzungen bleiben erhalten (roomId Referenz bleibt bestehen).
-  \item Wird ein Raum gelöscht, werden alle zugehörigen Messdaten, Grenzwerte und Grenzwertverletzungen gelöscht (CASCADE).
-  \item Wird ein Raspberry Pi aus einem Raum entfernt, bleiben historische Messdaten erhalten; der Raspberry Pi-Eintrag bleibt im System, bis er explizit gelöscht wird.
-  \item Messdaten, die aufgrund der Datenschutzbedingung (Mindestbelegung) nicht gespeichert wurden, existieren nie persistent -- sie müssen also nicht gelöscht werden.
+	\item Wird ein User gelöscht, werden seine Abwesenheiten ebenfalls gelöscht (CASCADE).
+	\item Wird eine Sensorstation gelöscht, werden ihre Messdaten ebenfalls gelöscht (CASCADE). Historische Grenzwertverletzungen bleiben erhalten (roomId-Referenz bleibt bestehen).
+	\item Wird ein Raum gelöscht, werden alle zugehörigen Messdaten, Grenzwerte und Grenzwertverletzungen gelöscht (CASCADE).
+	\item Wird ein Raspberry Pi aus einem Raum entfernt, bleiben historische Messdaten erhalten; der Raspberry Pi-Eintrag bleibt im System, bis er explizit gelöscht wird.
+	\item Messdaten, die aufgrund der Datenschutzbedingung (Mindestbelegung) nicht gespeichert wurden, existieren nie persistent -- sie müssen also nicht gelöscht werden.
 \end{itemize}
 
 \section{GUI Prototyp}
