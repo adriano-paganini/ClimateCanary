@@ -338,7 +338,8 @@ sehen die Daten rollenabhängig in einer React-Webanwendung.
 \newpage
 \section{GUI Prototyp}
 
-\textit{Der vollständige GUI Prototyp (Mockups) befindet sich als separates Dokument im GitLab Wiki. Hier folgt eine textuelle Beschreibung der Kernansichten.}
+\textit{Die vollständigen Papierprototypen der GUI befinden sich im Repository unter \\
+ \texttt{docs/Softwarekonzept\_V1/images/gui\_prototype}. Folgend werden die Kernansichten textuell beschrieben, weiters werden einzelne Prototypen direkt im Dokument eingebunden.}
 
 \subsection{Login}
 \begin{itemize}
@@ -346,13 +347,24 @@ sehen die Daten rollenabhängig in einer React-Webanwendung.
 	\item Nach Login: Weiterleitung auf rollenabhängiges Dashboard.
 \end{itemize}
 
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.78\textwidth]{images/gui_prototype/Paperprototype_login.png}
+	\caption{Papierprototyp der Login-Ansicht}
+\end{figure}
+
 \subsection{Dashboard (Mitarbeiter:in)}
 \begin{itemize}
 	\item Übersichtskacheln: Eigenes Büro (aktuelle Temperatur, Luftfeuchtigkeit, Luftqualität) + Allgemeinflächen der Abteilung.
 	\item Prominente Warnanzeige wenn aktive Grenzwertverletzung im eigenen Büro vorhanden, inkl. zugehörigem Raumklima-Tipp.
-	\item Hinweisbox wenn Bürodaten wegen Datenschutz nicht verfügbar sind (Belegung $<$ 5).
 	\item Navigation zu: Verlaufsansicht, Abwesenheitsverwaltung.
 \end{itemize}
+
+\begin{figure}[p]
+	\centering
+	\includegraphics[width=0.88\textwidth]{images/gui_prototype/Paperprototype_MA_Dashboard.png}
+	\caption{Papierprototyp des Dashboards für Mitarbeiter:innen mit Verlaufsansicht und Abwesenheitsverwaltung}
+\end{figure}
 
 \subsection{Verlaufsansicht (Raumdetails)}
 
@@ -376,11 +388,17 @@ sehen die Daten rollenabhängig in einer React-Webanwendung.
 	\item Verlinkung zu Raumdetailansicht mit reduzierter Granularität für Büros.
 \end{itemize}
 
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.88\textwidth]{images/gui_prototype/Paperprototype_Manager_Dashboard.png}
+	\caption{Papierprototyp des Dashboards der Abteilungsleitung mit Raumübersicht}
+\end{figure}
+
 \subsection{Dashboard (Geschäftsführung)}
 \begin{itemize}
 	\item Firmenweites Dashboard: Aggregierte Werte nach Abteilungen -- keine raumgenauen Daten.
 	\item Balkendiagramm: Anzahl Grenzwertverletzungen pro Abteilung (anonymisiert, nicht auf einzelne Räume zurückführbar).
-	\item Trendlinie über Wochen/Monate.
+	\item Trendlinie über Wochen.
 \end{itemize}
 
 \subsection{Konfigurationsansicht (Hausverwalter)}
