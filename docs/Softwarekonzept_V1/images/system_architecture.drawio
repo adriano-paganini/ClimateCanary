@@ -1,0 +1,95 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.2.5 Chrome/138.0.7204.251 Electron/37.6.1 Safari/537.36" version="28.2.5">
+  <diagram name="Page-1" id="K96bLJ8W6kHPUPjj1KGh">
+    <mxGraphModel dx="2749" dy="1411" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2000" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ZwCGAA4iwz6hEci2IWq_-1" value="Cloud Layer" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="1056" y="386" width="548" height="1174" as="geometry" />
+        </mxCell>
+        <mxCell id="ZwCGAA4iwz6hEci2IWq_-2" value="React Frontend" style="whiteSpace=wrap;strokeWidth=2;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="1273" y="411" width="295" height="540" as="geometry" />
+        </mxCell>
+        <mxCell id="ZwCGAA4iwz6hEci2IWq_-3" value="Mitarbeiter Dashboard" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="ZwCGAA4iwz6hEci2IWq_-2">
+          <mxGeometry x="46" y="43" width="220" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="ZwCGAA4iwz6hEci2IWq_-4" value="Abteilungsleitung" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="ZwCGAA4iwz6hEci2IWq_-2">
+          <mxGeometry x="63" y="147" width="185" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="ZwCGAA4iwz6hEci2IWq_-5" value="Management" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="ZwCGAA4iwz6hEci2IWq_-2">
+          <mxGeometry x="80" y="251" width="151" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="ZwCGAA4iwz6hEci2IWq_-6" value="Gebäudeadmin" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="ZwCGAA4iwz6hEci2IWq_-2">
+          <mxGeometry x="72" y="355" width="167" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="ZwCGAA4iwz6hEci2IWq_-7" value="Systemadmin" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="ZwCGAA4iwz6hEci2IWq_-2">
+          <mxGeometry x="78" y="459" width="154" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="ZwCGAA4iwz6hEci2IWq_-8" value="Spring Boot Backend" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="1089" y="1066" width="471" height="464" as="geometry" />
+        </mxCell>
+        <mxCell id="ZwCGAA4iwz6hEci2IWq_-9" value="Edge Layer" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="450" y="480" width="586" height="370" as="geometry" />
+        </mxCell>
+        <mxCell id="ZwCGAA4iwz6hEci2IWq_-10" value="IoT Layer" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="578" y="120" width="330" height="176" as="geometry" />
+        </mxCell>
+        <mxCell id="ZwCGAA4iwz6hEci2IWq_-11" value="Sensorstation&#xa;Arduino Nano 33 BLE&#xa;BME680 Sensor&#xa;LCD Display / LED / Buttons&#xa;BLE Peripheral" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="613" y="145" width="260" height="126" as="geometry" />
+        </mxCell>
+        <mxCell id="ZwCGAA4iwz6hEci2IWq_-12" value="Raspberry Pi&#xa;BLE Central&#xa;Grenzwertberechnung&#xa;Datensschutzprüfung&#xa;SQLite DB&#xa;REST Client und Server&#xa;Docker Container" style="whiteSpace=wrap;strokeWidth=2;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="485" y="600" width="516" height="132" as="geometry" />
+        </mxCell>
+        <mxCell id="ZwCGAA4iwz6hEci2IWq_-13" value="REST API (OpenAPI)" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="1189" y="1091" width="198" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="ZwCGAA4iwz6hEci2IWq_-14" value="Business Logic" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="1207" y="1195" width="161" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="ZwCGAA4iwz6hEci2IWq_-15" value="PostgreSQL&#xa;Users, Räume, Geräte&#xa;Messdaten, Grenzwerte&#xa;Abwesenheiten, Tipps" style="whiteSpace=wrap;strokeWidth=2;" vertex="1" parent="1">
+          <mxGeometry x="1149" y="1360" width="278" height="126" as="geometry" />
+        </mxCell>
+        <mxCell id="ZwCGAA4iwz6hEci2IWq_-16" value="BLE: Messwerte / Warnstatus" style="curved=1;startArrow=block;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;rounded=0;" edge="1" parent="1" source="ZwCGAA4iwz6hEci2IWq_-11" target="ZwCGAA4iwz6hEci2IWq_-12">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZwCGAA4iwz6hEci2IWq_-17" value="POST Messdaten" style="curved=1;startArrow=none;endArrow=block;exitX=0.46;exitY=1;entryX=0.1;entryY=0;rounded=0;" edge="1" parent="1" source="ZwCGAA4iwz6hEci2IWq_-12" target="ZwCGAA4iwz6hEci2IWq_-13">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="616" y="976" />
+              <mxPoint x="1135" y="1066" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZwCGAA4iwz6hEci2IWq_-18" value="GET Config / Notify Updates" style="curved=1;startArrow=block;endArrow=block;exitX=0.55;exitY=1;entryX=0.5;entryY=0;rounded=0;" edge="1" parent="1" source="ZwCGAA4iwz6hEci2IWq_-12" target="ZwCGAA4iwz6hEci2IWq_-13">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="879" y="976" />
+              <mxPoint x="1287" y="1021" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZwCGAA4iwz6hEci2IWq_-19" value="" style="curved=1;startArrow=block;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;rounded=0;" edge="1" parent="1" source="ZwCGAA4iwz6hEci2IWq_-13" target="ZwCGAA4iwz6hEci2IWq_-14">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZwCGAA4iwz6hEci2IWq_-20" value="" style="curved=1;startArrow=block;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;rounded=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="1230" y="1249" as="sourcePoint" />
+            <mxPoint x="1230.5" y="1360" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ZwCGAA4iwz6hEci2IWq_-21" value="HTTP REST" style="curved=1;startArrow=block;endArrow=block;exitX=0.5;exitY=1;entryX=0.85;entryY=0;rounded=0;" edge="1" parent="1" source="ZwCGAA4iwz6hEci2IWq_-2" target="ZwCGAA4iwz6hEci2IWq_-13">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1421" y="1066" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
