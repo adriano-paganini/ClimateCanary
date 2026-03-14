@@ -517,38 +517,208 @@ Auslösen und Aufheben einer Grenzwertwarnung.
 
 \section{Ausfallssicherheit}
 
+    \newcolumntype{L}{>{\bfseries}p{3.2cm}}
+
     \subsection{Szenario 1 – Ausfall der Sensorstation}
 
-    \subsubsection{Datenkonsistenz}
-        Der Raspberry Pi erkennt den Ausfall über einen BLE-Verbindungs Timeout.
-        Da keine neuen Messdaten eintreffen, werden keine fehlerhaften oder unvollständigen
-        Einträge in die SQLite-Datenbank geschrieben.
-        Bereits gepufferte Daten bleiben erhalten.
-
-    \subsubsection{Logging}
-        Der Raspberry Pi schreibt einen \texttt{ERROR}-Eintrag in sein lokales Logfile
-        (\texttt{sensor\_offline}, Sensor-ID, Timestamp). Der Webserver erhält ein entsprechendes
-        Event und loggt den Ausfall ebenfalls auf \texttt{ERROR}-Level in beiden Server-Logfiles.
-        Die Wiederverbindung wird auf \texttt{INFO}-Level protokolliert.
-
-    \subsubsection{Wiederaufnahme des Betriebs}
-        Sobald die Sensorstation wieder BLE-Advertising mit ihrer bekannten ID sendet,
-        baut der Raspberry Pi automatisch die Verbindung wieder auf; kein manuelles
-        Eingreifen ist notwendig.
-
-    \subsubsection{Informationsaustausch}
-        Der Raspberry Pi sendet bei Erkennung des Ausfalls aktiv ein
-        \texttt{POST /events \{type: sensor\_offline, sensorId\}} an die Webapp.
-        Bei Wiederherstellung folgt ein entsprechendes \texttt{sensor\_online}-Event.
-
-    \subsubsection{Informationen für User}
-        \begin{itemize}[leftmargin=1.2em, itemsep=2pt]
-          \item \textbf{Mitarbeiter:innen / Abteilungsleitung:} Hinweis im Dashboard,
-          dass die Sensorstation offline ist; Zeitlücke im Verlaufsdiagramm als
-          „Daten nicht verfügbar\textbackslash" markiert.
-          \item \textbf{Systemadmins:} Gerätestatus in der Verwaltungsansicht zeigt Ausfall in beiden Logfiles einsehbar.
-          \item \textbf{Gebäudeadmins:} Keine direkten Geräteinformationen (Datentrennung),
-          aber fehlende Messdaten im Raumverlauf erkennbar.
+    \begin{tabularx}{\linewidth}{L X}
+    \toprule
+    Datenkonsistenz &
+    Der Raspberry Pi erkennt den Ausfall über einen BLE-Verbindungs Timeout.
+    Da keine neuen Messdaten eintreffen, werden keine fehlerhaften oder unvollständigen
+    Einträge in die SQLite-Datenbank geschrieben.
+    Bereits gepufferte Daten bleiben erhalten. \\
+    \midrule
+    Logging &
+    Der Raspberry Pi schreibt einen \texttt{ERROR}-Eintrag in sein lokales Logfile
+    (\texttt{sensor\_offline}, Sensor-ID, Timestamp). Der Webserver erhält ein entsprechendes
+    Event und loggt den Ausfall ebenfalls auf \texttt{ERROR}-Level in beiden Server-Logfiles.
+    Die Wiederverbindung wird auf \texttt{INFO}-Level protokolliert. \\
+    \midrule
+    Wiederaufnahme &
+    Sobald die Sensorstation wieder BLE-Advertising mit ihrer bekannten ID sendet,
+    baut der Raspberry Pi automatisch die Verbindung wieder auf; kein manuelles
+    Eingreifen ist notwendig. \\
+    \midrule
+    Informationsaus-
+    tausch &
+    Der Raspberry Pi sendet bei Erkennung des Ausfalls aktiv ein
+    \texttt{POST /events \{type: sensor\_offline, sensorId\}} an die Webapp.
+    Bei Wiederherstellung folgt ein entsprechendes \texttt{sensor\_online}-Event. \\
+    \midrule
+    User-Information &
+    \begin{minipage}[t]{\linewidth}
+        \begin{itemize}[leftmargin=1.2em, itemsep=2pt, topsep=0pt]
+            \item \textbf{Mitarbeiter:innen / Abteilungsleitung:} Hinweis im Dashboard,
+            dass die Sensorstation offline ist; Zeitlücke im Verlaufsdiagramm als
+            „Daten nicht verfügbar" markiert.
+            \item \textbf{Systemadmins:} Gerätestatus in der Verwaltungsansicht zeigt Ausfall; in beiden Logfiles einsehbar.
+            \item \textbf{Gebäudeadmins:} Keine direkten Geräteinformationen (Datentrennung),
+            aber fehlende Messdaten im Raumverlauf erkennbar.
         \end{itemize}
+    \end{minipage} \\
+    \bottomrule
+    \end{tabularx}
 
+
+    \subsection{Szenario 2 – Eingeschränkte BLE-Kommunikation}
+
+    \begin{tabularx}{\linewidth}{L X}
+    \toprule
+    Datenkonsistenz &
+    Die Sensorstation puffert Messwerte lokal im Arduino-Speicher, solange die BLE-Verbindung
+    instabil ist. Der Raspberry Pi verwirft unvollständige Pakete und wartet auf eine stabile Übertragung.
+    Nur vollständig empfangene und validierte Datenpakete werden in SQLite geschrieben. \\
+    \midrule
+    Logging &
+    Verbindungsprobleme werden auf \texttt{WARN}-Level im Raspberry-Pi-Logfile festgehalten,
+    inkl.\ Anzahl verworfener Pakete und Dauer der Instabilität.
+    Sobald die Verbindung wiederhergestellt ist, wird dies auf \texttt{INFO}-Level geloggt. \\
+    \midrule
+    Wiederaufnahme &
+    Nach Stabilisierung der BLE-Verbindung überträgt die Sensorstation die gepufferten
+    Messwerte kumuliert. Der Raspberry Pi ergänzt Timestamps für jeden Messpunkt
+    und verarbeitet die Daten regulär weiter. \\
+    \midrule
+    Informationsaus-
+    tausch &
+    Während der Instabilität werden keine unvollständigen Daten an die Webapp weitergeleitet.
+    Nach Wiederherstellung erfolgt die Übertragung der aufgelaufenen Daten über ein API Endpoint. \\
+    \midrule
+    User-Information &
+    \begin{minipage}[t]{\linewidth}
+        \begin{itemize}[leftmargin=1.2em, itemsep=2pt, topsep=0pt]
+            \item \textbf{Mitarbeiter:innen / Abteilungsleitung:} Lücke im Verlaufsdiagramm
+            als „Daten fehlen (Verbindungsproblem)" markiert; keine Echtzeit-Warnung.
+            \item \textbf{Systemadmins:} Verbindungsstatus der BLE-Verbindung in der
+            Geräteverwaltung; \texttt{WARN}-Einträge in den Logfiles.
+        \end{itemize}
+    \end{minipage} \\
+    \bottomrule
+    \end{tabularx}
+
+
+    \subsection{Szenario 3 – Unerwarteter Neustart des Raspberry Pi}
+
+    \begin{tabularx}{\linewidth}{L X}
+    \toprule
+    Datenkonsistenz &
+    Alle Datenbankoperationen auf der SQLite-Datenbank werden als ACID-konforme
+    Transaktionen ausgeführt. Nach dem Neustart wird die Datenbank auf Integrität geprüft,
+    bevor der Betrieb aufgenommen wird. \\
+    \midrule
+    Logging &
+    Der Neustart wird beim ersten Start des Dienstes als \texttt{WARN}-Eintrag protokolliert
+    (erkennbar am Fehlen eines regulären \texttt{shutdown}-Eintrags).
+    Der Webserver loggt den Reconnect des Raspberry Pi auf \texttt{INFO}-Level. \\
+    \midrule
+    Wiederaufnahme &
+    Der Raspberry-Pi-Dienst startet nach einem Neustart automatisch. Beim Start:
+    \begin{enumerate}[leftmargin=1.5em, itemsep=2pt, topsep=0pt]
+            \item Laden der Konfiguration aus Config-File.
+            \item Abfrage der aktuellen Konfiguration anhand einer API Endpoint.
+            \item Automatischer Aufbau der BLE-Verbindungen zu zugeordneten Sensorstationen.
+    \end{enumerate} \\
+    \midrule
+    Informationsaus-
+    tausch &
+    Nach dem Reconnect sendet der Pi einen initialen Config-Request an den Webserver.
+    Der Webserver erkennt den Reconnect und übermittelt ggf.\ ausstehende
+    Konfigurationsänderungen. \\
+    \midrule
+    User-Information &
+    \begin{minipage}[t]{\linewidth}
+        \begin{itemize}[leftmargin=1.2em, itemsep=2pt, topsep=0pt]
+            \item \textbf{Systemadmins / Gebäudeadmins:} Kurzer Ausfall in den Logs und
+            im Gerätestatus sichtbar.
+            \item \textbf{Alle Rollen:} Datenlücke im Dashboard entsprechend markiert.
+        \end{itemize}
+    \end{minipage} \\
+    \bottomrule
+    \end{tabularx}
+
+
+    \subsection{Szenario 4 – Temporärer Ausfall: Raspberry Pi – Backend}
+
+    \begin{tabularx}{\linewidth}{L X}
+    \toprule
+    Datenkonsistenz &
+    Der Raspberry Pi puffert alle eingehenden Messdaten mit Timestamps in SQLite.
+    Doppelte Übertragungen werden durch eindeutige Measurement-IDs auf Serverseite
+    verhindert. \\
+    \midrule
+    Logging &
+    Fehlgeschlagene Übertragungsversuche werden auf \texttt{ERROR}-Level geloggt.
+    Die Wiederherstellung der Verbindung wird auf \texttt{INFO}-Level festgehalten. \\
+    \midrule
+    Wiederaufnahme &
+    Der Raspberry Pi implementiert eine Retry-Queue.
+    Grenzwertberechnungen und die Kommunikation mit den Sensorstationen laufen
+    während des Ausfalls vollständig autonom weiter; Grenzwerte liegen lokal in SQLite vor,
+    sodass keine Webapp-Abhängigkeit besteht.
+    Nach Wiederherstellung überträgt der Pi gepufferte Daten chronologisch geordnet. \\
+    \midrule
+    Informationsaus-
+    tausch &
+    Nach Wiederherstellung der Verbindung überträgt der Pi die gepufferten Daten
+    geordnet an den Webserver.
+    Der Server markiert eventuelle Zeitlücken im Datensatz. \\
+    \midrule
+    User-Information &
+    \begin{minipage}[t]{\linewidth}
+        \begin{itemize}[leftmargin=1.2em, itemsep=2pt, topsep=0pt]
+            \item \textbf{Mitarbeiter:innen / Abteilungsleitung:} Hinweis auf fehlende Daten
+            im betroffenen Zeitraum im Dashboard.
+            \item \textbf{Systemadmins:} Verbindungsstatus, Dauer des Ausfalls und
+            Retry-Versuche in den Logfiles einsehbar.
+            \item \textbf{Lokal (Sensorstation):} LED und Display funktionieren weiterhin
+            normal; Grenzwertwarnungen werden lokal angezeigt.
+        \end{itemize}
+    \end{minipage} \\
+    \bottomrule
+    \end{tabularx}
+
+
+    \subsection{Szenario 5 – Kurzfristiger Ausfall des zentralen Backends}
+
+    \begin{tabularx}{\linewidth}{L X}
+    \toprule
+    Datenkonsistenz &
+    Da alle persistenten Messdaten primär über den Webserver in PostgreSQL gespeichert
+    werden, entstehen bei einem Backend-Ausfall keine Schreibkonflikte. Der Raspberry Pi
+    puffert in SQLite und überträgt nach Wiederherstellung. Der Webserver stellt beim Start
+    die Datenbankverbindung zu PostgreSQL wieder her und verarbeitet aufgelaufene Requests
+    aus der Pi-Retry-Queue. \\
+    \midrule
+    Logging &
+    Der Webserver schreibt beim Hochfahren einen \texttt{INFO}-Eintrag.
+    Ein externer Health-Check detektiert den Ausfall und schreibt ihn in die Logfiles.
+    Alle beim Reconnect eingehenden Verbindungsversuche der Raspberry Pis werden ebenfalls geloggt. \\
+    \midrule
+    Wiederaufnahme &
+    Nach dem Neustart authentifizieren sich die Raspberry Pis automatisch erneut
+    und senden ihre gepufferten Daten. Die Webapp ist für alle Nutzer wieder erreichbar. \\
+    \midrule
+    Informationsaus-
+    tausch &
+    Während des Ausfalls laufen Sensorstation und Raspberry Pi vollständig autonom weiter;
+    Messung, Grenzwertprüfung und lokale Warnung über LED/Display funktionieren
+    unabhängig vom Backend. Grenzwert-Events werden in der Pi-Retry-Queue
+    zwischengespeichert und nach Wiederherstellung übertragen. \\
+    \midrule
+    User-Information &
+    \begin{minipage}[t]{\linewidth}
+        \begin{itemize}[leftmargin=1.2em, itemsep=2pt, topsep=0pt]
+            \item \textbf{Mitarbeiter:innen / alle Webapp-Nutzer:} Generische Fehlermeldung
+            beim Öffnen der Webapp (\texttt{HTTP 503 Service Unavailable}).
+            \item \textbf{Lokal (Sensorstation):} Warnungen über Displays und LEDs
+            funktionieren weiterhin uneingeschränkt.
+            \item \textbf{Systemadmins:} Ausfall-Zeitraum nach Wiederherstellung in den
+            Logfiles einsehbar; Docker-Health-Check-Status protokolliert.
+            \item \textbf{Alle Rollen:} Datenlücke im Verlaufsdiagramm als
+            „Daten fehlen" gekennzeichnet.
+        \end{itemize}
+    \end{minipage} \\
+    \bottomrule
+    \end{tabularx}
 \end{document}
