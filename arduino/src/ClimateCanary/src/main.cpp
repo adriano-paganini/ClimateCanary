@@ -1,15 +1,14 @@
 #include <Wire.h>
-#include "rgb_lcd.h"
 #include <Adafruit_Sensor.h>
 #include "Adafruit_BME680.h"
+
+#include "light.h"
+#include "buttons.h"
+#include "screen.h"
+
 #define SEALEVELPRESSURE_HPA (1013.25)
 
 Adafruit_BME680 bme;
-rgb_lcd lcd;
-
-int r = 255;
-int g = 0;
-int b = 0;
 
 int val1 = 0;  
 int val2 = 0;  
@@ -25,8 +24,6 @@ int myFunction(int, int);
 
 
 void setup() {
-  lcd.begin(16, 2);
-
   Serial.begin(9600); 
 //while (!Serial);
   Serial.println(F("BME680 async test"));
@@ -42,13 +39,11 @@ void setup() {
   bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
   bme.setGasHeater(320, 150);
 
-  pinMode(D2, INPUT_PULLUP);
-  pinMode(D3, INPUT_PULLUP);
-  pinMode(D10, INPUT_PULLUP);
+  setupScreen();
 
-  pinMode(A0, OUTPUT); 
-  pinMode(A6, OUTPUT); 
-  pinMode(A7, OUTPUT);
+  setupButtons();
+
+  setupLight();
 }
 
 void loop() {
@@ -73,11 +68,8 @@ void loop() {
 
   // ---- BUTTON READ every 100 ms ----
   if (rep_cnt % 100 == 0) {
-    val1 = digitalRead(D2);
-    val2 = digitalRead(D3);
-    val3 = digitalRead(D10);
+    ButtonState state = updateButtons();
           // ---- SENSOR DISPLAY (line 0) ----
-      lcd.setCursor(0,0);
 
       char line[17];
       snprintf(line, sizeof(line),
@@ -87,21 +79,11 @@ void loop() {
                bme.pressure / 100.0,
                bme.gas_resistance / 1000.0);
 
-      lcd.print("                ");
-      lcd.setCursor(0,0);
-      lcd.print(line);
+      printScreen(0, String(line));
 
       // ---- BUTTON DISPLAY (line 1) ----
-      lcd.setCursor(0,1);
-      lcd.print("                ");
-      lcd.setCursor(0,1);
+      printButtonScreen(state);
 
-      lcd.print("B:");
-      lcd.print(val1);
-      lcd.print(" ");
-      lcd.print(val2);
-      lcd.print(" ");
-      lcd.print(val3);
   }
 
   // ---- timing counter ----
@@ -112,17 +94,7 @@ void loop() {
     rep_cnt = 10;
   }
 
-  // ---- RGB animation ----
-  analogWrite(A0, r);
-  analogWrite(A6, g);
-  analogWrite(A7, b);
-  
-  if (r == 255 && g < 255 && b == 0) g++;
-  else if (g == 255 && r > 0 && b == 0) r--;
-  else if (g == 255 && b < 255 && r == 0) b++;
-  else if (b == 255 && g > 0 && r == 0) g--;
-  else if (b == 255 && r < 255 && g == 0) r++;
-  else if (r == 255 && b > 0 && g == 0) b--;
+  updateLight(10);
 }
 
 // put function definitions here:
