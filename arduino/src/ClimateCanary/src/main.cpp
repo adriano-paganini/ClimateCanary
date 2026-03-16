@@ -51,40 +51,25 @@ void testLoop(){
   }
 }
 
-// 1. Define a Service and a Characteristic with unique IDs (UUIDs)
-// You can generate your own at uuidgenerator.net
-
-
 void setup() {
   Serial.begin(9600);
 
   setupTest();
 
-  // 2. Start the BLE stack:
   if (!setupBLE("BLE33_ClimateCanary_G5T4", arduinoTest,sensorDataCharacteristic)){
     Serial.println("Failed to initialize BLE!");
     while (1);
   }
 }
 
+//TODO: Multithread BLE and screen-Display; Define speed of BLE updates; Create characteristic for config of arduino;
+
 void loop() {
-  // 6. Listen for BLE centrals (your phone) to connect:
   BLEDevice central = BLE.central();
   if (central) {
-    Serial.print("Connected to central: ");
-    Serial.println(central.address());
-
     while (central.connected()) {
       SensorData data = readSensors();
-      // 7. If a central is connected, write the value of the characteristic:
-      RelativePacket packet;
-      packet.ms_stamp = millis();
-      packet.s1 = data.temperature;
-      packet.s2 = data.humidity;
-      packet.s3 = data.pressure;
-      packet.s4 = data.gas_resistance;
-      sensorDataCharacteristic.writeValue((uint8_t*)&packet, sizeof(RelativePacket)); // You can change this to send different data
-      delay(1000); // Send data every second
+      sendSensorData(data, millis(), sensorDataCharacteristic);
     }
 
     Serial.print("Disconnected from central: ");
