@@ -1,0 +1,497 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36" version="29.6.3">
+  <diagram name="Page-1" id="vnTacTYP0uzZOSDrn60e">
+    <mxGraphModel dx="1032" dy="755" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-6" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=0;" target="9Ej1s3qNscek7iGzhOhC-2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="180" y="120" />
+              <mxPoint x="180" y="120" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-9" connectable="0" parent="9Ej1s3qNscek7iGzhOhC-6" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="GUI: Create Raspberry Pi" vertex="1">
+          <mxGeometry relative="1" x="-0.1938" y="2" as="geometry">
+            <mxPoint x="22" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-25" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-1" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="9Ej1s3qNscek7iGzhOhC-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="410" y="370" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-26" connectable="0" parent="9Ej1s3qNscek7iGzhOhC-25" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="uploads config.yaml via SD-card" vertex="1">
+          <mxGeometry relative="1" x="-0.1516" as="geometry">
+            <mxPoint x="37" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-27" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-1" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="9Ej1s3qNscek7iGzhOhC-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="410" y="400" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-28" connectable="0" parent="9Ej1s3qNscek7iGzhOhC-27" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="powers up Raspberry Pi" vertex="1">
+          <mxGeometry relative="1" x="-0.2267" y="-1" as="geometry">
+            <mxPoint x="62" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-48" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-1" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="9Ej1s3qNscek7iGzhOhC-2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="190" y="630" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-49" connectable="0" parent="9Ej1s3qNscek7iGzhOhC-48" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="press &quot;check for connection&quot; button" vertex="1">
+          <mxGeometry relative="1" x="-0.182" y="1" as="geometry">
+            <mxPoint x="10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-57" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=0;" target="9Ej1s3qNscek7iGzhOhC-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-58" connectable="0" parent="9Ej1s3qNscek7iGzhOhC-57" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="GUI: Find available SensorStations" vertex="1">
+          <mxGeometry relative="1" x="-0.2211" y="1" as="geometry">
+            <mxPoint x="25" y="1" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-63" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-1" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="9Ej1s3qNscek7iGzhOhC-5">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="520" y="780" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-64" connectable="0" parent="9Ej1s3qNscek7iGzhOhC-63" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="power up SensorStation(s)" vertex="1">
+          <mxGeometry relative="1" x="0.0985" as="geometry">
+            <mxPoint x="47" y="-5" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-85" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=0;" target="9Ej1s3qNscek7iGzhOhC-2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="190" y="1130" />
+              <mxPoint x="190" y="1130" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-86" connectable="0" parent="9Ej1s3qNscek7iGzhOhC-85" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="select correct Device" vertex="1">
+          <mxGeometry relative="1" x="-0.333" as="geometry">
+            <mxPoint x="27" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-1" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};participant=umlActor;" value="" vertex="1">
+          <mxGeometry height="1580" width="20" x="60" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-10" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-2" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="9Ej1s3qNscek7iGzhOhC-3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="390" y="130" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-11" connectable="0" parent="9Ej1s3qNscek7iGzhOhC-10" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="HTTP: /bpi POST" vertex="1">
+          <mxGeometry relative="1" x="-0.6665" y="1" as="geometry">
+            <mxPoint x="64" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-23" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=0;" target="9Ej1s3qNscek7iGzhOhC-1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="180" y="330" />
+              <mxPoint x="180" y="330" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-24" connectable="0" parent="9Ej1s3qNscek7iGzhOhC-23" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="downloads config.yaml" vertex="1">
+          <mxGeometry relative="1" x="0.196" y="-2" as="geometry">
+            <mxPoint x="12" y="2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-50" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-2" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="9Ej1s3qNscek7iGzhOhC-3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="400" y="670" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-51" connectable="0" parent="9Ej1s3qNscek7iGzhOhC-50" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="HTTP: /bpi/{id} GET" vertex="1">
+          <mxGeometry relative="1" x="-0.2124" y="1" as="geometry">
+            <mxPoint x="24" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-59" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=0;" target="9Ej1s3qNscek7iGzhOhC-3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="380" y="830" />
+              <mxPoint x="380" y="830" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-60" connectable="0" parent="9Ej1s3qNscek7iGzhOhC-59" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="HTTP: /sensorstation/find GET" vertex="1">
+          <mxGeometry relative="1" x="-0.2665" y="-2" as="geometry">
+            <mxPoint x="20" y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-83" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=0;" target="9Ej1s3qNscek7iGzhOhC-1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="190" y="1090" />
+              <mxPoint x="190" y="1090" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-84" connectable="0" parent="9Ej1s3qNscek7iGzhOhC-83" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="display available connection partners" vertex="1">
+          <mxGeometry relative="1" x="0.3392" y="-1" as="geometry">
+            <mxPoint x="37" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-87" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=0;" target="9Ej1s3qNscek7iGzhOhC-3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="370" y="1170" />
+              <mxPoint x="370" y="1170" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-88" connectable="0" parent="9Ej1s3qNscek7iGzhOhC-87" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="HTTP: /sensorstation/connect/{info} POST" vertex="1">
+          <mxGeometry relative="1" x="-0.5025" as="geometry">
+            <mxPoint x="51" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-2" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="Frontend&lt;span style=&quot;white-space: pre;&quot;&gt;&#x9;&lt;/span&gt;" vertex="1">
+          <mxGeometry height="1580" width="100" x="240" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-20" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-3" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="9Ej1s3qNscek7iGzhOhC-2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="400" y="280" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-21" connectable="0" parent="9Ej1s3qNscek7iGzhOhC-20" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="config.yaml" vertex="1">
+          <mxGeometry relative="1" x="0.0955" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-52" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-3" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="9Ej1s3qNscek7iGzhOhC-2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="390" y="710" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-53" connectable="0" parent="9Ej1s3qNscek7iGzhOhC-52" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="200 OK RaspberryPiDTO" vertex="1">
+          <mxGeometry relative="1" x="0.3867" y="-2" as="geometry">
+            <mxPoint x="43" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-61" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-3" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="9Ej1s3qNscek7iGzhOhC-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="630" y="850" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-62" connectable="0" parent="9Ej1s3qNscek7iGzhOhC-61" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="HTTP: /api/spi/scan GET" vertex="1">
+          <mxGeometry relative="1" x="-0.5527" y="2" as="geometry">
+            <mxPoint x="57" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-81" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=0;" target="9Ej1s3qNscek7iGzhOhC-2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="420" y="1060" />
+              <mxPoint x="420" y="1060" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-82" connectable="0" parent="9Ej1s3qNscek7iGzhOhC-81" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="&lt;span style=&quot;color: rgb(0, 0, 0); font-family: Helvetica; font-size: 11px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-align: center; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: nowrap; background-color: rgb(255, 255, 255); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; display: inline !important; float: none;&quot;&gt;200 OK List&amp;lt;String&amp;gt;&lt;/span&gt;" vertex="1">
+          <mxGeometry relative="1" x="0.539" y="1" as="geometry">
+            <mxPoint x="54" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-89" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-3" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="9Ej1s3qNscek7iGzhOhC-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="620" y="1200" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-90" connectable="0" parent="9Ej1s3qNscek7iGzhOhC-89" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="HTTP: /api/spi/connect/{info} POST" vertex="1">
+          <mxGeometry relative="1" x="-0.1919" y="-1" as="geometry">
+            <mxPoint x="24" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-3" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="Backend" vertex="1">
+          <mxGeometry height="1580" width="100" x="460" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-37" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-4" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="9Ej1s3qNscek7iGzhOhC-3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="650" y="520" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-38" connectable="0" parent="9Ej1s3qNscek7iGzhOhC-37" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="HTTP: /api/pi/hostname/booted POST" vertex="1">
+          <mxGeometry relative="1" x="0.3421" y="1" as="geometry">
+            <mxPoint x="41" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-79" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-4" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="9Ej1s3qNscek7iGzhOhC-3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="630" y="1030" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-80" connectable="0" parent="9Ej1s3qNscek7iGzhOhC-79" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="200 OK List&amp;lt;String&amp;gt;" vertex="1">
+          <mxGeometry relative="1" x="0.4158" y="1" as="geometry">
+            <mxPoint x="50" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-91" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=0;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="810" y="1230.03" />
+              <mxPoint x="810" y="1230.03" />
+            </Array>
+            <mxPoint x="749.810344827586" y="1229.9955172413793" as="sourcePoint" />
+            <mxPoint x="890" y="1229.9955172413793" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-92" connectable="0" parent="9Ej1s3qNscek7iGzhOhC-91" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="BLE-Connection setup" vertex="1">
+          <mxGeometry relative="1" x="-0.4135" y="1" as="geometry">
+            <mxPoint x="29" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-4" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="RaspberryPi" vertex="1">
+          <mxGeometry height="1580" width="100" x="700" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-5" parent="1" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="Arduino" vertex="1">
+          <mxGeometry height="1580" width="100" x="920" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-8" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="System-Admin" vertex="1">
+          <mxGeometry height="30" width="60" x="80" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-12" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 8px;&quot;&gt;contains: roomId&lt;/font&gt;" vertex="1">
+          <mxGeometry height="30" width="140" x="310" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-16" parent="1" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="" vertex="1">
+          <mxGeometry height="80" width="10" x="430" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-17" edge="1" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;entryX=1;entryY=0;entryDx=0;entryDy=5;" target="9Ej1s3qNscek7iGzhOhC-16" value="create raspberry pi">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="510" y="175" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-18" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-16" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;curved=0;rounded=0;exitX=1;exitY=1;exitDx=0;exitDy=-5;" value="return">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="510" y="245" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-22" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 8px;&quot;&gt;contains:&amp;nbsp;&lt;/font&gt;&lt;div&gt;&lt;span style=&quot;font-size: 8px;&quot;&gt;HostName, WiFi Credentials, roomId, measurements per Second, server IP,etc.&lt;/span&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="190" x="300" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-32" parent="1" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="" vertex="1">
+          <mxGeometry height="80" width="10" x="670" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-33" edge="1" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;entryX=1;entryY=0;entryDx=0;entryDy=5;" target="9Ej1s3qNscek7iGzhOhC-32" value="config.yaml">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="750" y="425" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-34" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-32" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;curved=0;rounded=0;exitX=1;exitY=1;exitDx=0;exitDy=-5;" value="return">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="750" y="495" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-35" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 8px;&quot;&gt;sets up Wifi, HostName, server IP etc.&lt;/font&gt;" vertex="1">
+          <mxGeometry height="40" width="70" x="680" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-39" parent="1" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="" vertex="1">
+          <mxGeometry height="80" width="10" x="430" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-40" edge="1" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;entryX=1;entryY=0;entryDx=0;entryDy=5;" target="9Ej1s3qNscek7iGzhOhC-39" value="update raspberry pi">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="510" y="545" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-41" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-39" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;curved=0;rounded=0;exitX=1;exitY=1;exitDx=0;exitDy=-5;" value="return">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="510" y="615" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-42" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;span style=&quot;font-size: 8px;&quot;&gt;set status, ip address, etc.&lt;/span&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="440" y="550" as="geometry" />
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-46" edge="1" parent="1" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="400" y="260" />
+            </Array>
+            <mxPoint x="510" y="260" as="sourcePoint" />
+            <mxPoint x="290" y="260" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-47" connectable="0" parent="9Ej1s3qNscek7iGzhOhC-46" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="201 CREATED RaspberryPiDTO" vertex="1">
+          <mxGeometry relative="1" x="0.0955" as="geometry">
+            <mxPoint x="11" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-54" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=8;" value="opt extra: debugging Info/Tips&amp;nbsp;" vertex="1">
+          <mxGeometry height="30" width="140" x="320" y="710" as="geometry" />
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-55" parent="1" style="shape=umlFrame;whiteSpace=wrap;html=1;pointerEvents=0;" value="Raspberry Pi Setup" vertex="1">
+          <mxGeometry height="670" width="1030" x="40" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-56" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="The config.yaml only needs to be transfered manually for the original setup. Afterwards updates get sent to a POST-Endpoint on the Raspberry Pi /api/spi/config" vertex="1">
+          <mxGeometry height="100" width="190" x="770" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-65" parent="1" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="" vertex="1">
+          <mxGeometry height="80" width="10" x="890" y="810" as="geometry" />
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-66" edge="1" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;entryX=1;entryY=0;entryDx=0;entryDy=5;" target="9Ej1s3qNscek7iGzhOhC-65" value="startup">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="970" y="815" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-67" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-65" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;curved=0;rounded=0;exitX=1;exitY=1;exitDx=0;exitDy=-5;" value="return">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="970" y="885" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-77" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-69" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=open;startFill=0;endArrow=open;endFill=0;dashed=1;dashPattern=8 8;" target="9Ej1s3qNscek7iGzhOhC-73">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="780" y="960" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-78" connectable="0" parent="9Ej1s3qNscek7iGzhOhC-77" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=8;" value="SensorStation is seen by RaspberryPi" vertex="1">
+          <mxGeometry relative="1" x="0.0559" as="geometry">
+            <mxPoint x="11" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-93" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-69" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=0;" target="9Ej1s3qNscek7iGzhOhC-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="830" y="1260" />
+              <mxPoint x="830" y="1260" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-94" connectable="0" parent="9Ej1s3qNscek7iGzhOhC-93" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="successfully connected" vertex="1">
+          <mxGeometry relative="1" x="0.4198" y="2" as="geometry">
+            <mxPoint x="39" y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-69" parent="1" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="" vertex="1">
+          <mxGeometry height="350" width="10" x="890" y="920" as="geometry" />
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-70" edge="1" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;entryX=1;entryY=0;entryDx=0;entryDy=5;fontSize=11;" target="9Ej1s3qNscek7iGzhOhC-69" value="loop">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="970" y="925" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-71" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-69" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;curved=0;rounded=0;exitX=1;exitY=1;exitDx=0;exitDy=-5;" target="9Ej1s3qNscek7iGzhOhC-5" value="got loop">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="940" y="1265" />
+            </Array>
+            <mxPoint x="970" y="995" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-72" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=8;" value="start advertising, accept connections, send data, etc..." vertex="1">
+          <mxGeometry height="30" width="60" x="910" y="940" as="geometry" />
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-73" parent="1" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="" vertex="1">
+          <mxGeometry height="80" width="10" x="670" y="920" as="geometry" />
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-74" edge="1" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;entryX=1;entryY=0;entryDx=0;entryDy=5;" target="9Ej1s3qNscek7iGzhOhC-73" value="scann for BLE connections">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="750" y="925" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-75" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-73" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;curved=0;rounded=0;exitX=1;exitY=1;exitDx=0;exitDy=-5;" value="return possible partners&#39; info">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="750" y="995" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-76" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=8;" value="filter: UUID" vertex="1">
+          <mxGeometry height="30" width="60" x="680" y="920" as="geometry" />
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-95" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=0;" target="9Ej1s3qNscek7iGzhOhC-3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="660" y="1280" />
+              <mxPoint x="660" y="1280" />
+            </Array>
+            <mxPoint x="740" y="1270" as="sourcePoint" />
+            <mxPoint x="600" y="1270" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-96" connectable="0" parent="9Ej1s3qNscek7iGzhOhC-95" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="200 OK" vertex="1">
+          <mxGeometry relative="1" x="0.4198" y="2" as="geometry">
+            <mxPoint x="39" y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-97" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=0;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="440" y="1410.03" />
+              <mxPoint x="440" y="1410.03" />
+            </Array>
+            <mxPoint x="510" y="1410" as="sourcePoint" />
+            <mxPoint x="290" y="1410.03" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-98" connectable="0" parent="9Ej1s3qNscek7iGzhOhC-97" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="200 OK SensorStationDTO" vertex="1">
+          <mxGeometry relative="1" x="0.4198" y="2" as="geometry">
+            <mxPoint x="39" y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-99" parent="1" style="html=1;points=[[0,0,0,0,5],[0,1,0,0,-5],[1,0,0,0,5],[1,1,0,0,-5]];perimeter=orthogonalPerimeter;outlineConnect=0;targetShapes=umlLifeline;portConstraint=eastwest;newEdgeStyle={&quot;curved&quot;:0,&quot;rounded&quot;:0};" value="" vertex="1">
+          <mxGeometry height="80" width="10" x="430" y="1300" as="geometry" />
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-100" edge="1" parent="1" style="html=1;verticalAlign=bottom;endArrow=block;curved=0;rounded=0;entryX=1;entryY=0;entryDx=0;entryDy=5;" target="9Ej1s3qNscek7iGzhOhC-99" value="create SensorStation">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="510" y="1305" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-101" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-99" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;curved=0;rounded=0;exitX=1;exitY=1;exitDx=0;exitDy=-5;" value="return">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="510" y="1375" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-102" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&amp;nbsp;" vertex="1">
+          <mxGeometry height="30" width="60" x="430" y="1300" as="geometry" />
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-105" parent="1" style="shape=umlFrame;whiteSpace=wrap;html=1;pointerEvents=0;width=180;height=30;" value="Sensor Station Setup&lt;br&gt;REQUIRES PI setup!" vertex="1">
+          <mxGeometry height="690" width="1030" x="40" y="750" as="geometry" />
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-106" edge="1" parent="1" source="9Ej1s3qNscek7iGzhOhC-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=0;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="80" y="1430" />
+              <mxPoint x="80" y="1430" />
+            </Array>
+            <mxPoint x="280" y="1430" as="sourcePoint" />
+            <mxPoint x="70" y="1430" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9Ej1s3qNscek7iGzhOhC-107" connectable="0" parent="9Ej1s3qNscek7iGzhOhC-106" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="display connected device" vertex="1">
+          <mxGeometry relative="1" x="0.4198" y="2" as="geometry">
+            <mxPoint x="39" y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

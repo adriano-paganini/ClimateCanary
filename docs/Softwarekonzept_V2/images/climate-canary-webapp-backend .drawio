@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36" version="29.6.3">
   <diagram name="Seite-1" id="rPzrdrrSWpQMOe0KcLTO">
-    <mxGraphModel dx="2003" dy="569" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+    <mxGraphModel dx="1656" dy="357" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -226,16 +226,19 @@
           <mxGeometry height="26" width="170" y="104" as="geometry" />
         </mxCell>
         <mxCell id="bcH1xF5qCqrsFM7SzG38-78" parent="1" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#f0a30a;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fontColor=#000000;strokeColor=#BD7000;" value="RaspberryPi" vertex="1">
-          <mxGeometry height="100" width="170" x="1065" y="993" as="geometry" />
+          <mxGeometry height="126" width="170" x="1065" y="993" as="geometry" />
         </mxCell>
         <mxCell id="bcH1xF5qCqrsFM7SzG38-79" parent="bcH1xF5qCqrsFM7SzG38-78" style="text;strokeColor=#BD7000;fillColor=#f0a30a;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontColor=#000000;" value="id: Long" vertex="1">
           <mxGeometry height="22" width="170" y="26" as="geometry" />
         </mxCell>
-        <mxCell id="bcH1xF5qCqrsFM7SzG38-80" parent="bcH1xF5qCqrsFM7SzG38-78" style="text;strokeColor=#BD7000;fillColor=#f0a30a;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontColor=#000000;" value="ipAddress: String" vertex="1">
+        <mxCell id="07QbKVjD4u0kuFHgimkA-1" parent="bcH1xF5qCqrsFM7SzG38-78" style="text;strokeColor=#BD7000;fillColor=#f0a30a;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontColor=#000000;" value="hostName: String" vertex="1">
           <mxGeometry height="26" width="170" y="48" as="geometry" />
         </mxCell>
-        <mxCell id="bcH1xF5qCqrsFM7SzG38-81" parent="bcH1xF5qCqrsFM7SzG38-78" style="text;strokeColor=#BD7000;fillColor=#f0a30a;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontColor=#000000;" value="deviceStatus: DeviceStatus" vertex="1">
+        <mxCell id="bcH1xF5qCqrsFM7SzG38-80" parent="bcH1xF5qCqrsFM7SzG38-78" style="text;strokeColor=#BD7000;fillColor=#f0a30a;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontColor=#000000;" value="ipAddress: String" vertex="1">
           <mxGeometry height="26" width="170" y="74" as="geometry" />
+        </mxCell>
+        <mxCell id="bcH1xF5qCqrsFM7SzG38-81" parent="bcH1xF5qCqrsFM7SzG38-78" style="text;strokeColor=#BD7000;fillColor=#f0a30a;align=left;verticalAlign=top;spacingLeft=4;spacingRight=4;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;whiteSpace=wrap;html=1;fontColor=#000000;" value="deviceStatus: DeviceStatus" vertex="1">
+          <mxGeometry height="26" width="170" y="100" as="geometry" />
         </mxCell>
         <mxCell id="bcH1xF5qCqrsFM7SzG38-88" parent="1" style="swimlane;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=40;fillColor=#1ba1e2;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=1;marginBottom=0;whiteSpace=wrap;html=1;fontColor=#ffffff;strokeColor=#006EAF;" value="&lt;div&gt;&amp;lt;&amp;lt;enumeration&amp;gt;&amp;gt;&lt;/div&gt;RoomType" vertex="1">
           <mxGeometry height="92" width="140" x="440" y="559" as="geometry" />
