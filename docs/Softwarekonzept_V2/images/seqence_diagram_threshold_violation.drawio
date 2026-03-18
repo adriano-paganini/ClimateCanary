@@ -1,0 +1,312 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.2.5 Chrome/138.0.7204.251 Electron/37.6.1 Safari/537.36" version="28.2.5">
+  <diagram name="Page-1" id="5PiXv2Vcjhmey884-Rbf">
+    <mxGraphModel dx="3360" dy="1724" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2000" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="uAUwE83y9B-maQB4NTwv-1" value="User" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};participant=umlActor;verticalAlign=bottom;labelPosition=center;verticalLabelPosition=top;align=center;size=65;" vertex="1" parent="1">
+          <mxGeometry x="20" y="20" width="35" height="2626" as="geometry" />
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-2" value="Frontend (React)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="468" y="20" width="150" height="2626" as="geometry" />
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-3" value="Sensorstation (Arduino)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="668" y="20" width="186" height="2626" as="geometry" />
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-4" value="Raspberry Pi" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="1201" y="20" width="150" height="2626" as="geometry" />
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-5" value="Backend (Spring Boot)" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="1680" y="20" width="177" height="2626" as="geometry" />
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-6" value="PostgreSQL" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;" vertex="1" parent="1">
+          <mxGeometry x="2250" y="20" width="150" height="2626" as="geometry" />
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-7" value="loop" style="shape=umlFrame;dashed=1;pointerEvents=0;dropTarget=0;strokeColor=light-dark(#636363, #535353);height=20;width=40" vertex="1" parent="1">
+          <mxGeometry x="750" y="95" width="678" height="149" as="geometry" />
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-8" value="[Jedes MessIntervall]" style="text;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;" vertex="1" parent="uAUwE83y9B-maQB4NTwv-7">
+          <mxGeometry x="40" width="638" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-9" value="alt" style="shape=umlFrame;dashed=1;pointerEvents=0;dropTarget=0;strokeColor=light-dark(#757575, #535353);height=20;width=30" vertex="1" parent="1">
+          <mxGeometry x="84" y="1488" width="2252" height="1005" as="geometry" />
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-10" value="[Messwerte kehren dauerhaft in Normalbereich zurueck]" style="text;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;" vertex="1" parent="uAUwE83y9B-maQB4NTwv-9">
+          <mxGeometry x="30" width="2222" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-11" value="[User quittiert Warnung im Frontend]" style="shape=line;dashed=1;whiteSpace=wrap;verticalAlign=top;labelPosition=center;verticalLabelPosition=middle;align=center;strokeColor=#B3B3B3;" vertex="1" parent="uAUwE83y9B-maQB4NTwv-9">
+          <mxGeometry y="322" width="2252" height="3" as="geometry" />
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-12" value="[Hausverwalter deaktiviert Grenzwert]" style="shape=line;dashed=1;whiteSpace=wrap;verticalAlign=top;labelPosition=center;verticalLabelPosition=middle;align=center;strokeColor=#B3B3B3;" vertex="1" parent="uAUwE83y9B-maQB4NTwv-9">
+          <mxGeometry y="639" width="2252" height="3" as="geometry" />
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-13" value="alt" style="shape=umlFrame;dashed=1;pointerEvents=0;dropTarget=0;strokeColor=light-dark(#6b6b6b, #535353);height=20;width=30" vertex="1" parent="1">
+          <mxGeometry x="74" y="302" width="2272" height="2201" as="geometry" />
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-14" value="[Durchschnitt innerhalb Grenzwerte]" style="text;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;" vertex="1" parent="uAUwE83y9B-maQB4NTwv-13">
+          <mxGeometry x="30" width="2242" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-15" value="[Durchschnitt verletzt Upper oder Lower Threshold]" style="shape=line;dashed=1;whiteSpace=wrap;verticalAlign=top;labelPosition=center;verticalLabelPosition=middle;align=center;strokeColor=light-dark(#5c5c5c, #535353);" vertex="1" parent="uAUwE83y9B-maQB4NTwv-13">
+          <mxGeometry y="298" width="2272" height="3" as="geometry" />
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-16" value="BLE: Messwerte senden (Temp / Humidity / AirQuality)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-3" target="uAUwE83y9B-maQB4NTwv-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1027" y="176" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-17" value="Kein Alarm - Zustand NORMAL" style="curved=1;endArrow=block;rounded=0;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-4" target="uAUwE83y9B-maQB4NTwv-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1327" y="383" />
+              <mxPoint x="1327" y="413" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-18" value="BLE: Status = OK (LED gruen)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-4" target="uAUwE83y9B-maQB4NTwv-3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1030" y="467" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-19" value="POST /measurement (gepufferte Daten)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-4" target="uAUwE83y9B-maQB4NTwv-5">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1531" y="521" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-20" value="Daten in PostgreSQL speichern" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-5" target="uAUwE83y9B-maQB4NTwv-6">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2055" y="575" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-21" value="BLE: Status = INTERMEDIATE (LED gelb)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-4" target="uAUwE83y9B-maQB4NTwv-3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1030" y="724" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-22" value="BLE: Status = WARNING (LED rot, ClimateHint anzeigen)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-4" target="uAUwE83y9B-maQB4NTwv-3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1030" y="826" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-23" value="POST /thresholdviolation (metric, value, timestamp, roomId)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-4" target="uAUwE83y9B-maQB4NTwv-5">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1531" y="880" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-24" value="ThresholdViolation anlegen (violationStatus=ACTIVE, startTime=now)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-5" target="uAUwE83y9B-maQB4NTwv-6">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2055" y="934" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-25" value="201 Created" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-5" target="uAUwE83y9B-maQB4NTwv-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1534" y="988" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-26" value="POST /measurement (gepufferte Daten)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-4" target="uAUwE83y9B-maQB4NTwv-5">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1531" y="1042" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-27" value="Daten in PostgreSQL speichern" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-5" target="uAUwE83y9B-maQB4NTwv-6">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2055" y="1096" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-28" value="GET /room/{id} (Polling: Grenzwerte / Belegungsstatus)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-4" target="uAUwE83y9B-maQB4NTwv-5">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1531" y="1150" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-29" value="200 OK (RoomDTO mit Grenzwerten / Belegungsstatus)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-5" target="uAUwE83y9B-maQB4NTwv-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1534" y="1204" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-30" value="Dashboard oeffnen" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-1" target="uAUwE83y9B-maQB4NTwv-2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="328" y="1306" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-31" value="GET /room/{id} (Messdaten + aktive Warnungen anfordern)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-2" target="uAUwE83y9B-maQB4NTwv-5">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1164" y="1360" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-32" value="200 OK (RoomDTO + aktive ThresholdViolations)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-5" target="uAUwE83y9B-maQB4NTwv-2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1167" y="1414" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-33" value="Warnung prominent anzeigen (Banner + ClimateHint)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-2" target="uAUwE83y9B-maQB4NTwv-1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="331" y="1468" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-34" value="BLE: Status = OK (LED gruen)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-4" target="uAUwE83y9B-maQB4NTwv-3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1030" y="1569" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-35" value="POST /thresholdviolation/{id}/resolve" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-4" target="uAUwE83y9B-maQB4NTwv-5">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1531" y="1623" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-36" value="violationStatus=RESOLVED, endTime=now" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-5" target="uAUwE83y9B-maQB4NTwv-6">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2055" y="1677" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-37" value="200 OK" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-5" target="uAUwE83y9B-maQB4NTwv-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1534" y="1731" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-38" value="Warnmeldung verschwindet (historisch gespeichert)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-2" target="uAUwE83y9B-maQB4NTwv-1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="331" y="1785" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-39" value="Warnung quittieren (Button)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-1" target="uAUwE83y9B-maQB4NTwv-2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="328" y="1886" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-40" value="PATCH /thresholdviolation/{id}/acknowledge" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-2" target="uAUwE83y9B-maQB4NTwv-5">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1164" y="1940" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-41" value="REST Notification: Warnung quittiert" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-5" target="uAUwE83y9B-maQB4NTwv-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1534" y="1994" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-42" value="BLE: Status = WARNING_ACKNOWLEDGED (LED gelb gedimmt)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-4" target="uAUwE83y9B-maQB4NTwv-3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1030" y="2048" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-43" value="Warnung als quittiert markiert" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;dashed=1;dashPattern=2 3;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-2" target="uAUwE83y9B-maQB4NTwv-1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="331" y="2102" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-44" value="Grenzwert deaktivieren" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-1" target="uAUwE83y9B-maQB4NTwv-2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="328" y="2203" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-45" value="PATCH /threshold/{id} (enabled=false)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-2" target="uAUwE83y9B-maQB4NTwv-5">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1164" y="2257" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-46" value="Threshold.enabled=false" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-5" target="uAUwE83y9B-maQB4NTwv-6">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2055" y="2311" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-47" value="ThresholdViolation - violationStatus=DISABLED" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-5" target="uAUwE83y9B-maQB4NTwv-6">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2055" y="2365" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-48" value="REST Notification: Grenzwert deaktiviert" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-5" target="uAUwE83y9B-maQB4NTwv-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1534" y="2419" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-49" value="BLE: Warnzustand zuruecksetzen (LED gruen)" style="verticalAlign=bottom;edgeStyle=elbowEdgeStyle;elbow=vertical;curved=0;rounded=0;endArrow=block;" edge="1" parent="1" source="uAUwE83y9B-maQB4NTwv-4" target="uAUwE83y9B-maQB4NTwv-3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1030" y="2473" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-50" value="Messwerte in RAM-Puffer aufnehmen" style="fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="1134" y="196" width="284" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-51" value="Nach 5-Minuten-Fenster: Durchschnitt berechnen" style="fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="1092" y="254" width="369" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-52" value="Noise-Filter: Zustand wechselt zu INTERMEDIATE" style="fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="1095" y="642" width="363" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-53" value="Grenzwert ueber konfigurierten Zeitraum kontinuierlich verletzt" style="fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="1043" y="744" width="466" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-54" value="Alert-Flooding-Schutz: kein erneuter Alert innerhalb 15 Minuten" style="fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="1533" y="1224" width="471" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="uAUwE83y9B-maQB4NTwv-55" value="Wenn Belegung &lt; 5: Backend setzt Flag, RPI speichert keine Daten persistent" style="fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+          <mxGeometry x="996" y="2513" width="561" height="48" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
