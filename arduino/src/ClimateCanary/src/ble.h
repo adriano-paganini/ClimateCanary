@@ -5,15 +5,20 @@
 #include "sensors.h"
 #include "buttons.h"
 
-extern BLEService arduinoTest;
-extern BLECharacteristic sensorDataCharacteristic;
+extern BLEService environmentalSensingService;
+extern BLECharacteristic sensorPacketCharacteristic;
 
-struct __attribute__((packed)) RelativePacket {
-  uint32_t ms_stamp; 
-  float s1, s2, s3, s4; 
+
+struct __attribute__((packed)) SensorPacket {
+  uint32_t timestamp;
+  float pressure;
+  float temperature;
+  float humidity;
+  uint32_t gasResistance;
 };
 
-void sendSensorData(SensorData data, uint32_t ms_stamp, BLECharacteristic& funcSensorDataCharacteristic);
+
+void sendSensorPacket(SensorData data, BLECharacteristic& funcSensorDataCharacteristic);
 
 inline void addCharacteristics(BLEService& service) {
   //needed for recursion
@@ -33,10 +38,11 @@ bool setupBLE(String deviceName, BLEService& service, Args&... characteristics) 
     return false;
   }
 
-  arduinoTest = service;
+  environmentalSensingService = service;
 
   BLE.setLocalName(deviceName.c_str());
   BLE.setAdvertisedService(service);
+  BLE.setManufacturerData((const uint8_t*)"00RDY", 5);
 
   addCharacteristics(service, characteristics...);
   

@@ -23,16 +23,14 @@ void printButtonScreen(ButtonState state){
     printScreen(1, line);
 }
 void printSensorScreen(SensorData data){
-    
     char line[17];
-      snprintf(line, sizeof(line),
-               "T%.0f H%.0f P%.0f G%.0f",
-               data.temperature,
-               data.humidity,
-               data.pressure / 100.0,
-               data.gas_resistance / 1000.0);
-
-      printScreen(0, String(line));
+    snprintf(line, sizeof(line),
+        "T%.0f H%.0f P%.0f G%.0f",
+        data.temperature,
+        data.humidity,
+        data.pressure / 100.0,
+        data.gas_resistance / 1000.0);
+        printScreen(0, String(line));
 };
 void clearScreen(){
     lcd.clear();
