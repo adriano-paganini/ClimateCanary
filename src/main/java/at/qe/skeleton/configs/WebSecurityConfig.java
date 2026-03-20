@@ -86,6 +86,9 @@ public class WebSecurityConfig {
                                                         .permitAll()
                                                         .requestMatchers("/swagger-ui/**")
                                                         .permitAll()
+                                                        
+                                                        //Systemdurchstich
+                                                        .requestMatchers("/api/gateway/**").permitAll()
 
                                                         .requestMatchers("/api/admin/**").hasAnyAuthority("ADMIN")
                                                         .requestMatchers("/api/**").authenticated()
