@@ -6,6 +6,10 @@ BLECharacteristic sensorPacketCharacteristic(
   BLERead | BLENotify,
   sizeof(SensorPacket)
 );
+BLEService ledColorService("f60518ee-c7e2-4bac-af6e-e501e4406a98");
+BLECharacteristic ledSetReadColor("ff9ff767-a7a2-46c7-bafc-5330fc8d9357", BLERead | BLEWrite, sizeof(RGBPacket));
+
+
 
 void sendSensorPacket(SensorData data, BLECharacteristic& funcSensorDataCharacteristic) {
   SensorPacket packet;

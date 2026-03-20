@@ -24,21 +24,41 @@ const unsigned int lightSpeed = 1;
 
 bool hasEverConnected = false;
 
-void bleTask() {
+static volatile bool bleClientConnected = false;
+
+
+void onBleConnected(BLEDevice central)
+{
+  String addr = central.address();
+  addr.toUpperCase();
+
+  Serial.print("Central connected: ");
+  Serial.println(addr);
+
+  if (!hasEverConnected) {
+    BLE.stopAdvertise();
+    BLE.setManufacturerData((const uint8_t*)"11LCK", 5);
+    BLE.advertise();
+    hasEverConnected = true;
+  }
+}
+
+void onBleDisconnected(BLEDevice central)
+{
+  bleClientConnected = false;
+}
+
+void bleTask()
+{
+  BLE.setEventHandler(BLEConnected, onBleConnected);
+  BLE.setEventHandler(BLEDisconnected, onBleDisconnected);
+
   uint32_t lastSend = 0;
 
   while (true) {
     BLE.poll();
 
-    BLEDevice central = BLE.central();
-
-    if (central.connected()) {
-      if (!hasEverConnected){
-        BLE.stopAdvertise();
-        BLE.setManufacturerData((const uint8_t*)"11LCK", 5);
-        BLE.advertise();
-        hasEverConnected = true;
-      }
+    if (bleClientConnected) {
       uint32_t now = millis();
 
       if (now - lastSend >= 1000) {
@@ -59,7 +79,7 @@ void setup() {
   Serial.begin(9600);
 
   if (!setupSensors()) while (1);
-  if (!setupBLE("G5T4CC", environmentalSensingService, sensorPacketCharacteristic))while (1);
+  if (!setupBLE("G5T4CC", environmentalSensingService, sensorPacketCharacteristic, ledSetReadColor))while (1);
   setupScreen();
   setupButtons();
   setupLight();
@@ -98,10 +118,5 @@ void loop() {
     Serial.print(data.gas_resistance);
     Serial.println(" ohms");
     printSensorScreen(data);
-  }
-
-  if (currentMillis - lastLightUpdate >= lightInterval) {
-    lastLightUpdate = currentMillis;
-    updateLight(lightSpeed);
   }
 }

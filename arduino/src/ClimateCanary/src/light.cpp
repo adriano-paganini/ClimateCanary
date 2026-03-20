@@ -17,7 +17,19 @@ bool setupLight(pin_size_t init_rPin, pin_size_t init_gPin, pin_size_t init_bPin
   pinMode(gPin, OUTPUT);
   pinMode(bPin, OUTPUT);
 
+  setColorRGB(0,255,0);
+
   return true;
+}
+
+void setColorRGB(int r, int g, int b){
+  if (r>255||g>255||b>255){
+    Serial.println("Value too high.");
+    return;
+  }
+  analogWrite(rPin,r);
+  analogWrite(gPin,g);
+  analogWrite(bPin,b);
 }
 
 void updateLight(int speed) {

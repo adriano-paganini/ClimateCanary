@@ -7,7 +7,8 @@
 
 extern BLEService environmentalSensingService;
 extern BLECharacteristic sensorPacketCharacteristic;
-
+extern BLEService ledColorService;
+extern BLECharacteristic ledSetReadColor;
 
 struct __attribute__((packed)) SensorPacket {
   uint32_t timestamp;
@@ -15,6 +16,12 @@ struct __attribute__((packed)) SensorPacket {
   float temperature;
   float humidity;
   uint32_t gasResistance;
+};
+
+struct __attribute__((packed))RGBPacket{
+  uint8_t r;
+  uint8_t g;
+  uint8_t b;
 };
 
 
