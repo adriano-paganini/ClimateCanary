@@ -27,6 +27,9 @@ struct __attribute__((packed))RGBPacket{
 
 void sendSensorPacket(SensorData data, BLECharacteristic& funcSensorDataCharacteristic);
 
+void sendLedSetReadColor(int r, int g, int b, BLECharacteristic& ledSetReadColorCharacteristic);
+
+
 inline void addCharacteristics(BLEService& service) {
   //needed for recursion
 }

@@ -21,3 +21,12 @@ void sendSensorPacket(SensorData data, BLECharacteristic& funcSensorDataCharacte
 
   funcSensorDataCharacteristic.writeValue((const uint8_t*)&packet, sizeof(packet));
 }
+
+void sendLedSetReadColor(int r, int g, int b, BLECharacteristic& ledSetReadColorCharacteristic){
+  RGBPacket packet;
+  packet.r=r;
+  packet.g=g;
+  packet.b=b;
+
+  ledSetReadColorCharacteristic.writeValue((const uint8_t*)&packet, sizeof(packet));
+}

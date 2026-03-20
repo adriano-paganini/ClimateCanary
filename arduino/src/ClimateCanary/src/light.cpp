@@ -1,4 +1,5 @@
 #include "light.h"
+#include "ble.h"
 
 int r = 255;
 int g = 0;
@@ -30,6 +31,8 @@ void setColorRGB(int r, int g, int b){
   analogWrite(rPin,r);
   analogWrite(gPin,g);
   analogWrite(bPin,b);
+
+  sendLedSetReadColor(r,g,b,ledSetReadColor);
 }
 
 void updateLight(int speed) {

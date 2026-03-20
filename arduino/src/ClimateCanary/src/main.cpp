@@ -43,6 +43,21 @@ void onBleConnected(BLEDevice central)
   }
 }
 
+void ledSetReadColorWritten(BLEDevice central, BLECharacteristic characteristic){
+
+  RGBPacket packet;
+
+  int n = characteristic.readValue((byte*)&packet, sizeof(packet));
+  if (!n){
+    Serial.println("Packet Malformed");
+  }
+  Serial.print(packet.r);
+  Serial.print(packet.g);
+  Serial.print(packet.b);
+
+  setColorRGB(packet.r, packet.g, packet.b);
+}
+
 void onBleDisconnected(BLEDevice central)
 {
   bleClientConnected = false;
@@ -52,6 +67,7 @@ void bleTask()
 {
   BLE.setEventHandler(BLEConnected, onBleConnected);
   BLE.setEventHandler(BLEDisconnected, onBleDisconnected);
+  ledSetReadColor.setEventHandler(BLEWritten, ledSetReadColorWritten);
 
   uint32_t lastSend = 0;
 
@@ -108,15 +124,6 @@ void loop() {
     dataMutex.lock();
     globalSensorData = data;
     dataMutex.unlock();
-    Serial.print("Temp: ");
-    Serial.print(data.temperature);
-    Serial.print(" °C, Humidity: ");
-    Serial.print(data.humidity);
-    Serial.print(" %, Pressure: ");
-    Serial.print(data.pressure);
-    Serial.print(" hPa, Gas Resistance: ");
-    Serial.print(data.gas_resistance);
-    Serial.println(" ohms");
     printSensorScreen(data);
   }
 }
