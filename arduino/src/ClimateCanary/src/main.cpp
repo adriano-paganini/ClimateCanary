@@ -29,10 +29,10 @@ static volatile bool bleClientConnected = false;
 
 void onBleConnected(BLEDevice central)
 {
+  bleClientConnected = true;
   String addr = central.address();
   addr.toUpperCase();
 
-  Serial.print("Central connected: ");
   Serial.println(addr);
 
   if (!hasEverConnected) {
@@ -51,16 +51,13 @@ void ledSetReadColorWritten(BLEDevice central, BLECharacteristic characteristic)
   if (!n){
     Serial.println("Packet Malformed");
   }
-  Serial.print(packet.r);
-  Serial.print(packet.g);
-  Serial.print(packet.b);
-
   setColorRGB(packet.r, packet.g, packet.b);
 }
 
 void onBleDisconnected(BLEDevice central)
 {
   bleClientConnected = false;
+  Serial.println("Disconnected from host");
 }
 
 void bleTask()

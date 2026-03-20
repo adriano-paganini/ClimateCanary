@@ -50,6 +50,8 @@ bool setupBLE(String deviceName, BLEService& service, Args&... characteristics) 
 
   environmentalSensingService = service;
 
+
+  BLE.setDeviceName(deviceName.c_str());
   BLE.setLocalName(deviceName.c_str());
   BLE.setAdvertisedService(service);
   BLE.setManufacturerData((const uint8_t*)"00RDY", 5);
