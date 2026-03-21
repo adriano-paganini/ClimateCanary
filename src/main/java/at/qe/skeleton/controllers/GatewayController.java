@@ -4,6 +4,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import at.qe.skeleton.services.GatewayService;
 import org.springframework.web.bind.annotation.GetMapping;
 
+/*
+Endpoint for Systemdurchstich to test the connectivity to the 
+webserver on the raspberry. Here, raspberry is server, backend is client */
 @RestController
 @RequestMapping("/api/gateway")
 public class GatewayController {
