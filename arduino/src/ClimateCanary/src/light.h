@@ -2,9 +2,10 @@
 #define LIGHT_H
 
 #include <Arduino.h>
+#include "buttons.h"
 
 bool setupLight(pin_size_t init_rPin=A0, pin_size_t init_gPin=A6, pin_size_t init_bPin=A7);
-void updateLight(int speed);
 void setColorRGB(int r, int g, int b);
+void updateLightWithButtonState(ButtonState state);
 
 #endif

@@ -109,7 +109,7 @@ void loop() {
     lastButtonUpdate = currentMillis;
 
     ButtonState state = updateButtons();
-
+    updateLightWithButtonState(state);
     printButtonScreen(state);
   }
 

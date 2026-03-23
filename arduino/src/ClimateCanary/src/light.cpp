@@ -1,7 +1,7 @@
 #include "light.h"
 #include "ble.h"
 
-int r = 255;
+int r = 0;
 int g = 0;
 int b = 0;
 
@@ -23,11 +23,14 @@ bool setupLight(pin_size_t init_rPin, pin_size_t init_gPin, pin_size_t init_bPin
   return true;
 }
 
-void setColorRGB(int r, int g, int b){
-  if (r>255||g>255||b>255){
+void setColorRGB(int red, int green, int blue){
+  if (red>255||green>255||blue>255){
     Serial.println("Value too high.");
     return;
   }
+  r=red;
+  g=green;
+  b=blue;
   analogWrite(rPin,r);
   analogWrite(gPin,g);
   analogWrite(bPin,b);
@@ -35,18 +38,8 @@ void setColorRGB(int r, int g, int b){
   sendLedSetReadColor(r,g,b,ledSetReadColor);
 }
 
-void updateLight(int speed) {
 
-  analogWrite(rPin, r);
-  analogWrite(gPin, g);
-  analogWrite(bPin, b);
-  
-  for(int i= 0; i < speed; i++){
-    if (r == 255 && g < 255 && b == 0) g++;
-    else if (g == 255 && r > 0 && b == 0) r--;
-    else if (g == 255 && b < 255 && r == 0) b++;
-    else if (b == 255 && g > 0 && r == 0) g--;
-    else if (b == 255 && r < 255 && g == 0) r++;
-    else if (r == 255 && b > 0 && g == 0) b--;
-  }
+void updateLightWithButtonState(ButtonState state){
+  if (r <255)setColorRGB(state.v1*254, state.v2*254, state.v3*254);
+  if (r == 0 && g == 0 && b== 0)setColorRGB(0,255,0);
 }
