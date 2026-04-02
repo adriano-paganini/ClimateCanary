@@ -12,7 +12,7 @@ LED_COLOUR_UUID = "ff9ff767-a7a2-46c7-bafc-5330fc8d9357"
 COMMAND_UUID    = "0000181a-0000-1000-8000-00805f9b34fb" 
 
 # Struct: Long, float, float, float, Long
-# Corresponds to: timestamp, pressure, temperature, humidity, gasResistance
+# timestamp, pressure, temperature, humidity, gasResistance
 SENSOR_STRUCT = "<LfffL" 
 
 async def send_to_api(payload):
@@ -49,7 +49,6 @@ async def main():
                 
                 if temp > 30.0:
                     print("ALERT: High Temp! Setting LED Red...")
-                    # RGBPacket: 3 bytes
                     await client.write_gatt_char(LED_COLOUR_UUID, bytearray([255, 0, 0]))
                 else:
                     print("Temp OK. Setting LED Green...")
