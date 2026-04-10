@@ -6,8 +6,18 @@ BLECharacteristic sensorPacketCharacteristic(
   BLERead | BLENotify,
   sizeof(SensorPacket)
 );
-BLEService ledColorService("f60518ee-c7e2-4bac-af6e-e501e4406a98");
-BLECharacteristic ledSetReadColor("ff9ff767-a7a2-46c7-bafc-5330fc8d9357", BLERead | BLEWrite, sizeof(RGBPacket));
+BLECharacteristic sensorPacketStatusCharacteristic(
+  "ff9ff767-a7a2-46c7-bafc-5330fc8d9357",
+  BLERead | BLEWrite,
+  sizeof(SensorPacketStatus)
+);
+
+BLEService setupService("9405d1c7-af44-4a64-b339-8b04d5565014");
+BLECharacteristic setupCharacteristic(
+  "df2bd1ae-56f7-42bd-960a-1b9163fc2f12",
+  BLEWrite,
+  sizeof(SetupConfig)
+);
 
 
 
@@ -20,13 +30,4 @@ void sendSensorPacket(SensorData data, BLECharacteristic& funcSensorDataCharacte
   packet.gasResistance = data.gas_resistance;
 
   funcSensorDataCharacteristic.writeValue((const uint8_t*)&packet, sizeof(packet));
-}
-
-void sendLedSetReadColor(int r, int g, int b, BLECharacteristic& ledSetReadColorCharacteristic){
-  RGBPacket packet;
-  packet.r=r;
-  packet.g=g;
-  packet.b=b;
-
-  ledSetReadColorCharacteristic.writeValue((const uint8_t*)&packet, sizeof(packet));
 }

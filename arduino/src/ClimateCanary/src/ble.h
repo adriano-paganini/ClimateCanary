@@ -7,8 +7,11 @@
 
 extern BLEService environmentalSensingService;
 extern BLECharacteristic sensorPacketCharacteristic;
-extern BLEService ledColorService;
-extern BLECharacteristic ledSetReadColor;
+extern BLECharacteristic sensorPacketStatusCharacteristic;
+
+extern BLEService setupService;
+extern BLECharacteristic setupCharacteristic;
+
 
 struct __attribute__((packed)) SensorPacket {
   uint32_t timestamp;
@@ -18,21 +21,24 @@ struct __attribute__((packed)) SensorPacket {
   uint32_t gasResistance;
 };
 
-struct __attribute__((packed))RGBPacket{
-  uint8_t r;
-  uint8_t g;
-  uint8_t b;
+struct __attribute__((packed)) SensorPacketStatus{
+  uint32_t timestamp;
+  uint16_t statusCode;
 };
 
-
-void sendSensorPacket(SensorData data, BLECharacteristic& funcSensorDataCharacteristic);
-
-void sendLedSetReadColor(int r, int g, int b, BLECharacteristic& ledSetReadColorCharacteristic);
+//This limits the measurement granularity SIGNIFICANTLY, but can always be changed.
+// It is just to not to write too much data to the arduino
+struct __attribute__((packed)) SetupConfig{
+  uint8_t measurementInterval;
+  uint32_t id;
+};
 
 
 inline void addCharacteristics(BLEService& service) {
   //needed for recursion
 }
+
+void sendSensorPacket(SensorData data, BLECharacteristic& funcSensorDataCharacteristic);
 
 
 template <typename T, typename... Args>
@@ -42,7 +48,7 @@ void addCharacteristics(BLEService& service, T& firstChar, Args&... remainingCha
 }
 
 template <typename... Args>
-bool setupBLE(String deviceName, BLEService& service, Args&... characteristics) {
+bool setupBLE(String deviceName,String manufacturerData, BLEService& service, Args&... characteristics) {
   if (!BLE.begin()) {
     Serial.println("Starting BLE failed!");
     return false;
@@ -50,11 +56,10 @@ bool setupBLE(String deviceName, BLEService& service, Args&... characteristics) 
 
   environmentalSensingService = service;
 
-
   BLE.setDeviceName(deviceName.c_str());
   BLE.setLocalName(deviceName.c_str());
   BLE.setAdvertisedService(service);
-  BLE.setManufacturerData((const uint8_t*)"00RDY", 5);
+  BLE.setManufacturerData((const uint8_t*)manufacturerData.c_str(), manufacturerData.length());
 
   addCharacteristics(service, characteristics...);
   

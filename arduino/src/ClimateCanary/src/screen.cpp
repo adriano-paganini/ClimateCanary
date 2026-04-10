@@ -2,12 +2,30 @@
 
 rgb_lcd lcd;
 
-boolean setupScreen() {
+void setupScreen() {
   lcd.begin(16, 2);
   printScreen(0, "Climare Canary");
   printScreen(1, "Initializing...");
-  return true;
 }
+
+void rendersString(String smoothString, int smoothIndex){
+  String scroll = smoothString + "    " + smoothString + "    ";
+  int len = scroll.length();
+
+  String doubled = scroll + scroll;
+  printScreen(1, doubled.substring(smoothIndex, smoothIndex + 16));
+}
+
+void waitForNewConnection(String smoothString, int smoothIndex){
+    printScreen(0,"ADVERTISING AS: ");
+    rendersString(smoothString, smoothIndex);
+}
+
+void waitForKnownConnection(String smoothString, int smoothIndex){
+    printScreen(0,"  DISCONNECTED ");
+    rendersString(smoothString, smoothIndex);
+}
+
 void printScreen(int line, String text){
     lcd.setCursor(0, line);
     lcd.print("                ");

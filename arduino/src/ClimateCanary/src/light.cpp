@@ -17,9 +17,6 @@ bool setupLight(pin_size_t init_rPin, pin_size_t init_gPin, pin_size_t init_bPin
   pinMode(rPin, OUTPUT);
   pinMode(gPin, OUTPUT);
   pinMode(bPin, OUTPUT);
-
-  setColorRGB(0,255,0);
-
   return true;
 }
 
@@ -34,12 +31,4 @@ void setColorRGB(int red, int green, int blue){
   analogWrite(rPin,r);
   analogWrite(gPin,g);
   analogWrite(bPin,b);
-
-  sendLedSetReadColor(r,g,b,ledSetReadColor);
-}
-
-
-void updateLightWithButtonState(ButtonState state){
-  if (r <255)setColorRGB(state.v1*254, state.v2*254, state.v3*254);
-  if (r == 0 && g == 0 && b== 0)setColorRGB(0,255,0);
 }

@@ -11,5 +11,5 @@ struct ButtonState {
 
 bool setupButtons(pin_size_t button1Pin=D2, pin_size_t button2Pin=D3, pin_size_t button3Pin=D10);
 ButtonState updateButtons();
-
+int checkButtonActivation(ButtonState previousState, ButtonState currentState);
 #endif

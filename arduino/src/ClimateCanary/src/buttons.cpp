@@ -15,3 +15,15 @@ ButtonState updateButtons(){
     state.v3 = !digitalRead(D10);
     return state;
 }
+
+int checkButtonActivation(ButtonState previousState, ButtonState currentState){
+    int activatedButtons = 0;
+    if (currentState.v1 && !previousState.v1){
+      activatedButtons += 1;
+    }if (currentState.v2 && !previousState.v2){
+      activatedButtons += 2;
+    }if (currentState.v3 && !previousState.v3){
+      activatedButtons += 4;
+    }
+    return activatedButtons;
+}
