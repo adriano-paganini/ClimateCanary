@@ -8,11 +8,17 @@
 #include <rgb_lcd.h>
 extern rgb_lcd lcd; 
 
+struct RelevantDisplayData{
+    SensorData sensorData;
+    String smoothString;
+    bool altView;
+};
+
 void setupScreen();
 void printScreen(int line, String text);
 void printButtonScreen(ButtonState state);
 void printSensorScreen(SensorData data);
 void clearScreen();
-void waitForNewConnection( String smoothString, int smoothIndex);
-void waitForKnownConnection( String smoothString, int smoothIndex);
+void waitForNewConnection(int smoothIndex,RelevantDisplayData data);
+void waitForKnownConnection(int smoothIndex, RelevantDisplayData);
 #endif

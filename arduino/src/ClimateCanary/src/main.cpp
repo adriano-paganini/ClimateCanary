@@ -33,7 +33,8 @@ unsigned long lastScreenUpdate = 0;
 const unsigned long screenInterval = 500;
 String smoothString = "";
 int smoothIndex = 0;
-void (*screenUpdateFunction)(String smoothString, int smoothIndex) = nullptr;
+bool altView = false;
+void (*screenUpdateFunction)(int smoothIndex, RelevantDisplayData data) = nullptr;
 
 
 bool bleClientConnected = false;
@@ -288,9 +289,8 @@ void loop() {
     ButtonState currentButtonState = updateButtons();
     int activatedButtons = checkButtonActivation(previousButtonState, currentButtonState);
     previousButtonState = currentButtonState;
-    if (activatedButtons){
-       Serial.print("Activated Buttons: ");
-      Serial.println(activatedButtons);
+    if (activatedButtons&1){
+      altView = !altView;
       }
     }
   // get up-to-date sensor data in a given sensorInterval
@@ -302,8 +302,16 @@ void loop() {
     dataMutex.unlock();
   }
   if (screenUpdateFunction && currentMillis - lastScreenUpdate >= screenInterval) {
+    RelevantDisplayData displayData;
+    dataMutex.lock();
+    displayData.sensorData = globalSensorData;
+    dataMutex.unlock();
+    displayData.smoothString = smoothString;
+    displayData.altView = altView;
+    
     lastScreenUpdate = currentMillis;
-    screenUpdateFunction(smoothString, smoothIndex);
+    
+    screenUpdateFunction(smoothIndex,displayData);
     smoothIndex++;
     if (smoothIndex > smoothString.length()*2+8){
       smoothIndex = 0;
