@@ -30,6 +30,7 @@ public class Department {
     public void setName(String name) { this.name = name; }
 
     public List<Room> getRooms() { return rooms; }
+    public void setRooms(List<Room> rooms) { this.rooms = rooms; }
 
     @Override
     public boolean equals(Object o) {
