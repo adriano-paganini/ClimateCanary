@@ -11,8 +11,11 @@ import org.springframework.security.core.GrantedAuthority;
 */
 @Schema(description = "Enumeration of available user roles.", enumAsRef = true)
 public enum UserxRole implements GrantedAuthority {
+
     ADMIN,
-    MANAGER,
+    BUILDING_ADMIN,
+    DEPARTMENT_LEAD,
+    MANAGEMENT,
     EMPLOYEE;
 
     @Override
