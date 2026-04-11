@@ -2,23 +2,46 @@
 
 BLEService environmentalSensingService("0x181A");
 BLECharacteristic sensorPacketCharacteristic(
-  "12345678-1234-5678-1234-56789abcdef2",
+  "4b8eba77-2581-4c5c-8a61-deb186a46179",
   BLERead | BLENotify,
   sizeof(SensorPacket)
 );
 BLECharacteristic sensorPacketStatusCharacteristic(
-  "ff9ff767-a7a2-46c7-bafc-5330fc8d9357",
+  "3f7346be-e224-45d7-91d2-71047d229b0a",
   BLERead | BLEWrite,
   sizeof(SensorPacketStatus)
 );
 
 BLEService setupService("9405d1c7-af44-4a64-b339-8b04d5565014");
 BLECharacteristic setupCharacteristic(
-  "df2bd1ae-56f7-42bd-960a-1b9163fc2f12",
+  "b7c5b6c6-820c-47eb-a641-b64cde06e6ac",
   BLEWrite,
   sizeof(SetupConfig)
 );
 
+BLECharacteristic authenticationCharacteristic(
+  "bda7eaf2-24ff-4f28-af24-8293a69561ca",
+  BLEWrite,
+  sizeof(AuthentificationPacket)
+);
+
+BLECharacteristic warningMessageTotalLength(
+  "c7e9187b-173a-4a56-bdd7-cc890f2b1366",
+  BLEWrite|BLERead,
+  sizeof(uint16_t)
+);
+
+BLECharacteristic warningMessageCharPack(
+  "a41f4b38-61c5-4528-84b2-9283bd185619",
+  BLERead|BLEWrite,
+  sizeof(WarningMessageCharPack)
+);
+
+BLECharacteristic warningMessageAck(
+  "",
+  BLERead|BLENotify,
+  sizeof(uint16_t)
+);
 
 
 void sendSensorPacket(SensorData data, BLECharacteristic& funcSensorDataCharacteristic) {

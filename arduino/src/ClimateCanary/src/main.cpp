@@ -31,9 +31,6 @@ bool lightOn = false;
 //update the screen every 0.1s, but with a specific update function
 unsigned long lastScreenUpdate = 0;
 const unsigned long screenInterval = 500;
-String smoothString = "";
-int smoothIndex = 0;
-bool altView = false;
 void (*screenUpdateFunction)(int smoothIndex, RelevantDisplayData data) = nullptr;
 
 
@@ -43,13 +40,45 @@ bool bleClientAuthenticated = false;
 const char* const ID_KEY = "ID";
 const char* const INTERVAL_KEY = "INTERVAL";
 
+uint16_t activeWarningCode=0;
+
 ButtonState previousButtonState = {0,0,0};
 
+String currentState = "STARTUP";
+bool stateChanged = false;
+String roomName = "";
+String smoothString = "";
+int smoothIndex = 0;
+bool altView = false;
+uint16_t statusCode = 0;
+
+std::vector<std::string> currentWarningMessages;
+
+
+void beginMessageTransfer(){
+  uint16_t totalWarningLength;
+  int warnLen =  warningMessageTotalLength.readValue(&totalWarningLength,sizeof(totalWarningLength));
+  if (warnLen == sizeof(totalWarningLength)){
+    Serial.println(totalWarningLength);
+    if (totalWarningLength != 0){
+      for (uint16_t i = 0; i< totalWarningLength; i++){
+        //TODO: implement Logic to save allstrings - SEPERATED BY \0 - into the global String-repository.
+      }
+    }
+  }else{
+    Serial.println("Message Transfer Failed, retrying at next iteration.");
+  }
+}
 
 void evaluateMeasurementStatus(BLEDevice central, BLECharacteristic characteristic){
+  //if the client is not authenticated, disconnect them immediately
   if (!bleClientAuthenticated){
     central.disconnect();
     Serial.println("Unauthenticated client tried to write measurement status. Disconnecting...");
+
+    currentState = "WAITING_FOR_KNOWN_CONNECTION";
+    stateChanged = true;
+
     return;
   }
   SensorPacketStatus packet;
@@ -57,14 +86,16 @@ void evaluateMeasurementStatus(BLEDevice central, BLECharacteristic characterist
   if (!n){
     Serial.println("Packet Malformed");
   }
-  //Process the packet and it's codes (0 - good, 1 - low, 2 - high)
+  //Process the packet and it's codes (0 - good, 1 - low, 2 - high, 3 - active warning, 4 - acknowledged warning)
   uint32_t timestamp = packet.timestamp;
-  uint16_t statusCode = packet.statusCode;
+  statusCode = packet.statusCode;
+  Serial.println("Received new measurement status: ");
+  Serial.println(statusCode, BIN);
   short pressureStatus = statusCode & 0x000F;
   short temperatureStatus = (statusCode & 0x00F0) >> 4;
   short humidityStatus = (statusCode & 0x0F00) >> 8;
   short gasResistanceStatus = (statusCode & 0xF000) >> 12;
-  if (pressureStatus > 2 || temperatureStatus > 2 || humidityStatus > 2 || gasResistanceStatus > 2){
+  if (pressureStatus > 4 || temperatureStatus > 4 || humidityStatus > 4 || gasResistanceStatus > 4){
     Serial.println("Invalid status code received.");
     return;
   }else if (timestamp>millis()){
@@ -72,19 +103,22 @@ void evaluateMeasurementStatus(BLEDevice central, BLECharacteristic characterist
     return;
   }
   //STATE-LOGIC
+  if ((pressureStatus > 0 && pressureStatus < 3) || (temperatureStatus > 0 && temperatureStatus < 3) 
+    || (humidityStatus > 0 && humidityStatus < 3) || (gasResistanceStatus > 0 && gasResistanceStatus < 3)){
+      currentState = "CONNECTED_SOME_SHORT_INVALID_DATA";
+      stateChanged = true;
+  }if (pressureStatus == 3 || temperatureStatus == 3 || humidityStatus == 3 || gasResistanceStatus == 3){
+    if (statusCode != activeWarningCode){
+      activeWarningCode=statusCode;
+      beginMessageTransfer();
+    }
+  }else{
+    currentState = "CONNECTED_ALL_VALID_DATA";
+    stateChanged = true;
+  }
 
 
-  //OPT
-  Serial.print("Measurement Status at ");
-  Serial.print(timestamp);
-  Serial.print(": Pressure - ");
-  Serial.print(pressureStatus);
-  Serial.print(", Temperature - ");
-  Serial.print(temperatureStatus);
-  Serial.print(", Humidity - ");
-  Serial.print(humidityStatus);
-  Serial.print(", Gas Resistance - ");
-  Serial.println(gasResistanceStatus);
+
 }
 
 void onSetupConfigWritten(BLEDevice central, BLECharacteristic characteristic){
@@ -112,15 +146,9 @@ void onSetupConfigWritten(BLEDevice central, BLECharacteristic characteristic){
 }
 
 void bleFirstSetup(){
-  smoothString = BLE.address()+"         ";
-  screenUpdateFunction = &waitForNewConnection;
+  currentState = "WAITING_FOR_NEW_CONNECTION";
+  stateChanged = true;
 
-  //quick orange blinking - 125ms on, 125ms off, r=255, g=30, b=0
-  lightOnMs = 125;
-  lightOffMs = 125;
-  lightR = 255;
-  lightG = 30;
-  lightB = 0;
   setupCharacteristic.setEventHandler(BLEWritten, onSetupConfigWritten);
 
   while(true){
@@ -130,6 +158,10 @@ void bleFirstSetup(){
 }
 
 void onBleConnected(BLEDevice central) {
+
+  currentState = "WAITING_FOR_AUTHENTICATION";
+  stateChanged = true;
+
 
   kv_info_t idInfo;
   kv_info_t intervalInfo;
@@ -156,18 +188,22 @@ void onBleConnected(BLEDevice central) {
 void onBleDisconnected(BLEDevice central) {
   bleClientConnected = false;
   bleClientAuthenticated = false;
+
+  currentState = "WAITING_FOR_KNOWN_CONNECTION";
+  stateChanged = true;
+
   BLE.advertise();
 }
 
-void onSetupConfigWrittenAuth(BLEDevice central, BLECharacteristic characteristic){
+void onAuthenticationPacketWritten(BLEDevice central, BLECharacteristic characteristic){
   //extract id from packet and compare with stored id
-  SetupConfig config;
-  int n = characteristic.readValue((byte*)&config, sizeof(config));
+  AuthentificationPacket packet;
+  int n = characteristic.readValue((byte*)&packet, sizeof(packet));
   if (!n){
     Serial.println("Packet Malformed");
     return;
   }
-  uint32_t id = config.id;
+  uint32_t id = packet.id;
   kv_info_t idInfo;
   int idResult = kv_get_info(ID_KEY, &idInfo);
   if (idResult != MBED_SUCCESS || idInfo.size != sizeof(id)){
@@ -187,23 +223,24 @@ void onSetupConfigWrittenAuth(BLEDevice central, BLECharacteristic characteristi
   else{
     bleClientAuthenticated = true;
     Serial.println("Client authenticated successfully.");
+    roomName = String(packet.roomName).substring(0, packet.roomNameLen);
+    Serial.print("Room Name: ");
+    Serial.println(roomName);
+
+    currentState = "CONNECTED_ALL_VALID_DATA";
+    stateChanged = true;
   }
 }
 
 void bleTask()
 {
-  smoothString = "Waiting for known connection...";
-  screenUpdateFunction = &waitForKnownConnection;
-  //slower yellow blinking - 125ms on, 125ms off, r=255, g=80, b=0
-  lightOnMs = 500;
-  lightOffMs = 500;
-  lightR = 255;
-  lightG = 80;
-  lightB = 0;
+  currentState = "WAITING_FOR_KNOWN_CONNECTION";
+  stateChanged = true;
+
   BLE.setEventHandler(BLEConnected, onBleConnected);
   BLE.setEventHandler(BLEDisconnected,onBleDisconnected);
   sensorPacketStatusCharacteristic.setEventHandler(BLEWritten, evaluateMeasurementStatus);
-  setupCharacteristic.setEventHandler(BLEWritten, onSetupConfigWrittenAuth);
+  authenticationCharacteristic.setEventHandler(BLEWritten, onAuthenticationPacketWritten);
 
   uint32_t lastSend = 0;
 
@@ -225,6 +262,57 @@ void bleTask()
   }
 }
 
+void setStateData(){
+  if (currentState == "WAITING_FOR_KNOWN_CONNECTION"){
+      smoothString = "Waiting for known connection...";
+      screenUpdateFunction = &waitForKnownConnection;
+      //slower yellow blinking - 500ms on, 500ms off, r=255, g=80, b=0
+      lightOnMs = 500;
+      lightOffMs = 500;
+      lightR = 255;
+      lightG = 80;
+      lightB = 0;
+  }else if (currentState == "WAITING_FOR_AUTHENTICATION"){
+      smoothString = "Waiting for authentication...";
+      screenUpdateFunction = &waitForAuthenticatedConnection;
+      // very quick green blinking - 25ms on 75 ms off, r=0, g=255, b=0
+      lightOnMs = 25;
+      lightOffMs = 75;
+      lightR = 0;
+      lightG = 255;
+      lightB = 0;
+  }else if (currentState == "WAITING_FOR_NEW_CONNECTION"){
+      smoothString = BLE.address();
+      screenUpdateFunction = &waitForNewConnection;
+      //quick orange blinking - 125ms on, 125ms off, r=255, g=30, b=0
+      lightOnMs = 125;
+      lightOffMs = 125;
+      lightR = 255;
+      lightG = 30;
+      lightB = 0;
+    }else if (currentState == "CONNECTED_ALL_VALID_DATA"){
+      smoothString = roomName;
+      screenUpdateFunction = &connectedAllValidData;
+      //light on constantly with a soft green color - r=0, g=255, b=0
+      lightOnMs = 1;
+      lightOffMs = 0;
+      lightR = 0;
+      lightG = 255;
+      lightB = 0;
+      lightOn = false; //force update of light in next loop
+    }else if (currentState == "CONNECTED_SOME_SHORT_INVALID_DATA"){
+      smoothString = roomName;
+      screenUpdateFunction = &connectedSomeShortInvalidData;
+      //light on constantly with a orange color - r=255, g=30, b=0
+      lightOnMs = 1;
+      lightOffMs = 0;
+      lightR = 255;
+      lightG = 30;
+      lightB = 0;
+      lightOn = false; //force update of light in next loop
+    }
+}
+
 void setup() {
   if (!setupSensors()) while (1);
   setupScreen();
@@ -232,6 +320,7 @@ void setup() {
   setupLight();
   setColorRGB(lightR, lightG, lightB);
   Serial.begin(9600);
+  //TODO: remove while(!Serial); for final product
   while(!Serial);
   kv_info_t idInfo;
   kv_info_t intervalInfo;
@@ -248,7 +337,13 @@ void setup() {
         bleThread.start(bleFirstSetup);
     }else{
       Serial.println("Keys exist and have expected sizes. Continuing with normal execution...");
-        if (!setupBLE("G5T4CC","11LCK", environmentalSensingService, sensorPacketCharacteristic, sensorPacketStatusCharacteristic,setupCharacteristic))while (1);
+        if (!setupBLE("G5T4CC","11LCK", environmentalSensingService,
+              sensorPacketCharacteristic,
+              sensorPacketStatusCharacteristic,
+              authenticationCharacteristic,
+              warningMessageTotalLength,
+              warningMessageCharPack,
+              warningMessageAck))while (1);
         bleThread.start(bleTask);
     }
   }else{
@@ -258,10 +353,7 @@ void setup() {
   }
 }
 
-//TODO: Create characteristic for config of arduino;
-
 void loop() {
-
   unsigned long currentMillis = millis();
 
   if (lightOnMs==1 && lightOffMs == 0){
@@ -292,7 +384,12 @@ void loop() {
     if (activatedButtons&1){
       altView = !altView;
       }
+    if (activatedButtons&2){
+      //delete complete kv store
+      //TODO: remove kv_reset("/kv/") line for final/when implementing next/previous for warning messages.
+      kv_reset("/kv/");
     }
+  }
   // get up-to-date sensor data in a given sensorInterval
   if (currentMillis - lastSensorUpdate >= sensorInterval) {
     lastSensorUpdate = currentMillis;
@@ -301,16 +398,22 @@ void loop() {
     globalSensorData = data;
     dataMutex.unlock();
   }
-  if (screenUpdateFunction && currentMillis - lastScreenUpdate >= screenInterval) {
+  if (currentMillis - lastScreenUpdate >= screenInterval) {
+    lastScreenUpdate = currentMillis;
+
+    if (stateChanged){
+      setStateData();
+      stateChanged = false;
+    }
+
     RelevantDisplayData displayData;
     dataMutex.lock();
     displayData.sensorData = globalSensorData;
     dataMutex.unlock();
     displayData.smoothString = smoothString;
     displayData.altView = altView;
-    
-    lastScreenUpdate = currentMillis;
-    
+    displayData.statusCode = statusCode;
+        
     screenUpdateFunction(smoothIndex,displayData);
     smoothIndex++;
     if (smoothIndex > smoothString.length()*2+8){

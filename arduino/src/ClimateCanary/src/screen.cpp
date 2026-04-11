@@ -8,12 +8,10 @@ void setupScreen() {
   printScreen(1, "Initializing...");
 }
 
-void rendersString(int smoothIndex, String smoothString){
+void rendersString(int smoothIndex, String smoothString, int line = 1){
   String scroll = smoothString + "    " + smoothString + "    ";
-  int len = scroll.length();
-
   String doubled = scroll + scroll;
-  printScreen(1, doubled.substring(smoothIndex, smoothIndex + 16));
+  printScreen(line, doubled.substring(smoothIndex, smoothIndex + 16));
 }
 
 void prettySensorScreen(int smoothIndex, SensorData data){
@@ -54,12 +52,148 @@ void prettySensorScreen(int smoothIndex, SensorData data){
     printScreen(1, String(line2));
 }
 
+void prettySensorScreenOneLine(int smoothIndex, SensorData data, int line){
+    char line2[17];
+
+    float tempC = data.temperature;
+    float pressurehPa = data.pressure / 100.0;
+    float humidityPct = data.humidity;
+    float gasKOhm = data.gas_resistance / 1000.0;
+
+    const int displayStep = 8;
+    int screen = (smoothIndex / displayStep) % 4;
+
+    switch (screen) {
+    case 0:
+        snprintf(line2, sizeof(line2), "Temperature: %.0fC", tempC);
+        break;
+
+    case 1:
+        snprintf(line2, sizeof(line2), "Press: %.0f hPa", pressurehPa);
+        break;
+
+    case 2:
+        snprintf(line2, sizeof(line2), "Humidity: %.0f%%", humidityPct);
+        break;
+
+    case 3:
+        snprintf(line2, sizeof(line2), "Gas: %.0f kOhm", gasKOhm);
+        break;
+    }
+    printScreen(line, String(line2));
+}
+
+void prettySensorScreenOneLineActiveWarning(int smoothIndex, RelevantDisplayData data, int line){
+    char line2[17];
+
+    float tempC = data.sensorData.temperature;
+    float pressurehPa = data.sensorData.pressure / 100.0;
+    float humidityPct = data.sensorData.humidity;
+    float gasKOhm = data.sensorData.gas_resistance / 1000.0;
+    uint16_t statusCode = data.statusCode;
+    const int displayStep = 8;
+    int screen = (smoothIndex / displayStep) % 4;
+
+    switch (screen) {
+    case 0:
+        if ((statusCode & 0x00F0)){
+            snprintf(line2, sizeof(line2), "TEMPERATURE: %.0fC", tempC);
+        }else{
+            snprintf(line2, sizeof(line2), "Temperature: %.0fC", tempC);
+        }
+    break;
+
+    case 1:
+        if ((statusCode & 0x000F)){
+            snprintf(line2, sizeof(line2), "PRESS: %.0f hPa", pressurehPa);
+        }else{
+            snprintf(line2, sizeof(line2), "Press: %.0f hPa", pressurehPa);
+        }
+        break;
+        
+    case 2:
+        if ((statusCode & 0x0F00)){
+            snprintf(line2, sizeof(line2), "HUMIDITY: %.0f%%", humidityPct);
+        }else{
+            snprintf(line2, sizeof(line2), "Humidity: %.0f%%", humidityPct);
+        }
+        break;
+    case 3:
+        if ((statusCode & 0xF000)){
+            snprintf(line2, sizeof(line2), "GAS: %.0f kOhm", gasKOhm);
+        }else{
+            snprintf(line2, sizeof(line2), "Gas: %.0f kOhm", gasKOhm);
+        }
+        break;
+    }
+    printScreen(line, String(line2));
+}
+
+void displayActiveWarnings(int smoothIndex, RelevantDisplayData data, int line){
+    char line2[17];
+    std::vector<String> activeWarnings;
+
+    uint16_t statusCode = data.statusCode;
+    const int displayStep = 8;
+
+    uint8_t pressure =(statusCode & 0x000F);
+    uint8_t temp =(statusCode & 0x00F0) >> 4;
+    uint8_t humidity =(statusCode & 0x0F00) >> 8;
+    uint8_t gas =(statusCode & 0xF000) >> 12;
+
+    if (temp) {
+        activeWarnings.push_back(String("TEMPERATURE ") + (temp == 2 ? "HIGH" : "LOW"));
+    }
+    if (pressure) {
+        activeWarnings.push_back(String("PRESSURE ") + (pressure == 2 ? "HIGH" : "LOW"));
+    }
+    if (humidity) {
+        activeWarnings.push_back(String("HUMIDITY ") + (humidity == 2 ? "HIGH" : "LOW"));
+    }
+    if (gas) {
+        activeWarnings.push_back(String("GAS ") + (gas == 2 ? "HIGH" : "LOW"));
+    }
+
+    int screen = (smoothIndex / displayStep) % activeWarnings.size();
+    snprintf(line2, sizeof(line2), "%s", activeWarnings[screen].c_str());
+    printScreen(line, String(line2));
+}
+
+void connectedAllValidData(int smoothIndex, RelevantDisplayData data){
+    if (data.altView){
+        printScreen(0, "   NO ACTIVE");
+        printScreen(1, "   WARNINGS!");
+    }else{
+        rendersString(smoothIndex, data.smoothString, 0);
+        prettySensorScreenOneLine(smoothIndex, data.sensorData, 1);
+    }
+}
+
+void connectedSomeShortInvalidData(int smoothIndex, RelevantDisplayData data){
+    if (data.altView){
+        printScreen(0, "ACTIVE WARNINGS!");
+        displayActiveWarnings(smoothIndex, data, 1);
+    }else{
+        rendersString(smoothIndex, data.smoothString, 0);
+        prettySensorScreenOneLineActiveWarning(smoothIndex, data, 1);
+    }
+}
+
 void waitForKnownConnection(int smoothIndex, RelevantDisplayData data){
     if (data.altView){
         prettySensorScreen(smoothIndex, data.sensorData);
     }else{
         printScreen(0,"  DISCONNECTED ");
-        rendersString(smoothIndex, data.smoothString);
+        rendersString(smoothIndex, data.smoothString, 1);
+    }
+}
+
+void waitForAuthenticatedConnection(int smoothIndex, RelevantDisplayData data){
+    if (data.altView){
+        prettySensorScreen(smoothIndex, data.sensorData);
+    }else{
+        printScreen(0,"   CONNECTED ");
+        rendersString(smoothIndex, data.smoothString, 1);
     }
 }
 
@@ -68,7 +202,7 @@ void waitForNewConnection(int smoothIndex, RelevantDisplayData data){
         prettySensorScreen(smoothIndex, data.sensorData);
     }else{
         printScreen(0,"ADVERTISING AS: ");
-        rendersString(smoothIndex, data.smoothString);
+        rendersString(smoothIndex, data.smoothString, 1);
     }   
 }
 

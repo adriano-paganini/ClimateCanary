@@ -12,6 +12,16 @@ extern BLECharacteristic sensorPacketStatusCharacteristic;
 extern BLEService setupService;
 extern BLECharacteristic setupCharacteristic;
 
+extern BLECharacteristic authenticationCharacteristic;
+
+extern BLECharacteristic warningMessageTotalLength;
+extern BLECharacteristic warningMessageCharPack;
+extern BLECharacteristic warningMessageAck;
+
+struct __attribute__((packed)) WarningMessageCharPack{
+  uint16_t sqn;
+  char content;
+};
 
 struct __attribute__((packed)) SensorPacket {
   uint32_t timestamp;
@@ -33,6 +43,11 @@ struct __attribute__((packed)) SetupConfig{
   uint32_t id;
 };
 
+struct __attribute__((packed))AuthentificationPacket{
+  uint32_t id;
+  char roomName[32];
+  uint8_t roomNameLen;
+};
 
 inline void addCharacteristics(BLEService& service) {
   //needed for recursion

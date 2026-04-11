@@ -4,6 +4,7 @@
 #include "buttons.h"
 #include "sensors.h"
 #include "ble.h"
+#include <vector>
 
 #include <rgb_lcd.h>
 extern rgb_lcd lcd; 
@@ -12,6 +13,7 @@ struct RelevantDisplayData{
     SensorData sensorData;
     String smoothString;
     bool altView;
+    uint16_t statusCode;
 };
 
 void setupScreen();
@@ -20,5 +22,8 @@ void printButtonScreen(ButtonState state);
 void printSensorScreen(SensorData data);
 void clearScreen();
 void waitForNewConnection(int smoothIndex,RelevantDisplayData data);
-void waitForKnownConnection(int smoothIndex, RelevantDisplayData);
+void waitForAuthenticatedConnection(int smoothIndex, RelevantDisplayData data);
+void waitForKnownConnection(int smoothIndex, RelevantDisplayData data);
+void connectedAllValidData(int smoothIndex, RelevantDisplayData data);
+void connectedSomeShortInvalidData(int smoothIndex, RelevantDisplayData data);
 #endif
