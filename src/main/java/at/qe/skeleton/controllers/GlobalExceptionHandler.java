@@ -3,6 +3,7 @@ package at.qe.skeleton.controllers;
 import at.qe.skeleton.dtos.ApiErrorResponse;
 import at.qe.skeleton.exceptions.BuildingNotFoundException;
 import at.qe.skeleton.exceptions.DepartmentNotFoundException;
+import at.qe.skeleton.exceptions.RoomNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -71,7 +72,23 @@ public class GlobalExceptionHandler {
     ){
         ApiErrorResponse response = new ApiErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
-                BuildingNotFoundException.class.getSimpleName(),
+                DepartmentNotFoundException.class.getSimpleName(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
+    // Handle Room Not Found
+    @ExceptionHandler(RoomNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleRoomNotFound(
+            Exception ex,
+            HttpServletRequest request
+    ){
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                RoomNotFoundException.class.getSimpleName(),
                 ex.getMessage(),
                 request.getRequestURI()
         );

@@ -8,4 +8,6 @@ import java.util.List;
 public interface RoomRepository extends AbstractRepository<Room, Long> {
 
     List<Room> findAllById(List<Long> ids);
+
+    void deleteById(Long id);
 }
