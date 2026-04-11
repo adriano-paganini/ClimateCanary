@@ -6,6 +6,8 @@
 #include <rtos.h>
 #include "KVStore.h"
 #include "kvstore_global_api.h"
+#include <vector>
+#include <string>
 
 using namespace rtos;
 
@@ -40,8 +42,6 @@ bool bleClientAuthenticated = false;
 const char* const ID_KEY = "ID";
 const char* const INTERVAL_KEY = "INTERVAL";
 
-uint16_t activeWarningCode=0;
-
 ButtonState previousButtonState = {0,0,0};
 
 String currentState = "STARTUP";
@@ -52,75 +52,152 @@ int smoothIndex = 0;
 bool altView = false;
 uint16_t statusCode = 0;
 
-std::vector<std::string> currentWarningMessages;
+std::vector<String> currentWarningMessages;
+int16_t skipText = 0;
 
 
-void beginMessageTransfer(){
-  uint16_t totalWarningLength;
-  int warnLen =  warningMessageTotalLength.readValue(&totalWarningLength,sizeof(totalWarningLength));
-  if (warnLen == sizeof(totalWarningLength)){
-    Serial.println(totalWarningLength);
-    if (totalWarningLength != 0){
-      for (uint16_t i = 0; i< totalWarningLength; i++){
-        //TODO: implement Logic to save allstrings - SEPERATED BY \0 - into the global String-repository.
-      }
+void beginMessageTransfer() {
+  skipText = 0;
+  uint16_t totalWarningLength = 0;
+  int warnLen = warningMessageTotalLength.readValue(&totalWarningLength, sizeof(totalWarningLength));
+
+  if (warnLen != sizeof(totalWarningLength)) {
+    Serial.println("Message transfer failed: could not read total length.");
+    return;
+  }
+
+  if (!warningMessageAck.writeValue((uint16_t)0)) {
+    Serial.println("Failed to write first ACK");
+    return;
+  }
+
+  currentWarningMessages.clear();
+
+  Serial.print("Total warning length: ");
+  Serial.println(totalWarningLength);
+
+  if (totalWarningLength == 0) {
+    return;
+  }
+
+  String tempString = "";
+
+  for (uint16_t i = 0; i < totalWarningLength; ++i) {
+    WarningMessageCharPack charPack;
+    int charPackLen = warningMessageCharPack.readValue(&charPack, sizeof(charPack));
+
+    if (charPackLen != sizeof(charPack)) {
+      Serial.print("Failed to read char pack at index ");
+      Serial.println(i);
+      return;
     }
-  }else{
-    Serial.println("Message Transfer Failed, retrying at next iteration.");
+
+    if (charPack.sqn != i) {
+      Serial.print("Sequence mismatch. Expected ");
+      Serial.print(i);
+      Serial.print(", got ");
+      Serial.println(charPack.sqn);
+      continue;
+    }
+
+    if (charPack.content == '\0') {
+      currentWarningMessages.push_back(tempString);
+      tempString = "";
+    } else {
+      tempString += charPack.content;
+    }
+  }
+
+  // Save trailing message if stream did not end with '\0'
+  if (tempString.length() > 0) {
+    currentWarningMessages.push_back(tempString);
   }
 }
 
-void evaluateMeasurementStatus(BLEDevice central, BLECharacteristic characteristic){
-  //if the client is not authenticated, disconnect them immediately
-  if (!bleClientAuthenticated){
-    central.disconnect();
+bool isNewWarning3(uint16_t oldStatusCode, uint16_t newStatusCode) {
+  for (int shift = 0; shift <= 12; shift += 4) {
+    uint8_t oldNibble = (oldStatusCode >> shift) & 0x0F;
+    uint8_t newNibble = (newStatusCode >> shift) & 0x0F;
+
+    if (oldNibble != 3 && newNibble == 3) {
+      return true;
+    }
+  }
+  return false;
+}
+
+void evaluateMeasurementStatus(BLEDevice central, BLECharacteristic characteristic) {
+  if (!bleClientAuthenticated) {
     Serial.println("Unauthenticated client tried to write measurement status. Disconnecting...");
+    central.disconnect();
 
     currentState = "WAITING_FOR_KNOWN_CONNECTION";
     stateChanged = true;
-
     return;
   }
+
   SensorPacketStatus packet;
   int n = characteristic.readValue((byte*)&packet, sizeof(packet));
-  if (!n){
-    Serial.println("Packet Malformed");
+  if (n != sizeof(packet)) {
+    Serial.println("Packet malformed");
+    return;
   }
-  //Process the packet and it's codes (0 - good, 1 - low, 2 - high, 3 - active warning, 4 - acknowledged warning)
-  uint32_t timestamp = packet.timestamp;
-  statusCode = packet.statusCode;
-  Serial.println("Received new measurement status: ");
-  Serial.println(statusCode, BIN);
-  short pressureStatus = statusCode & 0x000F;
-  short temperatureStatus = (statusCode & 0x00F0) >> 4;
-  short humidityStatus = (statusCode & 0x0F00) >> 8;
-  short gasResistanceStatus = (statusCode & 0xF000) >> 12;
-  if (pressureStatus > 4 || temperatureStatus > 4 || humidityStatus > 4 || gasResistanceStatus > 4){
+
+  const uint32_t timestamp = packet.timestamp;
+  const uint16_t newStatusCode = packet.statusCode;
+
+  Serial.println("Received new measurement status:");
+  Serial.println(newStatusCode, BIN);
+
+  const uint8_t pressureStatus =  newStatusCode & 0x000F;
+  const uint8_t temperatureStatus = (newStatusCode >> 4) & 0x000F;
+  const uint8_t humidityStatus  = (newStatusCode >> 8) & 0x000F;
+  const uint8_t gasResistanceStatus = (newStatusCode >> 12) & 0x000F;
+
+  if (pressureStatus > 4 || temperatureStatus > 4 || humidityStatus > 4 || gasResistanceStatus > 4) {
     Serial.println("Invalid status code received.");
     return;
-  }else if (timestamp>millis()){
+  }
+
+  if (timestamp > millis()) {
     Serial.println("Invalid timestamp received.");
     return;
   }
-  //STATE-LOGIC
-  if ((pressureStatus > 0 && pressureStatus < 3) || (temperatureStatus > 0 && temperatureStatus < 3) 
-    || (humidityStatus > 0 && humidityStatus < 3) || (gasResistanceStatus > 0 && gasResistanceStatus < 3)){
-      currentState = "CONNECTED_SOME_SHORT_INVALID_DATA";
-      stateChanged = true;
-  }if (pressureStatus == 3 || temperatureStatus == 3 || humidityStatus == 3 || gasResistanceStatus == 3){
-    if (statusCode != activeWarningCode){
-      activeWarningCode=statusCode;
-      beginMessageTransfer();
-    }
-  }else{
+
+  const bool hasShortInvalid =
+      ((pressureStatus > 0 && pressureStatus < 3) ||
+       (temperatureStatus > 0 && temperatureStatus < 3) ||
+       (humidityStatus > 0 && humidityStatus < 3) ||
+       (gasResistanceStatus > 0 && gasResistanceStatus < 3));
+
+  const bool hasActiveWarning =
+      (pressureStatus == 3 ||
+       temperatureStatus == 3 ||
+       humidityStatus == 3 ||
+       gasResistanceStatus == 3);
+
+  // Start transfer only if a NEW warning appeared
+  if (isNewWarning3(statusCode, newStatusCode)) {
+    beginMessageTransfer();
+  }
+
+  statusCode = newStatusCode;
+
+  if (hasActiveWarning) {
+    currentState = "CONNECTED_ACTIVE_WARNING";
+    stateChanged = true;
+  } else if (hasShortInvalid) {
+    currentWarningMessages.clear();
+    skipText = 0;
+    currentState = "CONNECTED_SOME_SHORT_INVALID_DATA";
+    stateChanged = true;
+  } else {
+    currentWarningMessages.clear();
+    skipText = 0;
     currentState = "CONNECTED_ALL_VALID_DATA";
     stateChanged = true;
   }
-
-
-
 }
-
 void onSetupConfigWritten(BLEDevice central, BLECharacteristic characteristic){
   SetupConfig config;
   int n = characteristic.readValue((byte*)&config, sizeof(config));
@@ -310,6 +387,16 @@ void setStateData(){
       lightG = 30;
       lightB = 0;
       lightOn = false; //force update of light in next loop
+    }else if (currentState == "CONNECTED_ACTIVE_WARNING"){
+      smoothString = roomName;
+      screenUpdateFunction = &connectedActiveWarning;
+      //light on constantly full red - r=255, g=0, b=0
+      lightOnMs = 1;
+      lightOffMs=0;
+      lightR = 255;
+      lightG = 0;
+      lightB = 0;
+      lightOn = false; //force update of light in next loop
     }
 }
 
@@ -384,10 +471,11 @@ void loop() {
     if (activatedButtons&1){
       altView = !altView;
       }
+      //TODO: Add logic to limit skipText-values
     if (activatedButtons&2){
-      //delete complete kv store
-      //TODO: remove kv_reset("/kv/") line for final/when implementing next/previous for warning messages.
-      kv_reset("/kv/");
+      skipText +=1;
+    }if (activatedButtons&4){
+      skipText-=1;
     }
   }
   // get up-to-date sensor data in a given sensorInterval
@@ -413,7 +501,9 @@ void loop() {
     displayData.smoothString = smoothString;
     displayData.altView = altView;
     displayData.statusCode = statusCode;
-        
+    displayData.currentWarningMessages = currentWarningMessages;
+    displayData.skipText=skipText;
+
     screenUpdateFunction(smoothIndex,displayData);
     smoothIndex++;
     if (smoothIndex > smoothString.length()*2+8){

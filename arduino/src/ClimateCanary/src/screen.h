@@ -14,6 +14,8 @@ struct RelevantDisplayData{
     String smoothString;
     bool altView;
     uint16_t statusCode;
+    std::vector<String> currentWarningMessages;
+    int skipText;
 };
 
 void setupScreen();
@@ -26,4 +28,5 @@ void waitForAuthenticatedConnection(int smoothIndex, RelevantDisplayData data);
 void waitForKnownConnection(int smoothIndex, RelevantDisplayData data);
 void connectedAllValidData(int smoothIndex, RelevantDisplayData data);
 void connectedSomeShortInvalidData(int smoothIndex, RelevantDisplayData data);
+void connectedActiveWarning(int smoothIndex, RelevantDisplayData data);
 #endif

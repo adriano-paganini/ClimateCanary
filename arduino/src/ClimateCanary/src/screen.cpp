@@ -169,9 +169,19 @@ void connectedAllValidData(int smoothIndex, RelevantDisplayData data){
     }
 }
 
+void connectedActiveWarning(int smoothIndex, RelevantDisplayData data){
+    if (data.altView){
+        printScreen(0,"ACTIVE WARNINGS!");
+        displayActiveWarnings(smoothIndex,data,1);
+    }else{
+        printScreen(0,"WARNING"+String(data.skipText)+"/"+String(data.currentWarningMessages.size()));
+        rendersString(smoothIndex, data.currentWarningMessages.at(data.skipText),1);
+    }
+}
+
 void connectedSomeShortInvalidData(int smoothIndex, RelevantDisplayData data){
     if (data.altView){
-        printScreen(0, "ACTIVE WARNINGS!");
+        printScreen(0, "ACTIVE DANGERS!");
         displayActiveWarnings(smoothIndex, data, 1);
     }else{
         rendersString(smoothIndex, data.smoothString, 0);
