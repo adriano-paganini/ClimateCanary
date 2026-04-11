@@ -2,6 +2,7 @@ package at.qe.skeleton.services;
 
 import at.qe.skeleton.exceptions.DepartmentNotFoundException;
 import at.qe.skeleton.model.Department;
+import at.qe.skeleton.model.Room;
 import at.qe.skeleton.repositories.DepartmentRepository;
 import org.springframework.stereotype.Service;
 
@@ -29,10 +30,25 @@ public class DepartmentService {
         return departmentRepository.save(d);
     }
 
-    public Department update(Long id, Department updated) {
-        Department d = getById(id);
-        d.setName(updated.getName());
-        return departmentRepository.save(d);
+    public Department update(Long id, Department updates) {
+        Department existing = getById(id);
+
+        if (updates.getName() != null) {
+            existing.setName(updates.getName());
+        }
+
+        if (updates.getRooms() != null) {
+
+            existing.getRooms().forEach(r -> r.setDepartment(null));
+            existing.getRooms().clear();
+
+            for (Room room : updates.getRooms()) {
+                room.setDepartment(existing);
+                existing.getRooms().add(room);
+            }
+        }
+
+        return departmentRepository.save(existing);
     }
 
     public void delete(Long id) {

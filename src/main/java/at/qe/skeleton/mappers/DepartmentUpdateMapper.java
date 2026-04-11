@@ -26,13 +26,14 @@ public class DepartmentUpdateMapper implements DTOMapper<Department, DepartmentU
     @Override
     public Department mapFrom(DepartmentUpdateDTO dto) {
         Department department = new Department();
-        department.setName(dto.name());
+
+        if (dto.name() != null) {
+            department.setName(dto.name());
+        }
 
         if (dto.roomIds() != null) {
-            List<Room> rooms = roomRepository.findAllById(dto.roomIds());
-
+            List<Room> rooms = roomRepository.findAllByIds(dto.roomIds());
             department.setRooms(rooms);
-            rooms.forEach(room -> room.setDepartment(department));
         }
 
         return department;

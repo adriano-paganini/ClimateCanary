@@ -1,5 +1,6 @@
 package at.qe.skeleton.services;
 
+import at.qe.skeleton.exceptions.RoomNotFoundException;
 import at.qe.skeleton.model.Room;
 import at.qe.skeleton.repositories.RoomRepository;
 import org.springframework.stereotype.Service;
@@ -21,7 +22,7 @@ public class RoomService {
 
     public Room getById(Long id) {
         return roomRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Room not found"));
+                .orElseThrow(() -> new RoomNotFoundException("Room with id " + id + " not found"));
     }
 
     public Room create(Room room) {
