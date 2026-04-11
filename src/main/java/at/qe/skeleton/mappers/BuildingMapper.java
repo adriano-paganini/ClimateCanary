@@ -1,0 +1,27 @@
+package at.qe.skeleton.mappers;
+
+import at.qe.skeleton.dtos.BuildingDTO;
+import at.qe.skeleton.model.Building;
+import org.springframework.stereotype.Service;
+
+@Service
+public class BuildingMapper implements DTOMapper<Building, BuildingDTO> {
+
+    @Override
+    public BuildingDTO mapTo(Building entity) {
+        return new BuildingDTO(
+                entity.getId(),
+                entity.getName(),
+                null
+        );
+    }
+
+    @Override
+    public Building mapFrom(BuildingDTO dto) {
+
+        Building building = new Building();
+        building.setName(dto.name());
+
+        return building;
+    }
+}
