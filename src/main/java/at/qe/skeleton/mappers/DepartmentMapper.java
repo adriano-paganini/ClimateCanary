@@ -27,7 +27,7 @@ public class DepartmentMapper implements DTOMapper<Department, DepartmentDTO> {
                         .stream()
                         .map(Room::getId)
                         .toList(),
-                entity.getDepartmentLeader().getId()
+                entity.getDepartmentLeader() != null ? entity.getDepartmentLeader().getId() : null
         );
     }
 

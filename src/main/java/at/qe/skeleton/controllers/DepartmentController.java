@@ -4,6 +4,7 @@ import at.qe.skeleton.dtos.*;
 import at.qe.skeleton.mappers.*;
 import at.qe.skeleton.model.Department;
 import at.qe.skeleton.services.DepartmentService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -17,7 +18,6 @@ public class DepartmentController {
 
     private final DepartmentService departmentService;
     private final DepartmentMapper departmentMapper;
-    private final DepartmentUpdateMapper departmentUpdateMapper;
     private final DepartmentCreateMapper departmentCreateMapper;
     private final UserxMapper userxMapper;
     private final RoomMapper roomMapper;
@@ -25,13 +25,11 @@ public class DepartmentController {
     public DepartmentController(
             DepartmentService departmentService,
             DepartmentMapper departmentMapper,
-            DepartmentUpdateMapper departmentUpdateMapper,
             DepartmentCreateMapper departmentCreateMapper,
             UserxMapper userxMapper,
             RoomMapper roomMapper) {
         this.departmentService = departmentService;
         this.departmentMapper = departmentMapper;
-        this.departmentUpdateMapper = departmentUpdateMapper;
         this.departmentCreateMapper = departmentCreateMapper;
         this.userxMapper = userxMapper;
         this.roomMapper = roomMapper;
@@ -39,24 +37,20 @@ public class DepartmentController {
 
     @GetMapping
     public ResponseEntity<List<DepartmentDTO>> getAll() {
-
         List<DepartmentDTO> departments = departmentService.getAll().stream()
                 .map(departmentMapper::mapTo)
                 .toList();
-
         return ResponseEntity.ok(departments);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<DepartmentDTO> getById(@PathVariable Long id) {
-        Department department = departmentService.getDepartmentById(id);
-        return ResponseEntity.ok(departmentMapper.mapTo(department));
+        return ResponseEntity.ok(departmentMapper.mapTo(departmentService.getDepartmentById(id)));
     }
 
     @GetMapping("/{id}/rooms")
     public ResponseEntity<List<RoomDTO>> getRooms(@PathVariable Long id) {
-        Department department = departmentService.getDepartmentById(id);
-        List<RoomDTO> rooms = department.getRooms().stream()
+        List<RoomDTO> rooms = departmentService.getDepartmentById(id).getRooms().stream()
                 .map(roomMapper::mapTo)
                 .toList();
         return ResponseEntity.ok(rooms);
@@ -69,8 +63,7 @@ public class DepartmentController {
     }
 
     @PostMapping
-    public ResponseEntity<DepartmentDTO> create(@RequestBody DepartmentCreateDTO dto) {
-
+    public ResponseEntity<DepartmentDTO> create(@Valid @RequestBody DepartmentCreateDTO dto) {
         Department department = departmentService.create(departmentCreateMapper.mapFrom(dto));
 
         URI location = ServletUriComponentsBuilder
@@ -83,14 +76,9 @@ public class DepartmentController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<DepartmentDTO> update(
-            @PathVariable Long id,
-            @RequestBody DepartmentUpdateDTO dto) {
-
-        departmentService.update(id, departmentUpdateMapper.mapFrom(dto));
-
-        Department updated = departmentService.getDepartmentById(id);
-
+    public ResponseEntity<DepartmentDTO> update(@PathVariable Long id,
+                                                @Valid @RequestBody DepartmentUpdateDTO dto) {
+        Department updated = departmentService.update(id, dto);
         return ResponseEntity.ok(departmentMapper.mapTo(updated));
     }
 

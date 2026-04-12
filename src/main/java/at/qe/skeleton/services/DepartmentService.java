@@ -1,9 +1,13 @@
 package at.qe.skeleton.services;
 
+import at.qe.skeleton.dtos.DepartmentUpdateDTO;
 import at.qe.skeleton.exceptions.DepartmentNotFoundException;
+import at.qe.skeleton.exceptions.UserNotFoundException;
 import at.qe.skeleton.model.Department;
 import at.qe.skeleton.model.Room;
+import at.qe.skeleton.model.Userx;
 import at.qe.skeleton.repositories.DepartmentRepository;
+import at.qe.skeleton.repositories.RoomRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,9 +16,13 @@ import java.util.List;
 public class DepartmentService {
 
     private final DepartmentRepository departmentRepository;
+    private final RoomRepository roomRepository;
+    private final UserxService userxService;
 
-    public DepartmentService(DepartmentRepository repo) {
+    public DepartmentService(DepartmentRepository repo, RoomRepository roomRepository, UserxService userxService) {
         this.departmentRepository = repo;
+        this.roomRepository = roomRepository;
+        this.userxService = userxService;
     }
 
     public List<Department> getAll() {
@@ -30,22 +38,26 @@ public class DepartmentService {
         return departmentRepository.save(d);
     }
 
-    public Department update(Long id, Department updates) {
+    public Department update(Long id, DepartmentUpdateDTO dto) {
         Department existing = getDepartmentById(id);
 
-        if (updates.getName() != null) {
-            existing.setName(updates.getName());
+        if (dto.name() != null) {
+            existing.setName(dto.name());
         }
 
-        if (updates.getRooms() != null) {
-
+        if (dto.roomIds() != null) {
             existing.getRooms().forEach(r -> r.setDepartment(null));
             existing.getRooms().clear();
 
-            for (Room room : updates.getRooms()) {
-                room.setDepartment(existing);
-                existing.getRooms().add(room);
-            }
+            List<Room> rooms = roomRepository.findAllByIds(dto.roomIds());
+            rooms.forEach(r -> r.setDepartment(existing));
+            existing.setRooms(rooms);
+        }
+
+        if (dto.departmentLeadId() != null) {
+            Userx leader = userxService.loadUser(dto.departmentLeadId())
+                    .orElseThrow(() -> new UserNotFoundException("User with id " + dto.departmentLeadId() + " not found"));
+            existing.setDepartmentLeader(leader);
         }
 
         return departmentRepository.save(existing);
