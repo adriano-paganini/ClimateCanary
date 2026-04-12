@@ -17,9 +17,6 @@ public class Address {
     private String houseNumber;
     private String extra;
 
-    @OneToOne(mappedBy = "address")
-    private Building building;
-
     public Address() {}
 
     public Address(String country, String zipCode, String city,
@@ -51,9 +48,6 @@ public class Address {
 
     public String getExtra() { return extra; }
     public void setExtra(String extra) { this.extra = extra; }
-
-    public Building getBuilding() { return building; }
-    public void setBuilding(Building building) { this.building = building; }
 
     @Override
     public boolean equals(Object o) {
