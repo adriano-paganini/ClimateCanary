@@ -12,7 +12,7 @@ public class BuildingMapper implements DTOMapper<Building, BuildingDTO> {
         return new BuildingDTO(
                 entity.getId(),
                 entity.getName(),
-                null
+                entity.getAddress() != null ? entity.getAddress().getId() : null
         );
     }
 

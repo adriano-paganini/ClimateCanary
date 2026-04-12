@@ -6,10 +6,10 @@ import at.qe.skeleton.dtos.BuildingUpdateDTO;
 import at.qe.skeleton.dtos.RoomDTO;
 import at.qe.skeleton.mappers.BuildingCreateMapper;
 import at.qe.skeleton.mappers.BuildingMapper;
-import at.qe.skeleton.mappers.BuildingUpdateMapper;
 import at.qe.skeleton.mappers.RoomMapper;
 import at.qe.skeleton.model.Building;
 import at.qe.skeleton.services.BuildingService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -24,17 +24,15 @@ public class BuildingController {
     private final BuildingService buildingService;
     private final BuildingMapper buildingMapper;
     private final BuildingCreateMapper buildingCreateMapper;
-    private final BuildingUpdateMapper buildingUpdateMapper;
     private final RoomMapper roomMapper;
 
     public BuildingController(BuildingService buildingService,
                               BuildingMapper buildingMapper,
                               BuildingCreateMapper buildingCreateMapper,
-                              BuildingUpdateMapper buildingUpdateMapper, RoomMapper roomMapper) {
+                              RoomMapper roomMapper) {
         this.buildingService = buildingService;
         this.buildingMapper = buildingMapper;
         this.buildingCreateMapper = buildingCreateMapper;
-        this.buildingUpdateMapper = buildingUpdateMapper;
         this.roomMapper = roomMapper;
     }
 
@@ -43,19 +41,16 @@ public class BuildingController {
         List<BuildingDTO> buildings = buildingService.getAllBuildings().stream()
                 .map(buildingMapper::mapTo)
                 .toList();
-
         return ResponseEntity.ok(buildings);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<BuildingDTO> getById(@PathVariable Long id) {
-        Building building = buildingService.getBuildingById(id);
-
-        return ResponseEntity.ok(buildingMapper.mapTo(building));
+        return ResponseEntity.ok(buildingMapper.mapTo(buildingService.getBuildingById(id)));
     }
 
     @PostMapping
-    public ResponseEntity<BuildingDTO> create(@RequestBody BuildingCreateDTO dto) {
+    public ResponseEntity<BuildingDTO> create(@Valid @RequestBody BuildingCreateDTO dto) {
         Building building = buildingService.create(buildingCreateMapper.mapFrom(dto));
 
         URI location = ServletUriComponentsBuilder
@@ -68,11 +63,8 @@ public class BuildingController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<BuildingDTO> update(@PathVariable Long id,
-                                           @RequestBody BuildingUpdateDTO updated) {
-
-        buildingService.update(id, buildingUpdateMapper.mapFrom(updated));
-        Building building = buildingService.getBuildingById(id);
-
+                                              @Valid @RequestBody BuildingUpdateDTO dto) {
+        Building building = buildingService.update(id, dto);
         return ResponseEntity.ok(buildingMapper.mapTo(building));
     }
 
@@ -88,7 +80,6 @@ public class BuildingController {
                 .stream()
                 .map(roomMapper::mapTo)
                 .toList();
-
         return ResponseEntity.ok(buildingRooms);
     }
 

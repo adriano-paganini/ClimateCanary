@@ -1,5 +1,6 @@
 package at.qe.skeleton.services;
 
+import at.qe.skeleton.dtos.BuildingUpdateDTO;
 import at.qe.skeleton.exceptions.BuildingNotFoundException;
 import at.qe.skeleton.model.Building;
 import at.qe.skeleton.model.Room;
@@ -30,9 +31,15 @@ public class BuildingService {
         return buildingRepository.save(building);
     }
 
-    public Building update(Long id, Building updated) {
+    public Building update(Long id, BuildingUpdateDTO dto) {
         Building building = getBuildingById(id);
-        building.setName(updated.getName());
+
+        if (dto.name() != null) {
+            building.setName(dto.name());
+        }
+
+        // TODO: if (dto.addressId() != null) resolve and set address
+
         return buildingRepository.save(building);
     }
 
@@ -45,7 +52,6 @@ public class BuildingService {
         }
 
         building.getRooms().clear();
-
         buildingRepository.deleteById(id);
     }
 

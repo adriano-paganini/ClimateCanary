@@ -5,5 +5,4 @@ public record BuildingDTO(
         Long id,
         String name,
         Long addressId
-) {
-}
+) {}
