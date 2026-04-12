@@ -13,9 +13,11 @@ import java.util.List;
 public class BuildingService {
 
     private final BuildingRepository buildingRepository;
+    private final AddressService addressService;
 
-    public BuildingService(BuildingRepository buildingRepository) {
+    public BuildingService(BuildingRepository buildingRepository, AddressService addressService) {
         this.buildingRepository = buildingRepository;
+        this.addressService = addressService;
     }
 
     public List<Building> getAllBuildings() {
@@ -38,20 +40,21 @@ public class BuildingService {
             building.setName(dto.name());
         }
 
-        // TODO: if (dto.addressId() != null) resolve and set address
+        if (dto.addressId() != null) {
+            building.setAddress(addressService.getById(dto.addressId()));
+        }
 
         return buildingRepository.save(building);
     }
 
     public void delete(Long id) {
-
         Building building = getBuildingById(id);
 
         for (Room room : building.getRooms()) {
             room.setBuilding(null);
         }
-
         building.getRooms().clear();
+
         buildingRepository.deleteById(id);
     }
 
