@@ -39,7 +39,7 @@ public class UserxService implements UserDetailsService {
      *
      * @return the userx collection
      */
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public Collection<Userx> getAllUsers() {
         return userRepository.findAll();
     }
@@ -50,7 +50,7 @@ public class UserxService implements UserDetailsService {
      * @param id the id to search for
      * @return the user with the id
      */
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public Optional<Userx> loadUser(Long id) {
         return userRepository.findById(id);
     }
@@ -64,7 +64,7 @@ public class UserxService implements UserDetailsService {
      * @param user the user to save
      * @return the updated user
      */
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public Userx saveUser(Userx user) {
         if (user.isNew()) {
             if (userRepository.existsByUsername(user.getUsername())) {
@@ -83,7 +83,7 @@ public class UserxService implements UserDetailsService {
      *
      * @param user the user to delete
      */
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public void deleteUser(Userx user) {
         Optional<Userx> userOpt = userRepository.findById(user.getId());
         userOpt.ifPresent(userRepository::delete);
