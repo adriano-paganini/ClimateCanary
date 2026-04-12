@@ -1,11 +1,12 @@
 package at.qe.skeleton.dtos;
 
 import at.qe.skeleton.model.RoomType;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
 public record RoomUpdateDTO (
-        @NotNull
+
+        @Size(min = 1, message = "Name must not be blank if provided")
         String name,
 
         RoomType roomType,
@@ -13,10 +14,7 @@ public record RoomUpdateDTO (
         @Positive
         Integer minOccupancy,
 
-        @NotNull
         Long departmentId,
 
-        @NotNull
         Long buildingId
-){
-}
+){}

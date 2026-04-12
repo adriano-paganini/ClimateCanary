@@ -21,19 +21,12 @@ public class RoomCreateMapper implements DTOMapper<Room, RoomCreateDTO> {
 
     @Override
     public Room mapFrom(RoomCreateDTO dto) {
-
         Room room = new Room();
-
         room.setName(dto.name());
         room.setRoomType(dto.roomType());
         room.setMinOccupancy(dto.minOccupancy());
-
-        Department department = departmentService.getDepartmentById(dto.departmentId());
-        room.setDepartment(department);
-
-        Building building = buildingService.getBuildingById(dto.buildingId());
-        room.setBuilding(building);
-
+        room.setDepartment(departmentService.getDepartmentById(dto.departmentId()));
+        room.setBuilding(buildingService.getBuildingById(dto.buildingId()));
         return room;
     }
 

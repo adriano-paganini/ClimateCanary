@@ -1,5 +1,6 @@
 package at.qe.skeleton.services;
 
+import at.qe.skeleton.dtos.RoomUpdateDTO;
 import at.qe.skeleton.exceptions.RoomNotFoundException;
 import at.qe.skeleton.model.Room;
 import at.qe.skeleton.repositories.RoomRepository;
@@ -11,9 +12,13 @@ import java.util.List;
 public class RoomService {
 
     private final RoomRepository roomRepository;
+    private final DepartmentService departmentService;
+    private final BuildingService buildingService;
 
-    public RoomService(RoomRepository repo) {
+    public RoomService(RoomRepository repo, DepartmentService departmentService, BuildingService buildingService) {
         this.roomRepository = repo;
+        this.departmentService = departmentService;
+        this.buildingService = buildingService;
     }
 
     public List<Room> getAll() {
@@ -29,24 +34,28 @@ public class RoomService {
         return roomRepository.save(room);
     }
 
-    public Room update(Long id, Room updates) {
-
+    /* Do not remove null checks, some fields may be null as they are optional despite what Intellij is suggesting */
+    public Room update(Long id, RoomUpdateDTO dto) {
         Room existing = getById(id);
 
-        if (updates.getName() != null) {
-            existing.setName(updates.getName());
+        if (dto.name() != null) {
+            existing.setName(dto.name());
         }
 
-        if (updates.getRoomType() != null) {
-            existing.setRoomType(updates.getRoomType());
+        if (dto.roomType() != null) {
+            existing.setRoomType(dto.roomType());
         }
 
-        if (updates.getMinOccupancy() != 0) {
-            existing.setMinOccupancy(updates.getMinOccupancy());
+        if (dto.minOccupancy() != null) {
+            existing.setMinOccupancy(dto.minOccupancy());
         }
 
-        if (updates.getDepartment() != null) {
-            existing.setDepartment(updates.getDepartment());
+        if (dto.departmentId() != null) {
+            existing.setDepartment(departmentService.getDepartmentById(dto.departmentId()));
+        }
+
+        if (dto.buildingId() != null) {
+            existing.setBuilding(buildingService.getBuildingById(dto.buildingId()));
         }
 
         return roomRepository.save(existing);
