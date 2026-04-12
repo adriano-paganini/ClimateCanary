@@ -304,7 +304,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"Research New\",\n    \"roomIds\": [],\n    \"departmentLeadId\": 2\n}",
+              "raw": "{\n    \"name\": \"Research Ne\",\n    \"roomIds\": [],\n    \"departmentLeadId\": 1\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -393,7 +393,7 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/department/3",
+              "raw": "http://localhost:8080/department/1",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -401,7 +401,7 @@
               "port": "8080",
               "path": [
                 "department",
-                "3"
+                "1"
               ]
             }
           },
@@ -664,6 +664,256 @@
               "path": [
                 "address",
                 "2"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "EmployeeProfile",
+      "item": [
+        {
+          "name": "Get EmployeeProfiles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/employeeProfile",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "employeeProfile"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get EmployeeProfile by Id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/employeeProfile/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "employeeProfile",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create EmployeeProfile",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"userxId\": 2,\n    \"departmentId\": 2,\n    \"roomId\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/employeeProfile",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "employeeProfile"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update EmployeeProfile",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/address/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "address",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete EmployeeProfile",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "http://localhost:8080/employeeProfile/2",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "employeeProfile",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Absence",
+      "item": [
+        {
+          "name": "Get Absences",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/absence",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "absence"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Absence by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/absence/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "absence",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Absence",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"startDate\": \"2025-03-10T14:45:00\",\n    \"endDate\": \"2025-03-10T14:45:00\",\n    \"absenceType\": \"HOLIDAY\",\n    \"userxId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/absence",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "absence"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Absence",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"extra\": \"Primary Address\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/address/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "address",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Absence",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "http://localhost:8080/absence/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "absence",
+                "1"
               ]
             }
           },
