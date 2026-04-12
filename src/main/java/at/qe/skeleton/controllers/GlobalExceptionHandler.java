@@ -155,6 +155,20 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(AbsenceNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleAbsenceNotFound(
+            Exception ex,
+            HttpServletRequest request
+    ) {
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                AbsenceNotFoundException.class.getSimpleName(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
 
 //    // Catch-all fallback
 //    @ExceptionHandler(Exception.class)
