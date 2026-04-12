@@ -17,8 +17,6 @@ public class BuildingCreateMapper implements DTOMapper<Building, BuildingCreateD
         Building building = new Building();
         building.setName(dto.name());
 
-        // TODO: Address missing
-
         return building;
     }
 }

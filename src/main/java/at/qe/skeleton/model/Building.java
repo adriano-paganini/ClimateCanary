@@ -18,6 +18,10 @@ public class Building {
     @OneToMany(mappedBy = "building")
     private List<Room> rooms = new ArrayList<>();
 
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "address_id")
+    private Address address;
+
     public Building() {}
 
     public Building(String name) {
@@ -30,6 +34,9 @@ public class Building {
     public void setName(String name) { this.name = name; }
 
     public List<Room> getRooms() { return rooms; }
+
+    public Address getAddress() { return address; }
+    public void setAddress(Address address) { this.address = address; }
 
     @Override
     public boolean equals(Object o) {

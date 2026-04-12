@@ -9,7 +9,6 @@ import at.qe.skeleton.mappers.BuildingMapper;
 import at.qe.skeleton.mappers.BuildingUpdateMapper;
 import at.qe.skeleton.mappers.RoomMapper;
 import at.qe.skeleton.model.Building;
-import at.qe.skeleton.model.Room;
 import at.qe.skeleton.services.BuildingService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
