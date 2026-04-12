@@ -1,10 +1,7 @@
 package at.qe.skeleton.controllers;
 
 import at.qe.skeleton.dtos.ApiErrorResponse;
-import at.qe.skeleton.exceptions.BuildingNotFoundException;
-import at.qe.skeleton.exceptions.DepartmentNotFoundException;
-import at.qe.skeleton.exceptions.RoomNotFoundException;
-import at.qe.skeleton.exceptions.UserNotFoundException;
+import at.qe.skeleton.exceptions.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -106,6 +103,22 @@ public class GlobalExceptionHandler {
         ApiErrorResponse response = new ApiErrorResponse(
                 HttpStatus.NOT_FOUND.value(),
                 UserNotFoundException.class.getSimpleName(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
+    // Handle Address not found Exception
+    @ExceptionHandler(AddressNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleAddressNotFound(
+            Exception ex,
+            HttpServletRequest request
+    ){
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                AddressNotFoundException.class.getSimpleName(),
                 ex.getMessage(),
                 request.getRequestURI()
         );
