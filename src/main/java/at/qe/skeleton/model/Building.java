@@ -18,7 +18,7 @@ public class Building {
     @OneToMany(mappedBy = "building")
     private List<Room> rooms = new ArrayList<>();
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "address_id")
     private Address address;
 

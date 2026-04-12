@@ -125,6 +125,36 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
+    @ExceptionHandler(EmployeeProfileNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleEmployeeProfileNotFound(
+            Exception ex,
+            HttpServletRequest request
+    ) {
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                EmployeeProfileNotFoundException.class.getSimpleName(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(UserAlreadyExists.class)
+    public ResponseEntity<ApiErrorResponse> handleUserAlreadyExists(
+            Exception ex,
+            HttpServletRequest request
+    ) {
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                UserAlreadyExists.class.getSimpleName(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
 
 //    // Catch-all fallback
 //    @ExceptionHandler(Exception.class)
