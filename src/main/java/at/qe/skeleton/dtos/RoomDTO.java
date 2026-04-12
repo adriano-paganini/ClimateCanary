@@ -7,6 +7,7 @@ public record RoomDTO(
         String name,
         RoomType roomType,
         int minOccupancy,
-        Long departmentId
+        Long departmentId,
+        Long buildingId
 ) {
 }

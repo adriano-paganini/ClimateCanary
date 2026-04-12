@@ -1,11 +1,22 @@
 package at.qe.skeleton.dtos;
 
 import at.qe.skeleton.model.RoomType;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 public record RoomCreateDTO(
+
+        @NotNull
         String name,
         RoomType roomType,
+
+        @Positive
         Integer minOccupancy,
-        Long departmentId
+
+        @NotNull
+        Long departmentId,
+
+        @NotNull
+        Long buildingId
 ) {
 }

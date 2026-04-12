@@ -20,8 +20,6 @@ public class DepartmentMapper implements DTOMapper<Department, DepartmentDTO> {
     @Override
     public DepartmentDTO mapTo(Department entity) {
 
-        // TODO: DepartmentLead ID, entity needs to be changed to support separate field
-
         return new DepartmentDTO(
                 entity.getId(),
                 entity.getName(),
@@ -29,7 +27,7 @@ public class DepartmentMapper implements DTOMapper<Department, DepartmentDTO> {
                         .stream()
                         .map(Room::getId)
                         .toList(),
-                null
+                entity.getDepartmentLeader().getId()
         );
     }
 

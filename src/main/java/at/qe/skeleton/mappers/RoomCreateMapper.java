@@ -1,8 +1,10 @@
 package at.qe.skeleton.mappers;
 
 import at.qe.skeleton.dtos.RoomCreateDTO;
+import at.qe.skeleton.model.Building;
 import at.qe.skeleton.model.Department;
 import at.qe.skeleton.model.Room;
+import at.qe.skeleton.services.BuildingService;
 import at.qe.skeleton.services.DepartmentService;
 import org.springframework.stereotype.Service;
 
@@ -10,9 +12,11 @@ import org.springframework.stereotype.Service;
 public class RoomCreateMapper implements DTOMapper<Room, RoomCreateDTO> {
 
     private final DepartmentService departmentService;
+    private final BuildingService buildingService;
 
-    public  RoomCreateMapper(DepartmentService departmentService) {
+    public  RoomCreateMapper(DepartmentService departmentService, BuildingService buildingService) {
         this.departmentService = departmentService;
+        this.buildingService = buildingService;
     }
 
     @Override
@@ -24,10 +28,11 @@ public class RoomCreateMapper implements DTOMapper<Room, RoomCreateDTO> {
         room.setRoomType(dto.roomType());
         room.setMinOccupancy(dto.minOccupancy());
 
-        if (dto.departmentId() != null) {
-            Department department = departmentService.getById(dto.departmentId());
-            room.setDepartment(department);
-        }
+        Department department = departmentService.getById(dto.departmentId());
+        room.setDepartment(department);
+
+        Building building = buildingService.getBuildingById(dto.buildingId());
+        room.setBuilding(building);
 
         return room;
     }

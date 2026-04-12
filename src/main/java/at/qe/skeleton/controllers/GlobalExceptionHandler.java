@@ -4,6 +4,7 @@ import at.qe.skeleton.dtos.ApiErrorResponse;
 import at.qe.skeleton.exceptions.BuildingNotFoundException;
 import at.qe.skeleton.exceptions.DepartmentNotFoundException;
 import at.qe.skeleton.exceptions.RoomNotFoundException;
+import at.qe.skeleton.exceptions.UserNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -96,19 +97,35 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 
-    // Catch-all fallback
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiErrorResponse> handleGenericException(
+    // Handle User not found Exception
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleUserNotFound(
             Exception ex,
             HttpServletRequest request
-    ) {
+    ){
         ApiErrorResponse response = new ApiErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Internal Server Error",
+                HttpStatus.NOT_FOUND.value(),
+                UserNotFoundException.class.getSimpleName(),
                 ex.getMessage(),
                 request.getRequestURI()
         );
 
-        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
+
+//    // Catch-all fallback
+//    @ExceptionHandler(Exception.class)
+//    public ResponseEntity<ApiErrorResponse> handleGenericException(
+//            Exception ex,
+//            HttpServletRequest request
+//    ) {
+//        ApiErrorResponse response = new ApiErrorResponse(
+//                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+//                "Internal Server Error",
+//                ex.getMessage(),
+//                request.getRequestURI()
+//        );
+//
+//        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+//    }
 }

@@ -1,12 +1,9 @@
 package at.qe.skeleton.controllers;
 
-import at.qe.skeleton.dtos.DepartmentCreateDTO;
-import at.qe.skeleton.dtos.DepartmentDTO;
-import at.qe.skeleton.dtos.DepartmentUpdateDTO;
-import at.qe.skeleton.mappers.DepartmentCreateMapper;
-import at.qe.skeleton.mappers.DepartmentMapper;
-import at.qe.skeleton.mappers.DepartmentUpdateMapper;
+import at.qe.skeleton.dtos.*;
+import at.qe.skeleton.mappers.*;
 import at.qe.skeleton.model.Department;
+import at.qe.skeleton.model.Room;
 import at.qe.skeleton.services.DepartmentService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,17 +20,22 @@ public class DepartmentController {
     private final DepartmentMapper departmentMapper;
     private final DepartmentUpdateMapper departmentUpdateMapper;
     private final DepartmentCreateMapper departmentCreateMapper;
+    private final UserxMapper userxMapper;
+    private final RoomMapper roomMapper;
 
     public DepartmentController(
             DepartmentService departmentService,
             DepartmentMapper departmentMapper,
             DepartmentUpdateMapper departmentUpdateMapper,
-            DepartmentCreateMapper departmentCreateMapper
-    ) {
+            DepartmentCreateMapper departmentCreateMapper,
+            UserxMapper userxMapper,
+            RoomMapper roomMapper) {
         this.departmentService = departmentService;
         this.departmentMapper = departmentMapper;
         this.departmentUpdateMapper = departmentUpdateMapper;
         this.departmentCreateMapper = departmentCreateMapper;
+        this.userxMapper = userxMapper;
+        this.roomMapper = roomMapper;
     }
 
     @GetMapping
@@ -50,6 +52,21 @@ public class DepartmentController {
     public ResponseEntity<DepartmentDTO> getById(@PathVariable Long id) {
         Department department = departmentService.getById(id);
         return ResponseEntity.ok(departmentMapper.mapTo(department));
+    }
+
+    @GetMapping("/{id}/rooms")
+    public ResponseEntity<List<RoomDTO>> getRooms(@PathVariable Long id) {
+        Department department = departmentService.getById(id);
+        List<RoomDTO> rooms = department.getRooms().stream()
+                .map(roomMapper::mapTo)
+                .toList();
+        return ResponseEntity.ok(rooms);
+    }
+
+    @GetMapping("/{id}/leader")
+    public ResponseEntity<UserxDTO> getDepartmentLeader(@PathVariable Long id) {
+        Department department = departmentService.getById(id);
+        return ResponseEntity.ok(userxMapper.mapTo(department.getDepartmentLeader()));
     }
 
     @PostMapping

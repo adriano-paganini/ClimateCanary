@@ -18,6 +18,10 @@ public class Department {
     @OneToMany(mappedBy = "department")
     private List<Room> rooms = new ArrayList<>();
 
+    @ManyToOne
+    @JoinColumn(name = "userx_id")
+    private Userx departmentLeader;
+
     public Department() {}
 
     public Department(String name) {
@@ -31,6 +35,9 @@ public class Department {
 
     public List<Room> getRooms() { return rooms; }
     public void setRooms(List<Room> rooms) { this.rooms = rooms; }
+
+    public Userx getDepartmentLeader() { return departmentLeader; }
+    public void setDepartmentLeader(Userx departmentLeader) { this.departmentLeader = departmentLeader; }
 
     @Override
     public boolean equals(Object o) {

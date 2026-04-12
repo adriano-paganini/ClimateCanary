@@ -3,9 +3,11 @@ package at.qe.skeleton.controllers;
 import at.qe.skeleton.dtos.BuildingCreateDTO;
 import at.qe.skeleton.dtos.BuildingDTO;
 import at.qe.skeleton.dtos.BuildingUpdateDTO;
+import at.qe.skeleton.dtos.RoomDTO;
 import at.qe.skeleton.mappers.BuildingCreateMapper;
 import at.qe.skeleton.mappers.BuildingMapper;
 import at.qe.skeleton.mappers.BuildingUpdateMapper;
+import at.qe.skeleton.mappers.RoomMapper;
 import at.qe.skeleton.model.Building;
 import at.qe.skeleton.model.Room;
 import at.qe.skeleton.services.BuildingService;
@@ -24,15 +26,17 @@ public class BuildingController {
     private final BuildingMapper buildingMapper;
     private final BuildingCreateMapper buildingCreateMapper;
     private final BuildingUpdateMapper buildingUpdateMapper;
+    private final RoomMapper roomMapper;
 
     public BuildingController(BuildingService buildingService,
                               BuildingMapper buildingMapper,
                               BuildingCreateMapper buildingCreateMapper,
-                              BuildingUpdateMapper buildingUpdateMapper) {
+                              BuildingUpdateMapper buildingUpdateMapper, RoomMapper roomMapper) {
         this.buildingService = buildingService;
         this.buildingMapper = buildingMapper;
         this.buildingCreateMapper = buildingCreateMapper;
         this.buildingUpdateMapper = buildingUpdateMapper;
+        this.roomMapper = roomMapper;
     }
 
     @GetMapping
@@ -79,11 +83,14 @@ public class BuildingController {
         return ResponseEntity.noContent().build();
     }
 
-    // TODO: update this to include DTO
-
     @GetMapping("/{id}/rooms")
-    public ResponseEntity<List<Room>> getRooms(@PathVariable Long id) {
-        return ResponseEntity.ok(buildingService.getBuildingById(id).getRooms());
+    public ResponseEntity<List<RoomDTO>> getRooms(@PathVariable Long id) {
+        List<RoomDTO> buildingRooms = buildingService.getBuildingById(id).getRooms()
+                .stream()
+                .map(roomMapper::mapTo)
+                .toList();
+
+        return ResponseEntity.ok(buildingRooms);
     }
 
 }
