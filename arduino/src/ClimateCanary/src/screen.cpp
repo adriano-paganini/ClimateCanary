@@ -142,16 +142,16 @@ void displayActiveWarnings(int smoothIndex, RelevantDisplayData data, int line){
     uint8_t gas =(statusCode & 0xF000) >> 12;
 
     if (temp) {
-        activeWarnings.push_back(String("TEMPERATURE ") + (temp == 2 ? "HIGH" : "LOW"));
+        activeWarnings.push_back(String("TEMPERATURE ") + ((temp == 2) ||(temp==4)  ? "HIGH" : "LOW"));
     }
     if (pressure) {
-        activeWarnings.push_back(String("PRESSURE ") + (pressure == 2 ? "HIGH" : "LOW"));
+        activeWarnings.push_back(String("PRESSURE ") + ((pressure == 2) ||(pressure==4)  ? "HIGH" : "LOW"));
     }
     if (humidity) {
-        activeWarnings.push_back(String("HUMIDITY ") + (humidity == 2 ? "HIGH" : "LOW"));
+        activeWarnings.push_back(String("HUMIDITY ") + ((humidity == 2) ||(humidity==4)  ? "HIGH" : "LOW"));
     }
     if (gas) {
-        activeWarnings.push_back(String("GAS ") + (gas == 2 ? "HIGH" : "LOW"));
+        activeWarnings.push_back(String("GAS ") + ((gas == 2) ||(gas==4)  ? "HIGH" : "LOW"));
     }
 
     int screen = (smoothIndex / displayStep) % activeWarnings.size();
@@ -174,8 +174,8 @@ void connectedActiveWarning(int smoothIndex, RelevantDisplayData data){
         printScreen(0,"ACTIVE WARNINGS!");
         displayActiveWarnings(smoothIndex,data,1);
     }else{
-        printScreen(0,"WARNING"+String(data.skipText)+"/"+String(data.currentWarningMessages.size()));
-        rendersString(smoothIndex, data.currentWarningMessages.at(data.skipText),1);
+        printScreen(0,"WARNING "+String(data.skipText)+"/"+String(data.currentWarningMessages.size()));
+        rendersString(smoothIndex, data.currentWarningMessages.at(data.skipText-1),1);
     }
 }
 

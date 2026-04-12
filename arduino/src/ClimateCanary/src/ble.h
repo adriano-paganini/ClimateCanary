@@ -14,9 +14,9 @@ extern BLECharacteristic setupCharacteristic;
 
 extern BLECharacteristic authenticationCharacteristic;
 
-extern BLECharacteristic warningMessageTotalLength;
-extern BLECharacteristic warningMessageCharPack;
-extern BLECharacteristic warningMessageAck;
+extern BLECharacteristic warningMessageTotalLengthCharacteristic;
+extern BLECharacteristic warningMessageCharPackCharacteristic;
+extern BLECharacteristic warningMessageAckCharacteristic;
 
 struct __attribute__((packed)) WarningMessageCharPack{
   uint16_t sqn;
@@ -63,24 +63,21 @@ void addCharacteristics(BLEService& service, T& firstChar, Args&... remainingCha
 }
 
 template <typename... Args>
-bool setupBLE(String deviceName,String manufacturerData, BLEService& service, Args&... characteristics) {
+bool setupBLE(const char* deviceName, const char* manufacturerData, BLEService& service, Args&... characteristics) {
   if (!BLE.begin()) {
     Serial.println("Starting BLE failed!");
     return false;
   }
 
-  environmentalSensingService = service;
-
-  BLE.setDeviceName(deviceName.c_str());
-  BLE.setLocalName(deviceName.c_str());
+  BLE.setDeviceName(deviceName);
+  BLE.setLocalName(deviceName);
   BLE.setAdvertisedService(service);
-  BLE.setManufacturerData((const uint8_t*)manufacturerData.c_str(), manufacturerData.length());
+  BLE.setManufacturerData((const uint8_t*)manufacturerData, strlen(manufacturerData));
 
   addCharacteristics(service, characteristics...);
-  
   BLE.addService(service);
   BLE.advertise();
-  
+
   Serial.println("BLE device is now advertising with multiple characteristics!");
   return true;
 }

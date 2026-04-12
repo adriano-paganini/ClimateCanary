@@ -25,20 +25,20 @@ BLECharacteristic authenticationCharacteristic(
   sizeof(AuthentificationPacket)
 );
 
-BLECharacteristic warningMessageTotalLength(
+BLECharacteristic warningMessageTotalLengthCharacteristic(
   "c7e9187b-173a-4a56-bdd7-cc890f2b1366",
   BLEWrite|BLERead,
   sizeof(uint16_t)
 );
 
-BLECharacteristic warningMessageCharPack(
+BLECharacteristic warningMessageCharPackCharacteristic(
   "a41f4b38-61c5-4528-84b2-9283bd185619",
   BLERead|BLEWrite,
   sizeof(WarningMessageCharPack)
 );
 
-BLECharacteristic warningMessageAck(
-  "",
+BLECharacteristic warningMessageAckCharacteristic(
+  "e6b0f5a2-4c9a-4f7d-8f3d-1a2b3c4d5e6f",
   BLERead|BLENotify,
   sizeof(uint16_t)
 );
