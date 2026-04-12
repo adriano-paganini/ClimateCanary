@@ -1,29 +1,16 @@
 package at.qe.skeleton.model;
 
-import java.io.Serial;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.Objects;
-import java.util.Set;
-
+import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.domain.Persistable;
-
-import jakarta.persistence.CollectionTable;
-import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.*;
 
 /**
  * Entity representing users.
@@ -63,6 +50,9 @@ public class Userx implements Persistable<Long>, Serializable, Comparable<Userx>
   @CollectionTable(name = "Userx_UserxRole")
   @Enumerated(EnumType.STRING)
   private Set<UserxRole> roles;
+
+  @OneToMany(mappedBy = "user")
+  private List<Absence> absences = new ArrayList<>();
 
   boolean enabled;
 
@@ -180,6 +170,10 @@ public class Userx implements Persistable<Long>, Serializable, Comparable<Userx>
 
   public void setUpdateDate(LocalDateTime updateDate) {
     this.updateDate = updateDate;
+  }
+
+  public List<Absence> getAbsences() {
+      return absences;
   }
 
   @Override
