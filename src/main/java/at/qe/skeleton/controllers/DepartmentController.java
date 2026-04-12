@@ -3,7 +3,6 @@ package at.qe.skeleton.controllers;
 import at.qe.skeleton.dtos.*;
 import at.qe.skeleton.mappers.*;
 import at.qe.skeleton.model.Department;
-import at.qe.skeleton.model.Room;
 import at.qe.skeleton.services.DepartmentService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -50,13 +49,13 @@ public class DepartmentController {
 
     @GetMapping("/{id}")
     public ResponseEntity<DepartmentDTO> getById(@PathVariable Long id) {
-        Department department = departmentService.getById(id);
+        Department department = departmentService.getDepartmentById(id);
         return ResponseEntity.ok(departmentMapper.mapTo(department));
     }
 
     @GetMapping("/{id}/rooms")
     public ResponseEntity<List<RoomDTO>> getRooms(@PathVariable Long id) {
-        Department department = departmentService.getById(id);
+        Department department = departmentService.getDepartmentById(id);
         List<RoomDTO> rooms = department.getRooms().stream()
                 .map(roomMapper::mapTo)
                 .toList();
@@ -65,7 +64,7 @@ public class DepartmentController {
 
     @GetMapping("/{id}/leader")
     public ResponseEntity<UserxDTO> getDepartmentLeader(@PathVariable Long id) {
-        Department department = departmentService.getById(id);
+        Department department = departmentService.getDepartmentById(id);
         return ResponseEntity.ok(userxMapper.mapTo(department.getDepartmentLeader()));
     }
 
@@ -90,7 +89,7 @@ public class DepartmentController {
 
         departmentService.update(id, departmentUpdateMapper.mapFrom(dto));
 
-        Department updated = departmentService.getById(id);
+        Department updated = departmentService.getDepartmentById(id);
 
         return ResponseEntity.ok(departmentMapper.mapTo(updated));
     }

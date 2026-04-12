@@ -2,6 +2,7 @@ package at.qe.skeleton.services;
 
 import at.qe.skeleton.exceptions.BuildingNotFoundException;
 import at.qe.skeleton.model.Building;
+import at.qe.skeleton.model.Room;
 import at.qe.skeleton.repositories.BuildingRepository;
 import org.springframework.stereotype.Service;
 
@@ -36,6 +37,15 @@ public class BuildingService {
     }
 
     public void delete(Long id) {
+
+        Building building = getBuildingById(id);
+
+        for (Room room : building.getRooms()) {
+            room.setBuilding(null);
+        }
+
+        building.getRooms().clear();
+
         buildingRepository.deleteById(id);
     }
 

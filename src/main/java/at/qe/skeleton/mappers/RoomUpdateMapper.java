@@ -3,7 +3,6 @@ package at.qe.skeleton.mappers;
 import at.qe.skeleton.dtos.RoomUpdateDTO;
 import at.qe.skeleton.model.Department;
 import at.qe.skeleton.model.Room;
-import at.qe.skeleton.repositories.DepartmentRepository;
 import at.qe.skeleton.services.DepartmentService;
 import org.springframework.stereotype.Service;
 
@@ -27,7 +26,7 @@ public class RoomUpdateMapper implements DTOMapper<Room, RoomUpdateDTO> {
 
 
         if (dto.departmentId() != null) {
-            Department department = departmentService.getById(dto.departmentId());
+            Department department = departmentService.getDepartmentById(dto.departmentId());
             room.setDepartment(department);
         }
 

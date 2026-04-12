@@ -21,7 +21,7 @@ public class DepartmentService {
         return departmentRepository.findAll();
     }
 
-    public Department getById(Long id) {
+    public Department getDepartmentById(Long id) {
         return departmentRepository.findById(id)
                 .orElseThrow(() -> new DepartmentNotFoundException("Department with id " + id + " not found"));
     }
@@ -31,7 +31,7 @@ public class DepartmentService {
     }
 
     public Department update(Long id, Department updates) {
-        Department existing = getById(id);
+        Department existing = getDepartmentById(id);
 
         if (updates.getName() != null) {
             existing.setName(updates.getName());
@@ -52,6 +52,13 @@ public class DepartmentService {
     }
 
     public void delete(Long id) {
+        Department department = getDepartmentById(id);
+
+        for (Room room : department.getRooms()) {
+            room.setDepartment(null);
+        }
+
+        department.getRooms().clear();
         departmentRepository.deleteById(id);
     }
 }

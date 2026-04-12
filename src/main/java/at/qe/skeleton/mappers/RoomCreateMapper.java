@@ -28,7 +28,7 @@ public class RoomCreateMapper implements DTOMapper<Room, RoomCreateDTO> {
         room.setRoomType(dto.roomType());
         room.setMinOccupancy(dto.minOccupancy());
 
-        Department department = departmentService.getById(dto.departmentId());
+        Department department = departmentService.getDepartmentById(dto.departmentId());
         room.setDepartment(department);
 
         Building building = buildingService.getBuildingById(dto.buildingId());
