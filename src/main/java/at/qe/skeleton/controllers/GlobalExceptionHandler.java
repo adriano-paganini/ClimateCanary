@@ -216,6 +216,21 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(EntityInUseException.class)
+    public ResponseEntity<ApiErrorResponse> handleEntityInUse(
+            Exception ex,
+            HttpServletRequest request
+    ) {
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                EntityInUseException.class.getSimpleName(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
 //    // Catch-all fallback
 //    @ExceptionHandler(Exception.class)
 //    public ResponseEntity<ApiErrorResponse> handleGenericException(

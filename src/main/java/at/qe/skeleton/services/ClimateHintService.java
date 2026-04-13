@@ -2,7 +2,6 @@ package at.qe.skeleton.services;
 
 import at.qe.skeleton.dtos.ClimateHintUpdateDTO;
 import at.qe.skeleton.exceptions.ClimateHintNotFound;
-import at.qe.skeleton.mappers.ClimateHintMapper;
 import at.qe.skeleton.model.ClimateHint;
 import at.qe.skeleton.repositories.ClimateHintRepository;
 import org.springframework.stereotype.Service;
@@ -14,11 +13,9 @@ import java.util.List;
 public class ClimateHintService {
 
     private final ClimateHintRepository climateHintRepository;
-    private final ClimateHintMapper climateHintMapper;
 
-    public ClimateHintService(ClimateHintRepository climateHintRepository, ClimateHintMapper climateHintMapper) {
+    public ClimateHintService(ClimateHintRepository climateHintRepository) {
         this.climateHintRepository = climateHintRepository;
-        this.climateHintMapper = climateHintMapper;
     }
 
     public List<ClimateHint> findAll() {
