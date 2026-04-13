@@ -29,4 +29,5 @@ void waitForKnownConnection(int smoothIndex, RelevantDisplayData data);
 void connectedAllValidData(int smoothIndex, RelevantDisplayData data);
 void connectedSomeShortInvalidData(int smoothIndex, RelevantDisplayData data);
 void connectedActiveWarning(int smoothIndex, RelevantDisplayData data);
+void acknowledgedWarningsScreen(int smoothIndex, RelevantDisplayData data);
 #endif

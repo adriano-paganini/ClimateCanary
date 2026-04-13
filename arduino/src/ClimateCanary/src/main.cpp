@@ -92,8 +92,8 @@ void evaluateMeasurementStatus(BLEDevice central, BLECharacteristic characterist
   const uint8_t temperatureStatus = (newStatusCode >> 4) & 0x000F;
   const uint8_t humidityStatus  = (newStatusCode >> 8) & 0x000F;
   const uint8_t gasResistanceStatus = (newStatusCode >> 12) & 0x000F;
-
-  if (pressureStatus > 4 || temperatureStatus > 4 || humidityStatus > 4 || gasResistanceStatus > 4) {
+  //0 = valid, 1 = short invalid low, 2 = short invalid high, 3 = long invalid low, 4 = long invalid high
+  if (pressureStatus > 5 || temperatureStatus > 5 || humidityStatus > 5 || gasResistanceStatus > 5) {
     Serial.println("Invalid status code received.");
     return;
   }
@@ -114,15 +114,36 @@ void evaluateMeasurementStatus(BLEDevice central, BLECharacteristic characterist
        (temperatureStatus > 2 && temperatureStatus < 5) ||
        (humidityStatus > 2 && humidityStatus < 5) ||
        (gasResistanceStatus > 2 && gasResistanceStatus < 5));
+
+  bool isLongValid =
+      ((pressureStatus == 5) &&
+       (temperatureStatus == 5) &&
+       (humidityStatus == 5) &&
+       (gasResistanceStatus == 5));
+
   statusCode = newStatusCode;
 
-  if (hasShortInvalid && warningStatus == 0) {
+  if ((hasShortInvalid && warningStatus == 0)|| (hasLongInvalid && warningStatus == 1)|| (hasLongInvalid && warningStatus == 0)){
     currentState = "CONNECTED_SOME_SHORT_INVALID_DATA";
     stateChanged = true;
   } else if(hasLongInvalid && warningStatus == 2){
     currentState = "CONNECTED_ACTIVE_WARNING";
     stateChanged = true;
   }else if(warningStatus == 0){
+    currentState = "CONNECTED_ALL_VALID_DATA";
+    stateChanged = true;
+  }else if(isLongValid && warningStatus != 1){
+    if (warningStatus == 2){
+      warningStatus = 3; //mark as acknowledged
+    }
+    if(warningStatus == 3){
+      warningStatus = 0; //reset to inactive
+      //communicate acknowledgment to app
+      if(warningAcknowledgedCharacteristic.writeValue(true)){
+        Serial.println("Failed to set warning acknowledgment characteristic.");
+      }
+    }
+
     currentState = "CONNECTED_ALL_VALID_DATA";
     stateChanged = true;
   }
@@ -328,6 +349,26 @@ void onCharPacketWritten(BLEDevice central, BLECharacteristic characteristic){
   }
 }
 
+void onWarningAcknowledgedWritten(BLEDevice central, BLECharacteristic characteristic){
+  bool acknowledged;
+  int n = characteristic.readValue((byte*)&acknowledged, sizeof(acknowledged));
+  if (n != sizeof(acknowledged)){
+    Serial.println("Packet malformed");
+    return;
+  }
+  if (acknowledged && warningStatus == 2){
+    warningStatus = 3; //warning acknowledged
+    Serial.println("Warning acknowledged by client.");
+    currentState = "ACTIVE_WARNING_ACKNOWLEDGED";
+    stateChanged = true;
+  }else{
+    Serial.println("Received unexpected warning acknowledgment. Resetting acknowledgment to false...");
+    if (warningAcknowledgedCharacteristic.writeValue(false)) {
+      Serial.println("Failed to reset warning acknowledgment.");
+    }
+  }
+}
+
 void bleTask()
 {
   currentState = "WAITING_FOR_KNOWN_CONNECTION";
@@ -339,6 +380,7 @@ void bleTask()
   authenticationCharacteristic.setEventHandler(BLEWritten, onAuthenticationPacketWritten);
   warningMessageTotalLengthCharacteristic.setEventHandler(BLEWritten, onWarningmessageLengthWritten);
   warningMessageCharPackCharacteristic.setEventHandler(BLEWritten, onCharPacketWritten);
+  warningAcknowledgedCharacteristic.setEventHandler(BLEWritten, onWarningAcknowledgedWritten);
 
 
   uint32_t lastSend = 0;
@@ -410,7 +452,7 @@ void setStateData(){
       lightB = 0;
       lightOn = false; //force update of light in next loop
     }else if (currentState == "CONNECTED_ACTIVE_WARNING"){
-      smoothString = roomName;
+      smoothString = "ACTIVE WARNINGS FOR: " + roomName;
       screenUpdateFunction = &connectedActiveWarning;
       //light quick flashing full red - r=255, g=0, b=0
       lightOnMs = 25;
@@ -418,6 +460,19 @@ void setStateData(){
       lightR = 255;
       lightG = 0;
       lightB = 0;
+    }else if( currentState == "ACTIVE_WARNING_ACKNOWLEDGED"){
+      smoothString = roomName;
+      screenUpdateFunction = &acknowledgedWarningsScreen;
+      if(warningAcknowledgedCharacteristic.writeValue(true)){
+        Serial.println("Failed to set warning acknowledgment characteristic.");
+      }
+      //light on constantly with dim red color - r=80, g=0, b=0
+      lightOnMs = 1;
+      lightOffMs = 0;
+      lightR = 80;
+      lightG = 0;
+      lightB = 0;
+      lightOn = false; //force update of light in next loop
     }
 }
 
@@ -450,6 +505,7 @@ void setup() {
               authenticationCharacteristic,
               warningMessageTotalLengthCharacteristic,
               warningMessageCharPackCharacteristic,
+              warningAcknowledgedCharacteristic,
               warningMessageAckCharacteristic))while (1);
         bleThread.start(bleTask);
     }
@@ -496,7 +552,8 @@ void loop() {
         if (skipText == currentWarningMessages.size()){
           warningStatus = 3; //acknowledge warning after user skipped all warning messages
           //TODO: Add last state (acknowledged warning)
-          currentState = "CONNECTED_ALL_VALID_DATA";
+          skipText = 1;
+          currentState = "ACTIVE_WARNING_ACKNOWLEDGED";
           stateChanged = true;
           Serial.println("User acknowledged warning by skipping all messages.");
         }else{
@@ -504,6 +561,19 @@ void loop() {
         }
       }if (activatedButtons&4 && skipText>1){
         skipText-=1;
+      }
+    }
+    if (warningStatus == 3){
+      if (activatedButtons&2){
+        skipText+=1;
+        if (skipText > currentWarningMessages.size()){
+          skipText = 1;
+        }
+      }if (activatedButtons&4){
+        skipText-=1;
+        if (skipText < 1){
+          skipText = currentWarningMessages.size();
+        }
       }
     }
   }
@@ -535,8 +605,5 @@ void loop() {
 
     screenUpdateFunction(smoothIndex,displayData);
     smoothIndex++;
-    if (smoothIndex > smoothString.length()*2+8){
-      smoothIndex = 0;
-    }
   }
 }

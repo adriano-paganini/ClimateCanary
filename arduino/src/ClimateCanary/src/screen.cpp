@@ -9,9 +9,10 @@ void setupScreen() {
 }
 
 void rendersString(int smoothIndex, String smoothString, int line = 1){
+  int normalizedIndex = smoothIndex % (smoothString.length() + 4); // +4 for the spaces added in scroll
   String scroll = smoothString + "    " + smoothString + "    ";
   String doubled = scroll + scroll;
-  printScreen(line, doubled.substring(smoothIndex, smoothIndex + 16));
+  printScreen(line, doubled.substring(normalizedIndex, normalizedIndex + 16));
 }
 
 void prettySensorScreen(int smoothIndex, SensorData data){
@@ -169,9 +170,20 @@ void connectedAllValidData(int smoothIndex, RelevantDisplayData data){
     }
 }
 
+void acknowledgedWarningsScreen(int smoothIndex, RelevantDisplayData data){
+    if (data.altView){
+        rendersString(smoothIndex, data.smoothString,0);
+        displayActiveWarnings(smoothIndex,data,1);
+    }else{
+        String titleScreen = "ACKNOWLEDGED WARNINGS FOR: " + data.smoothString + " "+data.skipText+"/"+String(data.currentWarningMessages.size());
+        rendersString(smoothIndex, titleScreen,0);
+        rendersString(smoothIndex, data.currentWarningMessages.at(data.skipText-1),1);
+    }
+}
+
 void connectedActiveWarning(int smoothIndex, RelevantDisplayData data){
     if (data.altView){
-        printScreen(0,"ACTIVE WARNINGS!");
+        rendersString(smoothIndex,data.smoothString,0);
         displayActiveWarnings(smoothIndex,data,1);
     }else{
         printScreen(0,"WARNING "+String(data.skipText)+"/"+String(data.currentWarningMessages.size()));

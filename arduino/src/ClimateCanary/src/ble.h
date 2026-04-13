@@ -17,6 +17,7 @@ extern BLECharacteristic authenticationCharacteristic;
 extern BLECharacteristic warningMessageTotalLengthCharacteristic;
 extern BLECharacteristic warningMessageCharPackCharacteristic;
 extern BLECharacteristic warningMessageAckCharacteristic;
+extern BLEBoolCharacteristic warningAcknowledgedCharacteristic;
 
 struct __attribute__((packed)) WarningMessageCharPack{
   uint16_t sqn;

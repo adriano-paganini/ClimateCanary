@@ -43,6 +43,13 @@ BLECharacteristic warningMessageAckCharacteristic(
   sizeof(uint16_t)
 );
 
+BLEBoolCharacteristic warningAcknowledgedCharacteristic(
+  "d1e2f3a4-5678-90ab-cdef-1234567890ab",
+  BLERead | BLENotify | BLEWrite
+);
+
+
+
 
 void sendSensorPacket(SensorData data, BLECharacteristic& funcSensorDataCharacteristic) {
   SensorPacket packet;
