@@ -2,6 +2,11 @@ package at.qe.skeleton.model;
 
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 @Table(name = "thresholds")
 @Entity
 public class Threshold {
@@ -10,10 +15,21 @@ public class Threshold {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Enumerated(EnumType.STRING)
     private Metric metric;
     private boolean enabled;
     private Long boundValue;
     private ThresholdType thresholdType;
+
+    @ManyToMany(mappedBy = "thresholds")
+    private Set<ClimateHint> climateHints = new HashSet<>();
+
+    @OneToMany(mappedBy = "threshold")
+    private List<ThresholdViolation> violations = new ArrayList<>();
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "room_id")
+    private Room room;
 
     public Long getId() {
         return id;
@@ -49,6 +65,18 @@ public class Threshold {
 
     public void setThresholdType(ThresholdType thresholdType) {
         this.thresholdType = thresholdType;
+    }
+
+    public Set<ClimateHint> getClimateHints() {
+        return climateHints;
+    }
+
+    public List<ThresholdViolation> getViolations() {
+        return violations;
+    }
+
+    public Room getRoom() {
+        return room;
     }
 
     @Override

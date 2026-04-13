@@ -11,13 +11,24 @@ public class ThresholdViolation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
+    @Enumerated(EnumType.STRING)
     private Metric metric;
+
+    @Column(name = "`value`")
     private Long value;
     private ViolationStatus violationStatus;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "threshold_id")
+    private Threshold threshold;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "room_id")
+    private Room room;
 
     public long getId() {
         return id;
@@ -61,6 +72,14 @@ public class ThresholdViolation {
 
     public void setEndTime(LocalDateTime endTime) {
         this.endTime = endTime;
+    }
+
+    public Threshold getThreshold() {
+        return threshold;
+    }
+
+    public Room getRoom() {
+        return room;
     }
 
     @Override

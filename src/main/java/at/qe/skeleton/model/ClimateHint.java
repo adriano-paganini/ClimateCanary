@@ -2,6 +2,9 @@ package at.qe.skeleton.model;
 
 import jakarta.persistence.*;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Table(name = "climatehints")
 @Entity
 public class ClimateHint {
@@ -12,6 +15,14 @@ public class ClimateHint {
 
     private Metric metric;
     private String hintText;
+
+    @ManyToMany
+    @JoinTable(
+            name = "climatehint_threshold",
+            joinColumns = @JoinColumn(name = "climatehint_id"),
+            inverseJoinColumns = @JoinColumn(name = "threshold_id")
+    )
+    private Set<Threshold> thresholds = new HashSet<>();
 
     public Long getId() {
         return id;
@@ -31,6 +42,10 @@ public class ClimateHint {
 
     public void setHintText(String hintText) {
         this.hintText = hintText;
+    }
+
+    public Set<Threshold> getThresholds() {
+        return thresholds;
     }
 
     @Override

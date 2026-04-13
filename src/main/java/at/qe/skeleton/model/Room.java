@@ -33,6 +33,12 @@ public class Room {
     @OneToMany(mappedBy = "room")
     private List<EmployeeProfile> employeeProfiles = new ArrayList<>();
 
+    @OneToMany(mappedBy = "room")
+    private List<Threshold> thresholds = new ArrayList<>();
+
+    @OneToMany(mappedBy = "room")
+    private List<ThresholdViolation> violations = new ArrayList<>();
+
     public Room() {}
 
     public Room(String name, RoomType roomType, int minOccupancy) {
@@ -62,6 +68,14 @@ public class Room {
 
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
+
+    public List<Threshold> getThresholds() {
+        return thresholds;
+    }
+
+    public List<ThresholdViolation> getViolations() {
+        return violations;
+    }
 
     @Override
     public boolean equals(Object o) {
