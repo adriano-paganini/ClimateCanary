@@ -30,7 +30,7 @@ public class ClimateHintService {
                 .orElseThrow(() -> new ClimateHintNotFound("Climate hint not found with id: " + id));
     }
 
-    public ClimateHint save(ClimateHint climateHint) {
+    public ClimateHint create(ClimateHint climateHint) {
         return climateHintRepository.save(climateHint);
     }
 

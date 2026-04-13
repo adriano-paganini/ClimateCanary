@@ -35,7 +35,6 @@ public class ThresholdCreateMapper implements DTOMapper<Threshold, ThresholdCrea
         if (dto.climateHintIds() != null) {
             entity.setClimateHints(new HashSet<>(hintRepository.findAllById(dto.climateHintIds())));
         }
-
         return entity;
     }
 
