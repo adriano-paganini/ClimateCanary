@@ -201,6 +201,21 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(ClimateHintNotFound.class)
+    public ResponseEntity<ApiErrorResponse> handleClimateHintNotFound(
+            Exception ex,
+            HttpServletRequest request
+    ) {
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                ClimateHintNotFound.class.getSimpleName(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
 //    // Catch-all fallback
 //    @ExceptionHandler(Exception.class)
 //    public ResponseEntity<ApiErrorResponse> handleGenericException(
