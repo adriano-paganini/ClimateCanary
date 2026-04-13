@@ -1,7 +1,6 @@
 package at.qe.skeleton.mappers;
 
 import at.qe.skeleton.dtos.DepartmentCreateDTO;
-import at.qe.skeleton.dtos.DepartmentUpdateDTO;
 import at.qe.skeleton.exceptions.UserNotFoundException;
 import at.qe.skeleton.model.Department;
 import at.qe.skeleton.model.Room;
@@ -38,7 +37,7 @@ public class DepartmentCreateMapper implements DTOMapper<Department, DepartmentC
         department.setDepartmentLeader(user);
 
         if (dto.roomIds() != null) {
-            List<Room> rooms = roomRepository.findAllByIds(dto.roomIds());
+            List<Room> rooms = roomRepository.findAllByIdsAndActiveTrue(dto.roomIds());
 
             department.setRooms(rooms);
             rooms.forEach(room -> room.setDepartment(department));

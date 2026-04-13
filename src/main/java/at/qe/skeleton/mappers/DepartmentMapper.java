@@ -38,7 +38,7 @@ public class DepartmentMapper implements DTOMapper<Department, DepartmentDTO> {
         department.setName(dto.name());
 
         if (dto.roomIds() != null) {
-            List<Room> rooms = roomRepository.findAllByIds(dto.roomIds());
+            List<Room> rooms = roomRepository.findAllByIdsAndActiveTrue(dto.roomIds());
 
             department.setRooms(rooms);
             rooms.forEach(room -> room.setDepartment(department));

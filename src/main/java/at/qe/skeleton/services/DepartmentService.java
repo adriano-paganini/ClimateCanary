@@ -49,7 +49,7 @@ public class DepartmentService {
             existing.getRooms().forEach(r -> r.setDepartment(null));
             existing.getRooms().clear();
 
-            List<Room> rooms = roomRepository.findAllByIds(dto.roomIds());
+            List<Room> rooms = roomRepository.findAllByIdsAndActiveTrue(dto.roomIds());
             rooms.forEach(r -> r.setDepartment(existing));
             existing.setRooms(rooms);
         }
