@@ -28,6 +28,8 @@ public class Room {
     @JoinColumn(name = "building_id")
     private Building building;
 
+    private boolean active = true;
+
     @OneToMany(mappedBy = "room")
     private List<EmployeeProfile> employeeProfiles = new ArrayList<>();
 
@@ -57,6 +59,9 @@ public class Room {
     public void setBuilding(Building building) { this.building = building; }
 
     public List<EmployeeProfile> getEmployeeProfiles() { return employeeProfiles; }
+
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
 
     @Override
     public boolean equals(Object o) {
