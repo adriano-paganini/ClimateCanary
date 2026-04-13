@@ -1,0 +1,18 @@
+package at.qe.skeleton.dtos;
+
+import at.qe.skeleton.model.Metric;
+import at.qe.skeleton.model.ViolationStatus;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+public record ThresholdViolationUpdateDTO(
+        Metric metric,
+        Long value,
+        ViolationStatus violationStatus,
+        LocalDateTime endTime,
+        LocalDateTime startTime,
+        Long thresholdId,
+        Long roomId,
+        List<Long> measurementIds
+) {}
