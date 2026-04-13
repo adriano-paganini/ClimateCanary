@@ -1,7 +1,7 @@
 import asyncio
 import struct
 from bleak import BleakClient
-from Dokumente.g5t4.raspberry_setup.config import DATA_CHAR_UUID, SENSOR_STRUCT
+from config import DATA_CHAR_UUID, SENSOR_STRUCT
 
 async def ble_worker(queue: asyncio.Queue, client: BleakClient):
     def handle_notification(sender, data):

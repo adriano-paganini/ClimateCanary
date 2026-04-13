@@ -5,6 +5,7 @@ from config import API_URL, SEND_INTERVAL
 
 async def http_sender(db: aiosqlite.Connection):
     async with aiohttp.ClientSession() as session:
+
         while True:
             await asyncio.sleep(SEND_INTERVAL)
             try:
@@ -25,6 +26,8 @@ async def http_sender(db: aiosqlite.Connection):
                         "humidity":      hum,
                         "pressure":      press,
                         "gasResistance": gas,
+                        "roomId":          config.ROOM_ID,
+                        "sensorStationId": config.SENSOR_STATION_ID,
                     }
                     try:
                         async with session.post(API_URL, json=payload, timeout=aiohttp.ClientTimeout(total=5)) as resp:
@@ -42,3 +45,14 @@ async def http_sender(db: aiosqlite.Connection):
 
             except Exception as e:
                 print(f"[HTTP] sender error: {e}")
+
+
+async def send_booted(session: aiohttp.ClientSession):
+    try:
+        async with session.post(
+            f"{config.BACKEND_URL}/api/pi/{config.HOST_NAME}/booted",
+            timeout=aiohttp.ClientTimeout(total=5)
+        ) as resp:
+            print(f"[HTTP] booted sent → {resp.status}")
+    except Exception as e:
+        print(f"[HTTP] booted failed: {e}")

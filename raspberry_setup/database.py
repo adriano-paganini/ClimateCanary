@@ -12,9 +12,17 @@ async def init_db(db: aiosqlite.Connection):
             humidity      REAL,
             pressure      REAL,
             gas_resistance INTEGER,
+            room_id          INTEGER,
+            sensor_station_id TEXT,
             sent          INTEGER DEFAULT 0
         )
     """)
+    await db.execute("""
+            CREATE TABLE IF NOT EXISTS pi_state (
+                key   TEXT PRIMARY KEY,
+                value TEXT
+            )
+        """)
     await db.commit()
 
 
@@ -32,6 +40,8 @@ async def db_writer(queue: asyncio.Queue, db: aiosqlite.Connection, client: Blea
                     payload["humidity"],
                     payload["pressure"],
                     payload["gas_resistance"],
+                    config.ROOM_ID,
+                    config.SENSOR_STATION_ID,
                 ),
             )
             await db.commit()
