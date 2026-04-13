@@ -47,5 +47,15 @@ public class EmployeeProfile {
     public int hashCode() {
         return getClass().hashCode();
     }
+
+    @PreRemove
+    private void removeFromAssociations() {
+        if (department != null) {
+            department.getEmployeeProfiles().remove(this);
+        }
+        if (room != null) {
+            room.getEmployeeProfiles().remove(this);
+        }
+    }
 }
 

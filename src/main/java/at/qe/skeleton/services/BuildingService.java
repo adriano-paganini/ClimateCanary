@@ -5,7 +5,9 @@ import at.qe.skeleton.exceptions.BuildingNotFoundException;
 import at.qe.skeleton.model.Building;
 import at.qe.skeleton.model.Room;
 import at.qe.skeleton.repositories.BuildingRepository;
+import at.qe.skeleton.repositories.RoomRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -14,10 +16,12 @@ public class BuildingService {
 
     private final BuildingRepository buildingRepository;
     private final AddressService addressService;
+    private final RoomRepository roomRepository;
 
-    public BuildingService(BuildingRepository buildingRepository, AddressService addressService) {
+    public BuildingService(BuildingRepository buildingRepository, AddressService addressService, RoomRepository roomRepository) {
         this.buildingRepository = buildingRepository;
         this.addressService = addressService;
+        this.roomRepository = roomRepository;
     }
 
     public List<Building> getAllBuildings() {
@@ -47,11 +51,13 @@ public class BuildingService {
         return buildingRepository.save(building);
     }
 
+    @Transactional
     public void delete(Long id) {
         Building building = getBuildingById(id);
 
         for (Room room : building.getRooms()) {
             room.setBuilding(null);
+            roomRepository.save(room);
         }
         building.getRooms().clear();
 

@@ -33,7 +33,7 @@ public class RoomService {
     }
 
     public Room getById(Long id) {
-        return roomRepository.findById(id)
+        return roomRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new RoomNotFoundException("Room with id " + id + " not found"));
     }
 

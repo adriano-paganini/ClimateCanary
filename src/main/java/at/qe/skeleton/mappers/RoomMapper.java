@@ -16,7 +16,8 @@ public class RoomMapper implements DTOMapper<Room, RoomDTO> {
                 entity.getRoomType(),
                 entity.getMinOccupancy(),
                 entity.getDepartment() == null ? null : entity.getDepartment().getId(),
-                entity.getBuilding() == null ? null : entity.getBuilding().getId()
+                entity.getBuilding() == null ? null : entity.getBuilding().getId(),
+                entity.isActive()
         );
     }
 

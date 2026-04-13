@@ -4,6 +4,7 @@ import at.qe.skeleton.dtos.AddressUpdateDTO;
 import at.qe.skeleton.exceptions.AddressNotFoundException;
 import at.qe.skeleton.model.Address;
 import at.qe.skeleton.repositories.AddressRepository;
+import at.qe.skeleton.repositories.BuildingRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,9 +13,11 @@ import java.util.List;
 public class AddressService {
 
     private final AddressRepository addressRepository;
+    private final BuildingRepository buildingRepository;
 
-    public AddressService(AddressRepository addressRepository) {
+    public AddressService(AddressRepository addressRepository, BuildingRepository buildingRepository) {
         this.addressRepository = addressRepository;
+        this.buildingRepository = buildingRepository;
     }
 
     public List<Address> getAll() {
@@ -57,6 +60,10 @@ public class AddressService {
 
     public void delete(Long id) {
         getById(id);
+
+        if (buildingRepository.existsBuildingByAddressId(id)) {
+            throw new IllegalStateException("Address with id " + id + " is still referenced by a building");
+        }
         addressRepository.deleteById(id);
     }
 }

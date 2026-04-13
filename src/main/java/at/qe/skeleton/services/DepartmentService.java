@@ -4,9 +4,11 @@ import at.qe.skeleton.dtos.DepartmentUpdateDTO;
 import at.qe.skeleton.exceptions.DepartmentNotFoundException;
 import at.qe.skeleton.exceptions.UserNotFoundException;
 import at.qe.skeleton.model.Department;
+import at.qe.skeleton.model.EmployeeProfile;
 import at.qe.skeleton.model.Room;
 import at.qe.skeleton.model.Userx;
 import at.qe.skeleton.repositories.DepartmentRepository;
+import at.qe.skeleton.repositories.EmployeeProfileRepository;
 import at.qe.skeleton.repositories.RoomRepository;
 import org.springframework.stereotype.Service;
 
@@ -18,11 +20,13 @@ public class DepartmentService {
     private final DepartmentRepository departmentRepository;
     private final RoomRepository roomRepository;
     private final UserxService userxService;
+    private final EmployeeProfileRepository employeeProfileRepository;
 
-    public DepartmentService(DepartmentRepository repo, RoomRepository roomRepository, UserxService userxService) {
+    public DepartmentService(DepartmentRepository repo, RoomRepository roomRepository, UserxService userxService, EmployeeProfileRepository employeeProfileRepository) {
         this.departmentRepository = repo;
         this.roomRepository = roomRepository;
         this.userxService = userxService;
+        this.employeeProfileRepository = employeeProfileRepository;
     }
 
     public List<Department> getAll() {
@@ -68,9 +72,16 @@ public class DepartmentService {
 
         for (Room room : department.getRooms()) {
             room.setDepartment(null);
+            roomRepository.save(room);
         }
-
         department.getRooms().clear();
+
+        for (EmployeeProfile ep : department.getEmployeeProfiles()) {
+            ep.setDepartment(null);
+            employeeProfileRepository.save(ep);
+        }
+        department.getEmployeeProfiles().clear();
+
         departmentRepository.deleteById(id);
     }
 }

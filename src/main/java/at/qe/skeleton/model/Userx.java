@@ -51,8 +51,11 @@ public class Userx implements Persistable<Long>, Serializable, Comparable<Userx>
   @Enumerated(EnumType.STRING)
   private Set<UserxRole> roles;
 
-  @OneToMany(mappedBy = "user")
+  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<Absence> absences = new ArrayList<>();
+
+  @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+  private EmployeeProfile employeeProfile;
 
   boolean enabled;
 
@@ -176,7 +179,11 @@ public class Userx implements Persistable<Long>, Serializable, Comparable<Userx>
       return absences;
   }
 
-  @Override
+  public EmployeeProfile getEmployeeProfile() {
+      return employeeProfile;
+  }
+
+    @Override
   public int hashCode() {
     int hash = 7;
     hash = 59 * hash + Objects.hashCode(this.getId());

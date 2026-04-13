@@ -9,6 +9,7 @@ public record RoomDTO(
         RoomType roomType,
         Integer minOccupancy,
         Long departmentId,
-        Long buildingId
+        Long buildingId,
+        boolean active
 
 ) {}

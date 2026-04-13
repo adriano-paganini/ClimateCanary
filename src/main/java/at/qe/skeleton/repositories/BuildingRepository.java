@@ -2,9 +2,10 @@ package at.qe.skeleton.repositories;
 
 
 import at.qe.skeleton.model.Building;
-import org.springframework.data.repository.Repository;
 
 public interface BuildingRepository extends AbstractRepository<Building, Long> {
 
     void deleteById(Long id);
+
+    boolean existsBuildingByAddressId(Long addressId);
 }

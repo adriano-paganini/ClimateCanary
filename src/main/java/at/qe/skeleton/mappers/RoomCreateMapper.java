@@ -1,8 +1,6 @@
 package at.qe.skeleton.mappers;
 
 import at.qe.skeleton.dtos.RoomCreateDTO;
-import at.qe.skeleton.model.Building;
-import at.qe.skeleton.model.Department;
 import at.qe.skeleton.model.Room;
 import at.qe.skeleton.services.BuildingService;
 import at.qe.skeleton.services.DepartmentService;
@@ -27,6 +25,7 @@ public class RoomCreateMapper implements DTOMapper<Room, RoomCreateDTO> {
         room.setMinOccupancy(dto.minOccupancy());
         room.setDepartment(departmentService.getDepartmentById(dto.departmentId()));
         room.setBuilding(buildingService.getBuildingById(dto.buildingId()));
+        room.setActive(true);
         return room;
     }
 
