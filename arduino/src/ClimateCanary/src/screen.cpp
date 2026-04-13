@@ -187,7 +187,11 @@ void connectedActiveWarning(int smoothIndex, RelevantDisplayData data){
         displayActiveWarnings(smoothIndex,data,1);
     }else{
         printScreen(0,"WARNING "+String(data.skipText)+"/"+String(data.currentWarningMessages.size()));
+        if (warningStatus!=2){
+            rendersString(smoothIndex, "RECEIVING MESSAGES...",1);
+        }else{
         rendersString(smoothIndex, data.currentWarningMessages.at(data.skipText-1),1);
+        }
     }
 }
 

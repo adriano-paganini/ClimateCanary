@@ -6,25 +6,31 @@
 #include "buttons.h"
 
 extern BLEService environmentalSensingService;
-extern BLECharacteristic sensorPacketCharacteristic;
-extern BLECharacteristic sensorPacketStatusCharacteristic;
+extern BLECharacteristic sensorDataCharacteristic;
+extern BLECharacteristic sensorDataStatusCharacteristic;
 
-extern BLEService setupService;
-extern BLECharacteristic setupCharacteristic;
+extern BLEService deviceSetupService;
+extern BLECharacteristic deviceSetupCharacteristic;
 
-extern BLECharacteristic authenticationCharacteristic;
-
-extern BLECharacteristic warningMessageTotalLengthCharacteristic;
-extern BLECharacteristic warningMessageCharPackCharacteristic;
-extern BLECharacteristic warningMessageAckCharacteristic;
+extern BLEService warningControlService;
+extern BLECharacteristic warningAuthCharacteristic;
 extern BLEBoolCharacteristic warningAcknowledgedCharacteristic;
+extern BLECharacteristic warningMessageLengthCharacteristic;
+extern BLECharacteristic warningMessageChunkCharacteristic;
+extern BLECharacteristic warningMessageAckRequestCharacteristic;
 
-struct __attribute__((packed)) WarningMessageCharPack{
-  uint16_t sqn;
-  char content;
+struct __attribute__((packed)) DeviceSetupConfig {
+  uint8_t measurementInterval;
+  uint32_t deviceId;
 };
 
-struct __attribute__((packed)) SensorPacket {
+struct __attribute__((packed)) DeviceAuthenticationPacket {
+  uint32_t deviceId;
+  char roomName[32];
+  uint8_t roomNameLength;
+};
+
+struct __attribute__((packed)) SensorDataPacket {
   uint32_t timestamp;
   float pressure;
   float temperature;
@@ -32,55 +38,20 @@ struct __attribute__((packed)) SensorPacket {
   uint32_t gasResistance;
 };
 
-struct __attribute__((packed)) SensorPacketStatus{
+struct __attribute__((packed)) SensorStatusPacket {
   uint32_t timestamp;
   uint16_t statusCode;
 };
 
-//This limits the measurement granularity SIGNIFICANTLY, but can always be changed.
-// It is just to not to write too much data to the arduino
-struct __attribute__((packed)) SetupConfig{
-  uint8_t measurementInterval;
-  uint32_t id;
+struct __attribute__((packed)) WarningMessageChunk {
+  uint16_t sequenceNumber;
+  char content;
 };
-
-struct __attribute__((packed))AuthentificationPacket{
-  uint32_t id;
-  char roomName[32];
-  uint8_t roomNameLen;
-};
-
-inline void addCharacteristics(BLEService& service) {
-  //needed for recursion
-}
 
 void sendSensorPacket(SensorData data, BLECharacteristic& funcSensorDataCharacteristic);
 
+bool initialSetupBLE(const char* deviceName, const char* manufacturerData);
 
-template <typename T, typename... Args>
-void addCharacteristics(BLEService& service, T& firstChar, Args&... remainingChars) {
-    service.addCharacteristic(firstChar);
-    addCharacteristics(service, remainingChars...);
-}
-
-template <typename... Args>
-bool setupBLE(const char* deviceName, const char* manufacturerData, BLEService& service, Args&... characteristics) {
-  if (!BLE.begin()) {
-    Serial.println("Starting BLE failed!");
-    return false;
-  }
-
-  BLE.setDeviceName(deviceName);
-  BLE.setLocalName(deviceName);
-  BLE.setAdvertisedService(service);
-  BLE.setManufacturerData((const uint8_t*)manufacturerData, strlen(manufacturerData));
-
-  addCharacteristics(service, characteristics...);
-  BLE.addService(service);
-  BLE.advertise();
-
-  Serial.println("BLE device is now advertising with multiple characteristics!");
-  return true;
-}
+bool normalSetupBLE(const char* deviceName, const char* manufacturerData);
 
 #endif

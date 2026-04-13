@@ -9,6 +9,8 @@
 #include <vector>
 #include <string>
 
+//TODO:data buffering
+
 using namespace rtos;
 
 Thread bleThread;
@@ -75,7 +77,7 @@ void evaluateMeasurementStatus(BLEDevice central, BLECharacteristic characterist
     return;
   }
 
-  SensorPacketStatus packet;
+  SensorStatusPacket packet;
   int n = characteristic.readValue((byte*)&packet, sizeof(packet));
   if (n != sizeof(packet)) {
     Serial.println("Packet malformed");
@@ -126,9 +128,6 @@ void evaluateMeasurementStatus(BLEDevice central, BLECharacteristic characterist
   if ((hasShortInvalid && warningStatus == 0)|| (hasLongInvalid && warningStatus == 1)|| (hasLongInvalid && warningStatus == 0)){
     currentState = "CONNECTED_SOME_SHORT_INVALID_DATA";
     stateChanged = true;
-  } else if(hasLongInvalid && warningStatus == 2){
-    currentState = "CONNECTED_ACTIVE_WARNING";
-    stateChanged = true;
   }else if(warningStatus == 0){
     currentState = "CONNECTED_ALL_VALID_DATA";
     stateChanged = true;
@@ -149,15 +148,15 @@ void evaluateMeasurementStatus(BLEDevice central, BLECharacteristic characterist
   }
 }
 
-void onSetupConfigWritten(BLEDevice central, BLECharacteristic characteristic){
-  SetupConfig config;
+void onDeviceSetupConfigWritten(BLEDevice central, BLECharacteristic characteristic){
+  DeviceSetupConfig config;
   int n = characteristic.readValue((byte*)&config, sizeof(config));
   if (!n){
     Serial.println("Packet Malformed");
     return;
   }
   uint8_t measurementInterval = config.measurementInterval;
-  uint32_t id = config.id;
+  uint32_t id = config.deviceId;
 
   Serial.print("Received new setup config: Measurement Interval - ");
   Serial.print(measurementInterval);
@@ -177,7 +176,7 @@ void bleFirstSetup(){
   currentState = "WAITING_FOR_NEW_CONNECTION";
   stateChanged = true;
 
-  setupCharacteristic.setEventHandler(BLEWritten, onSetupConfigWritten);
+  deviceSetupCharacteristic.setEventHandler(BLEWritten, onDeviceSetupConfigWritten);
 
   while(true){
     BLE.poll();
@@ -216,6 +215,20 @@ void onBleConnected(BLEDevice central) {
 void onBleDisconnected(BLEDevice central) {
   bleClientConnected = false;
   bleClientAuthenticated = false;
+  //reset all relevant variables
+  roomName = "";
+  smoothString = "";
+  smoothIndex = 0;
+  altView = false;
+  statusCode = 0;
+  warningStatus= 0;
+  //not resetting, to avoid having to synchronize access
+  //currentWarningMessages.clear();
+  //write acknowledged
+  if (warningAcknowledgedCharacteristic.writeValue(false)) {
+    Serial.println("Failed to reset warning acknowledgment.");
+  }
+
 
   BLE.stopAdvertise();
   BLE.setDeviceName("G5T4CC");
@@ -227,7 +240,7 @@ void onBleDisconnected(BLEDevice central) {
 }
 
 void onAuthenticationPacketWritten(BLEDevice central, BLECharacteristic characteristic){
-  AuthentificationPacket packet;
+  DeviceAuthenticationPacket packet;
   int n = characteristic.readValue((byte*)&packet, sizeof(packet));
   if (n != sizeof(packet)) {
     Serial.println("Packet malformed");
@@ -235,14 +248,14 @@ void onAuthenticationPacketWritten(BLEDevice central, BLECharacteristic characte
     return;
   }
 
-  uint8_t len = packet.roomNameLen;
+  uint8_t len = packet.roomNameLength;
   if (len > sizeof(packet.roomName)) {
-    Serial.println("roomNameLen out of range");
+    Serial.println("roomNameLength out of range");
     central.disconnect();
     return;
   }
 
-  uint32_t id = packet.id;
+  uint32_t id = packet.deviceId;
   kv_info_t idInfo;
   int idResult = kv_get_info(ID_KEY, &idInfo);
   if (idResult != MBED_SUCCESS || idInfo.size != sizeof(id)) {
@@ -279,20 +292,29 @@ void onAuthenticationPacketWritten(BLEDevice central, BLECharacteristic characte
 }
 
 void onWarningmessageLengthWritten(BLEDevice central, BLECharacteristic characteristic){
+  if (!bleClientAuthenticated) {
+    Serial.println("Unauthenticated client tried to write warning message length. Disconnecting...");
+    central.disconnect();
+
+    currentState = "WAITING_FOR_KNOWN_CONNECTION";
+    stateChanged = true;
+    return;
+  }
   uint16_t newLength;
   int n = characteristic.readValue((byte*)&newLength, sizeof(newLength));
   if (n != sizeof(newLength)) {
     Serial.println("Packet malformed");
     return;
   }
-  //if an active warning transmission is ongoing, completely reset it, and start with the new one.
 
   warningMessageLength = newLength;
   currentWarningMessages.clear();
   skipText = 1;
-  warningStatus = 1; //activate warning
-  warningMessageAck = 0; //reset ack for new message
-  warningMessageBuffer = ""; //clear buffer for new message
+  warningStatus = 1;
+  warningMessageAck = 0;
+  warningMessageBuffer = "";
+  currentState = "CONNECTED_ACTIVE_WARNING";
+  stateChanged = true;
   
 
   Serial.print("Received new warning message length: ");
@@ -300,7 +322,16 @@ void onWarningmessageLengthWritten(BLEDevice central, BLECharacteristic characte
 }
 
 void onCharPacketWritten(BLEDevice central, BLECharacteristic characteristic){
-  WarningMessageCharPack packet;
+  if (!bleClientAuthenticated) {
+    Serial.println("Unauthenticated client tried to write warning message chunk. Disconnecting...");
+    central.disconnect();
+
+    currentState = "WAITING_FOR_KNOWN_CONNECTION";
+    stateChanged = true;
+    return;
+  }
+
+  WarningMessageChunk packet;
   int n = characteristic.readValue((byte*)&packet,sizeof(packet));
   if (n != sizeof(packet)){
     Serial.println("Packet malformed");
@@ -312,7 +343,7 @@ void onCharPacketWritten(BLEDevice central, BLECharacteristic characteristic){
       return;
     case 1:
       {
-        if (packet.sqn == warningMessageAck){
+        if (packet.sequenceNumber == warningMessageAck){
           if (packet.content == '\0'){
             currentWarningMessages.push_back(warningMessageBuffer);
             Serial.println(warningMessageBuffer);
@@ -329,11 +360,11 @@ void onCharPacketWritten(BLEDevice central, BLECharacteristic characteristic){
           }
           }else{
             Serial.print("Received wrong sequence number:");
-            Serial.println(packet.sqn);
+            Serial.println(packet.sequenceNumber);
             Serial.print("Expected sequence number:");
             Serial.println(warningMessageAck);
           }
-          warningMessageAckCharacteristic.writeValue(warningMessageAck); //request send of relevant packet
+          warningMessageAckRequestCharacteristic.writeValue(warningMessageAck); //request send of relevant packet
         }
       break;
     case 2:
@@ -350,6 +381,15 @@ void onCharPacketWritten(BLEDevice central, BLECharacteristic characteristic){
 }
 
 void onWarningAcknowledgedWritten(BLEDevice central, BLECharacteristic characteristic){
+  if (!bleClientAuthenticated) {
+    Serial.println("Unauthenticated client tried to write warning acknowledgment. Disconnecting...");
+    central.disconnect();
+
+    currentState = "WAITING_FOR_KNOWN_CONNECTION";
+    stateChanged = true;
+    return;
+  }
+
   bool acknowledged;
   int n = characteristic.readValue((byte*)&acknowledged, sizeof(acknowledged));
   if (n != sizeof(acknowledged)){
@@ -376,10 +416,10 @@ void bleTask()
 
   BLE.setEventHandler(BLEConnected, onBleConnected);
   BLE.setEventHandler(BLEDisconnected,onBleDisconnected);
-  sensorPacketStatusCharacteristic.setEventHandler(BLEWritten, evaluateMeasurementStatus);
-  authenticationCharacteristic.setEventHandler(BLEWritten, onAuthenticationPacketWritten);
-  warningMessageTotalLengthCharacteristic.setEventHandler(BLEWritten, onWarningmessageLengthWritten);
-  warningMessageCharPackCharacteristic.setEventHandler(BLEWritten, onCharPacketWritten);
+  sensorDataStatusCharacteristic.setEventHandler(BLEWritten, evaluateMeasurementStatus);
+  warningAuthCharacteristic.setEventHandler(BLEWritten, onAuthenticationPacketWritten);
+  warningMessageLengthCharacteristic.setEventHandler(BLEWritten, onWarningmessageLengthWritten);
+  warningMessageChunkCharacteristic.setEventHandler(BLEWritten, onCharPacketWritten);
   warningAcknowledgedCharacteristic.setEventHandler(BLEWritten, onWarningAcknowledgedWritten);
 
 
@@ -393,7 +433,7 @@ void bleTask()
 
       if (now - lastSend >= 1000) {
         dataMutex.lock();
-        sendSensorPacket(globalSensorData, sensorPacketCharacteristic);
+        sendSensorPacket(globalSensorData, sensorDataCharacteristic);
         dataMutex.unlock();
 
         lastSend = now;
@@ -483,7 +523,6 @@ void setup() {
   setupLight();
   setColorRGB(lightR, lightG, lightB);
   Serial.begin(9600);
-  //while(!Serial);
   kv_info_t idInfo;
   kv_info_t intervalInfo;
   uint32_t idValue;
@@ -495,23 +534,16 @@ void setup() {
   if (idResult ==intervalResult && idResult == MBED_SUCCESS){
     if (idInfo.size != sizeof(idValue) || intervalInfo.size != sizeof(intervalValue)){
       Serial.println("Keys exists but have unexpected sizes. Restarting Pairing process...");
-        if (!setupBLE("G5T4SETUP","00RDY", setupService,setupCharacteristic))while (1);
+        if (!initialSetupBLE("G5T4SETUP","00RDY"))while (1);
         bleThread.start(bleFirstSetup);
     }else{
       Serial.println("Keys exist and have expected sizes. Continuing with normal execution...");
-        if (!setupBLE("G5T4CC","11LCK", environmentalSensingService,
-              sensorPacketCharacteristic,
-              sensorPacketStatusCharacteristic,
-              authenticationCharacteristic,
-              warningMessageTotalLengthCharacteristic,
-              warningMessageCharPackCharacteristic,
-              warningAcknowledgedCharacteristic,
-              warningMessageAckCharacteristic))while (1);
+        if (!normalSetupBLE("G5T4CC","11LCK"))while (1);
         bleThread.start(bleTask);
     }
   }else{
     Serial.println("Keys do not exist. Starting Pairing process...");
-      if (!setupBLE("G5T4SETUP","00RDY", setupService,setupCharacteristic))while (1);
+      if (!initialSetupBLE("G5T4SETUP","00RDY"))while (1);
       bleThread.start(bleFirstSetup);
   }
 }
@@ -547,11 +579,16 @@ void loop() {
     if (activatedButtons&1){
       altView = !altView;
       }
-    if(warningStatus == 2){
+    if ((activatedButtons&7) == 7){
+      //delete kv pairs and restart entire arduino
+      kv_reset("/kv/");
+      Serial.println("Factory reset triggered by pressing all buttons. Restarting...");
+      NVIC_SystemReset();
+    }
+    if(warningStatus == 2&& !altView){
       if (activatedButtons&2){
         if (skipText == currentWarningMessages.size()){
           warningStatus = 3; //acknowledge warning after user skipped all warning messages
-          //TODO: Add last state (acknowledged warning)
           skipText = 1;
           currentState = "ACTIVE_WARNING_ACKNOWLEDGED";
           stateChanged = true;
@@ -563,7 +600,7 @@ void loop() {
         skipText-=1;
       }
     }
-    if (warningStatus == 3){
+    if (warningStatus == 3 && !altView){
       if (activatedButtons&2){
         skipText+=1;
         if (skipText > currentWarningMessages.size()){

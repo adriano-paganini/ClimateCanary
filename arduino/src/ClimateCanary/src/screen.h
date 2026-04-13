@@ -8,6 +8,7 @@
 
 #include <rgb_lcd.h>
 extern rgb_lcd lcd; 
+extern uint16_t warningStatus;
 
 struct RelevantDisplayData{
     SensorData sensorData;
