@@ -222,28 +222,29 @@ public class GlobalExceptionHandler {
             HttpServletRequest request
     ) {
         ApiErrorResponse response = new ApiErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.CONFLICT.value(),
                 EntityInUseException.class.getSimpleName(),
                 ex.getMessage(),
                 request.getRequestURI()
         );
 
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(response, HttpStatus.CONFLICT);
     }
 
-//    // Catch-all fallback
-//    @ExceptionHandler(Exception.class)
-//    public ResponseEntity<ApiErrorResponse> handleGenericException(
-//            Exception ex,
-//            HttpServletRequest request
-//    ) {
-//        ApiErrorResponse response = new ApiErrorResponse(
-//                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-//                "Internal Server Error",
-//                ex.getMessage(),
-//                request.getRequestURI()
-//        );
-//
-//        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-//    }
+    @ExceptionHandler(ThresholdViolationNotFound.class)
+    public ResponseEntity<ApiErrorResponse> handleThresholdViolationNotFound(
+            Exception ex,
+            HttpServletRequest request
+    ) {
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                ThresholdViolationNotFound.class.getSimpleName(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
+
 }
