@@ -71,12 +71,20 @@ public class Threshold {
         return climateHints;
     }
 
+    public void setClimateHints(Set<ClimateHint> climateHints) {
+        this.climateHints = climateHints;
+    }
+
     public List<ThresholdViolation> getViolations() {
         return violations;
     }
 
     public Room getRoom() {
         return room;
+    }
+
+    public void setRoom(Room room) {
+        this.room = room;
     }
 
     @Override

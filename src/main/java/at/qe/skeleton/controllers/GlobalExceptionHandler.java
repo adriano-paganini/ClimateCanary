@@ -186,6 +186,21 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(ThresholdNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleThresholdNotFound(
+            Exception ex,
+            HttpServletRequest request
+    ) {
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                ThresholdNotFoundException.class.getSimpleName(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
 //    // Catch-all fallback
 //    @ExceptionHandler(Exception.class)
 //    public ResponseEntity<ApiErrorResponse> handleGenericException(

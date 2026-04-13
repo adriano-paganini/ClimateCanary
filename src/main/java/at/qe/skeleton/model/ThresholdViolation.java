@@ -78,8 +78,16 @@ public class ThresholdViolation {
         return threshold;
     }
 
+    public void setThreshold(Threshold threshold) {
+        this.threshold = threshold;
+    }
+
     public Room getRoom() {
         return room;
+    }
+
+    public void setRoom(Room room) {
+        this.room = room;
     }
 
     @Override
