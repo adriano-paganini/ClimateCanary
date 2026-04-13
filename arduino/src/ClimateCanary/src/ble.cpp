@@ -13,6 +13,17 @@ BLECharacteristic sensorDataStatusCharacteristic(
   sizeof(SensorStatusPacket)
 );
 
+BLECharacteristic cachedSensorDataCharacteristic(
+  "4b8e0003-2581-4c5c-8a61-deb186a46179",
+  BLERead|BLEWrite,
+  sizeof(SensorDataPacket)
+);
+
+BLEBoolCharacteristic cachedSensorDataAckCharacteristic(
+  "4b8e0004-2581-4c5c-8a61-deb186a46179",
+  BLEWrite | BLENotify
+);
+
 BLEService deviceSetupService("94050000-af44-4a64-b339-8b04d5565014");
 BLECharacteristic deviceSetupCharacteristic(
   "94050001-af44-4a64-b339-8b04d5565014",
@@ -88,6 +99,8 @@ bool normalSetupBLE(const char* deviceName, const char* manufacturerData){
 
   environmentalSensingService.addCharacteristic(sensorDataCharacteristic);
   environmentalSensingService.addCharacteristic(sensorDataStatusCharacteristic);
+  environmentalSensingService.addCharacteristic(cachedSensorDataCharacteristic);
+  environmentalSensingService.addCharacteristic(cachedSensorDataAckCharacteristic);
 
   warningControlService.addCharacteristic(warningAuthCharacteristic);
   warningControlService.addCharacteristic(warningAcknowledgedCharacteristic);

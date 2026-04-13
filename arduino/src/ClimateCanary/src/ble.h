@@ -11,6 +11,8 @@ extern BLECharacteristic sensorDataStatusCharacteristic;
 
 extern BLEService deviceSetupService;
 extern BLECharacteristic deviceSetupCharacteristic;
+extern BLECharacteristic cachedSensorDataCharacteristic;
+extern BLEBoolCharacteristic cachedSensorDataAckCharacteristic;
 
 extern BLEService warningControlService;
 extern BLECharacteristic warningAuthCharacteristic;
@@ -18,6 +20,7 @@ extern BLEBoolCharacteristic warningAcknowledgedCharacteristic;
 extern BLECharacteristic warningMessageLengthCharacteristic;
 extern BLECharacteristic warningMessageChunkCharacteristic;
 extern BLECharacteristic warningMessageAckRequestCharacteristic;
+
 
 struct __attribute__((packed)) DeviceSetupConfig {
   uint8_t measurementInterval;

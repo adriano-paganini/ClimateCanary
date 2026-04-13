@@ -13,59 +13,117 @@
 
 using namespace rtos;
 
+// ============================================================
+// BLE / RTOS
+// ============================================================
 Thread bleThread;
-
-SensorData globalSensorData;
-Mutex dataMutex;
-
-constexpr char NORMAL_NAME[] = "G5T4CC";
-constexpr char SETUP_NAME[]  = "G5T4SETUP";
-
-//update button-states all 50ms
-unsigned long lastButtonUpdate = 0;
-const unsigned long buttonInterval = 50;
-//update sensor data all 1000ms - 1s
-unsigned long lastSensorUpdate = 0;
-unsigned long sensorInterval = 1000;
-//update light all with info onMs, offMs, r,g,b values
-unsigned long lastLightUpdate = 0;
-unsigned long lightOnMs = 1;
-unsigned long lightOffMs = 0;
-uint8_t lightR = 255;
-uint8_t lightG = 0;
-uint8_t lightB = 0;
-bool lightOn = false;
-//update the screen every 0.1s, but with a specific update function
-unsigned long lastScreenUpdate = 0;
-const unsigned long screenInterval = 500;
-void (*screenUpdateFunction)(int smoothIndex, RelevantDisplayData data) = nullptr;
-
 
 bool bleClientConnected = false;
 bool bleClientAuthenticated = false;
 
-const char* const ID_KEY = "ID";
+constexpr char NORMAL_NAME[] = "G5T4CC";
+constexpr char SETUP_NAME[]  = "G5T4SETUP";
+
+const char* const ID_KEY       = "ID";
 const char* const INTERVAL_KEY = "INTERVAL";
 
-ButtonState previousButtonState = {0,0,0};
+// ============================================================
+// Shared sensor data
+// ============================================================
+SensorData globalSensorData;
+Mutex dataMutex;
 
-String currentState = "STARTUP";
-bool stateChanged = false;
-String roomName = "";
+// ============================================================
+// Timing
+// ============================================================
+unsigned long lastButtonUpdate = 0;
+const unsigned long buttonInterval = 50;      // update button states every 50 ms
+
+unsigned long lastSensorUpdate = 0;
+unsigned long sensorInterval = 1000;          // update sensor data every 1000 ms
+
+unsigned long lastLightUpdate = 0;            // update LED using on/off timing
+
+unsigned long lastScreenUpdate = 0;
+const unsigned long screenInterval = 500;     // update screen every 500 ms
+
+// ============================================================
+// RGB LED state
+// ============================================================
+unsigned long lightOnMs = 1;
+unsigned long lightOffMs = 0;
+
+uint8_t lightR = 0;
+uint8_t lightG = 15;
+uint8_t lightB = 240;
+
+bool lightOn = false;
+
+// ============================================================
+// Screen state
+// ============================================================
+void (*screenUpdateFunction)(int smoothIndex, RelevantDisplayData data) = nullptr;
+
 String smoothString = "";
 int smoothIndex = 0;
 bool altView = false;
 
+// ============================================================
+// Buttons
+// ============================================================
+ButtonState previousButtonState = {0, 0, 0};
+
+// ============================================================
+// Application state
+// ============================================================
+String currentState = "STARTUP";
+bool stateChanged = false;
+
+String roomName = "";
 uint16_t statusCode = 0;
 
-//relevant for active warning state
+// ============================================================
+// Warning / alert handling
+// ============================================================
 std::vector<String> currentWarningMessages;
-int16_t skipText = 1;
-uint16_t warningStatus = 0; //0 inactive, 1 active, 2 completed transfer, 3 acknowledged
+
+// 0 inactive, 1 active, 2 completed transfer, 3 acknowledged
+uint16_t warningStatus = 0;         
 uint16_t warningMessageLength = 0;
 uint16_t warningMessageAck = 0;
-String warningMessageBuffer = "";
 
+String warningMessageBuffer = "";
+int16_t skipText = 1;
+
+// ============================================================
+// Buffer Management
+// ============================================================
+
+std::vector<SensorDataPacket> sensorDataRingBuffer;
+int16_t sensorDataRingBufferIndex = 0;
+int16_t sensorDataRingBufferSize = 2000; // close to max safe value
+int16_t sensorDataRingBufferCount = 0;
+int16_t sensorDataRingBufferInsertionCounter = 0; // counts how many values have been seen, to determine, when to safe the next one.
+int16_t sensorDataRingBufferTransmittedIndex = 0; // index of the next packet to transmit
+
+void sensorDataRingBufferInsert(SensorData data){
+  Serial.println("Inserting new sensor data into ring buffer at index: " + String((sensorDataRingBufferIndex)? sensorDataRingBufferIndex : sensorDataRingBuffer.size()+1));
+  SensorDataPacket packet;
+  packet.timestamp = millis();
+  packet.pressure = data.pressure;
+  packet.temperature = data.temperature;
+  packet.humidity = data.humidity;
+  packet.gasResistance = data.gas_resistance;
+  
+  if (sensorDataRingBufferCount < sensorDataRingBufferSize){
+    sensorDataRingBuffer.push_back(packet);
+    sensorDataRingBufferCount++;
+  }else{
+    sensorDataRingBuffer[sensorDataRingBufferIndex] = packet;
+    sensorDataRingBufferIndex = (sensorDataRingBufferIndex + 1) % sensorDataRingBufferSize;
+  }
+
+}
 
 void evaluateMeasurementStatus(BLEDevice central, BLECharacteristic characteristic) {
   if (!bleClientAuthenticated) {
@@ -168,6 +226,11 @@ void onDeviceSetupConfigWritten(BLEDevice central, BLECharacteristic characteris
 
   if (idResult != MBED_SUCCESS || measurementIntervalResult != MBED_SUCCESS){
     Serial.println("Failed to write config to KVStore. Restarting Pairing process...");
+  }else{
+    Serial.print("Keys written with values: ID - ");
+    Serial.print(id);
+    Serial.print(", Measurement Interval - ");
+    Serial.println(measurementInterval);
   }
   NVIC_SystemReset();
 }
@@ -198,6 +261,12 @@ void onBleConnected(BLEDevice central) {
   int idResult = kv_get_info(ID_KEY, &idInfo);
   int intervalResult = kv_get_info(INTERVAL_KEY, &intervalInfo);
 
+  int n = kv_get(INTERVAL_KEY, &intervalValue, sizeof(intervalValue), &intervalInfo.size);
+
+  if (n != MBED_SUCCESS) {
+    Serial.println("Failed to read measurement interval from KVStore. Restarting Pairing process...");
+    NVIC_SystemReset();
+  }
   if (idResult != MBED_SUCCESS || intervalResult != MBED_SUCCESS){
     Serial.println("Keys do not exist. Starting Pairing process...");
     NVIC_SystemReset();
@@ -207,6 +276,7 @@ void onBleConnected(BLEDevice central) {
   }else{
     Serial.println("Keys exist and have expected sizes. Continuing with normal execution...");
     sensorInterval = intervalValue * 1000;
+    Serial.println("Measurement interval set to: " + String(sensorInterval) + " ms");
     BLE.stopAdvertise();
   }
   bleClientConnected = true;
@@ -229,6 +299,11 @@ void onBleDisconnected(BLEDevice central) {
     Serial.println("Failed to reset warning acknowledgment.");
   }
 
+  sensorDataRingBufferIndex = 0;
+  sensorDataRingBufferCount = 0;
+  sensorDataRingBufferInsertionCounter = 0;
+  sensorDataRingBufferTransmittedIndex = 0;
+  sensorDataRingBuffer.clear();
 
   BLE.stopAdvertise();
   BLE.setDeviceName("G5T4CC");
@@ -409,6 +484,53 @@ void onWarningAcknowledgedWritten(BLEDevice central, BLECharacteristic character
   }
 }
 
+void onCachedSensorDataAckWritten(BLEDevice central, BLECharacteristic characteristic){
+  if (!bleClientAuthenticated) {
+    Serial.println("Unauthenticated client tried to write cached sensor data acknowledgment. Disconnecting...");
+    central.disconnect();
+    currentState = "WAITING_FOR_KNOWN_CONNECTION";
+    stateChanged = true;
+    return;
+  }
+
+  bool ack = false;
+  int n = characteristic.readValue((byte*)&ack, sizeof(ack));
+  if (n != sizeof(ack) || !ack){
+    Serial.println("Packet malformed or ACK was false");
+    return;
+  }
+
+  if (sensorDataRingBufferCount == 0) {
+    Serial.println("No cached sensor data available.");
+    return;
+  }
+
+  if (sensorDataRingBufferTransmittedIndex >= sensorDataRingBufferCount) {
+    Serial.println("All cached sensor data packets have been acknowledged by the client.");
+
+    sensorDataRingBufferIndex = 0;
+    sensorDataRingBufferCount = 0;
+    sensorDataRingBufferInsertionCounter = 0;
+    sensorDataRingBufferTransmittedIndex = 0;
+    sensorDataRingBuffer.clear();
+    return;
+  }
+
+  SensorDataPacket packetToSend = sensorDataRingBuffer[sensorDataRingBufferTransmittedIndex];
+
+  bool ok = cachedSensorDataCharacteristic.writeValue((byte*)&packetToSend, sizeof(packetToSend));
+  Serial.println(String("cached write ok=") + (ok ? "true" : "false"));
+
+  if (!ok) {
+    Serial.println("Failed to update cached sensor data characteristic.");
+    return;
+  }
+
+  Serial.print("Prepared cached sensor data packet with timestamp: ");
+  Serial.println(packetToSend.timestamp);
+
+  sensorDataRingBufferTransmittedIndex++;
+}
 void bleTask()
 {
   currentState = "WAITING_FOR_KNOWN_CONNECTION";
@@ -421,7 +543,18 @@ void bleTask()
   warningMessageLengthCharacteristic.setEventHandler(BLEWritten, onWarningmessageLengthWritten);
   warningMessageChunkCharacteristic.setEventHandler(BLEWritten, onCharPacketWritten);
   warningAcknowledgedCharacteristic.setEventHandler(BLEWritten, onWarningAcknowledgedWritten);
+  cachedSensorDataAckCharacteristic.setEventHandler(BLEWritten, onCachedSensorDataAckWritten);
 
+  if (sensorDataRingBufferCount > 0) {
+    SensorDataPacket packetToSend = sensorDataRingBuffer[sensorDataRingBufferTransmittedIndex];
+    if (cachedSensorDataCharacteristic.writeValue((byte*)&packetToSend, sizeof(packetToSend))){
+      Serial.println("Failed to write cached sensor data packet.");
+    }else{      
+      Serial.print("Sent cached sensor data packet with timestamp: ");
+      Serial.println(packetToSend.timestamp);
+    }
+    sensorDataRingBufferTransmittedIndex = (sensorDataRingBufferTransmittedIndex + 1) % sensorDataRingBufferSize; 
+  }
 
   uint32_t lastSend = 0;
 
@@ -444,76 +577,84 @@ void bleTask()
 }
 
 void setStateData(){
-  if (currentState == "WAITING_FOR_KNOWN_CONNECTION"){
+    if (currentState == "WAITING_FOR_KNOWN_CONNECTION"){
       smoothString = "Waiting for known connection...";
       screenUpdateFunction = &waitForKnownConnection;
-      //slower yellow blinking - 500ms on, 500ms off, r=255, g=80, b=0
+      // warm amber pulse
       lightOnMs = 500;
       lightOffMs = 500;
       lightR = 255;
-      lightG = 80;
-      lightB = 0;
+      lightG = 56;   // 140 * 0.40
+      lightB = 11;   // 20 * 0.55
+
   }else if (currentState == "WAITING_FOR_AUTHENTICATION"){
       smoothString = "Waiting for authentication...";
       screenUpdateFunction = &waitForAuthenticatedConnection;
-      // very quick green blinking - 25ms on 75 ms off, r=0, g=255, b=0
+      // vivid aqua-green fast blink
       lightOnMs = 25;
       lightOffMs = 75;
       lightR = 0;
-      lightG = 255;
-      lightB = 0;
+      lightG = 102;  // 255 * 0.40
+      lightB = 99;   // 180 * 0.55
+
   }else if (currentState == "WAITING_FOR_NEW_CONNECTION"){
       smoothString = BLE.address();
       screenUpdateFunction = &waitForNewConnection;
-      //quick orange blinking - 125ms on, 125ms off, r=255, g=30, b=0
+      // bright pink-magenta blink
       lightOnMs = 125;
       lightOffMs = 125;
       lightR = 255;
-      lightG = 30;
-      lightB = 0;
-    }else if (currentState == "CONNECTED_ALL_VALID_DATA"){
+      lightG = 24;   // 60 * 0.40
+      lightB = 66;   // 120 * 0.55
+
+  }else if (currentState == "CONNECTED_ALL_VALID_DATA"){
       smoothString = roomName;
       screenUpdateFunction = &connectedAllValidData;
-      //light on constantly with a soft green color - r=0, g=255, b=0
+      // soft turquoise solid
       lightOnMs = 1;
       lightOffMs = 0;
-      lightR = 0;
-      lightG = 255;
-      lightB = 0;
-      lightOn = false; //force update of light in next loop
-    }else if (currentState == "CONNECTED_SOME_SHORT_INVALID_DATA"){
+      lightR = 40;
+      lightG = 102;  // 255 * 0.40
+      lightB = 99;   // 180 * 0.55
+      lightOn = false; // force update of light in next loop
+
+  }else if (currentState == "CONNECTED_SOME_SHORT_INVALID_DATA"){
       smoothString = roomName;
       screenUpdateFunction = &connectedSomeShortInvalidData;
-      //light on constantly with a orange color - r=255, g=30, b=0
+      // golden coral solid
       lightOnMs = 1;
       lightOffMs = 0;
       lightR = 255;
-      lightG = 30;
-      lightB = 0;
-      lightOn = false; //force update of light in next loop
-    }else if (currentState == "CONNECTED_ACTIVE_WARNING"){
+      lightG = 40;   // 100 * 0.40
+      lightB = 22;   // 40 * 0.55
+      lightOn = false; // force update of light in next loop
+
+  }else if (currentState == "CONNECTED_ACTIVE_WARNING"){
       smoothString = "ACTIVE WARNINGS FOR: " + roomName;
       screenUpdateFunction = &connectedActiveWarning;
-      //light quick flashing full red - r=255, g=0, b=0
+      // red urgent flash
       lightOnMs = 25;
       lightOffMs=75;
       lightR = 255;
       lightG = 0;
-      lightB = 0;
-    }else if( currentState == "ACTIVE_WARNING_ACKNOWLEDGED"){
+      lightB = 0;  
+
+  }else if( currentState == "ACTIVE_WARNING_ACKNOWLEDGED"){
       smoothString = roomName;
       screenUpdateFunction = &acknowledgedWarningsScreen;
-      if(warningAcknowledgedCharacteristic.writeValue(true)){
-        Serial.println("Failed to set warning acknowledgment characteristic.");
+
+      if (!warningAcknowledgedCharacteristic.writeValue(true)){
+          Serial.println("Failed to set warning acknowledgment characteristic.");
       }
-      //light on constantly with dim red color - r=80, g=0, b=0
+
+      // deep purple-red solid
       lightOnMs = 1;
       lightOffMs = 0;
-      lightR = 80;
+      lightR = 120;
       lightG = 0;
-      lightB = 0;
-      lightOn = false; //force update of light in next loop
-    }
+      lightB = 50;   // 90 * 0.55
+      lightOn = false; // force update of light in next loop
+  }
 }
 
 void setup() {
@@ -522,7 +663,7 @@ void setup() {
   setupButtons();
   setupLight();
   setColorRGB(lightR, lightG, lightB);
-  Serial.begin(9600);
+  Serial.begin(115200);
   kv_info_t idInfo;
   kv_info_t intervalInfo;
   uint32_t idValue;
@@ -621,6 +762,11 @@ void loop() {
     dataMutex.lock();
     globalSensorData = data;
     dataMutex.unlock();
+  if (!(bleClientConnected && bleClientAuthenticated) &&
+      sensorDataRingBufferInsertionCounter % 5 == 0) {
+      sensorDataRingBufferInsert(data);
+  }
+    sensorDataRingBufferInsertionCounter++;
   }
   if (currentMillis - lastScreenUpdate >= screenInterval) {
     lastScreenUpdate = currentMillis;
