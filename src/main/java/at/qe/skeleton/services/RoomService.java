@@ -2,9 +2,14 @@ package at.qe.skeleton.services;
 
 import at.qe.skeleton.dtos.RoomUpdateDTO;
 import at.qe.skeleton.exceptions.RoomNotFoundException;
+import at.qe.skeleton.model.Building;
+import at.qe.skeleton.model.Department;
+import at.qe.skeleton.model.EmployeeProfile;
 import at.qe.skeleton.model.Room;
+import at.qe.skeleton.repositories.EmployeeProfileRepository;
 import at.qe.skeleton.repositories.RoomRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -14,15 +19,17 @@ public class RoomService {
     private final RoomRepository roomRepository;
     private final DepartmentService departmentService;
     private final BuildingService buildingService;
+    private final EmployeeProfileRepository employeeProfileRepository;
 
-    public RoomService(RoomRepository repo, DepartmentService departmentService, BuildingService buildingService) {
+    public RoomService(RoomRepository repo, DepartmentService departmentService, BuildingService buildingService, EmployeeProfileRepository employeeProfileRepository) {
         this.roomRepository = repo;
         this.departmentService = departmentService;
         this.buildingService = buildingService;
+        this.employeeProfileRepository = employeeProfileRepository;
     }
 
     public List<Room> getAll() {
-        return roomRepository.findAll();
+        return roomRepository.findAllByActiveTrue();
     }
 
     public Room getById(Long id) {
@@ -34,7 +41,6 @@ public class RoomService {
         return roomRepository.save(room);
     }
 
-    /* Do not remove null checks, some fields may be null as they are optional despite what Intellij is suggesting */
     public Room update(Long id, RoomUpdateDTO dto) {
         Room existing = getById(id);
 
@@ -61,7 +67,36 @@ public class RoomService {
         return roomRepository.save(existing);
     }
 
+    /**
+     * Soft delete policy
+     * @param id
+     */
+    @Transactional
     public void delete(Long id) {
-        roomRepository.deleteById(id);
+        Room room = getById(id);
+
+        // Remove from department's room list
+        Department dept = room.getDepartment();
+        if (dept != null) {
+            dept.getRooms().remove(room);
+            room.setDepartment(null);
+        }
+
+        // Remove from building's room list
+        Building building = room.getBuilding();
+        if (building != null) {
+            building.getRooms().remove(room);
+            room.setBuilding(null);
+        }
+
+        // Nullify roomId on any employee profiles pointing to this room
+        for (EmployeeProfile ep : room.getEmployeeProfiles()) {
+            ep.setRoom(null);
+            employeeProfileRepository.save(ep);
+        }
+        room.getEmployeeProfiles().clear();
+
+        room.setActive(false);
+        roomRepository.save(room);
     }
 }
