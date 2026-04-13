@@ -23,12 +23,11 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
@@ -135,7 +134,7 @@ public class AdminControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"ADMIN"})
+    @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
     void getUserUserDoesNotExist() throws Exception {
         Mockito.when(userService.loadUser(1L)).thenReturn(Optional.empty());
 
@@ -144,7 +143,7 @@ public class AdminControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"ADMIN"})
+    @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
     void createUserValidInput() throws Exception {
         Long id = 1L;
         String username = "newUser";
@@ -152,7 +151,7 @@ public class AdminControllerTest {
         String firstName = "first";
         String lastName = "last";
         String email = "new@example.com";
-        Set<UserxRole> roles = Set.of(UserxRole.ADMIN);
+        Set<UserxRole> roles = Set.of(UserxRole.SYSTEM_ADMIN);
         boolean isEnabled = true;
 
         UserxCreateDTO newUser = new UserxCreateDTO(username, password, firstName, lastName, email, "", true, roles);
@@ -177,7 +176,7 @@ public class AdminControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"ADMIN"})
+    @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
     void deleteUserUserExists() throws Exception {
         Long id = 1L;
         String username = "newUser";
@@ -193,7 +192,7 @@ public class AdminControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"ADMIN"})
+    @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
     void deleteUserUserDoesNotExist() throws Exception {
         Long id = 1L;
         Mockito.when(userService.loadUser(id)).thenReturn(Optional.empty());
