@@ -47,6 +47,8 @@ unsigned long lastLightUpdate = 0;            // update LED using on/off timing
 unsigned long lastScreenUpdate = 0;
 const unsigned long screenInterval = 500;     // update screen every 500 ms
 
+unsigned long lastSensorRead = 0;
+
 // ============================================================
 // RGB LED state
 // ============================================================
@@ -564,7 +566,7 @@ void bleTask()
     if (bleClientConnected && bleClientAuthenticated) {
       uint32_t now = millis();
 
-      if (now - lastSend >= 1000) {
+      if (now - lastSend >= sensorInterval) {
         dataMutex.lock();
         sendSensorPacket(globalSensorData, sensorDataCharacteristic);
         dataMutex.unlock();
@@ -687,6 +689,8 @@ void setup() {
       if (!initialSetupBLE("G5T4SETUP","00RDY"))while (1);
       bleThread.start(bleFirstSetup);
   }
+  //sleep 2 seconds to ensure stable startup of sensors and ble
+  ThisThread::sleep_for(2000);
 }
 
 void loop() {
@@ -755,19 +759,25 @@ void loop() {
       }
     }
   }
-  // get up-to-date sensor data in a given sensorInterval
-  if (currentMillis - lastSensorUpdate >= sensorInterval) {
-    lastSensorUpdate = currentMillis;
+
+  if (currentMillis - lastSensorRead >= 150){
+    lastSensorRead = currentMillis;
     SensorData data = readSensors();
     dataMutex.lock();
     globalSensorData = data;
     dataMutex.unlock();
+  }
+  // get up-to-date sensor data in a given sensorInterval
+  if (currentMillis - lastSensorUpdate >= sensorInterval) {
+    lastSensorUpdate = currentMillis;
   if (!(bleClientConnected && bleClientAuthenticated) &&
       sensorDataRingBufferInsertionCounter % 5 == 0) {
-      sensorDataRingBufferInsert(data);
+      sensorDataRingBufferInsert(globalSensorData);
   }
     sensorDataRingBufferInsertionCounter++;
   }
+
+
   if (currentMillis - lastScreenUpdate >= screenInterval) {
     lastScreenUpdate = currentMillis;
 

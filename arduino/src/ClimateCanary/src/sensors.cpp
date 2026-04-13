@@ -4,6 +4,7 @@ Adafruit_BME680 bme;
 
 unsigned long bmeEndTime = 0;
 bool bmeReading = false;
+int bmeReadingBreak = 0;
 SensorData lastValidData = {0, 0, 0, 0};
 
 void startBmeReading() {
@@ -23,7 +24,7 @@ bool setupSensors() {
   bme.setHumidityOversampling(BME680_OS_2X);
   bme.setPressureOversampling(BME680_OS_4X);
   bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
-  bme.setGasHeater(320, 150);
+  bme.setGasHeater(320, 200);
 
   startBmeReading();
 
@@ -32,7 +33,6 @@ bool setupSensors() {
 
 
 SensorData readSensors() {
-
     if (bmeReading && millis() >= bmeEndTime) {
         if (bme.endReading()) {
             lastValidData.temperature = bme.temperature;
@@ -41,8 +41,16 @@ SensorData readSensors() {
             lastValidData.gas_resistance = bme.gas_resistance;
             
             bmeReading = false;
-            startBmeReading();
         }
+    }
+    //allow the sensors to cool down. performs as well as not using the gas heater at all!
+    if (!bmeReading){
+      if (bmeReadingBreak >=10){
+        startBmeReading();
+        bmeReadingBreak = 0;
+      }else{
+        bmeReadingBreak++;
+      }
     }
     
     return lastValidData;
