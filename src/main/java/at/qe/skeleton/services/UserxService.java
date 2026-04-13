@@ -1,5 +1,6 @@
 package at.qe.skeleton.services;
 
+import at.qe.skeleton.exceptions.UserNotFoundException;
 import at.qe.skeleton.exceptions.UsernameDuplicateException;
 import at.qe.skeleton.model.Userx;
 import java.util.Collection;
@@ -54,7 +55,11 @@ public class UserxService implements UserDetailsService {
     public Optional<Userx> loadUser(Long id) {
         return userRepository.findById(id);
     }
-    
+
+    public Userx getUserById(Long id) {
+        return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User with id " + id + " not found"));
+    }
+
     /**
      * Saves the user. This method will also set {@link Userx#createDate} for new
      * entities or {@link Userx#updateDate} for updated entities. The user

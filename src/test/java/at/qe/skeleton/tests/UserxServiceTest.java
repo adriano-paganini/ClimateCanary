@@ -31,14 +31,14 @@ public class UserxServiceTest {
     UserxService userService;
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"ADMIN"})
+    @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
     public void testDatainitialization() {
         Assertions.assertEquals(4, userService.getAllUsers().size(),
                 "Insufficient amount of users initialized for test data source");
         for (Userx user : userService.getAllUsers()) {
             switch (user.getUsername()) {
                 case "admin" -> {
-                    Assertions.assertTrue(user.getRoles().contains(UserxRole.ADMIN),
+                    Assertions.assertTrue(user.getRoles().contains(UserxRole.SYSTEM_ADMIN),
                             "User \"" + user + "\" does not have role ADMIN");
                     Assertions.assertNotNull(user.getCreateUser(),
                             "User \"" + user + "\" does not have a createUser defined");
@@ -50,7 +50,7 @@ public class UserxServiceTest {
                             "User \"" + user + "\" has a updateDate defined");
                 }
                 case "user1" -> {
-                    Assertions.assertTrue(user.getRoles().contains(UserxRole.MANAGER),
+                    Assertions.assertTrue(user.getRoles().contains(UserxRole.MANAGEMENT),
                             "User \"" + user + "\" does not have role MANAGER");
                     Assertions.assertNotNull(user.getCreateUser(),
                             "User \"" + user + "\" does not have a createUser defined");
@@ -74,7 +74,7 @@ public class UserxServiceTest {
                             "User \"" + user + "\" has a updateDate defined");
                 }
                 case "elvis" -> {
-                    Assertions.assertTrue(user.getRoles().contains(UserxRole.ADMIN),
+                    Assertions.assertTrue(user.getRoles().contains(UserxRole.SYSTEM_ADMIN),
                             "User \"" + user + "\" does not have role ADMIN");
                     Assertions.assertNotNull(user.getCreateUser(),
                             "User \"" + user + "\" does not have a createUser defined");
@@ -93,7 +93,7 @@ public class UserxServiceTest {
 
     @DirtiesContext
     @Test
-    @WithMockUser(username = "admin", authorities = {"ADMIN"})
+    @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
     public void testDeleteUser() {
         Long deleteUserId = 2000L;
         Optional<Userx> adminUser = userService.loadUser(1000L);
@@ -120,7 +120,7 @@ public class UserxServiceTest {
 
     @DirtiesContext
     @Test
-    @WithMockUser(username = "admin", authorities = {"ADMIN"})
+    @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
     public void testUpdateUser() {
         Long userId = 2000L;
         Optional<Userx> adminUserOpt = userService.loadUser(1000L);
@@ -156,7 +156,7 @@ public class UserxServiceTest {
 
     @DirtiesContext
     @Test
-    @WithMockUser(username = "admin", authorities = {"ADMIN"})
+    @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
     public void testCreateUser() {
         Optional<Userx> adminUserOpt = userService.loadUser(1000L);
         Assertions.assertFalse(adminUserOpt.isEmpty(),
@@ -177,7 +177,7 @@ public class UserxServiceTest {
         toBeCreatedUser.setLastName(lName);
         toBeCreatedUser.setEmail(email);
         toBeCreatedUser.setPhone(phone);
-        toBeCreatedUser.setRoles(Sets.newSet(UserxRole.EMPLOYEE, UserxRole.MANAGER));
+        toBeCreatedUser.setRoles(Sets.newSet(UserxRole.EMPLOYEE, UserxRole.MANAGEMENT));
         Userx savedUser = userService.saveUser(toBeCreatedUser);
 
         Optional<Userx> freshlyCreatedUserOpt = userService.loadUser(savedUser.getId());
@@ -198,7 +198,7 @@ public class UserxServiceTest {
                 "User \"" + username + "\" does not have a the correct email attribute stored being saved");
         Assertions.assertEquals(phone, freshlyCreatedUser.getPhone(),
                 "User \"" + username + "\" does not have a the correct phone attribute stored being saved");
-        Assertions.assertTrue(freshlyCreatedUser.getRoles().contains(UserxRole.MANAGER),
+        Assertions.assertTrue(freshlyCreatedUser.getRoles().contains(UserxRole.MANAGEMENT),
                 "User \"" + username + "\" does not have role MANAGER");
         Assertions.assertTrue(freshlyCreatedUser.getRoles().contains(UserxRole.EMPLOYEE),
                 "User \"" + username + "\" does not have role EMPLOYEE");
@@ -211,7 +211,7 @@ public class UserxServiceTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"ADMIN"})
+    @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
     public void testExceptionForEmptyUsername() {
         Assertions.assertThrows(org.springframework.dao.DataIntegrityViolationException.class, () -> {
             Optional<Userx> adminUser = userService.loadUser(1000L);
@@ -225,7 +225,7 @@ public class UserxServiceTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", authorities = {"ADMIN"})
+    @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
     public void testExceptionForEmptyUser() {
         Assertions.assertThrows(IllegalArgumentException.class, () -> {
             Optional<Userx> adminUser = userService.loadUser(1000L);

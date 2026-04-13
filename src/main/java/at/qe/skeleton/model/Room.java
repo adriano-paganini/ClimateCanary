@@ -2,6 +2,9 @@ package at.qe.skeleton.model;
 
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "rooms")
 public class Room {
@@ -24,6 +27,9 @@ public class Room {
     @ManyToOne
     @JoinColumn(name = "building_id")
     private Building building;
+
+    @OneToMany(mappedBy = "room")
+    private List<EmployeeProfile> employeeProfiles = new ArrayList<>();
 
     public Room() {}
 
@@ -49,6 +55,8 @@ public class Room {
 
     public Building getBuilding() { return building; }
     public void setBuilding(Building building) { this.building = building; }
+
+    public List<EmployeeProfile> getEmployeeProfiles() { return employeeProfiles; }
 
     @Override
     public boolean equals(Object o) {

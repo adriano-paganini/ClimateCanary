@@ -22,6 +22,9 @@ public class Department {
     @JoinColumn(name = "userx_id")
     private Userx departmentLeader;
 
+    @OneToMany(mappedBy = "department")
+    private List<EmployeeProfile> employeeProfiles = new ArrayList<>();
+
     public Department() {}
 
     public Department(String name) {
@@ -38,6 +41,8 @@ public class Department {
 
     public Userx getDepartmentLeader() { return departmentLeader; }
     public void setDepartmentLeader(Userx departmentLeader) { this.departmentLeader = departmentLeader; }
+
+    public List<EmployeeProfile> getEmployeeProfiles() { return employeeProfiles; }
 
     @Override
     public boolean equals(Object o) {
