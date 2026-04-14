@@ -920,6 +920,273 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "ClimateHint",
+      "item": [
+        {
+          "name": "Get all ClimateHints",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/climate-hints",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["climate-hints"]
+            }
+          }
+        },
+        {
+          "name": "Get ClimateHint by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/climate-hints/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["climate-hints", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create ClimateHint",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"metric\": \"TEMPERATURE\",\n  \"hintText\": \"Open windows when temperature is high\"\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/climate-hints",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["climate-hints"]
+            }
+          }
+        },
+        {
+          "name": "Update ClimateHint",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"metric\": \"HUMIDITY\",\n  \"hintText\": \"Use a dehumidifier\"\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/climate-hints/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["climate-hints", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete ClimateHint",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/climate-hints/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["climate-hints", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Threshold",
+      "item": [
+        {
+          "name": "Get all Thresholds",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/thresholds",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["thresholds"]
+            }
+          }
+        },
+        {
+          "name": "Get Threshold by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/thresholds/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["thresholds", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Threshold",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roomId\": 1,\n  \"metric\": \"TEMPERATURE\",\n  \"boundValue\": 25,\n  \"thresholdType\": \"MAX\",\n  \"climateHintIds\": [1, 2]\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/thresholds",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["thresholds"]
+            }
+          }
+        },
+        {
+          "name": "Update Threshold",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"metric\": \"HUMIDITY\",\n  \"boundValue\": 60,\n  \"enabled\": true\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/thresholds/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["thresholds", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Threshold",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/thresholds/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["thresholds", "1"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "ThresholdViolation",
+      "item": [
+        {
+          "name": "Get all Violations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/violations",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["violations"]
+            }
+          }
+        },
+        {
+          "name": "Get Violation by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/violations/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["violations", "1"]
+            }
+          }
+        },
+        {
+          "name": "Create Violation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"metric\": \"TEMPERATURE\",\n  \"value\": 32,\n  \"startTime\": \"2026-04-13T10:00:00\",\n  \"thresholdId\": 1,\n  \"roomId\": 1,\n  \"measurementIds\": []\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/violations",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["violations"]
+            }
+          }
+        },
+        {
+          "name": "Update Violation",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"value\": 28,\n  \"violationStatus\": \"RESOLVED\",\n  \"endTime\": \"2026-04-13T11:00:00\"\n}",
+              "options": {
+                "raw": { "language": "json" }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:8080/violations/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["violations", "1"]
+            }
+          }
+        },
+        {
+          "name": "Delete Violation",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/violations/1",
+              "protocol": "http",
+              "host": ["localhost"],
+              "port": "8080",
+              "path": ["violations", "1"]
+            }
+          }
+        }
+      ]
     }
   ],
   "variable": [

@@ -1,8 +1,8 @@
 package at.qe.skeleton.tests;
 
-import at.qe.skeleton.model.Userx;
-import at.qe.skeleton.model.UserxRole;
-import at.qe.skeleton.services.UserxService;
+import at.qe.skeleton.userx.model.Userx;
+import at.qe.skeleton.userx.model.UserxRole;
+import at.qe.skeleton.userx.service.UserxService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.internal.util.collections.Sets;
