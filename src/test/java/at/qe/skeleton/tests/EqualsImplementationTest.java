@@ -1,7 +1,7 @@
 package at.qe.skeleton.tests;
 
-import at.qe.skeleton.model.Userx;
-import at.qe.skeleton.model.UserxRole;
+import at.qe.skeleton.userx.model.Userx;
+import at.qe.skeleton.userx.model.UserxRole;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
 import org.junit.jupiter.api.Test;
