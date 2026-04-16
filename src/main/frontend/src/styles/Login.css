@@ -1,29 +1,33 @@
 /* Login Styles */
 
 .login-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
 }
 
 .login-card {
-    width: 400px;
-    padding: 2rem;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-    background-color: #fff;
+  width: 400px;
+  padding: 2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  background-color: #fff;
 }
 
 .input-field {
-    width: 100% !important;
+  width: 100% !important;
 }
 
 .input-field input {
-    width: 100% !important;
+  width: 100% !important;
 }
 
 .loginButton {
-    margin-top: 25px;
-    float: right;
+  margin-top: 25px;
+  float: right;
+}
+
+.login-error {
+  margin-top: 25px;
 }
