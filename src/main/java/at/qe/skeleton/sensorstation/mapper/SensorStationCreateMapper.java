@@ -1,8 +1,8 @@
 package at.qe.skeleton.sensorstation.mapper;
 
 import at.qe.skeleton.common.DTOMapper;
-import at.qe.skeleton.raspberrypi.model.RaspberryPi;
 import at.qe.skeleton.raspberrypi.repository.RaspberryPiRepository;
+import at.qe.skeleton.raspberrypi.service.RaspberryPiService;
 import at.qe.skeleton.sensorstation.dto.SensorStationCreateDTO;
 import at.qe.skeleton.sensorstation.model.SensorStation;
 import org.springframework.stereotype.Service;
@@ -11,9 +11,11 @@ import org.springframework.stereotype.Service;
 public class SensorStationCreateMapper implements DTOMapper<SensorStation, SensorStationCreateDTO> {
 
     private final RaspberryPiRepository raspberryPiRepository;
+    private final RaspberryPiService raspberryPiService;
 
-    public SensorStationCreateMapper(RaspberryPiRepository raspberryPiRepository) {
+    public SensorStationCreateMapper(RaspberryPiRepository raspberryPiRepository, RaspberryPiService raspberryPiService) {
         this.raspberryPiRepository = raspberryPiRepository;
+        this.raspberryPiService = raspberryPiService;
     }
 
     @Override
@@ -22,12 +24,7 @@ public class SensorStationCreateMapper implements DTOMapper<SensorStation, Senso
         station.setName(dto.name());
         station.setDeviceStatus(dto.deviceStatus());
         station.setMeasurementsPerSec(dto.measurementsPerSec());
-
-        RaspberryPi pi = raspberryPiRepository.findById(dto.raspberryPiId())
-                .orElseThrow(() -> new RuntimeException("RaspberryPi not found"));
-
-        station.setRaspberryPi(pi);
-
+        station.setRaspberryPi(raspberryPiService.getById(dto.raspberryPiId()));
         return station;
     }
 

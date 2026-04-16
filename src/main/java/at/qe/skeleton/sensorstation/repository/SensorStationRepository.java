@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface SensorStationRepository extends AbstractRepository<SensorStation, Long> {
     List<SensorStation> findAllById(Iterable<Long> longs);
+
+    void deleteById(Long id);
 }
