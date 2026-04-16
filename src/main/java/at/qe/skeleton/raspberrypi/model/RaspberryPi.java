@@ -1,5 +1,6 @@
 package at.qe.skeleton.raspberrypi.model;
 
+import at.qe.skeleton.room.model.Room;
 import at.qe.skeleton.sensorstation.model.SensorStation;
 import jakarta.persistence.*;
 
@@ -22,6 +23,10 @@ public class RaspberryPi {
 
     @OneToMany(mappedBy = "raspberryPi")
     private List<SensorStation> sensorStations = new ArrayList<>();
+
+    @OneToOne
+    @JoinColumn(name = "room_id", nullable = false)
+    private Room room;
 
     public Long getId() {
         return id;
@@ -57,6 +62,14 @@ public class RaspberryPi {
 
     public void setSensorStations(List<SensorStation> sensorStations) {
         this.sensorStations = sensorStations;
+    }
+
+    public Room getRoom() {
+        return room;
+    }
+
+    public void setRoom(Room room) {
+        this.room = room;
     }
 }
 

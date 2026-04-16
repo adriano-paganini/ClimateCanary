@@ -2,6 +2,7 @@ package at.qe.skeleton.sensorstation.model;
 
 import at.qe.skeleton.raspberrypi.model.DeviceStatus;
 import at.qe.skeleton.raspberrypi.model.RaspberryPi;
+import at.qe.skeleton.room.model.Room;
 import jakarta.persistence.*;
 
 @Table(name = "sensorstations")
@@ -22,6 +23,10 @@ public class SensorStation {
     @ManyToOne
     @JoinColumn(name = "raspberry_pi_id", nullable = false)
     private RaspberryPi raspberryPi;
+
+    @ManyToOne
+    @JoinColumn(name = "room_id", nullable = false)
+    private Room room;
 
     public Long getId() {
         return id;
@@ -57,5 +62,13 @@ public class SensorStation {
 
     public void setRaspberryPi(RaspberryPi raspberryPi) {
         this.raspberryPi = raspberryPi;
+    }
+
+    public Room getRoom() {
+        return room;
+    }
+
+    public void setRoom(Room room) {
+        this.room = room;
     }
 }

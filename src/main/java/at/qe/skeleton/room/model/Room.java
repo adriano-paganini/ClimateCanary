@@ -3,6 +3,8 @@ package at.qe.skeleton.room.model;
 import at.qe.skeleton.building.model.Building;
 import at.qe.skeleton.department.model.Department;
 import at.qe.skeleton.employeeprofile.model.EmployeeProfile;
+import at.qe.skeleton.raspberrypi.model.RaspberryPi;
+import at.qe.skeleton.sensorstation.model.SensorStation;
 import at.qe.skeleton.threshold.model.Threshold;
 import at.qe.skeleton.violation.model.ThresholdViolation;
 import jakarta.persistence.*;
@@ -44,6 +46,12 @@ public class Room {
     @OneToMany(mappedBy = "room")
     private List<ThresholdViolation> violations = new ArrayList<>();
 
+    @OneToMany(mappedBy = "room")
+    private List<SensorStation> sensorStations = new ArrayList<>();
+
+    @OneToOne(mappedBy = "room")
+    private RaspberryPi raspberryPi;
+
     public Room() {}
 
     public Room(String name, RoomType roomType, int minOccupancy) {
@@ -80,6 +88,18 @@ public class Room {
 
     public List<ThresholdViolation> getViolations() {
         return violations;
+    }
+
+    public List<SensorStation> getSensorStations() {
+        return sensorStations;
+    }
+
+    public RaspberryPi getRaspberryPi() {
+        return raspberryPi;
+    }
+
+    public void setRaspberryPi(RaspberryPi raspberryPi) {
+        this.raspberryPi = raspberryPi;
     }
 
     @Override
