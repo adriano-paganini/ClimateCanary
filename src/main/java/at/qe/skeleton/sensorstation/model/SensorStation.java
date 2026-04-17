@@ -1,9 +1,13 @@
 package at.qe.skeleton.sensorstation.model;
 
+import at.qe.skeleton.measurement.model.Measurement;
 import at.qe.skeleton.raspberrypi.model.DeviceStatus;
 import at.qe.skeleton.raspberrypi.model.RaspberryPi;
 import at.qe.skeleton.room.model.Room;
 import jakarta.persistence.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Table(name = "sensorstations")
 @Entity
@@ -27,6 +31,9 @@ public class SensorStation {
     @ManyToOne
     @JoinColumn(name = "room_id", nullable = false)
     private Room room;
+
+    @OneToMany(mappedBy = "sensorStation")
+    private List<Measurement> measurements = new ArrayList<>();
 
     public Long getId() {
         return id;
@@ -70,5 +77,9 @@ public class SensorStation {
 
     public void setRoom(Room room) {
         this.room = room;
+    }
+
+    public List<Measurement> getMeasurements() {
+        return measurements;
     }
 }

@@ -1,11 +1,14 @@
 package at.qe.skeleton.violation.model;
 
 import at.qe.skeleton.climatehint.model.Metric;
+import at.qe.skeleton.measurement.model.Measurement;
 import at.qe.skeleton.room.model.Room;
 import at.qe.skeleton.threshold.model.Threshold;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @Table(name = "thresholdviolations")
@@ -32,6 +35,14 @@ public class ThresholdViolation {
     @ManyToOne(optional = false)
     @JoinColumn(name = "room_id")
     private Room room;
+
+    @ManyToMany
+    @JoinTable(
+            name = "threshold_violation_measurement",
+            joinColumns = @JoinColumn(name = "threshold_violation_id"),
+            inverseJoinColumns = @JoinColumn(name = "measurement_id")
+    )
+    private List<Measurement> measurements = new ArrayList<>();
 
     public long getId() {
         return id;
@@ -91,6 +102,10 @@ public class ThresholdViolation {
 
     public void setRoom(Room room) {
         this.room = room;
+    }
+
+    public List<Measurement> getMeasurements() {
+        return measurements;
     }
 
     @Override

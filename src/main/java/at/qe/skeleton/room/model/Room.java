@@ -3,6 +3,7 @@ package at.qe.skeleton.room.model;
 import at.qe.skeleton.building.model.Building;
 import at.qe.skeleton.department.model.Department;
 import at.qe.skeleton.employeeprofile.model.EmployeeProfile;
+import at.qe.skeleton.measurement.model.Measurement;
 import at.qe.skeleton.raspberrypi.model.RaspberryPi;
 import at.qe.skeleton.sensorstation.model.SensorStation;
 import at.qe.skeleton.threshold.model.Threshold;
@@ -52,6 +53,9 @@ public class Room {
     @OneToOne(mappedBy = "room")
     private RaspberryPi raspberryPi;
 
+    @OneToMany(mappedBy = "room")
+    private List<Measurement> measurements = new ArrayList<>();
+
     public Room() {}
 
     public Room(String name, RoomType roomType, int minOccupancy) {
@@ -100,6 +104,10 @@ public class Room {
 
     public void setRaspberryPi(RaspberryPi raspberryPi) {
         this.raspberryPi = raspberryPi;
+    }
+
+    public List<Measurement> getMeasurements() {
+        return measurements;
     }
 
     @Override
