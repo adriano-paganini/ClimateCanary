@@ -1,12 +1,17 @@
 package at.qe.skeleton.absence.service;
 
 import at.qe.skeleton.absence.dto.AbsenceUpdateDTO;
-import at.qe.skeleton.common.exceptions.AbsenceNotFoundException;
 import at.qe.skeleton.absence.model.Absence;
 import at.qe.skeleton.absence.repository.AbsenceRepository;
+import at.qe.skeleton.auth.service.AuthenticatedUserService;
+import at.qe.skeleton.common.exceptions.AbsenceNotFoundException;
+import at.qe.skeleton.userx.model.Userx;
+import at.qe.skeleton.userx.model.UserxRole;
 import at.qe.skeleton.userx.service.UserxService;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.List;
 
 @Service
@@ -14,11 +19,13 @@ public class AbsenceService {
 
     private final AbsenceRepository absenceRepository;
     private final UserxService userxService;
+    private final AuthenticatedUserService authenticatedUserService;
 
     public AbsenceService(AbsenceRepository absenceRepository,
-                          UserxService userxService) {
+                          UserxService userxService, AuthenticatedUserService authenticatedUserService) {
         this.absenceRepository = absenceRepository;
         this.userxService = userxService;
+        this.authenticatedUserService = authenticatedUserService;
     }
 
     public List<Absence> getAll() {
@@ -28,6 +35,16 @@ public class AbsenceService {
     public Absence getById(Long id) {
         return absenceRepository.findById(id)
                 .orElseThrow(() -> new AbsenceNotFoundException("Absence with id " + id + " not found"));
+    }
+
+    public Collection<Absence> getAbsencesForUser(Userx user) {
+        Userx authenticatedUser = authenticatedUserService.getAuthenticatedUser();
+        boolean isSelf = authenticatedUser.getId().equals(user.getId());
+        boolean isAdmin = authenticatedUser.getRoles().contains(UserxRole.SYSTEM_ADMIN);
+        if (!isSelf && !isAdmin) {
+            throw new AccessDeniedException("You may only view your own absences.");
+        }
+        return absenceRepository.findByUser(user);
     }
 
     public Absence create(Absence absence) {

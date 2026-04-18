@@ -1,18 +1,26 @@
 package at.qe.skeleton.userx.controller;
 
+import at.qe.skeleton.absence.dto.AbsenceDTO;
+import at.qe.skeleton.absence.mapper.AbsenceMapper;
+import at.qe.skeleton.absence.model.Absence;
+import at.qe.skeleton.absence.service.AbsenceService;
+import at.qe.skeleton.auth.service.AuthenticatedUserService;
 import at.qe.skeleton.userx.dto.UserxDTO;
+import at.qe.skeleton.userx.dto.UserxSelfUpdateDTO;
 import at.qe.skeleton.userx.mapper.UserxMapper;
 import at.qe.skeleton.userx.model.Userx;
-import at.qe.skeleton.auth.service.AuthenticatedUserService;
+import at.qe.skeleton.userx.service.UserxService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Userx endpoints exposed by the server.
@@ -26,11 +34,21 @@ public class UserxController {
  
     private final UserxMapper userMapper;
     private final AuthenticatedUserService authenticatedUserService;
+    private final UserxService userxService;
+    private final AbsenceMapper absenceMapper;
+    private final AbsenceService absenceService;
 
     @Autowired
-    public UserxController(UserxMapper userMapper, AuthenticatedUserService authenticatedUserService) {
+    public UserxController(UserxMapper userMapper,
+                           AuthenticatedUserService authenticatedUserService,
+                           UserxService userxService,
+                           AbsenceMapper absenceMapper,
+                           AbsenceService absenceService) {
         this.userMapper = userMapper;
         this.authenticatedUserService = authenticatedUserService;
+        this.userxService = userxService;
+        this.absenceMapper = absenceMapper;
+        this.absenceService = absenceService;
     }
 
     @Operation(summary = "Get current user",
@@ -52,5 +70,27 @@ public class UserxController {
         }
         return ResponseEntity.ok("User is authenticated: " + userDetails.getUsername());
         
+    }
+
+    @PatchMapping("/me")
+    public ResponseEntity<UserxDTO> updateCurrentUser(@Valid @RequestBody UserxSelfUpdateDTO userxUpdateDto) {
+        Userx saved = userxService.saveCurrentUser(userxUpdateDto);
+        return ResponseEntity.ok(userMapper.mapTo(saved));
+    }
+
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteCurrentUser() {
+        userxService.deleteCurrentUser();
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/me/absences")
+    public ResponseEntity<Collection<AbsenceDTO>> getCurrentUserAbsences() {
+        Userx authenticatedUser = authenticatedUserService.getAuthenticatedUser();
+        Collection<Absence> absences = absenceService.getAbsencesForUser(authenticatedUser);
+        List<AbsenceDTO> absenceDTOs = absences.stream()
+                .map(absenceMapper::mapTo)
+                .toList();
+        return ResponseEntity.ok(absenceDTOs);
     }
 }
