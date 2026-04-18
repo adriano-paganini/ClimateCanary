@@ -1,19 +1,21 @@
 package at.qe.skeleton.userx.service;
 
+import at.qe.skeleton.auth.service.AuthenticatedUserService;
 import at.qe.skeleton.common.exceptions.UserNotFoundException;
 import at.qe.skeleton.common.exceptions.UsernameDuplicateException;
-import at.qe.skeleton.auth.service.AuthenticatedUserService;
+import at.qe.skeleton.userx.dto.UserxSelfUpdateDTO;
+import at.qe.skeleton.userx.dto.UserxUpdateDTO;
 import at.qe.skeleton.userx.model.Userx;
-import java.util.Collection;
+import at.qe.skeleton.userx.repository.UserxRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import at.qe.skeleton.userx.repository.UserxRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.Optional;
 
 /**
@@ -30,7 +32,10 @@ public class UserxService implements UserDetailsService {
     private final AuthenticatedUserService authenticatedUserService;
 
     @Autowired
-    public UserxService(UserxRepository userRepository, PasswordEncoder passwordEncoder, AuthenticatedUserService authenticatedUserService) {
+    public UserxService(UserxRepository userRepository,
+                        PasswordEncoder passwordEncoder,
+                        AuthenticatedUserService authenticatedUserService)
+    {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticatedUserService = authenticatedUserService;
@@ -76,6 +81,7 @@ public class UserxService implements UserDetailsService {
             if (userRepository.existsByUsername(user.getUsername())) {
                 throw new UsernameDuplicateException("Username " + user.getUsername() + " not available");
             }
+            user.setEnabled(true);
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             user.setCreateUser(authenticatedUserService.getAuthenticatedUser());
         } else {
@@ -95,6 +101,8 @@ public class UserxService implements UserDetailsService {
         userOpt.ifPresent(userRepository::delete);
     }
 
+    // The following are self-service operations (no system_admin)
+
     public Userx getUserByUsername(String username) {
         return userRepository.findFirstByUsername(username).orElse(null);
     }
@@ -111,5 +119,38 @@ public class UserxService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return userRepository.findFirstByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    }
+
+    public Userx saveCurrentUser(UserxSelfUpdateDTO dto) {
+        Userx user = authenticatedUserService.getAuthenticatedUser();
+
+        if (dto.email() != null) user.setEmail(dto.email());
+        if (dto.firstName() != null) user.setFirstName(dto.firstName());
+        if (dto.lastName() != null) user.setLastName(dto.lastName());
+        if (dto.phone() != null) user.setPhone(dto.phone());
+
+        user.setUpdateUser(user);
+        return userRepository.save(user);
+    }
+
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
+    public Userx updateUser(Long id, UserxUpdateDTO dto) {
+        Userx user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User with id " + id + " not found"));
+
+        if (dto.firstName() != null) user.setFirstName(dto.firstName());
+        if (dto.lastName() != null) user.setLastName(dto.lastName());
+        if (dto.email() != null) user.setEmail(dto.email());
+        if (dto.phone() != null) user.setPhone(dto.phone());
+        if (dto.roles() != null) user.setRoles(dto.roles());
+        if (dto.deleted() != null) user.setEnabled(dto.deleted());
+
+        user.setUpdateUser(authenticatedUserService.getAuthenticatedUser());
+        return userRepository.save(user);
+    }
+
+    public void deleteCurrentUser() {
+        Userx authenticatedUser = authenticatedUserService.getAuthenticatedUser();
+        userRepository.delete(authenticatedUser);
     }
 }

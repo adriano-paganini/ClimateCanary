@@ -2,6 +2,7 @@ package at.qe.skeleton.userx.controller;
 
 import at.qe.skeleton.userx.dto.UserxCreateDTO;
 import at.qe.skeleton.userx.dto.UserxDTO;
+import at.qe.skeleton.userx.dto.UserxUpdateDTO;
 import at.qe.skeleton.userx.mapper.UserxCreateMapper;
 import at.qe.skeleton.userx.mapper.UserxMapper;
 import at.qe.skeleton.userx.model.Userx;
@@ -74,11 +75,7 @@ public class AdminController {
   public ResponseEntity<UserxDTO> getUser(
       @Parameter(description = "The id of the User to get.") @PathVariable Long id) {
     Optional<Userx> existingUserx = userService.loadUser(id);
-    if (existingUserx.isPresent()) {
-      return ResponseEntity.ok(userMapper.mapTo(existingUserx.get()));
-    } else {
-      return ResponseEntity.notFound().build();
-    }
+      return existingUserx.map(userx -> ResponseEntity.ok(userMapper.mapTo(userx))).orElseGet(() -> ResponseEntity.notFound().build());
   }
 
   /**
@@ -115,15 +112,13 @@ public class AdminController {
   public ResponseEntity<UserxDTO> updateUser(
       @Parameter(name = "id", description = "The id of the User to update.") @PathVariable Long id,
       @Parameter(name = "userxDto", description = "The User to update.") @Valid @RequestBody
-      UserxDTO userxDto) {
-    Optional<Userx> existingUserx = userService.loadUser(id);
-    if (existingUserx.isPresent()) {
-      Userx user = userMapper.mapFrom(userxDto);
-      Userx savedUser = userService.saveUser(user);
+      UserxUpdateDTO userxDto) {
+
+      if (userService.loadUser(id).isEmpty()) {
+          return ResponseEntity.notFound().build();
+      }
+      Userx savedUser = userService.updateUser(id, userxDto);
       return ResponseEntity.ok(userMapper.mapTo(savedUser));
-    } else {
-      return ResponseEntity.notFound().build();
-    }
   }
 
   /**
