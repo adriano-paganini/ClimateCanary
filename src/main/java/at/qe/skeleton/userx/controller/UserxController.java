@@ -29,7 +29,7 @@ import java.util.List;
 * course "Software Engineering" offered by Innsbruck University.
  */
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/userx")
 public class UserxController {
  
     private final UserxMapper userMapper;

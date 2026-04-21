@@ -18,7 +18,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/building")
+@RequestMapping("/api/building")
 public class BuildingController {
 
     private final BuildingService buildingService;

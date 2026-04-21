@@ -16,7 +16,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/SensorStation")
+@RequestMapping("/api/sensorstation")
 public class SensorStationController {
 
     private final SensorStationService sensorStationService;

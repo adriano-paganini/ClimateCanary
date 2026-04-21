@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/thresholdviolation")
+@RequestMapping("/api/thresholdviolation")
 public class ThresholdViolationController {
 
     private final ThresholdViolationService thresholdViolationService;

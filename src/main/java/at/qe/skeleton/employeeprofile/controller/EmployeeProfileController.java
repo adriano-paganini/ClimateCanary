@@ -16,7 +16,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/employeeProfile")
+@RequestMapping("/api/employeeProfile")
 public class EmployeeProfileController {
 
     private final EmployeeProfileService employeeProfileService;
