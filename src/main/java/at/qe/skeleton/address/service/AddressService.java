@@ -5,15 +5,18 @@ import at.qe.skeleton.common.exceptions.AddressNotFoundException;
 import at.qe.skeleton.address.model.Address;
 import at.qe.skeleton.address.repository.AddressRepository;
 import at.qe.skeleton.building.repository.BuildingRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 public class AddressService {
 
     private final AddressRepository addressRepository;
     private final BuildingRepository buildingRepository;
+
 
     public AddressService(AddressRepository addressRepository, BuildingRepository buildingRepository) {
         this.addressRepository = addressRepository;
@@ -30,6 +33,7 @@ public class AddressService {
     }
 
     public Address create(Address address) {
+        log.info("Created Address");
         return addressRepository.save(address);
     }
 
