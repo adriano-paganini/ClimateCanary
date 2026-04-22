@@ -5,6 +5,7 @@ import at.qe.skeleton.common.exceptions.AddressNotFoundException;
 import at.qe.skeleton.address.model.Address;
 import at.qe.skeleton.address.repository.AddressRepository;
 import at.qe.skeleton.building.repository.BuildingRepository;
+import at.qe.skeleton.common.exceptions.EntityInUseException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -62,7 +63,7 @@ public class AddressService {
         getById(id);
 
         if (buildingRepository.existsBuildingByAddressId(id)) {
-            throw new IllegalStateException("Address with id " + id + " is still referenced by a building");
+            throw new EntityInUseException("Address with id " + id + " is still referenced by a building");
         }
         addressRepository.deleteById(id);
     }
