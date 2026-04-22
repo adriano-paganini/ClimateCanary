@@ -1,10 +1,9 @@
 package at.qe.skeleton.services;
 
+import at.qe.skeleton.common.exceptions.ConflictException;
+import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.ThresholdCreateDTO;
 import at.qe.skeleton.dtos.ThresholdUpdateDTO;
-import at.qe.skeleton.common.exceptions.EntityInUseException;
-import at.qe.skeleton.common.exceptions.ThresholdNotFoundException;
-import at.qe.skeleton.mappers.ThresholdMapper;
 import at.qe.skeleton.models.ClimateHint;
 import at.qe.skeleton.models.Threshold;
 import at.qe.skeleton.repositories.ClimateHintRepository;
@@ -23,7 +22,6 @@ public class ThresholdService {
 
     public ThresholdService(ThresholdRepository thresholdRepository,
                             RoomService roomService,
-                            ThresholdMapper thresholdMapper,
                             ClimateHintRepository climateHintRepository) {
         this.thresholdRepository = thresholdRepository;
         this.roomService = roomService;
@@ -36,7 +34,7 @@ public class ThresholdService {
 
     public Threshold getThresholdById(Long id){
         return thresholdRepository.findById(id)
-                .orElseThrow(() -> new ThresholdNotFoundException("Threshold with id " + id + " not found"));
+                .orElseThrow(() -> new NotFoundException("Threshold with id " + id + " not found"));
     }
 
     public Threshold create(ThresholdCreateDTO dto) {
@@ -56,9 +54,7 @@ public class ThresholdService {
     }
 
     public Threshold update(Long id, ThresholdUpdateDTO dto) {
-
-        Threshold entity = thresholdRepository.findById(id)
-                .orElseThrow(() -> new ThresholdNotFoundException("Threshold with id " + id + " not found"));
+        Threshold entity = getThresholdById(id);
 
         if (dto.metric() != null)
             entity.setMetric(dto.metric());
@@ -86,11 +82,10 @@ public class ThresholdService {
     }
 
     public void delete(Long id) {
-        Threshold entity = thresholdRepository.findById(id)
-                .orElseThrow(() -> new ThresholdNotFoundException("Threshold with id " + id + " not found"));
+        Threshold entity = getThresholdById(id);
 
         if (!entity.getViolations().isEmpty()) {
-            throw new EntityInUseException("Threshold cannot be enabled because it has violations");
+            throw new ConflictException("Threshold cannot be enabled because it has violations");
         }
 
         entity.getClimateHints().clear();

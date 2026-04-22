@@ -1,295 +1,127 @@
 package at.qe.skeleton.common;
 
-import at.qe.skeleton.common.exceptions.*;
+import at.qe.skeleton.common.exceptions.ConflictException;
+import at.qe.skeleton.common.exceptions.NotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authorization.AuthorizationDeniedException;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // Handle validation errors (@Valid)
+    /**
+     * Handles NOT FOUND (404) issues
+     * @param ex
+     * @param request
+     * @return
+     */
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleNotFound(
+            NotFoundException ex,
+            HttpServletRequest request)
+    {
+        return build(HttpStatus.NOT_FOUND, "NOT_FOUND", ex, request);
+    }
+
+    /**
+     * Handles CONFLICT (409) issues
+     * @param ex
+     * @param request
+     * @return
+     */
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ApiErrorResponse> handleConflict(
+            ConflictException ex,
+            HttpServletRequest request)
+    {
+        return build(HttpStatus.CONFLICT, "CONFLICT", ex, request);
+    }
+
+    /**
+     * Handles BAD REQUEST (400) issues
+     * @param ex
+     * @param request
+     * @return
+     */
+    @ExceptionHandler({
+            IllegalArgumentException.class,
+            IllegalStateException.class
+    })
+    public ResponseEntity<ApiErrorResponse> handleBadRequest(
+            RuntimeException ex,
+            HttpServletRequest request)
+    {
+        return build(HttpStatus.BAD_REQUEST, "BAD_REQUEST", ex, request);
+    }
+
+    /**
+     * Handles Jakarta VALIDATION ERRORS
+     * @param ex
+     * @return
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidationErrors(
-            MethodArgumentNotValidException ex
-    ) {
+    public ResponseEntity<Map<String, String>> handleValidation(
+            MethodArgumentNotValidException ex)
+    {
         Map<String, String> errors = new HashMap<>();
-
-        for (FieldError error : ex.getBindingResult().getFieldErrors()) {
-            errors.put(error.getField(), error.getDefaultMessage());
-        }
-
-        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+        ex.getBindingResult().getFieldErrors()
+                .forEach(err -> errors.put(err.getField(), err.getDefaultMessage()));
+        return ResponseEntity.badRequest().body(errors);
     }
 
-    // Handle illegal arguments
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiErrorResponse> handleIllegalArgument(
-            IllegalArgumentException ex,
-            HttpServletRequest request
-    ) {
-        ApiErrorResponse response = new ApiErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                "Bad Request",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-    }
-
-    // Handle illegal arguments
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<ApiErrorResponse> handleIllegalStateException(
-            IllegalStateException ex,
-            HttpServletRequest request
-    ) {
-        ApiErrorResponse response = new ApiErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                "Bad Request",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-    }
-
-    // Handle Building Not Found
-    @ExceptionHandler(BuildingNotFoundException.class)
-    public ResponseEntity<ApiErrorResponse> handleBuildingNotFound(
-            Exception ex,
-            HttpServletRequest request
-    ){
-        ApiErrorResponse response = new ApiErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                BuildingNotFoundException.class.getSimpleName(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-    }
-
-    // Handle Department Not Found
-    @ExceptionHandler(DepartmentNotFoundException.class)
-    public ResponseEntity<ApiErrorResponse> handleDepartmentNotFound(
-            Exception ex,
-            HttpServletRequest request
-    ){
-        ApiErrorResponse response = new ApiErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                DepartmentNotFoundException.class.getSimpleName(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-    }
-
-    // Handle Room Not Found
-    @ExceptionHandler(RoomNotFoundException.class)
-    public ResponseEntity<ApiErrorResponse> handleRoomNotFound(
-            Exception ex,
-            HttpServletRequest request
-    ){
-        ApiErrorResponse response = new ApiErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                RoomNotFoundException.class.getSimpleName(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-    }
-
-    // Handle User not found Exception
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ApiErrorResponse> handleUserNotFound(
-            Exception ex,
-            HttpServletRequest request
-    ){
-        ApiErrorResponse response = new ApiErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                UserNotFoundException.class.getSimpleName(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-    }
-
-    // Handle Address not found Exception
-    @ExceptionHandler(AddressNotFoundException.class)
-    public ResponseEntity<ApiErrorResponse> handleAddressNotFound(
-            Exception ex,
-            HttpServletRequest request
-    ){
-        ApiErrorResponse response = new ApiErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                AddressNotFoundException.class.getSimpleName(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-    }
-    @ExceptionHandler(EmployeeProfileNotFoundException.class)
-    public ResponseEntity<ApiErrorResponse> handleEmployeeProfileNotFound(
-            Exception ex,
-            HttpServletRequest request
-    ) {
-        ApiErrorResponse response = new ApiErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                EmployeeProfileNotFoundException.class.getSimpleName(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-    }
-
-    @ExceptionHandler(UserAlreadyExists.class)
-    public ResponseEntity<ApiErrorResponse> handleUserAlreadyExists(
-            Exception ex,
-            HttpServletRequest request
-    ) {
-        ApiErrorResponse response = new ApiErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                UserAlreadyExists.class.getSimpleName(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(AbsenceNotFoundException.class)
-    public ResponseEntity<ApiErrorResponse> handleAbsenceNotFound(
-            Exception ex,
-            HttpServletRequest request
-    ) {
-        ApiErrorResponse response = new ApiErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                AbsenceNotFoundException.class.getSimpleName(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-    }
-
-    @ExceptionHandler(ThresholdNotFoundException.class)
-    public ResponseEntity<ApiErrorResponse> handleThresholdNotFound(
-            Exception ex,
-            HttpServletRequest request
-    ) {
-        ApiErrorResponse response = new ApiErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                ThresholdNotFoundException.class.getSimpleName(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-    }
-
-    @ExceptionHandler(ClimateHintNotFound.class)
-    public ResponseEntity<ApiErrorResponse> handleClimateHintNotFound(
-            Exception ex,
-            HttpServletRequest request
-    ) {
-        ApiErrorResponse response = new ApiErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                ClimateHintNotFound.class.getSimpleName(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-    }
-
-    @ExceptionHandler(EntityInUseException.class)
-    public ResponseEntity<ApiErrorResponse> handleEntityInUse(
-            Exception ex,
-            HttpServletRequest request
-    ) {
-        ApiErrorResponse response = new ApiErrorResponse(
-                HttpStatus.CONFLICT.value(),
-                EntityInUseException.class.getSimpleName(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(response, HttpStatus.CONFLICT);
-    }
-
-    @ExceptionHandler(ThresholdViolationNotFound.class)
-    public ResponseEntity<ApiErrorResponse> handleThresholdViolationNotFound(
-            Exception ex,
-            HttpServletRequest request
-    ) {
-        ApiErrorResponse response = new ApiErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                ThresholdViolationNotFound.class.getSimpleName(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-    }
-
-    @ExceptionHandler(RaspberryPiNotFoundException.class)
-    public ResponseEntity<ApiErrorResponse> handleRaspberryPiNotFound(
-            Exception ex,
-            HttpServletRequest request
-    ) {
-        ApiErrorResponse response = new ApiErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                RaspberryPiNotFoundException.class.getSimpleName(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-    }
-
-    @ExceptionHandler(MeasurementNotFoundException.class)
-    public ResponseEntity<ApiErrorResponse> handleMeasurementNotFound(
-            Exception ex,
-            HttpServletRequest request
-    ) {
-        ApiErrorResponse response = new ApiErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                MeasurementNotFoundException.class.getSimpleName(),
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-    }
-
+    /**
+     * Handles FORBIDDEN (403) issues
+     * @param ex
+     * @param request
+     * @return
+     */
     @ExceptionHandler(AuthorizationDeniedException.class)
-    public ResponseEntity<ApiErrorResponse> handleAccessDenied(
+    public ResponseEntity<ApiErrorResponse> handleForbidden(
+            Exception ex,
+            HttpServletRequest request)
+    {
+        return build(HttpStatus.FORBIDDEN, "FORBIDDEN", ex, request);
+    }
+
+    /**
+     * Handles FALLBACK issues
+     * @param ex
+     * @param request
+     * @return
+     */
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiErrorResponse> handleGeneric(
+            Exception ex,
+            HttpServletRequest request)
+    {
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", ex, request);
+
+    }
+
+    private ResponseEntity<ApiErrorResponse> build(
+            HttpStatus status,
+            String code,
             Exception ex,
             HttpServletRequest request
     ) {
-        ApiErrorResponse response = new ApiErrorResponse(
-                HttpStatus.FORBIDDEN.value(),
-                AuthorizationDeniedException.class.getSimpleName(),
-                ex.getMessage(),
-                request.getRequestURI()
+        return new ResponseEntity<>(
+                new ApiErrorResponse(
+                        Instant.now(),
+                        status.value(),
+                        code,
+                        ex.getMessage(),
+                        request.getMethod() + " " + request.getRequestURI()),
+                status
         );
-
-        return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
     }
-
-
 }
+
+

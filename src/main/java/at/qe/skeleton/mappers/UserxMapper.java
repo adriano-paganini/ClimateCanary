@@ -28,7 +28,7 @@ public class UserxMapper implements DTOMapper<Userx, UserxDTO> {
         if (user == null) {
             return null;
         }
-        UserxDTO dto = new UserxDTO(
+       return new UserxDTO(
                 user.getId(), 
                 user.getCreateUser().getId(), 
                 user.getCreateDate(), 
@@ -42,8 +42,6 @@ public class UserxMapper implements DTOMapper<Userx, UserxDTO> {
                 user.isEnabled(), 
                 user.getRoles()
         );
-        
-        return dto;
     }
 
     @Override

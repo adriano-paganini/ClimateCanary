@@ -1,8 +1,7 @@
 package at.qe.skeleton.services;
 
+import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.DepartmentUpdateDTO;
-import at.qe.skeleton.common.exceptions.DepartmentNotFoundException;
-import at.qe.skeleton.common.exceptions.UserNotFoundException;
 import at.qe.skeleton.models.Department;
 import at.qe.skeleton.models.EmployeeProfile;
 import at.qe.skeleton.models.Room;
@@ -35,7 +34,7 @@ public class DepartmentService {
 
     public Department getDepartmentById(Long id) {
         return departmentRepository.findById(id)
-                .orElseThrow(() -> new DepartmentNotFoundException("Department with id " + id + " not found"));
+                .orElseThrow(() -> new NotFoundException("Department with id " + id + " not found"));
     }
 
     public Department create(Department d) {
@@ -60,7 +59,7 @@ public class DepartmentService {
 
         if (dto.departmentLeadId() != null) {
             Userx leader = userxService.loadUser(dto.departmentLeadId())
-                    .orElseThrow(() -> new UserNotFoundException("User with id " + dto.departmentLeadId() + " not found"));
+                    .orElseThrow(() -> new NotFoundException("User with id " + dto.departmentLeadId() + " not found"));
             existing.setDepartmentLeader(leader);
         }
 

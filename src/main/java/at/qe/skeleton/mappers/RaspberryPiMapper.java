@@ -16,6 +16,7 @@ public class RaspberryPiMapper implements DTOMapper<RaspberryPi, RaspberryPiDTO>
                 entity.getHostName(),
                 entity.getIpAddress(),
                 entity.getDeviceStatus(),
+                entity.getRoom() == null ? null : entity.getRoom().getId(),
                 entity.getSensorStations()
                         .stream()
                         .map(SensorStation::getId)
