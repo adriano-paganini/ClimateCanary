@@ -7,12 +7,13 @@ import {useEffect, useState} from 'react';
 import {ProgressSpinner} from 'primereact/progressspinner';
 
 import {useUser} from "../Contexts/AuthenticatedUserContext";
+import {UserxRole} from "../generated-skeleton-api";
 import {ROUTES} from "../utilities/routes.paths";
 
 /**
  * Private route component that checks if the user is authenticated. Used to protect routes.
  */
-const PrivateRoute = () => {
+const PrivateRoute = ({roles}: { roles?: UserxRole[] }) => {
 
     enum AuthStatus {
         AUTHENTICATED = 200,
@@ -20,7 +21,7 @@ const PrivateRoute = () => {
         UNKNOWN = 0
     }
 
-    const {userIsAuthenticated} = useUser();
+    const {userIsAuthenticated, currentUser} = useUser();
     const location = useLocation();
 
     const [authStatus, setAuthStatus] = useState(AuthStatus.UNKNOWN); // null -> Status unknonw, true/false for authentication
@@ -49,8 +50,16 @@ const PrivateRoute = () => {
         return <ProgressSpinner/>
     }
 
-    return authStatus === AuthStatus.AUTHENTICATED ? <Outlet/> :
-        <Navigate to={ROUTES.LOGIN} replace state={{from: location}}/>; // return to location in case of
+    if (authStatus === AuthStatus.UNAUTHENTICATED) {
+        return <Navigate to={ROUTES.LOGIN} replace state={{from: location}}/>;
+    }
+
+    if (roles && roles.length > 0) {
+        const hasRequiredRole = roles.some(r => currentUser?.roles?.has(r));
+        if (!hasRequiredRole) return <Navigate to={ROUTES.HOME} replace/>;
+    }
+
+    return <Outlet/>;
 };
 
 export default PrivateRoute;

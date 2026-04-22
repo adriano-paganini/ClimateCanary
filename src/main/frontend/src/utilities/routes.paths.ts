@@ -5,4 +5,10 @@ export const ROUTES = {
     LOGOUT: '/logout',
     DASHBOARD: '/dashboard',
     DASHBOARD_HISTORY: '/dashboard/:roomId/history',
+    ABSENCE: '/absence',
+    ROOMS: '/rooms',
+    THRESHOLDS: '/thresholds',
+    DEVICES: '/devices',
+    BUILDINGS: '/buildings',
+    DEPARTMENTS: '/departments',
 } as const;

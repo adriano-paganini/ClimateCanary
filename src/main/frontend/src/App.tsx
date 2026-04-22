@@ -9,6 +9,7 @@ import {BrowserRouter, Route, Routes} from "react-router-dom";
 import {HomePageRoute, LoginsRoute, LogoutsRoute, ManageUsersRoute} from "./routes";
 import PrivateRoute from './components/PrivateRoute';
 import {UserProvider} from "./Contexts/AuthenticatedUserContext";
+import {UserxRole} from "./generated-skeleton-api";
 
 const App: React.FC = () => {
     return (
@@ -21,9 +22,10 @@ const App: React.FC = () => {
                         {/* Protected Routes (authentication required) */}
                         <Route element={<PrivateRoute/>}>
                             <Route path={HomePageRoute.url} Component={HomePageRoute.component}/>
-                            <Route path={ManageUsersRoute.url}
-                                   Component={ManageUsersRoute.component}/>
                             <Route path={LogoutsRoute.url} Component={LogoutsRoute.component}/>
+                        </Route>
+                        <Route element={<PrivateRoute roles={[UserxRole.BUILDING_ADMIN, UserxRole.SYSTEM_ADMIN]}/>}>
+                            <Route path={ManageUsersRoute.url} Component={ManageUsersRoute.component}/>
                         </Route>
                         {/* end of protected routes */}
                     </Routes>
