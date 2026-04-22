@@ -132,7 +132,7 @@ public class AdminController {
    * with status {@code 404 (Not Found)} if no user with this id exists
    */
   @Operation(summary = "Delete User", description = "Delete a User by id.")
-  @ApiResponse(responseCode = "204", description = "User deleted.")
+  @ApiResponse(responseCode = "204", description = "User enabled.")
   @ApiResponse(responseCode = "404", description = "User not found.")
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> deleteUser(

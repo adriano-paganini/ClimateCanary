@@ -91,7 +91,7 @@ public class ThresholdService {
                 .orElseThrow(() -> new ThresholdNotFoundException("Threshold with id " + id + " not found"));
 
         if (!entity.getViolations().isEmpty()) {
-            throw new EntityInUseException("Threshold cannot be deleted because it has violations");
+            throw new EntityInUseException("Threshold cannot be enabled because it has violations");
         }
 
         entity.getClimateHints().clear();

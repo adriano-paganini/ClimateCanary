@@ -185,6 +185,10 @@ public class Userx implements Persistable<Long>, Serializable, Comparable<Userx>
       return employeeProfile;
   }
 
+  public void setEmployeeProfile(EmployeeProfile employeeProfile) {
+      this.employeeProfile = employeeProfile;
+  }
+
     @Override
   public int hashCode() {
     int hash = 7;
