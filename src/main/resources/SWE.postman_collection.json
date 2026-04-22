@@ -1429,17 +1429,28 @@
         {
           "name": "Get all Thresholds",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/thresholds",
+              "raw": "http://localhost:8080/api/threshold",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
-                "thresholds"
+                "api",
+                "threshold"
               ]
             }
           },
@@ -1448,17 +1459,28 @@
         {
           "name": "Get Threshold by id",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/thresholds/1",
+              "raw": "http://localhost:8080/api/threshold/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
-                "thresholds",
+                "api",
+                "threshold",
                 "1"
               ]
             }
@@ -1468,11 +1490,21 @@
         {
           "name": "Create Threshold",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"roomId\": 1,\n  \"metric\": \"TEMPERATURE\",\n  \"boundValue\": 25,\n  \"thresholdType\": \"MAX\",\n  \"climateHintIds\": [1, 2]\n}",
+              "raw": "{\n  \"roomId\": 1,\n  \"metric\": \"HUMIDITY\",\n  \"boundValue\": 0,\n  \"thresholdType\": \"LOWER\",\n  \"climateHintIds\": [\n    2\n  ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1480,14 +1512,15 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/thresholds",
+              "raw": "http://localhost:8080/api/threshold",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
-                "thresholds"
+                "api",
+                "threshold"
               ]
             }
           },
@@ -1496,6 +1529,16 @@
         {
           "name": "Update Threshold",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "PATCH",
             "header": [],
             "body": {
@@ -1508,14 +1551,15 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/thresholds/1",
+              "raw": "http://localhost:8080/api/threshold/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
-                "thresholds",
+                "api",
+                "threshold",
                 "1"
               ]
             }
@@ -1525,17 +1569,28 @@
         {
           "name": "Delete Threshold",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/thresholds/1",
+              "raw": "http://localhost:8080/api/threshold/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
-                "thresholds",
+                "api",
+                "threshold",
                 "1"
               ]
             }

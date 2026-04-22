@@ -37,7 +37,7 @@ public class RaspberryPiService {
         RaspberryPi savedPi = repo.save(pi);
 
         log.info("Created raspberry pi with id={}", savedPi.getId());
-        log.debug("RaspberryPi details: id={}, ipAddress={}, deviceStatus={}, roomId={}",
+        log.debug("Created raspberryPi details: id={}, ipAddress={}, deviceStatus={}, roomId={}",
                 savedPi.getId(),
                 savedPi.getIpAddress(),
                 savedPi.getDeviceStatus(),

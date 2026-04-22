@@ -2,7 +2,6 @@ package at.qe.skeleton.services;
 
 import at.qe.skeleton.common.exceptions.RoomNotFoundException;
 import at.qe.skeleton.models.EmployeeProfile;
-import at.qe.skeleton.repositories.EmployeeProfileRepository;
 import at.qe.skeleton.models.DeviceStatus;
 import at.qe.skeleton.dtos.RoomUpdateDTO;
 import at.qe.skeleton.models.Room;
@@ -41,7 +40,7 @@ public class RoomService {
         Room savedRoom = roomRepository.save(room);
 
         log.info("Created room with id={}", savedRoom.getId());
-        log.debug("Room details: id={}, name={}, roomType={}, minOccupancy={}, departmentId={}, buildingId={}",
+        log.debug("Created room details: id={}, name={}, roomType={}, minOccupancy={}, departmentId={}, buildingId={}",
                 savedRoom.getId(),
                 savedRoom.getName(),
                 savedRoom.getRoomType(),
