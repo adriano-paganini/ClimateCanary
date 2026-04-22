@@ -42,7 +42,7 @@ const Login = () => {
         try {
             const decoded = jwtDecode<CustomJwtPayload>(token);
             const roles = new Set(decoded.roles ?? []);
-            if (roles.has(UserxRole.SYSTEM_ADMIN))    return ROUTES.USERS;
+            if (roles.has(UserxRole.SYSTEM_ADMIN))    return ROUTES.MANAGE_USERS;
             if (roles.has(UserxRole.BUILDING_ADMIN))  return ROUTES.THRESHOLDS;
             if (roles.has(UserxRole.MANAGEMENT))      return ROUTES.MANAGEMENT_DASHBOARD;
             if (roles.has(UserxRole.DEPARTMENT_LEAD)) return ROUTES.DEPARTMENT_DASHBOARD;
