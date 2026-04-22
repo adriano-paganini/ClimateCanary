@@ -44,7 +44,7 @@ public class ThresholdViolation {
     )
     private List<Measurement> measurements = new ArrayList<>();
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
