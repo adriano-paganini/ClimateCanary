@@ -534,7 +534,14 @@
           },
           "request": {
             "auth": {
-              "type": "noauth"
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
             },
             "method": "GET",
             "header": [],
@@ -543,13 +550,14 @@
               "raw": ""
             },
             "url": {
-              "raw": "http://localhost:8080/room",
+              "raw": "http://localhost:8080/api/room",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "room"
               ]
             }
@@ -599,20 +607,28 @@
           "name": "Get Room by id",
           "request": {
             "auth": {
-              "type": "noauth"
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
             },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/room/2",
+              "raw": "http://localhost:8080/api/room/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "room",
-                "2"
+                "1"
               ]
             }
           },
@@ -622,13 +638,20 @@
           "name": "Update room",
           "request": {
             "auth": {
-              "type": "noauth"
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
             },
             "method": "PATCH",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"new updated building\",\n    \"addressId\": 60\n}",
+              "raw": "{\n    \"name\": \"new updated building\",\n    \"addressId\": 1\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -636,13 +659,14 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/building/1",
+              "raw": "http://localhost:8080/api/building/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "building",
                 "1"
               ]
@@ -653,18 +677,29 @@
         {
           "name": "Delete a room",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/room/3",
+              "raw": "http://localhost:8080/api/room/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "room",
-                "3"
+                "1"
               ]
             }
           },

@@ -8,24 +8,24 @@ import at.qe.skeleton.dtos.RoomUpdateDTO;
 import at.qe.skeleton.models.Room;
 import at.qe.skeleton.repositories.RoomRepository;
 import at.qe.skeleton.models.SensorStation;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 public class RoomService {
 
     private final RoomRepository roomRepository;
     private final DepartmentService departmentService;
     private final BuildingService buildingService;
-    private final EmployeeProfileRepository employeeProfileRepository;
 
-    public RoomService(RoomRepository repo, DepartmentService departmentService, BuildingService buildingService, EmployeeProfileRepository employeeProfileRepository) {
+    public RoomService(RoomRepository repo, DepartmentService departmentService, BuildingService buildingService) {
         this.roomRepository = repo;
         this.departmentService = departmentService;
         this.buildingService = buildingService;
-        this.employeeProfileRepository = employeeProfileRepository;
     }
 
     public List<Room> getAll() {
@@ -38,33 +38,57 @@ public class RoomService {
     }
 
     public Room create(Room room) {
-        return roomRepository.save(room);
+        Room savedRoom = roomRepository.save(room);
+
+        log.info("Created room with id={}", savedRoom.getId());
+        log.debug("Room details: id={}, name={}, roomType={}, minOccupancy={}, departmentId={}, buildingId={}",
+                savedRoom.getId(),
+                savedRoom.getName(),
+                savedRoom.getRoomType(),
+                savedRoom.getMinOccupancy(),
+                savedRoom.getDepartment() != null ? savedRoom.getDepartment().getId() : null,
+                savedRoom.getBuilding() != null ? savedRoom.getBuilding().getId() : null);
+
+        return savedRoom;
     }
 
     public Room update(Long id, RoomUpdateDTO dto) {
         Room existing = getById(id);
 
+        StringBuilder debugInfo = new StringBuilder("Updated room details:")
+                .append(" id=").append(id);
+
         if (dto.name() != null) {
             existing.setName(dto.name());
+            debugInfo.append(", name=").append(dto.name());
         }
 
         if (dto.roomType() != null) {
             existing.setRoomType(dto.roomType());
+            debugInfo.append(", roomType=").append(dto.roomType());
         }
 
         if (dto.minOccupancy() != null) {
             existing.setMinOccupancy(dto.minOccupancy());
+            debugInfo.append(", minOccupancy=").append(dto.minOccupancy());
         }
 
         if (dto.departmentId() != null) {
             existing.setDepartment(departmentService.getDepartmentById(dto.departmentId()));
+            debugInfo.append(", departmentId=").append(dto.departmentId());
         }
 
         if (dto.buildingId() != null) {
             existing.setBuilding(buildingService.getBuildingById(dto.buildingId()));
+            debugInfo.append(", buildingId=").append(dto.buildingId());
         }
 
-        return roomRepository.save(existing);
+        Room updatedRoom = roomRepository.save(existing);
+
+        log.info("Updated room with id={}", id);
+        log.debug(debugInfo.toString());
+
+        return updatedRoom;
     }
 
     /**
@@ -90,7 +114,6 @@ public class RoomService {
         }
         room.getEmployeeProfiles().clear();
 
-
         for (SensorStation ss : room.getSensorStations()) {
             ss.setDeviceStatus(DeviceStatus.DECOMMISSIONED);
         }
@@ -100,5 +123,8 @@ public class RoomService {
         }
 
         room.setActive(false);
+
+        log.info("Soft-deleted room with id={}", id);
+        log.debug("Room id={} marked inactive, associations cleared, and linked devices decommissioned", id);
     }
 }
