@@ -4,20 +4,15 @@ export const ROUTES = {
     LOGIN: '/login',
     LOGOUT: '/logout',
     PROFILE: '/profile',
-    // Employee
     DASHBOARD: '/dashboard',
     DASHBOARD_HISTORY: '/dashboard/:roomId/history',
-    ABSENCES: '/absences',
-    // Department Lead
+    ABSENCE: '/absence',
     DEPARTMENT_DASHBOARD: '/department',
     DEPARTMENT_ALERTS: '/department/alerts',
-    // Management
     MANAGEMENT_DASHBOARD: '/management',
-    // Building Admin (Facility Manager)
-    THRESHOLDS: '/admin/thresholds',
-    ROOMS: '/admin/rooms',
-    BUILDINGS: '/admin/buildings',
-    // System Admin
-    USERS: '/admin/users',
-    DEVICES: '/admin/devices',
+    ROOMS: '/rooms',
+    THRESHOLDS: '/thresholds',
+    DEVICES: '/devices',
+    BUILDINGS: '/buildings',
+    DEPARTMENTS: '/departments',
 } as const;

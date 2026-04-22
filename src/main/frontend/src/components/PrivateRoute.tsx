@@ -11,9 +11,7 @@ import {UserxRole} from "../generated-skeleton-api";
 import {ROUTES} from "../utilities/routes.paths";
 
 /**
- * Private route component that checks authentication and optionally enforces role-based access.
- * Usage without roles: all authenticated users may enter.
- * Usage with roles: only authenticated users with at least one matching role may enter.
+ * Private route component that checks if the user is authenticated. Used to protect routes.
  */
 const PrivateRoute = ({roles}: { roles?: UserxRole[] }) => {
 
@@ -44,10 +42,10 @@ const PrivateRoute = ({roles}: { roles?: UserxRole[] }) => {
                 setAuthStatus(AuthStatus.UNAUTHENTICATED);
             }
         };
-        void checkAuthentication();
+        void checkAuthentication(); // to mark the returned Promise as explicitly and intentionally unawaited (ESLint)
     }, []); // an empty dependency array signals that the effect is executed only once on mount
 
-    // loading spinner while auth status is being determined
+    // loading spinner
     if (authStatus === AuthStatus.UNKNOWN) {
         return <ProgressSpinner/>
     }
@@ -56,13 +54,9 @@ const PrivateRoute = ({roles}: { roles?: UserxRole[] }) => {
         return <Navigate to={ROUTES.LOGIN} replace state={{from: location}}/>;
     }
 
-    // If specific roles are required, check whether the current user has at least one of them.
-    // Redirect to HOME (not login) so the user stays logged in but sees their own landing page.
     if (roles && roles.length > 0) {
         const hasRequiredRole = roles.some(r => currentUser?.roles?.has(r));
-        if (!hasRequiredRole) {
-            return <Navigate to={ROUTES.HOME} replace/>;
-        }
+        if (!hasRequiredRole) return <Navigate to={ROUTES.HOME} replace/>;
     }
 
     return <Outlet/>;

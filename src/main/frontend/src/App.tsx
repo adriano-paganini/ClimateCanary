@@ -10,7 +10,6 @@ import {HomePageRoute, LoginsRoute, LogoutsRoute, ManageUsersRoute} from "./rout
 import PrivateRoute from './components/PrivateRoute';
 import {UserProvider} from "./Contexts/AuthenticatedUserContext";
 import {UserxRole} from "./generated-skeleton-api";
-import {ROUTES} from "./utilities/routes.paths";
 
 const App: React.FC = () => {
     return (
@@ -27,13 +26,10 @@ const App: React.FC = () => {
                             <Route path={LogoutsRoute.url} Component={LogoutsRoute.component}/>
                         </Route>
 
-                        {/* System Admin only */}
-                        <Route element={<PrivateRoute roles={[UserxRole.SYSTEM_ADMIN]}/>}>
-                            <Route path={ROUTES.USERS} Component={ManageUsersRoute.component}/>
+                        {/* Building Admin and System Admin only */}
+                        <Route element={<PrivateRoute roles={[UserxRole.BUILDING_ADMIN, UserxRole.SYSTEM_ADMIN]}/>}>
                             <Route path={ManageUsersRoute.url} Component={ManageUsersRoute.component}/>
                         </Route>
-
-                        {/* Additional role-guarded routes are added here as views are implemented */}
                     </Routes>
                 </BrowserRouter>
             </Suspense>
