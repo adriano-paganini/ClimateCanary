@@ -2,7 +2,6 @@ package at.qe.skeleton.services;
 
 import at.qe.skeleton.dtos.AddressUpdateDTO;
 import at.qe.skeleton.common.exceptions.AddressNotFoundException;
-import at.qe.skeleton.models.Absence;
 import at.qe.skeleton.models.Address;
 import at.qe.skeleton.repositories.AddressRepository;
 import at.qe.skeleton.repositories.BuildingRepository;

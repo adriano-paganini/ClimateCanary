@@ -553,16 +553,27 @@
         {
           "name": "Get addresses",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/address",
+              "raw": "http://localhost:8080/api/address",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "address"
               ]
             }
@@ -572,16 +583,27 @@
         {
           "name": "Get address by id",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/address/1",
+              "raw": "http://localhost:8080/api/address/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "address",
                 "1"
               ]
@@ -631,6 +653,16 @@
         {
           "name": "Update address",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "PATCH",
             "header": [],
             "body": {
@@ -643,13 +675,14 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/address/1",
+              "raw": "http://localhost:8080/api/address/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "address",
                 "1"
               ]
@@ -660,6 +693,16 @@
         {
           "name": "Delete address",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
             "header": [],
             "body": {
@@ -667,15 +710,16 @@
               "raw": ""
             },
             "url": {
-              "raw": "http://localhost:8080/address/2",
+              "raw": "http://localhost:8080/api/address/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "address",
-                "2"
+                "1"
               ]
             }
           },
@@ -928,7 +972,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"extra\": \"Primary Address\"\n}",
+              "raw": "{\n  \"startDate\": \"2026-04-22T19:11:35.668Z\",\n  \"endDate\": \"2026-04-22T19:11:35.668Z\",\n  \"absenceType\": \"HOLIDAY\",\n  \"userxId\": 1,\n  \"absenceStatus\": \"PLANNED\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -936,7 +980,7 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/api/address/1",
+              "raw": "http://localhost:8080/api/absence/1",
               "protocol": "http",
               "host": [
                 "localhost"
@@ -944,7 +988,7 @@
               "port": "8080",
               "path": [
                 "api",
-                "address",
+                "absence",
                 "1"
               ]
             }
@@ -1350,6 +1394,30 @@
           "response": []
         }
       ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
     }
   ],
   "variable": [
