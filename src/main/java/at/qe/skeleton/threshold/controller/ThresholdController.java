@@ -51,9 +51,7 @@ public class ThresholdController {
     @PatchMapping("/{id}")
     public ResponseEntity<ThresholdDTO> update(@PathVariable Long id,
                                                @RequestBody ThresholdUpdateDTO dto) {
-        return ResponseEntity.ok(
-                thresholdMapper.mapTo(thresholdService.update(id, dto))
-        );
+        return ResponseEntity.ok(thresholdMapper.mapTo(thresholdService.update(id, dto)));
     }
 
     @DeleteMapping("/{id}")

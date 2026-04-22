@@ -83,7 +83,7 @@ public class ThresholdService {
             entity.getClimateHints().addAll(hints);
         }
 
-        return entity;
+        return thresholdRepository.save(entity);
     }
 
     public void delete(Long id) {
