@@ -1,8 +1,8 @@
 package at.qe.skeleton.sensorstation.mapper;
 
 import at.qe.skeleton.common.DTOMapper;
-import at.qe.skeleton.raspberrypi.repository.RaspberryPiRepository;
 import at.qe.skeleton.raspberrypi.service.RaspberryPiService;
+import at.qe.skeleton.room.service.RoomService;
 import at.qe.skeleton.sensorstation.dto.SensorStationCreateDTO;
 import at.qe.skeleton.sensorstation.model.SensorStation;
 import org.springframework.stereotype.Service;
@@ -10,12 +10,12 @@ import org.springframework.stereotype.Service;
 @Service
 public class SensorStationCreateMapper implements DTOMapper<SensorStation, SensorStationCreateDTO> {
 
-    private final RaspberryPiRepository raspberryPiRepository;
     private final RaspberryPiService raspberryPiService;
+    private final RoomService roomService;
 
-    public SensorStationCreateMapper(RaspberryPiRepository raspberryPiRepository, RaspberryPiService raspberryPiService) {
-        this.raspberryPiRepository = raspberryPiRepository;
+    public SensorStationCreateMapper(RaspberryPiService raspberryPiService, RoomService roomService) {
         this.raspberryPiService = raspberryPiService;
+        this.roomService = roomService;
     }
 
     @Override
@@ -25,6 +25,7 @@ public class SensorStationCreateMapper implements DTOMapper<SensorStation, Senso
         station.setDeviceStatus(dto.deviceStatus());
         station.setMeasurementsPerSec(dto.measurementsPerSec());
         station.setRaspberryPi(raspberryPiService.getById(dto.raspberryPiId()));
+        station.setRoom(roomService.getById(dto.roomId()));
         return station;
     }
 

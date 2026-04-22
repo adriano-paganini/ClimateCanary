@@ -1,14 +1,15 @@
 package at.qe.skeleton.employeeprofile.service;
 
-import at.qe.skeleton.department.service.DepartmentService;
-import at.qe.skeleton.employeeprofile.dto.EmployeeProfileUpdateDTO;
 import at.qe.skeleton.common.exceptions.EmployeeProfileNotFoundException;
 import at.qe.skeleton.common.exceptions.UserAlreadyExists;
+import at.qe.skeleton.department.service.DepartmentService;
+import at.qe.skeleton.employeeprofile.dto.EmployeeProfileUpdateDTO;
 import at.qe.skeleton.employeeprofile.model.EmployeeProfile;
 import at.qe.skeleton.employeeprofile.repository.EmployeeProfileRepository;
 import at.qe.skeleton.room.service.RoomService;
 import at.qe.skeleton.userx.service.UserxService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -69,8 +70,15 @@ public class EmployeeProfileService {
         return employeeProfileRepository.save(existing);
     }
 
+    @Transactional
     public void delete(Long id) {
-        getById(id);
+        EmployeeProfile ep = getById(id);
+
+        if (ep.getUser() != null) {
+            ep.getUser().setEmployeeProfile(null);
+            ep.setUser(null);
+        }
+
         employeeProfileRepository.deleteById(id);
     }
 }

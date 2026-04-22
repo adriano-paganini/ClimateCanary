@@ -16,7 +16,8 @@ public class SensorStationMapper implements DTOMapper<SensorStation, SensorStati
                 entity.getName(),
                 entity.getDeviceStatus(),
                 entity.getMeasurementsPerSec(),
-                entity.getRaspberryPi() == null ? null : entity.getRaspberryPi().getId()
+                entity.getRaspberryPi() == null ? null : entity.getRaspberryPi().getId(),
+                entity.getRoom() == null ? null : entity.getRoom().getId()
         );
     }
 

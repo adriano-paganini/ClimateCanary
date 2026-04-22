@@ -24,6 +24,8 @@ public class ThresholdViolation {
 
     @Column(name = "`value`")
     private Long value;
+
+    @Enumerated(EnumType.STRING)
     private ViolationStatus violationStatus;
     private LocalDateTime startTime;
     private LocalDateTime endTime;

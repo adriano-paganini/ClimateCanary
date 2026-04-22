@@ -16,5 +16,8 @@ public record SensorStationCreateDTO (
         Float measurementsPerSec,
 
         @NotNull
-        Long raspberryPiId
+        Long raspberryPiId,
+
+        @NotNull
+        Long roomId
 ) {}
