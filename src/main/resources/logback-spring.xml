@@ -13,9 +13,6 @@
 
     <appender name="APP_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_PATH}/${APP_LOG_FILE}</file>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
-        </filter>
         <encoder>
             <pattern>${LOG_PATTERN}</pattern>
         </encoder>
@@ -43,15 +40,10 @@
         </rollingPolicy>
     </appender>
 
-    <root level="WARN">
+    <root level="INFO">
         <appender-ref ref = "CONSOLE"/>
         <appender-ref ref="APP_FILE"/>
         <appender-ref ref="WARN_ERROR_FILE"/>
     </root>
-
-    <logger name="at.qe.skeleton" level="INFO" additivity="false">
-        <appender-ref ref="CONSOLE"/>
-        <appender-ref ref="APP_FILE"/>
-    </logger>
 
 </configuration>
