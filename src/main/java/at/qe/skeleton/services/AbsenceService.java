@@ -1,10 +1,9 @@
 package at.qe.skeleton.services;
 
-import at.qe.skeleton.common.exceptions.UserNotFoundException;
+import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.AbsenceUpdateDTO;
 import at.qe.skeleton.models.Absence;
 import at.qe.skeleton.repositories.AbsenceRepository;
-import at.qe.skeleton.common.exceptions.AbsenceNotFoundException;
 import at.qe.skeleton.models.Userx;
 import at.qe.skeleton.models.UserxRole;
 import lombok.extern.slf4j.Slf4j;
@@ -35,12 +34,12 @@ public class AbsenceService {
 
     public Absence getById(Long id) {
         return absenceRepository.findById(id)
-                .orElseThrow(() -> new AbsenceNotFoundException("Absence with id " + id + " not found"));
+                .orElseThrow(() -> new NotFoundException("Absence with id " + id + " not found"));
     }
 
     public Collection<Absence> getAbsencesForUser(Userx user) {
         if (user == null) {
-            throw new UserNotFoundException("User cannot be null");
+            throw new NotFoundException("User cannot be null");
         }
         Userx authenticatedUser = authenticatedUserService.getAuthenticatedUser();
         boolean isSelf = authenticatedUser.getId().equals(user.getId());

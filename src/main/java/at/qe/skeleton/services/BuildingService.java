@@ -1,7 +1,7 @@
 package at.qe.skeleton.services;
 
+import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.BuildingUpdateDTO;
-import at.qe.skeleton.common.exceptions.BuildingNotFoundException;
 import at.qe.skeleton.models.Building;
 import at.qe.skeleton.models.Room;
 import at.qe.skeleton.repositories.BuildingRepository;
@@ -32,7 +32,7 @@ public class BuildingService {
 
     public Building getBuildingById(long id) {
         return buildingRepository.findById(id)
-                .orElseThrow(() -> new BuildingNotFoundException("Building with id " + id + " not found"));
+                .orElseThrow(() -> new NotFoundException("Building with id " + id + " not found"));
     }
 
     public Building create(Building building) {

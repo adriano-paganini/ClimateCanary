@@ -1,7 +1,7 @@
 package at.qe.skeleton.services;
 
+import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.ClimateHintUpdateDTO;
-import at.qe.skeleton.common.exceptions.ClimateHintNotFound;
 import at.qe.skeleton.models.ClimateHint;
 import at.qe.skeleton.repositories.ClimateHintRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +26,7 @@ public class ClimateHintService {
 
     public ClimateHint getClimateHintById(Long id) {
         return climateHintRepository.findById(id)
-                .orElseThrow(() -> new ClimateHintNotFound("Climate hint not found with id: " + id));
+                .orElseThrow(() -> new NotFoundException("Climate hint not found with id: " + id));
     }
 
     public ClimateHint create(ClimateHint climateHint) {
@@ -68,7 +68,7 @@ public class ClimateHintService {
     @Transactional
     public void delete(Long id) {
         ClimateHint entity = climateHintRepository.findById(id)
-                .orElseThrow(() -> new ClimateHintNotFound("Climate hint not found with id: " + id));
+                .orElseThrow(() -> new NotFoundException("Climate hint not found with id: " + id));
 
         entity.getThresholds().clear();
         climateHintRepository.delete(entity);

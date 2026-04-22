@@ -1,11 +1,11 @@
 package at.qe.skeleton.services;
 
+import at.qe.skeleton.common.exceptions.ConflictException;
+import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.AddressUpdateDTO;
-import at.qe.skeleton.common.exceptions.AddressNotFoundException;
 import at.qe.skeleton.models.Address;
 import at.qe.skeleton.repositories.AddressRepository;
 import at.qe.skeleton.repositories.BuildingRepository;
-import at.qe.skeleton.common.exceptions.EntityInUseException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +30,7 @@ public class AddressService {
 
     public Address getById(Long id) {
         return addressRepository.findById(id)
-                .orElseThrow(() -> new AddressNotFoundException(String.format("Address with id %d not found", id)));
+                .orElseThrow(() -> new NotFoundException(String.format("Address with id %d not found", id)));
     }
 
     public Address create(Address address) {
@@ -93,7 +93,7 @@ public class AddressService {
         getById(id);
 
         if (buildingRepository.existsBuildingByAddressId(id)) {
-            throw new EntityInUseException("Address with id " + id + " is still referenced by a building");
+            throw new ConflictException("Address with id " + id + " is still referenced by a building");
         }
         addressRepository.deleteById(id);
         log.info("Deleted address with id: {}", id);

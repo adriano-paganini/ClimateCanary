@@ -3,4 +3,6 @@ export const ROUTES = {
     MANAGE_USERS: '/manage-users',
     LOGIN: '/login',
     LOGOUT: '/logout',
+    DASHBOARD: '/dashboard',
+    DASHBOARD_HISTORY: '/dashboard/:roomId/history',
 } as const;

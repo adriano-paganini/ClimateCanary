@@ -1,7 +1,7 @@
 package at.qe.skeleton.services;
 
-import at.qe.skeleton.common.exceptions.EmployeeProfileNotFoundException;
-import at.qe.skeleton.common.exceptions.UserAlreadyExists;
+import at.qe.skeleton.common.exceptions.ConflictException;
+import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.EmployeeProfileUpdateDTO;
 import at.qe.skeleton.models.EmployeeProfile;
 import at.qe.skeleton.repositories.EmployeeProfileRepository;
@@ -37,7 +37,7 @@ public class EmployeeProfileService {
 
     public EmployeeProfile getById(Long id) {
         return employeeProfileRepository.findById(id)
-                .orElseThrow(() -> new EmployeeProfileNotFoundException("Employee profile with id " + id + " not found"));
+                .orElseThrow(() -> new NotFoundException("Employee profile with id " + id + " not found"));
     }
 
     public EmployeeProfile create(EmployeeProfile employeeProfile) {
@@ -45,7 +45,7 @@ public class EmployeeProfileService {
         EmployeeProfile p = profile.orElse(null);
 
         if (p != null) {
-            throw new UserAlreadyExists("User with id " + employeeProfile.getUser().getId() + " already has a profile");
+            throw new ConflictException("User with id " + employeeProfile.getUser().getId() + " already has a profile");
         }
 
         EmployeeProfile savedProfile = employeeProfileRepository.save(employeeProfile);

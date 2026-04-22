@@ -1,26 +1,24 @@
 package at.qe.skeleton.mappers;
 
-import at.qe.skeleton.dtos.ThresholdViolationCreateDTO;
-import at.qe.skeleton.common.exceptions.RoomNotFoundException;
-import at.qe.skeleton.common.exceptions.ThresholdNotFoundException;
 import at.qe.skeleton.common.DTOMapper;
+import at.qe.skeleton.dtos.ThresholdViolationCreateDTO;
 import at.qe.skeleton.models.ThresholdViolation;
 import at.qe.skeleton.models.ViolationStatus;
-import at.qe.skeleton.repositories.RoomRepository;
-import at.qe.skeleton.repositories.ThresholdRepository;
+import at.qe.skeleton.services.RoomService;
+import at.qe.skeleton.services.ThresholdService;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ThresholdViolationCreateMapper implements DTOMapper<ThresholdViolation, ThresholdViolationCreateDTO> {
 
-    private final ThresholdRepository thresholdRepository;
-    private final RoomRepository roomRepository;
+    private final ThresholdService thresholdService;
+    private final RoomService roomService;
 
     public ThresholdViolationCreateMapper(
-            ThresholdRepository thresholdRepository,
-            RoomRepository roomRepository) {
-        this.thresholdRepository = thresholdRepository;
-        this.roomRepository = roomRepository;
+            ThresholdService thresholdService,
+            RoomService roomService) {
+        this.thresholdService = thresholdService;
+        this.roomService = roomService;
     }
 
     @Override
@@ -29,16 +27,8 @@ public class ThresholdViolationCreateMapper implements DTOMapper<ThresholdViolat
         entity.setMetric(dto.metric());
         entity.setValue(dto.value());
         entity.setStartTime(dto.startTime());
-
-        entity.setThreshold(thresholdRepository.findById(dto.thresholdId())
-                        .orElseThrow(() ->
-                                new ThresholdNotFoundException("Threshold with id " + dto.thresholdId() + " not found"))
-        );
-
-        entity.setRoom(roomRepository.findById(dto.roomId())
-                        .orElseThrow(() -> new RoomNotFoundException("Room with id " + dto.roomId() + " not found"))
-        );
-
+        entity.setThreshold(thresholdService.getThresholdById(dto.thresholdId()));
+        entity.setRoom(roomService.getById(dto.roomId()));
         entity.setViolationStatus(ViolationStatus.ACTIVE);
         return entity;
     }

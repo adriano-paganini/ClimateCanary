@@ -9,5 +9,6 @@ public record RaspberryPiDTO(
         String hostName,
         String ipAddress,
         DeviceStatus deviceStatus,
+        Long roomId,
         List<Long> sensorStationIds
 ) {}

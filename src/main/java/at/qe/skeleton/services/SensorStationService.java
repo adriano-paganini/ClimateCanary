@@ -1,6 +1,6 @@
 package at.qe.skeleton.services;
 
-import at.qe.skeleton.common.exceptions.SensorStationNotFoundException;
+import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.SensorStationUpdateDTO;
 import at.qe.skeleton.models.SensorStation;
 import at.qe.skeleton.repositories.SensorStationRepository;
@@ -30,7 +30,7 @@ public class SensorStationService {
     }
 
     public SensorStation getById(Long id) {
-        return repo.findById(id).orElseThrow(() -> new SensorStationNotFoundException("SensorStation with id " + id + " not found"));
+        return repo.findById(id).orElseThrow(() -> new NotFoundException("SensorStation with id " + id + " not found"));
     }
 
     public SensorStation create(SensorStation s) {

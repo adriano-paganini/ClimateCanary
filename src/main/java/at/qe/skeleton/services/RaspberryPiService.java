@@ -1,6 +1,6 @@
 package at.qe.skeleton.services;
 
-import at.qe.skeleton.common.exceptions.RaspberryPiNotFoundException;
+import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.RaspberryPiUpdateDTO;
 import at.qe.skeleton.models.RaspberryPi;
 import at.qe.skeleton.repositories.RaspberryPiRepository;
@@ -30,7 +30,7 @@ public class RaspberryPiService {
     }
 
     public RaspberryPi getById(Long id) {
-        return repo.findById(id).orElseThrow(() -> new RaspberryPiNotFoundException("RaspberryPi with id " + id + " not found"));
+        return repo.findById(id).orElseThrow(() -> new NotFoundException("RaspberryPi with id " + id + " not found"));
     }
 
     public RaspberryPi create(RaspberryPi pi) {

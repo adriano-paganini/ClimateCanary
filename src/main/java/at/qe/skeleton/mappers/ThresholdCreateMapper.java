@@ -1,8 +1,8 @@
 package at.qe.skeleton.mappers;
 
 import at.qe.skeleton.common.DTOMapper;
+import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.ThresholdCreateDTO;
-import at.qe.skeleton.common.exceptions.RoomNotFoundException;
 import at.qe.skeleton.models.Threshold;
 import at.qe.skeleton.repositories.ClimateHintRepository;
 import at.qe.skeleton.repositories.RoomRepository;
@@ -31,7 +31,7 @@ public class ThresholdCreateMapper implements DTOMapper<Threshold, ThresholdCrea
         entity.setEnabled(true);
 
         entity.setRoom(roomRepository.findById(dto.roomId())
-                        .orElseThrow(() -> new RoomNotFoundException("Room with id " + dto.roomId() + " not found")));
+                        .orElseThrow(() -> new NotFoundException("Room with id " + dto.roomId() + " not found")));
 
         if (dto.climateHintIds() != null) {
             entity.setClimateHints(new HashSet<>(hintRepository.findAllById(dto.climateHintIds())));

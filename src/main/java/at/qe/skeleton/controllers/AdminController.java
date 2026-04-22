@@ -1,6 +1,6 @@
 package at.qe.skeleton.controllers;
 
-import at.qe.skeleton.common.exceptions.UserNotFoundException;
+import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.UserxCreateDTO;
 import at.qe.skeleton.dtos.UserxDTO;
 import at.qe.skeleton.dtos.UserxUpdateDTO;
@@ -57,7 +57,7 @@ public class AdminController {
   @GetMapping("")
   public ResponseEntity<Collection<UserxDTO>> getAllUsers() {
     Collection<Userx> allUsers = userService.getAllUsers();
-    List<UserxDTO> allUsersMapped = allUsers.stream().map(user -> userMapper.mapTo(user)).toList();
+    List<UserxDTO> allUsersMapped = allUsers.stream().map(userMapper::mapTo).toList();
     return ResponseEntity.ok(allUsersMapped);
   }
 
@@ -79,7 +79,7 @@ public class AdminController {
               userx ->
                       ResponseEntity.ok(userMapper.mapTo(userx)))
               .orElseThrow(() ->
-                      new UserNotFoundException("User not found with id: " + id));
+                      new NotFoundException("User not found with id: " + id));
   }
 
   /**
@@ -147,7 +147,7 @@ public class AdminController {
       userService.deleteUser(existingUserx.get());
       return ResponseEntity.noContent().build();
     } else {
-      throw new UserNotFoundException("User not found with id: " + id);
+      throw new NotFoundException("User not found with id: " + id);
     }
   }
 }
