@@ -7,12 +7,15 @@ import {useEffect, useState} from 'react';
 import {ProgressSpinner} from 'primereact/progressspinner';
 
 import {useUser} from "../Contexts/AuthenticatedUserContext";
+import {UserxRole} from "../generated-skeleton-api";
 import {ROUTES} from "../utilities/routes.paths";
 
 /**
- * Private route component that checks if the user is authenticated. Used to protect routes.
+ * Private route component that checks authentication and optionally enforces role-based access.
+ * Usage without roles: all authenticated users may enter.
+ * Usage with roles: only authenticated users with at least one matching role may enter.
  */
-const PrivateRoute = () => {
+const PrivateRoute = ({roles}: { roles?: UserxRole[] }) => {
 
     enum AuthStatus {
         AUTHENTICATED = 200,
@@ -20,10 +23,10 @@ const PrivateRoute = () => {
         UNKNOWN = 0
     }
 
-    const {userIsAuthenticated} = useUser();
+    const {userIsAuthenticated, currentUser} = useUser();
     const location = useLocation();
 
-    const [authStatus, setAuthStatus] = useState(AuthStatus.UNKNOWN); // null -> Status unknonw, true/false for authentication
+    const [authStatus, setAuthStatus] = useState(AuthStatus.UNKNOWN);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
@@ -41,16 +44,28 @@ const PrivateRoute = () => {
                 setAuthStatus(AuthStatus.UNAUTHENTICATED);
             }
         };
-        void checkAuthentication(); // to mark the returned Promise as explicitly and intentionally unawaited (ESLint)
+        void checkAuthentication();
     }, []); // an empty dependency array signals that the effect is executed only once on mount
 
-    // loading spinner
+    // loading spinner while auth status is being determined
     if (authStatus === AuthStatus.UNKNOWN) {
         return <ProgressSpinner/>
     }
 
-    return authStatus === AuthStatus.AUTHENTICATED ? <Outlet/> :
-        <Navigate to={ROUTES.LOGIN} replace state={{from: location}}/>; // return to location in case of
+    if (authStatus === AuthStatus.UNAUTHENTICATED) {
+        return <Navigate to={ROUTES.LOGIN} replace state={{from: location}}/>;
+    }
+
+    // If specific roles are required, check whether the current user has at least one of them.
+    // Redirect to HOME (not login) so the user stays logged in but sees their own landing page.
+    if (roles && roles.length > 0) {
+        const hasRequiredRole = roles.some(r => currentUser?.roles?.has(r));
+        if (!hasRequiredRole) {
+            return <Navigate to={ROUTES.HOME} replace/>;
+        }
+    }
+
+    return <Outlet/>;
 };
 
 export default PrivateRoute;
