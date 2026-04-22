@@ -15,6 +15,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -26,6 +27,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Optional;
 
+@Slf4j
 @Component
 public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
@@ -45,6 +47,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
     public void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain chain) throws ServletException, IOException {
         try {
             getJwtFromRequest(request)
+                    .map(String::strip)
                     .flatMap(tokenProvider::validateTokenAndGetJws)
                     .ifPresent(jws -> {
                         String username = jws.getPayload().getSubject();
@@ -54,13 +57,13 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
                         SecurityContextHolder.getContext().setAuthentication(authentication);
                     });
         } catch (ExpiredJwtException e) {
-            System.err.println("Cannot set user authentication " + e);
+            log.error("Cannot set user authentication {}", String.valueOf(e));
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token is expired");
         } catch (MalformedJwtException e) {
-            System.err.println("Cannot parse token " + e);
+            log.error("Cannot parse token {}", String.valueOf(e));
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token is invalid");
         } catch (Exception e) {
-            System.err.println("Cannot set user authentication " + e);
+            log.error("Cannot set user authentication {}", String.valueOf(e));
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
         }
         chain.doFilter(request, response);
