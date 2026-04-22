@@ -6,10 +6,12 @@ import at.qe.skeleton.models.RaspberryPi;
 import at.qe.skeleton.repositories.RaspberryPiRepository;
 import at.qe.skeleton.models.SensorStation;
 import at.qe.skeleton.repositories.SensorStationRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 public class RaspberryPiService {
 
@@ -32,22 +34,37 @@ public class RaspberryPiService {
     }
 
     public RaspberryPi create(RaspberryPi pi) {
-        return repo.save(pi);
+        RaspberryPi savedPi = repo.save(pi);
+
+        log.info("Created raspberry pi with id={}", savedPi.getId());
+        log.debug("RaspberryPi details: id={}, ipAddress={}, deviceStatus={}, roomId={}",
+                savedPi.getId(),
+                savedPi.getIpAddress(),
+                savedPi.getDeviceStatus(),
+                savedPi.getRoom() != null ? savedPi.getRoom().getId() : null);
+
+        return savedPi;
     }
 
     public RaspberryPi update(Long id, RaspberryPiUpdateDTO dto) {
         RaspberryPi existing = getById(id);
 
+        StringBuilder debugInfo = new StringBuilder("Updated raspberry pi details:")
+                .append(" id=").append(id);
+
         if (dto.ipAddress() != null) {
             existing.setIpAddress(dto.ipAddress());
+            debugInfo.append(", ipAddress=").append(dto.ipAddress());
         }
 
         if (dto.deviceStatus() != null) {
             existing.setDeviceStatus(dto.deviceStatus());
+            debugInfo.append(", deviceStatus=").append(dto.deviceStatus());
         }
 
         if (dto.roomId() != null) {
             existing.setRoom(roomService.getById(dto.roomId()));
+            debugInfo.append(", roomId=").append(dto.roomId());
         }
 
         if (dto.sensorStationIds() != null) {
@@ -60,9 +77,16 @@ public class RaspberryPiService {
                 s.setRaspberryPi(existing);
                 existing.getSensorStations().add(s);
             }
+
+            debugInfo.append(", sensorStationIds=").append(dto.sensorStationIds());
         }
 
-        return repo.save(existing);
+        RaspberryPi updatedPi = repo.save(existing);
+
+        log.info("Updated raspberry pi with id={}", id);
+        log.debug(debugInfo.toString());
+
+        return updatedPi;
     }
 
     public List<SensorStation> getSensorStations(Long raspberryPiId) {
@@ -72,5 +96,6 @@ public class RaspberryPiService {
 
     public void delete(Long id) {
         repo.deleteById(id);
+        log.info("Deleted raspberry pi with id={}", id);
     }
 }
