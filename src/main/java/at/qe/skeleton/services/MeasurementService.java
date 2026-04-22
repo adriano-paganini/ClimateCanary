@@ -1,7 +1,7 @@
 package at.qe.skeleton.services;
 
+import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.models.Metric;
-import at.qe.skeleton.common.exceptions.MeasurementNotFoundException;
 import at.qe.skeleton.models.Measurement;
 import at.qe.skeleton.repositories.MeasurementRepository;
 import org.springframework.stereotype.Service;
@@ -28,7 +28,7 @@ public class MeasurementService {
 
     public Measurement getById(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new MeasurementNotFoundException("Measurement with id " + id + " not found"));
+                .orElseThrow(() -> new NotFoundException("Measurement with id " + id + " not found"));
     }
 
     public List<Measurement> getFiltered(Long roomId,

@@ -1,13 +1,12 @@
 package at.qe.skeleton.services;
 
-import at.qe.skeleton.common.exceptions.UserNotFoundException;
-import at.qe.skeleton.common.exceptions.UsernameDuplicateException;
-import at.qe.skeleton.models.Department;
-import at.qe.skeleton.repositories.DepartmentRepository;
-import at.qe.skeleton.repositories.EmployeeProfileRepository;
+import at.qe.skeleton.common.exceptions.ConflictException;
+import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.UserxSelfUpdateDTO;
 import at.qe.skeleton.dtos.UserxUpdateDTO;
+import at.qe.skeleton.models.Department;
 import at.qe.skeleton.models.Userx;
+import at.qe.skeleton.repositories.DepartmentRepository;
 import at.qe.skeleton.repositories.UserxRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -39,8 +38,7 @@ public class UserxService implements UserDetailsService {
     public UserxService(UserxRepository userRepository,
                         PasswordEncoder passwordEncoder,
                         AuthenticatedUserService authenticatedUserService,
-                        DepartmentRepository departmentRepository,
-                        EmployeeProfileRepository employeeProfileRepository)
+                        DepartmentRepository departmentRepository)
     {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -70,7 +68,7 @@ public class UserxService implements UserDetailsService {
     }
 
     public Userx getUserById(Long id) {
-        return userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User with id " + id + " not found"));
+        return userRepository.findById(id).orElseThrow(() -> new NotFoundException("User with id " + id + " not found"));
     }
 
     /**
@@ -86,7 +84,7 @@ public class UserxService implements UserDetailsService {
     public Userx saveUser(Userx user) {
         if (user.isNew()) {
             if (userRepository.existsByUsername(user.getUsername())) {
-                throw new UsernameDuplicateException("Username " + user.getUsername() + " not available");
+                throw new ConflictException("Username " + user.getUsername() + " not available");
             }
             user.setEnabled(true);
             user.setPassword(passwordEncoder.encode(user.getPassword()));
@@ -143,7 +141,7 @@ public class UserxService implements UserDetailsService {
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public Userx updateUser(Long id, UserxUpdateDTO dto) {
         Userx user = userRepository.findById(id)
-                .orElseThrow(() -> new UserNotFoundException("User with id " + id + " not found"));
+                .orElseThrow(() -> new NotFoundException("User with id " + id + " not found"));
 
         if (dto.firstName() != null) user.setFirstName(dto.firstName());
         if (dto.lastName() != null) user.setLastName(dto.lastName());

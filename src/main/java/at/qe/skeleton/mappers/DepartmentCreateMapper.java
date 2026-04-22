@@ -1,7 +1,7 @@
 package at.qe.skeleton.mappers;
 
+import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.DepartmentCreateDTO;
-import at.qe.skeleton.common.exceptions.UserNotFoundException;
 import at.qe.skeleton.models.Department;
 import at.qe.skeleton.common.DTOMapper;
 import at.qe.skeleton.models.Room;
@@ -32,7 +32,7 @@ public class DepartmentCreateMapper implements DTOMapper<Department, DepartmentC
     public Department mapFrom(DepartmentCreateDTO dto) {
         Department department = new Department();
         Userx user = userxService.loadUser(dto.departmentLeadId())
-                .orElseThrow(() -> new UserNotFoundException("User with id " + dto.departmentLeadId() + " not found."));
+                .orElseThrow(() -> new NotFoundException("User with id " + dto.departmentLeadId() + " not found."));
 
         department.setName(dto.name());
         department.setDepartmentLeader(user);

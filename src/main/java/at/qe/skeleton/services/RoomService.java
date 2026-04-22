@@ -1,13 +1,12 @@
 package at.qe.skeleton.services;
 
-import at.qe.skeleton.common.exceptions.RoomNotFoundException;
-import at.qe.skeleton.models.EmployeeProfile;
-import at.qe.skeleton.repositories.EmployeeProfileRepository;
-import at.qe.skeleton.models.DeviceStatus;
+import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.RoomUpdateDTO;
+import at.qe.skeleton.models.DeviceStatus;
+import at.qe.skeleton.models.EmployeeProfile;
 import at.qe.skeleton.models.Room;
-import at.qe.skeleton.repositories.RoomRepository;
 import at.qe.skeleton.models.SensorStation;
+import at.qe.skeleton.repositories.RoomRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,13 +18,13 @@ public class RoomService {
     private final RoomRepository roomRepository;
     private final DepartmentService departmentService;
     private final BuildingService buildingService;
-    private final EmployeeProfileRepository employeeProfileRepository;
 
-    public RoomService(RoomRepository repo, DepartmentService departmentService, BuildingService buildingService, EmployeeProfileRepository employeeProfileRepository) {
+    public RoomService(RoomRepository repo,
+                       DepartmentService departmentService,
+                       BuildingService buildingService) {
         this.roomRepository = repo;
         this.departmentService = departmentService;
         this.buildingService = buildingService;
-        this.employeeProfileRepository = employeeProfileRepository;
     }
 
     public List<Room> getAll() {
@@ -34,7 +33,7 @@ public class RoomService {
 
     public Room getById(Long id) {
         return roomRepository.findByIdAndActiveTrue(id)
-                .orElseThrow(() -> new RoomNotFoundException("Room with id " + id + " not found"));
+                .orElseThrow(() -> new NotFoundException("Room with id " + id + " not found"));
     }
 
     public Room create(Room room) {

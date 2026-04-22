@@ -1,9 +1,9 @@
 package at.qe.skeleton.services;
 
+import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.AbsenceUpdateDTO;
 import at.qe.skeleton.models.Absence;
 import at.qe.skeleton.repositories.AbsenceRepository;
-import at.qe.skeleton.common.exceptions.AbsenceNotFoundException;
 import at.qe.skeleton.models.Userx;
 import at.qe.skeleton.models.UserxRole;
 import org.springframework.security.access.AccessDeniedException;
@@ -32,7 +32,7 @@ public class AbsenceService {
 
     public Absence getById(Long id) {
         return absenceRepository.findById(id)
-                .orElseThrow(() -> new AbsenceNotFoundException("Absence with id " + id + " not found"));
+                .orElseThrow(() -> new NotFoundException("Absence with id " + id + " not found"));
     }
 
     public Collection<Absence> getAbsencesForUser(Userx user) {
