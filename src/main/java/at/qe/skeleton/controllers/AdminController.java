@@ -57,7 +57,7 @@ public class AdminController {
   @GetMapping("")
   public ResponseEntity<Collection<UserxDTO>> getAllUsers() {
     Collection<Userx> allUsers = userService.getAllUsers();
-    List<UserxDTO> allUsersMapped = allUsers.stream().map(user -> userMapper.mapTo(user)).toList();
+    List<UserxDTO> allUsersMapped = allUsers.stream().map(userMapper::mapTo).toList();
     return ResponseEntity.ok(allUsersMapped);
   }
 

@@ -4,11 +4,13 @@ import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.ClimateHintUpdateDTO;
 import at.qe.skeleton.models.ClimateHint;
 import at.qe.skeleton.repositories.ClimateHintRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+@Slf4j
 @Service
 public class ClimateHintService {
 
@@ -28,19 +30,39 @@ public class ClimateHintService {
     }
 
     public ClimateHint create(ClimateHint climateHint) {
-        return climateHintRepository.save(climateHint);
+        ClimateHint savedClimateHint = climateHintRepository.save(climateHint);
+
+        log.info("Created climate hint with id={}", savedClimateHint.getId());
+        log.debug("Created climate hint details: id={}, metric={}, hintText={}",
+                savedClimateHint.getId(),
+                savedClimateHint.getMetric(),
+                savedClimateHint.getHintText());
+
+        return savedClimateHint;
     }
 
     public ClimateHint update(Long id, ClimateHintUpdateDTO dto) {
         ClimateHint climateHint = getClimateHintById(id);
 
-        if (dto.metric() != null)
+        StringBuilder debugInfo = new StringBuilder("Updated climate hint details:")
+                .append(" id=").append(id);
+
+        if (dto.metric() != null) {
             climateHint.setMetric(dto.metric());
+            debugInfo.append(", metric=").append(dto.metric());
+        }
 
-        if (dto.hintText() != null)
+        if (dto.hintText() != null) {
             climateHint.setHintText(dto.hintText());
+            debugInfo.append(", hintText=").append(dto.hintText());
+        }
 
-        return climateHintRepository.save(climateHint);
+        ClimateHint updatedClimateHint = climateHintRepository.save(climateHint);
+
+        log.info("Updated climate hint with id={}", id);
+        log.debug(debugInfo.toString());
+
+        return updatedClimateHint;
     }
 
     @Transactional
@@ -50,5 +72,8 @@ public class ClimateHintService {
 
         entity.getThresholds().clear();
         climateHintRepository.delete(entity);
+
+        log.info("Deleted climate hint with id={}", id);
+        log.debug("Cleared thresholds and deleted climate hint id={}", id);
     }
 }

@@ -4,6 +4,7 @@ import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.models.Metric;
 import at.qe.skeleton.models.Measurement;
 import at.qe.skeleton.repositories.MeasurementRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -13,6 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class MeasurementService {
 
@@ -39,6 +41,9 @@ public class MeasurementService {
         boolean hasMetric = metric != null;
         boolean hasRange  = from != null && to != null;
 
+        log.debug("Filtering measurements with roomId={}, metric={}, from={}, to={}",
+                roomId, metric, from, to);
+
         if (hasRoom && hasMetric && hasRange)
             return repository.findByRoomIdAndMetricAndTimestampBetween(roomId, metric, from, to);
         if (hasRoom && hasMetric)
@@ -54,10 +59,15 @@ public class MeasurementService {
     }
 
     public Map<Metric, Measurement> getLatestPerMetric(Long roomId) {
-        return Arrays.stream(Metric.values())
+        Map<Metric, Measurement> latestMeasurements = Arrays.stream(Metric.values())
                 .map(metric -> repository.findLatestByRoomIdAndMetric(roomId, metric))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toMap(Measurement::getMetric, m -> m));
+
+        log.debug("Retrieved latest measurements per metric for roomId={}, metricCount={}",
+                roomId, latestMeasurements.size());
+
+        return latestMeasurements;
     }
 }

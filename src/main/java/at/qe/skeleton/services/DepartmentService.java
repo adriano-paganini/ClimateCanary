@@ -9,10 +9,12 @@ import at.qe.skeleton.models.Userx;
 import at.qe.skeleton.repositories.DepartmentRepository;
 import at.qe.skeleton.repositories.EmployeeProfileRepository;
 import at.qe.skeleton.repositories.RoomRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 public class DepartmentService {
 
@@ -38,14 +40,26 @@ public class DepartmentService {
     }
 
     public Department create(Department d) {
-        return departmentRepository.save(d);
+        Department savedDepartment = departmentRepository.save(d);
+
+        log.info("Created department with id={}", savedDepartment.getId());
+        log.debug("Created department details: id={}, name={}, leaderId={}",
+                savedDepartment.getId(),
+                savedDepartment.getName(),
+                savedDepartment.getDepartmentLeader() != null ? savedDepartment.getDepartmentLeader().getId() : null);
+
+        return savedDepartment;
     }
 
     public Department update(Long id, DepartmentUpdateDTO dto) {
         Department existing = getDepartmentById(id);
 
+        StringBuilder debugInfo = new StringBuilder("Updated department details:")
+                .append(" id=").append(id);
+
         if (dto.name() != null) {
             existing.setName(dto.name());
+            debugInfo.append(", name=").append(dto.name());
         }
 
         if (dto.roomIds() != null) {
@@ -55,15 +69,23 @@ public class DepartmentService {
             List<Room> rooms = roomRepository.findAllByIdsAndActiveTrue(dto.roomIds());
             rooms.forEach(r -> r.setDepartment(existing));
             existing.setRooms(rooms);
+
+            debugInfo.append(", roomIds=").append(dto.roomIds());
         }
 
         if (dto.departmentLeadId() != null) {
             Userx leader = userxService.loadUser(dto.departmentLeadId())
                     .orElseThrow(() -> new NotFoundException("User with id " + dto.departmentLeadId() + " not found"));
             existing.setDepartmentLeader(leader);
+            debugInfo.append(", departmentLeadId=").append(dto.departmentLeadId());
         }
 
-        return departmentRepository.save(existing);
+        Department updatedDepartment = departmentRepository.save(existing);
+
+        log.info("Updated department with id={}", id);
+        log.debug(debugInfo.toString());
+
+        return updatedDepartment;
     }
 
     public void delete(Long id) {
@@ -82,5 +104,8 @@ public class DepartmentService {
         department.getEmployeeProfiles().clear();
 
         departmentRepository.deleteById(id);
+
+        log.info("Deleted department with id={}", id);
+        log.debug("Cleared room and employee profile associations before deleting department id={}", id);
     }
 }
