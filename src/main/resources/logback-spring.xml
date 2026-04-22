@@ -46,4 +46,8 @@
         <appender-ref ref="WARN_ERROR_FILE"/>
     </root>
 
+    <logger name="at.qe.skeleton" level ="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+
 </configuration>

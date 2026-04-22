@@ -38,7 +38,7 @@ public class AddressService {
 
         log.info("Created address with id: {}", savedAddress.getId());
 
-        log.debug("address details: id={}, country={}, zipCode={}, city={}, street={}, houseNumber={}, extra={}",
+        log.debug("Created address details: id={}, country={}, zipCode={}, city={}, street={}, houseNumber={}, extra={}",
                 savedAddress.getId(),
                 savedAddress.getCountry(),
                 savedAddress.getZipCode(),

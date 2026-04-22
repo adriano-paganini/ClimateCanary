@@ -60,7 +60,7 @@ public class AbsenceService {
         Absence savedAbsence =  absenceRepository.save(absence);
         log.info("Created absence with ID: {} for User with ID: {}",absence.getId(),absence.getUser().getId());
 
-        log.debug("absence details: id={}, UserId={}, startDate={}, endDate={}, absenceType={}, absenceStatus={}",
+        log.debug("Created absence details: id={}, UserId={}, startDate={}, endDate={}, absenceType={}, absenceStatus={}",
                 savedAbsence.getId(),
                 savedAbsence.getUser().getId(),
                 savedAbsence.getStartDate(),

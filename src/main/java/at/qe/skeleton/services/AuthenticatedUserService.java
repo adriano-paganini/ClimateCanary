@@ -2,6 +2,7 @@ package at.qe.skeleton.services;
 
 import at.qe.skeleton.models.Userx;
 import at.qe.skeleton.repositories.UserxRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
  * This class is part of the skeleton project provided for students of the
  * course "Software Engineering" offered by Innsbruck University.
  */
+@Slf4j
 @Service
 public class AuthenticatedUserService {
 
@@ -30,7 +32,22 @@ public class AuthenticatedUserService {
      */
     public Userx getAuthenticatedUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        return userRepository.findFirstByUsername(auth.getName()).orElse(null);
-    }
 
+        if (auth == null) {
+            log.warn("No authentication found in security context");
+            return null;
+        }
+
+        Userx authenticatedUser = userRepository.findFirstByUsername(auth.getName()).orElse(null);
+
+        if (authenticatedUser == null) {
+            log.warn("No user found for authenticated username={}", auth.getName());
+        } else {
+            log.debug("Authenticated user resolved: id={}, username={}",
+                    authenticatedUser.getId(),
+                    authenticatedUser.getUsername());
+        }
+
+        return authenticatedUser;
+    }
 }
