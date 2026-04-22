@@ -1605,17 +1605,28 @@
         {
           "name": "Get all Violations",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/violations",
+              "raw": "http://localhost:8080/api/thresholdviolation",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
-                "violations"
+                "api",
+                "thresholdviolation"
               ]
             }
           },
@@ -1624,17 +1635,28 @@
         {
           "name": "Get Violation by id",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/violations/1",
+              "raw": "http://localhost:8080/api/thresholdviolation/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
-                "violations",
+                "api",
+                "thresholdviolation",
                 "1"
               ]
             }
@@ -1644,6 +1666,16 @@
         {
           "name": "Create Violation",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [],
             "body": {
@@ -1656,14 +1688,15 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/violations",
+              "raw": "http://localhost:8080/api/thresholdviolation",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
-                "violations"
+                "api",
+                "thresholdviolation"
               ]
             }
           },
@@ -1672,6 +1705,16 @@
         {
           "name": "Update Violation",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "PATCH",
             "header": [],
             "body": {
@@ -1684,14 +1727,15 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/violations/1",
+              "raw": "http://localhost:8080/api/thresholdviolation/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
-                "violations",
+                "api",
+                "thresholdviolation",
                 "1"
               ]
             }
@@ -1701,17 +1745,28 @@
         {
           "name": "Delete Violation",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/violations/1",
+              "raw": "http://localhost:8080/api/thresholdviolation/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
-                "violations",
+                "api",
+                "thresholdviolation",
                 "1"
               ]
             }
