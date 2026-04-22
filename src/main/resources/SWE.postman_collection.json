@@ -1,16 +1,17 @@
 {
   "info": {
-    "_postman_id": "cc3c4344-df85-4f94-8eda-6c0ca4ff5dc9",
+    "_postman_id": "73b30df1-e257-42d2-b06c-3328ccd8a612",
     "name": "SWE",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "40382670"
+    "_exporter_id": "54201523",
+    "_collection_link": "https://go.postman.co/collection/54201523-73b30df1-e257-42d2-b06c-3328ccd8a612?source=collection_link"
   },
   "item": [
     {
       "name": "Auth",
       "item": [
         {
-          "name": "Login",
+          "name": "/authentication/login",
           "request": {
             "method": "POST",
             "header": [],
@@ -24,233 +25,15 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/authentication/login",
+              "raw": "http://localhost:8080/authentication/login",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
                 "authentication",
                 "login"
-              ]
-            }
-          },
-          "response": []
-        }
-      ],
-      "auth": {
-        "type": "noauth"
-      }
-    },
-    {
-      "name": "Users (Self)",
-      "item": [
-        {
-          "name": "Get Current User",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                {
-                  "key": "token",
-                  "value": "{{accessToken}}",
-                  "type": "string"
-                }
-              ]
-            },
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/userx/me",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "userx",
-                "me"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Update Current User",
-          "request": {
-            "method": "PATCH",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"phone\": \"+39 377 377377\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/userx/me",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "userx",
-                "me"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Delete Current User",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/userx/me",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "userx",
-                "me"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Current User Absences",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/userx/me/absences",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "userx",
-                "me",
-                "absences"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Admin",
-      "item": [
-        {
-          "name": "Get All Users",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/admin",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get User by Id",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "{{id}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Create User",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"username\": \"jane\",\n    \"password\": \"securePassword123\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"jane.doe@example.com\",\n    \"roles\": [\n        \"EMPLOYEE\",\n        \"BUILDING_ADMIN\"\n    ],\n    \"phone\": \"+39 377 377377\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/admin",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Update User",
-          "request": {
-            "method": "PATCH",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"firstName\": \"Jane\",\n    \"roles\": [\n        \"EMPLOYEE\"\n    ]\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "{{id}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Disable User",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/admin/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "admin",
-                "{{id}}"
               ]
             }
           },
@@ -262,17 +45,25 @@
       "name": "Building",
       "item": [
         {
-          "name": "Get All Buildings",
+          "name": "Get all buildings",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
           "request": {
             "method": "GET",
             "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"IT\",\n    \"addressId\": 5\n}"
+            },
             "url": {
-              "raw": "{{baseUrl}}/api/building",
+              "raw": "http://localhost:8080/building",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
                 "building"
               ]
             }
@@ -280,38 +71,27 @@
           "response": []
         },
         {
-          "name": "Get Building by Id",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/building/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "building",
-                "{{id}}"
-              ]
-            }
+          "name": "Get Building rooms",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
           },
-          "response": []
-        },
-        {
-          "name": "Get Building Rooms",
           "request": {
             "method": "GET",
             "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"IT\",\n    \"addressId\": 5\n}"
+            },
             "url": {
-              "raw": "{{baseUrl}}/api/building/{{id}}/rooms",
+              "raw": "http://localhost:8080/building/1/rooms",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
                 "building",
-                "{{id}}",
+                "1",
                 "rooms"
               ]
             }
@@ -319,7 +99,7 @@
           "response": []
         },
         {
-          "name": "Create Building",
+          "name": "Create building",
           "request": {
             "method": "POST",
             "header": [],
@@ -333,12 +113,13 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/building",
+              "raw": "http://localhost:8080/building",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
                 "building"
               ]
             }
@@ -346,8 +127,34 @@
           "response": []
         },
         {
-          "name": "Update Building",
+          "name": "Get building by id",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/building/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "building",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update building",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "PATCH",
             "header": [],
             "body": {
@@ -360,33 +167,35 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/building/{{id}}",
+              "raw": "http://localhost:8080/building/2",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
                 "building",
-                "{{id}}"
+                "2"
               ]
             }
           },
           "response": []
         },
         {
-          "name": "Delete Building",
+          "name": "Delete a building",
           "request": {
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/building/{{id}}",
+              "raw": "http://localhost:8080/building/1",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
                 "building",
-                "{{id}}"
+                "1"
               ]
             }
           },
@@ -398,17 +207,25 @@
       "name": "Department",
       "item": [
         {
-          "name": "Get All Departments",
+          "name": "Get all Departments",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
           "request": {
             "method": "GET",
             "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
             "url": {
-              "raw": "{{baseUrl}}/api/department",
+              "raw": "http://localhost:8080/department",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
                 "department"
               ]
             }
@@ -416,38 +233,27 @@
           "response": []
         },
         {
-          "name": "Get Department by Id",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/department/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "department",
-                "{{id}}"
-              ]
-            }
+          "name": "Get Department rooms",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
           },
-          "response": []
-        },
-        {
-          "name": "Get Department Rooms",
           "request": {
             "method": "GET",
             "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"IT\",\n    \"addressId\": 5\n}"
+            },
             "url": {
-              "raw": "{{baseUrl}}/api/department/{{id}}/rooms",
+              "raw": "http://localhost:8080/department/1/rooms",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
                 "department",
-                "{{id}}",
+                "1",
                 "rooms"
               ]
             }
@@ -455,19 +261,27 @@
           "response": []
         },
         {
-          "name": "Get Department Leader",
+          "name": "Get Department leader",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
           "request": {
             "method": "GET",
             "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"IT\",\n    \"addressId\": 5\n}"
+            },
             "url": {
-              "raw": "{{baseUrl}}/api/department/{{id}}/leader",
+              "raw": "http://localhost:8080/department/1/leader",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
                 "department",
-                "{{id}}",
+                "1",
                 "leader"
               ]
             }
@@ -477,11 +291,21 @@
         {
           "name": "Create Department",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzU5OTM0MzYsImV4cCI6MTc3NjA3OTgzNiwianRpIjoiYjNmMGZjODMtNWI1MC00NmM1LTlkZDYtOTI2NzJjYjliNmE4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiQURNSU4iXSwibmFtZSI6IkFkbWluIElzdHJhdG9yIiwidXNlcm5hbWUiOiJhZG1pbiJ9.PNJ5fBxi66Is-i-OnWaQD_3lUXsx6xd3YLUNUY-hIF_whUqoC07ZSJNOv-Hcmvm3Ts447NeNZPCOo_L6an-oMw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"Research\",\n    \"roomIds\": [],\n    \"departmentLeadId\": 4\n}",
+              "raw": "{\n    \"name\": \"Research Ne\",\n    \"roomIds\": [],\n    \"departmentLeadId\": 1\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -489,13 +313,37 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/department",
+              "raw": "http://localhost:8080/department",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
                 "department"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Department by id",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/department/2",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "department",
+                "2"
               ]
             }
           },
@@ -504,11 +352,21 @@
         {
           "name": "Update Department",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzYwMDUwMzksImV4cCI6MTc3NjA5MTQzOSwianRpIjoiMjQzODViYjgtNGVlZi00M2M0LTk5MjAtNTRiMTVjMmU1MDkyIiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.uTitZK8FDAmDm-KMbur7KIlt4U_d3vQ_sGt-ARI7U_tDAtS_c_wYWcU1C0cSNoL19q_GLxXV-1EFFzsCXMq80w",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "PATCH",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"departmentLeadId\": 4\n}",
+              "raw": "{\n    \"name\": \"Research (2)\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -516,33 +374,35 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/department/{{id}}",
+              "raw": "http://localhost:8080/department/3",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
                 "department",
-                "{{id}}"
+                "3"
               ]
             }
           },
           "response": []
         },
         {
-          "name": "Delete Department",
+          "name": "Delete a department",
           "request": {
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/department/{{id}}",
+              "raw": "http://localhost:8080/department/1",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
                 "department",
-                "{{id}}"
+                "1"
               ]
             }
           },
@@ -554,37 +414,29 @@
       "name": "Room",
       "item": [
         {
-          "name": "Get All Rooms",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/room",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "room"
-              ]
-            }
+          "name": "Get all Rooms",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
           },
-          "response": []
-        },
-        {
-          "name": "Get Room by Id",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "GET",
             "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
             "url": {
-              "raw": "{{baseUrl}}/api/room/{{id}}",
+              "raw": "http://localhost:8080/room",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
-                "room",
-                "{{id}}"
+                "room"
               ]
             }
           },
@@ -605,12 +457,13 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/room",
+              "raw": "http://localhost:8080/room",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
                 "room"
               ]
             }
@@ -618,13 +471,39 @@
           "response": []
         },
         {
-          "name": "Update Room",
+          "name": "Get Room by id",
           "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:8080/room/2",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "room",
+                "2"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update room",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
             "method": "PATCH",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"Updated Room\",\n    \"roomType\": \"OFFICE\",\n    \"minOccupancy\": 8\n}",
+              "raw": "{\n    \"name\": \"new updated building\",\n    \"addressId\": 60\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -632,33 +511,35 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/room/{{id}}",
+              "raw": "http://localhost:8080/building/1",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
-                "room",
-                "{{id}}"
+                "building",
+                "1"
               ]
             }
           },
           "response": []
         },
         {
-          "name": "Delete Room",
+          "name": "Delete a room",
           "request": {
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/room/{{id}}",
+              "raw": "http://localhost:8080/room/3",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
                 "room",
-                "{{id}}"
+                "3"
               ]
             }
           },
@@ -670,17 +551,18 @@
       "name": "Address",
       "item": [
         {
-          "name": "Get All Addresses",
+          "name": "Get addresses",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/address",
+              "raw": "http://localhost:8080/address",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
                 "address"
               ]
             }
@@ -688,32 +570,43 @@
           "response": []
         },
         {
-          "name": "Get Address by Id",
+          "name": "Get address by id",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/address/{{id}}",
+              "raw": "http://localhost:8080/address/1",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
                 "address",
-                "{{id}}"
+                "1"
               ]
             }
           },
           "response": []
         },
         {
-          "name": "Create Address",
+          "name": "Create address",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "                                eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NjgwMTcsImV4cCI6MTc3Njk1NDQxNywianRpIjoiYjgxMzE0ZmYtMmI5NS00MThjLWI1Y2YtNWY2YTIxZjJhY2UwIiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.d-Tk7AYhKBy3QESrAHnDfF_4j2TRNPBLCbYlcP115CANbJhCzREcO-MUdCh2fEOZnXlu7SYROOoY8qyx5lYtnQ",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"country\": \"Italy\",\n    \"zipCode\": \"4999\",\n    \"city\": \"Something\",\n    \"street\": \"N/A\",\n    \"houseNumber\": \"81/A\"\n}",
+              "raw": "{\n    \"country\": \"Italy\",\n    \"zipCode\": \"4999\", \n    \"city\": \"Something\",\n    \"street\": \"N/A\",\n    \"houseNumber\": \"81/A\"\n\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -721,10 +614,12 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/address",
+              "raw": "http://localhost:8080/api/address",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
                 "api",
                 "address"
@@ -734,7 +629,7 @@
           "response": []
         },
         {
-          "name": "Update Address",
+          "name": "Update address",
           "request": {
             "method": "PATCH",
             "header": [],
@@ -748,33 +643,39 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/address/{{id}}",
+              "raw": "http://localhost:8080/address/1",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
                 "address",
-                "{{id}}"
+                "1"
               ]
             }
           },
           "response": []
         },
         {
-          "name": "Delete Address",
+          "name": "Delete address",
           "request": {
             "method": "DELETE",
             "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
             "url": {
-              "raw": "{{baseUrl}}/api/address/{{id}}",
+              "raw": "http://localhost:8080/address/2",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
                 "address",
-                "{{id}}"
+                "2"
               ]
             }
           },
@@ -786,18 +687,19 @@
       "name": "EmployeeProfile",
       "item": [
         {
-          "name": "Get All EmployeeProfiles",
+          "name": "Get EmployeeProfiles",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/employeeprofile",
+              "raw": "http://localhost:8080/employeeProfile",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
-                "employeeprofile"
+                "employeeProfile"
               ]
             }
           },
@@ -809,14 +711,15 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/employeeprofile/{{id}}",
+              "raw": "http://localhost:8080/employeeProfile/1",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
-                "employeeprofile",
-                "{{id}}"
+                "employeeProfile",
+                "1"
               ]
             }
           },
@@ -829,7 +732,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"userxId\": 3,\n    \"departmentId\": 1,\n    \"roomId\": 1\n}",
+              "raw": "{\n    \"userxId\": 2,\n    \"departmentId\": 2,\n    \"roomId\": 2\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -837,13 +740,14 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/employeeprofile",
+              "raw": "http://localhost:8080/employeeProfile",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
-                "employeeprofile"
+                "employeeProfile"
               ]
             }
           },
@@ -856,7 +760,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"departmentId\": 1,\n    \"roomId\": 1\n}",
+              "raw": "{\n    \n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -864,14 +768,15 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/employeeprofile/{{id}}",
+              "raw": "http://localhost:8080/address/1",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
-                "employeeprofile",
-                "{{id}}"
+                "address",
+                "1"
               ]
             }
           },
@@ -882,15 +787,20 @@
           "request": {
             "method": "DELETE",
             "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
             "url": {
-              "raw": "{{baseUrl}}/api/employeeprofile/{{id}}",
+              "raw": "http://localhost:8080/employeeProfile/2",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
-                "employeeprofile",
-                "{{id}}"
+                "employeeProfile",
+                "2"
               ]
             }
           },
@@ -902,15 +812,27 @@
       "name": "Absence",
       "item": [
         {
-          "name": "Get All Absences",
+          "name": "Get Absences",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/absence",
+              "raw": "http://localhost:8080/api/absence",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
                 "api",
                 "absence"
@@ -920,19 +842,31 @@
           "response": []
         },
         {
-          "name": "Get Absence by Id",
+          "name": "Get Absence by id",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/absence/{{id}}",
+              "raw": "http://localhost:8080/api/absence/1",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
                 "api",
                 "absence",
-                "{{id}}"
+                "1"
               ]
             }
           },
@@ -941,11 +875,21 @@
         {
           "name": "Create Absence",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"startDate\": \"2025-03-10T14:45:00\",\n    \"endDate\": \"2025-03-10T14:45:00\",\n    \"absenceType\": \"HOLIDAY\",\n    \"userxId\": 4\n}",
+              "raw": "{\n    \"startDate\": \"2025-03-10T14:45:00\",\n    \"endDate\": \"2025-03-10T14:45:00\",\n    \"absenceType\": \"HOLIDAY\",\n    \"userxId\": 1\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -953,10 +897,12 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/absence",
+              "raw": "http://localhost:8080/api/absence",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
                 "api",
                 "absence"
@@ -968,11 +914,21 @@
         {
           "name": "Update Absence",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "PATCH",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"startDate\": \"2025-03-11T09:00:00\",\n    \"endDate\": \"2025-03-12T09:00:00\",\n    \"absenceType\": \"SICK_LEAVE\"\n}",
+              "raw": "{\n    \"extra\": \"Primary Address\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -980,14 +936,16 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/absence/{{id}}",
+              "raw": "http://localhost:8080/api/address/1",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
                 "api",
-                "absence",
-                "{{id}}"
+                "address",
+                "1"
               ]
             }
           },
@@ -996,269 +954,33 @@
         {
           "name": "Delete Absence",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
             "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
             "url": {
-              "raw": "{{baseUrl}}/api/absence/{{id}}",
+              "raw": "http://localhost:8080/api/absence/1",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
                 "api",
                 "absence",
-                "{{id}}"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "RaspberryPi",
-      "item": [
-        {
-          "name": "Get All RaspberryPis",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/bpi",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "bpi"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get RaspberryPi by Id",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/bpi/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "bpi",
-                "{{id}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Create RaspberryPi",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"hostName\": \"rpi-01\",\n    \"ipAddress\": \"192.168.1.100\",\n    \"deviceStatus\": \"ONLINE\",\n    \"roomId\": 1\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/bpi",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "bpi"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Update RaspberryPi",
-          "request": {
-            "method": "PATCH",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"ipAddress\": \"192.168.1.101\",\n    \"deviceStatus\": \"MAINTENANCE\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/bpi/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "bpi",
-                "{{id}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Delete RaspberryPi",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/bpi/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "bpi",
-                "{{id}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get RaspberryPi SensorStations",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/bpi/{{id}}/sensor-stations",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "bpi",
-                "{{id}}",
-                "sensor-stations"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "SensorStation",
-      "item": [
-        {
-          "name": "Get All SensorStations",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/sensorstation",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sensorstation"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get SensorStation by Id",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/sensorstation/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sensorstation",
-                "{{id}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Create SensorStation",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"name\": \"Station A\",\n    \"deviceStatus\": \"ONLINE\",\n    \"measurementsPerSec\": 1.0,\n    \"raspberryPiId\": 1,\n    \"roomId\": 1\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/sensorstation",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sensorstation"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Update SensorStation",
-          "request": {
-            "method": "PATCH",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"name\": \"Station A Updated\",\n    \"deviceStatus\": \"MAINTENANCE\",\n    \"measurementsPerSec\": 0.5\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/sensorstation/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sensorstation",
-                "{{id}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Delete SensorStation",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/sensorstation/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sensorstation",
-                "{{id}}"
+                "1"
               ]
             }
           },
@@ -1270,37 +992,39 @@
       "name": "ClimateHint",
       "item": [
         {
-          "name": "Get All ClimateHints",
+          "name": "Get all ClimateHints",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/climate-hint",
+              "raw": "http://localhost:8080/climate-hints",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
-                "climate-hint"
+                "climate-hints"
               ]
             }
           },
           "response": []
         },
         {
-          "name": "Get ClimateHint by Id",
+          "name": "Get ClimateHint by id",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/climate-hint/{{id}}",
+              "raw": "http://localhost:8080/climate-hints/1",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
-                "climate-hint",
-                "{{id}}"
+                "climate-hints",
+                "1"
               ]
             }
           },
@@ -1313,7 +1037,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"metric\": \"TEMPERATURE\",\n    \"hintText\": \"Open windows when temperature is high\"\n}",
+              "raw": "{\n  \"metric\": \"TEMPERATURE\",\n  \"hintText\": \"Open windows when temperature is high\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1321,13 +1045,14 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/climate-hint",
+              "raw": "http://localhost:8080/climate-hints",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
-                "climate-hint"
+                "climate-hints"
               ]
             }
           },
@@ -1340,7 +1065,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"metric\": \"HUMIDITY\",\n    \"hintText\": \"Use a dehumidifier\"\n}",
+              "raw": "{\n  \"metric\": \"HUMIDITY\",\n  \"hintText\": \"Use a dehumidifier\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1348,14 +1073,15 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/climate-hint/{{id}}",
+              "raw": "http://localhost:8080/climate-hints/1",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
-                "climate-hint",
-                "{{id}}"
+                "climate-hints",
+                "1"
               ]
             }
           },
@@ -1367,14 +1093,15 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/climate-hint/{{id}}",
+              "raw": "http://localhost:8080/climate-hints/1",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
-                "climate-hint",
-                "{{id}}"
+                "climate-hints",
+                "1"
               ]
             }
           },
@@ -1386,37 +1113,39 @@
       "name": "Threshold",
       "item": [
         {
-          "name": "Get All Thresholds",
+          "name": "Get all Thresholds",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/threshold",
+              "raw": "http://localhost:8080/thresholds",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
-                "threshold"
+                "thresholds"
               ]
             }
           },
           "response": []
         },
         {
-          "name": "Get Threshold by Id",
+          "name": "Get Threshold by id",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/threshold/{{id}}",
+              "raw": "http://localhost:8080/thresholds/1",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
-                "threshold",
-                "{{id}}"
+                "thresholds",
+                "1"
               ]
             }
           },
@@ -1429,7 +1158,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"roomId\": 1,\n    \"metric\": \"TEMPERATURE\",\n    \"boundValue\": 25,\n    \"thresholdType\": \"MAX\",\n    \"climateHintIds\": [\n        1,\n        2\n    ]\n}",
+              "raw": "{\n  \"roomId\": 1,\n  \"metric\": \"TEMPERATURE\",\n  \"boundValue\": 25,\n  \"thresholdType\": \"MAX\",\n  \"climateHintIds\": [1, 2]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1437,13 +1166,14 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/threshold",
+              "raw": "http://localhost:8080/thresholds",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
-                "threshold"
+                "thresholds"
               ]
             }
           },
@@ -1456,7 +1186,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"metric\": \"HUMIDITY\",\n    \"boundValue\": 60,\n    \"enabled\": true\n}",
+              "raw": "{\n  \"metric\": \"HUMIDITY\",\n  \"boundValue\": 60,\n  \"enabled\": true\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1464,14 +1194,15 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/threshold/{{id}}",
+              "raw": "http://localhost:8080/thresholds/1",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
-                "threshold",
-                "{{id}}"
+                "thresholds",
+                "1"
               ]
             }
           },
@@ -1483,206 +1214,15 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/threshold/{{id}}",
+              "raw": "http://localhost:8080/thresholds/1",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
-                "threshold",
-                "{{id}}"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Measurement",
-      "item": [
-        {
-          "name": "Get All Measurements",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/measurement",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "measurement"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Measurement by Id",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/measurement/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "measurement",
-                "{{id}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Measurements by Room",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/measurement?roomId={{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "measurement"
-              ],
-              "query": [
-                {
-                  "key": "roomId",
-                  "value": "{{id}}",
-                  "description": "Filter by room ID"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Measurements by Room + Metric",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/measurement",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "measurement"
-              ],
-              "query": [
-                {
-                  "key": "roomId",
-                  "value": "{{id}}",
-                  "description": "Filter by room ID",
-                  "disabled": true
-                },
-                {
-                  "key": "metric",
-                  "value": "TEMPERATURE",
-                  "description": "One of: TEMPERATURE, HUMIDITY, PRESSURE, GAS",
-                  "disabled": true
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Measurements by Time Range",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/measurement",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "measurement"
-              ],
-              "query": [
-                {
-                  "key": "from",
-                  "value": "2025-01-01T00:00:00",
-                  "description": "ISO-8601 start datetime",
-                  "disabled": true
-                },
-                {
-                  "key": "to",
-                  "value": "2025-12-31T23:59:59",
-                  "description": "ISO-8601 end datetime",
-                  "disabled": true
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Measurements — All Filters",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/measurement?roomId={{id}}&metric=TEMPERATURE&from=2025-01-01T00:00:00&to=2026-12-31T23:59:50",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "measurement"
-              ],
-              "query": [
-                {
-                  "key": "roomId",
-                  "value": "{{id}}",
-                  "description": "Filter by room ID"
-                },
-                {
-                  "key": "metric",
-                  "value": "TEMPERATURE",
-                  "description": "One of: TEMPERATURE, HUMIDITY, PRESSURE, GAS"
-                },
-                {
-                  "key": "from",
-                  "value": "2025-01-01T00:00:00",
-                  "description": "ISO-8601 start datetime"
-                },
-                {
-                  "key": "to",
-                  "value": "2026-12-31T23:59:50",
-                  "description": "ISO-8601 end datetime"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Latest per Metric for Room",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/measurement/room/{{id}}/latest",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "measurement",
-                "room",
-                "{{id}}",
-                "latest"
+                "thresholds",
+                "1"
               ]
             }
           },
@@ -1694,37 +1234,39 @@
       "name": "ThresholdViolation",
       "item": [
         {
-          "name": "Get All Violations",
+          "name": "Get all Violations",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/thresholdviolation",
+              "raw": "http://localhost:8080/violations",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
-                "thresholdviolation"
+                "violations"
               ]
             }
           },
           "response": []
         },
         {
-          "name": "Get Violation by Id",
+          "name": "Get Violation by id",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/threshold-violation/{{id}}",
+              "raw": "http://localhost:8080/violations/1",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
-                "threshold-violation",
-                "{{id}}"
+                "violations",
+                "1"
               ]
             }
           },
@@ -1737,7 +1279,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"metric\": \"TEMPERATURE\",\n    \"value\": 32,\n    \"startTime\": \"2026-04-13T10:00:00\",\n    \"thresholdId\": 1,\n    \"roomId\": 1\n}",
+              "raw": "{\n  \"metric\": \"TEMPERATURE\",\n  \"value\": 32,\n  \"startTime\": \"2026-04-13T10:00:00\",\n  \"thresholdId\": 1,\n  \"roomId\": 1,\n  \"measurementIds\": []\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1745,13 +1287,14 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/threshold-violation",
+              "raw": "http://localhost:8080/violations",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
-                "threshold-violation"
+                "violations"
               ]
             }
           },
@@ -1764,7 +1307,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"value\": 28,\n    \"violationStatus\": \"RESOLVED\",\n    \"endTime\": \"2026-04-13T11:00:00\"\n}",
+              "raw": "{\n  \"value\": 28,\n  \"violationStatus\": \"RESOLVED\",\n  \"endTime\": \"2026-04-13T11:00:00\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1772,14 +1315,15 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/threshold-violation/{{id}}",
+              "raw": "http://localhost:8080/violations/1",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
-                "threshold-violation",
-                "{{id}}"
+                "violations",
+                "1"
               ]
             }
           },
@@ -1791,14 +1335,15 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/threshold-violation/{{id}}",
+              "raw": "http://localhost:8080/violations/1",
+              "protocol": "http",
               "host": [
-                "{{baseUrl}}"
+                "localhost"
               ],
+              "port": "8080",
               "path": [
-                "api",
-                "threshold-violation",
-                "{{id}}"
+                "violations",
+                "1"
               ]
             }
           },
@@ -1807,28 +1352,10 @@
       ]
     }
   ],
-  "auth": {
-    "type": "bearer",
-    "bearer": [
-      {
-        "key": "token",
-        "value": "{{accessToken}}",
-        "type": "string"
-      }
-    ]
-  },
   "variable": [
-    {
-      "key": "baseUrl",
-      "value": "http://localhost:8080"
-    },
     {
       "key": "accessToken",
       "value": ""
-    },
-    {
-      "key": "id",
-      "value": "1"
     }
   ]
 }
