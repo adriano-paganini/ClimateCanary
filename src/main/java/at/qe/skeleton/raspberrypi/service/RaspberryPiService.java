@@ -25,7 +25,7 @@ public class RaspberryPiService {
     }
 
     public List<RaspberryPi> getAll() {
-        return repo.findAll();
+        return repo.findAllActive();
     }
 
     public RaspberryPi getById(Long id) {

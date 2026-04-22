@@ -17,14 +17,16 @@ public class SensorStationService {
     private final RaspberryPiService raspberryPiService;
     private final RoomService roomService;
 
-    public SensorStationService(SensorStationRepository repo, RaspberryPiService raspberryPiService, RoomService roomService) {
+    public SensorStationService(SensorStationRepository repo,
+                                RaspberryPiService raspberryPiService,
+                                RoomService roomService) {
         this.repo = repo;
         this.raspberryPiService = raspberryPiService;
         this.roomService = roomService;
     }
 
     public List<SensorStation> getAll() {
-        return repo.findAll();
+        return repo.findAllActive();
     }
 
     public SensorStation getById(Long id) {
