@@ -4,11 +4,11 @@ import at.qe.skeleton.common.exceptions.UserNotFoundException;
 import at.qe.skeleton.common.exceptions.UsernameDuplicateException;
 import at.qe.skeleton.models.Department;
 import at.qe.skeleton.repositories.DepartmentRepository;
-import at.qe.skeleton.repositories.EmployeeProfileRepository;
 import at.qe.skeleton.dtos.UserxSelfUpdateDTO;
 import at.qe.skeleton.dtos.UserxUpdateDTO;
 import at.qe.skeleton.models.Userx;
 import at.qe.skeleton.repositories.UserxRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -27,9 +27,10 @@ import java.util.Optional;
  * This class is part of the skeleton project provided for students of the
  * course "Software Engineering" offered by Innsbruck University.
  */
+@Slf4j
 @Service
 public class UserxService implements UserDetailsService {
- 
+
     private final UserxRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticatedUserService authenticatedUserService;
@@ -39,15 +40,14 @@ public class UserxService implements UserDetailsService {
     public UserxService(UserxRepository userRepository,
                         PasswordEncoder passwordEncoder,
                         AuthenticatedUserService authenticatedUserService,
-                        DepartmentRepository departmentRepository,
-                        EmployeeProfileRepository employeeProfileRepository)
+                        DepartmentRepository departmentRepository)
     {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticatedUserService = authenticatedUserService;
         this.departmentRepository = departmentRepository;
     }
-    
+
     /**
      * Returns a collection of all users.
      *
@@ -91,10 +91,29 @@ public class UserxService implements UserDetailsService {
             user.setEnabled(true);
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             user.setCreateUser(authenticatedUserService.getAuthenticatedUser());
+
+            Userx savedUser = userRepository.save(user);
+            log.info("Created user with id={} and username={}", savedUser.getId(), savedUser.getUsername());
+            log.debug("User details: id={}, username={}, enabled={}, roles={}, createUserId={}",
+                    savedUser.getId(),
+                    savedUser.getUsername(),
+                    savedUser.isEnabled(),
+                    savedUser.getRoles(),
+                    savedUser.getCreateUser() != null ? savedUser.getCreateUser().getId() : null);
+            return savedUser;
         } else {
             user.setUpdateUser(authenticatedUserService.getAuthenticatedUser());
+
+            Userx updatedUser = userRepository.save(user);
+            log.info("Saved existing user with id={} and username={}", updatedUser.getId(), updatedUser.getUsername());
+            log.debug("User details: id={}, username={}, enabled={}, roles={}, updateUserId={}",
+                    updatedUser.getId(),
+                    updatedUser.getUsername(),
+                    updatedUser.isEnabled(),
+                    updatedUser.getRoles(),
+                    updatedUser.getUpdateUser() != null ? updatedUser.getUpdateUser().getId() : null);
+            return updatedUser;
         }
-        return userRepository.save(user);
     }
 
     /**
@@ -105,7 +124,10 @@ public class UserxService implements UserDetailsService {
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public void deleteUser(Userx user) {
         Optional<Userx> userOpt = userRepository.findById(user.getId());
-        userOpt.ifPresent(userRepository::delete);
+        userOpt.ifPresent(existingUser -> {
+            userRepository.delete(existingUser);
+            log.info("Deleted user with id={} and username={}", existingUser.getId(), existingUser.getUsername());
+        });
     }
 
     // The following are self-service operations (no system_admin)
@@ -113,7 +135,6 @@ public class UserxService implements UserDetailsService {
     public Userx getUserByUsername(String username) {
         return userRepository.findFirstByUsername(username).orElse(null);
     }
-
 
     /**
      * Loads a user by its username. Required for JWT authentication.
@@ -124,20 +145,44 @@ public class UserxService implements UserDetailsService {
      */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findFirstByUsername(username)
+        UserDetails userDetails = userRepository.findFirstByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        log.debug("Loaded user by username={}", username);
+
+        return userDetails;
     }
 
     public Userx saveCurrentUser(UserxSelfUpdateDTO dto) {
         Userx user = authenticatedUserService.getAuthenticatedUser();
 
-        if (dto.email() != null) user.setEmail(dto.email());
-        if (dto.firstName() != null) user.setFirstName(dto.firstName());
-        if (dto.lastName() != null) user.setLastName(dto.lastName());
-        if (dto.phone() != null) user.setPhone(dto.phone());
+        StringBuilder debugInfo = new StringBuilder("Updated current user details:")
+                .append(" id=").append(user.getId());
+
+        if (dto.email() != null) {
+            user.setEmail(dto.email());
+            debugInfo.append(", email=").append(dto.email());
+        }
+        if (dto.firstName() != null) {
+            user.setFirstName(dto.firstName());
+            debugInfo.append(", firstName=").append(dto.firstName());
+        }
+        if (dto.lastName() != null) {
+            user.setLastName(dto.lastName());
+            debugInfo.append(", lastName=").append(dto.lastName());
+        }
+        if (dto.phone() != null) {
+            user.setPhone(dto.phone());
+            debugInfo.append(", phone=").append(dto.phone());
+        }
 
         user.setUpdateUser(user);
-        return userRepository.save(user);
+        Userx updatedUser = userRepository.save(user);
+
+        log.info("Updated current user with id={}", user.getId());
+        log.debug(debugInfo.toString());
+
+        return updatedUser;
     }
 
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
@@ -145,15 +190,37 @@ public class UserxService implements UserDetailsService {
         Userx user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User with id " + id + " not found"));
 
-        if (dto.firstName() != null) user.setFirstName(dto.firstName());
-        if (dto.lastName() != null) user.setLastName(dto.lastName());
-        if (dto.email() != null) user.setEmail(dto.email());
-        if (dto.phone() != null) user.setPhone(dto.phone());
-        if (dto.roles() != null) user.setRoles(dto.roles());
-        if (dto.enabled() != null && dto.enabled()) user.setEnabled(true);
+        StringBuilder debugInfo = new StringBuilder("Updated user details:")
+                .append(" id=").append(id);
+
+        if (dto.firstName() != null) {
+            user.setFirstName(dto.firstName());
+            debugInfo.append(", firstName=").append(dto.firstName());
+        }
+        if (dto.lastName() != null) {
+            user.setLastName(dto.lastName());
+            debugInfo.append(", lastName=").append(dto.lastName());
+        }
+        if (dto.email() != null) {
+            user.setEmail(dto.email());
+            debugInfo.append(", email=").append(dto.email());
+        }
+        if (dto.phone() != null) {
+            user.setPhone(dto.phone());
+            debugInfo.append(", phone=").append(dto.phone());
+        }
+        if (dto.roles() != null) {
+            user.setRoles(dto.roles());
+            debugInfo.append(", roles=").append(dto.roles());
+        }
+        if (dto.enabled() != null && dto.enabled()) {
+            user.setEnabled(true);
+            debugInfo.append(", enabled=true");
+        }
 
         if (dto.enabled() != null && !dto.enabled()) {
             user.setEnabled(false);
+            debugInfo.append(", enabled=false");
             List<Department> ledDepartments = departmentRepository.findByDepartmentLeader(user);
 
             for (Department dept : ledDepartments) {
@@ -167,14 +234,25 @@ public class UserxService implements UserDetailsService {
             }
 
             user.getAbsences().clear();
+            debugInfo.append(", clearedLedDepartments=").append(ledDepartments.size())
+                    .append(", clearedEmployeeProfileAndAbsences=true");
         }
 
         user.setUpdateUser(authenticatedUserService.getAuthenticatedUser());
-        return userRepository.save(user);
+        Userx updatedUser = userRepository.save(user);
+
+        log.info("Updated user with id={}", id);
+        log.debug(debugInfo.toString());
+
+        return updatedUser;
     }
 
     public void deleteCurrentUser() {
         Userx authenticatedUser = authenticatedUserService.getAuthenticatedUser();
         userRepository.delete(authenticatedUser);
+
+        log.info("Deleted current user with id={} and username={}",
+                authenticatedUser.getId(),
+                authenticatedUser.getUsername());
     }
 }
