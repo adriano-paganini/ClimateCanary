@@ -7,8 +7,8 @@
 
 package at.qe.skeleton.configs;
 
-import at.qe.skeleton.userx.model.Userx;
-import at.qe.skeleton.userx.service.UserxService;
+import at.qe.skeleton.models.Userx;
+import at.qe.skeleton.services.UserxService;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import jakarta.servlet.FilterChain;
