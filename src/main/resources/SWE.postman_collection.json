@@ -50,6 +50,16 @@
             "disableBodyPruning": true
           },
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "body": {
@@ -57,13 +67,14 @@
               "raw": "{\n    \"name\": \"IT\",\n    \"addressId\": 5\n}"
             },
             "url": {
-              "raw": "http://localhost:8080/building",
+              "raw": "http://localhost:8080/api/building",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "building"
               ]
             }
@@ -76,20 +87,31 @@
             "disableBodyPruning": true
           },
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"IT\",\n    \"addressId\": 5\n}"
+              "raw": ""
             },
             "url": {
-              "raw": "http://localhost:8080/building/1/rooms",
+              "raw": "http://localhost:8080/api/building/1/rooms",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "building",
                 "1",
                 "rooms"
@@ -101,6 +123,16 @@
         {
           "name": "Create building",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [],
             "body": {
@@ -113,13 +145,14 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/building",
+              "raw": "http://localhost:8080/api/building",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "building"
               ]
             }
@@ -130,18 +163,26 @@
           "name": "Get building by id",
           "request": {
             "auth": {
-              "type": "noauth"
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
             },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/building/1",
+              "raw": "http://localhost:8080/api/building/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "building",
                 "1"
               ]
@@ -153,13 +194,20 @@
           "name": "Update building",
           "request": {
             "auth": {
-              "type": "noauth"
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
             },
             "method": "PATCH",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"IT - Old\",\n    \"addressId\": 60\n}",
+              "raw": "{\n    \"name\": \"Still OLD IT\",\n    \"addressId\": 1\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -167,15 +215,16 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/building/2",
+              "raw": "http://localhost:8080/api/building/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "building",
-                "2"
+                "1"
               ]
             }
           },
@@ -184,16 +233,27 @@
         {
           "name": "Delete a building",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/building/1",
+              "raw": "http://localhost:8080/api/building/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "building",
                 "1"
               ]
