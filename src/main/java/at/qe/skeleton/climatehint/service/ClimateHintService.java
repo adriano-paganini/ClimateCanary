@@ -40,7 +40,7 @@ public class ClimateHintService {
         if (dto.hintText() != null)
             climateHint.setHintText(dto.hintText());
 
-        return climateHint;
+        return climateHintRepository.save(climateHint);
     }
 
     @Transactional

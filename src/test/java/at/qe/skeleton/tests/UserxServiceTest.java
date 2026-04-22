@@ -107,7 +107,7 @@ public class UserxServiceTest {
         userService.deleteUser(toBeDeletedUser);
 
         Assertions.assertEquals(3, userService.getAllUsers().size(),
-                "No user has been deleted after calling UserService.deleteUser");
+                "No user has been enabled after calling UserService.deleteUser");
         Optional<Userx> deletedUserOpt = userService.loadUser(deleteUserId);
         Assertions.assertTrue(deletedUserOpt.isEmpty(),
                 "Deleted User with id \"" + deleteUserId + "\" could still be loaded from test data source via UserService.loadUser");

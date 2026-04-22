@@ -1,5 +1,6 @@
 package at.qe.skeleton.userx.controller;
 
+import at.qe.skeleton.common.exceptions.UserNotFoundException;
 import at.qe.skeleton.userx.dto.UserxCreateDTO;
 import at.qe.skeleton.userx.dto.UserxDTO;
 import at.qe.skeleton.userx.dto.UserxUpdateDTO;
@@ -16,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Collection;
 import java.util.List;
@@ -75,7 +75,11 @@ public class AdminController {
   public ResponseEntity<UserxDTO> getUser(
       @Parameter(description = "The id of the User to get.") @PathVariable Long id) {
     Optional<Userx> existingUserx = userService.loadUser(id);
-      return existingUserx.map(userx -> ResponseEntity.ok(userMapper.mapTo(userx))).orElseGet(() -> ResponseEntity.notFound().build());
+      return existingUserx.map(
+              userx ->
+                      ResponseEntity.ok(userMapper.mapTo(userx)))
+              .orElseThrow(() ->
+                      new UserNotFoundException("User not found with id: " + id));
   }
 
   /**
@@ -132,7 +136,7 @@ public class AdminController {
    * with status {@code 404 (Not Found)} if no user with this id exists
    */
   @Operation(summary = "Delete User", description = "Delete a User by id.")
-  @ApiResponse(responseCode = "204", description = "User deleted.")
+  @ApiResponse(responseCode = "204", description = "User enabled.")
   @ApiResponse(responseCode = "404", description = "User not found.")
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> deleteUser(
@@ -143,7 +147,7 @@ public class AdminController {
       userService.deleteUser(existingUserx.get());
       return ResponseEntity.noContent().build();
     } else {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+      throw new UserNotFoundException("User not found with id: " + id);
     }
   }
 }

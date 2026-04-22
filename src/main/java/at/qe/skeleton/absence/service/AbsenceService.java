@@ -48,6 +48,11 @@ public class AbsenceService {
     }
 
     public Absence create(Absence absence) {
+
+        if (absence.getEndDate() != null && absence.getStartDate() != null
+                && absence.getEndDate().isBefore(absence.getStartDate())) {
+            throw new IllegalArgumentException("Absence end date must not be before start date");
+        }
         return absenceRepository.save(absence);
     }
 

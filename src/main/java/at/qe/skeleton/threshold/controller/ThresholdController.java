@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/threshold")
+@RequestMapping("/api/threshold")
 public class ThresholdController {
 
     private final ThresholdService thresholdService;
@@ -51,9 +51,7 @@ public class ThresholdController {
     @PatchMapping("/{id}")
     public ResponseEntity<ThresholdDTO> update(@PathVariable Long id,
                                                @RequestBody ThresholdUpdateDTO dto) {
-        return ResponseEntity.ok(
-                thresholdMapper.mapTo(thresholdService.update(id, dto))
-        );
+        return ResponseEntity.ok(thresholdMapper.mapTo(thresholdService.update(id, dto)));
     }
 
     @DeleteMapping("/{id}")

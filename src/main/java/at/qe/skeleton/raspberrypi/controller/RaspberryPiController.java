@@ -18,7 +18,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/bpi")
+@RequestMapping("/api/bpi")
 public class RaspberryPiController {
 
     private final RaspberryPiService raspberryPiService;

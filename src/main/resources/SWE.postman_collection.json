@@ -1,28 +1,13 @@
 {
   "info": {
-    "_postman_id": "b5596062-a618-49dd-b00f-98abcfd41fe9",
+    "_postman_id": "cc3c4344-df85-4f94-8eda-6c0ca4ff5dc9",
     "name": "SWE",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "40382670"
   },
-  "auth": {
-    "type": "bearer",
-    "bearer": [
-      {
-        "key": "token",
-        "value": "{{accessToken}}",
-        "type": "string"
-      }
-    ]
-  },
-  "variable": [
-    { "key": "baseUrl", "value": "http://localhost:8080" },
-    { "key": "accessToken", "value": "" },
-    { "key": "id", "value": "1" }
-  ],
   "item": [
     {
       "name": "Auth",
-      "auth": { "type": "noauth" },
       "item": [
         {
           "name": "Login",
@@ -32,16 +17,29 @@
             "body": {
               "mode": "raw",
               "raw": "{\n    \"username\": \"admin\",\n    \"password\": \"passwd\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/authentication/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["authentication", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "authentication",
+                "login"
+              ]
             }
-          }
+          },
+          "response": []
         }
-      ]
+      ],
+      "auth": {
+        "type": "noauth"
+      }
     },
     {
       "name": "Users (Self)",
@@ -49,14 +47,31 @@
         {
           "name": "Get Current User",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{accessToken}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/users/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users", "me"]
+              "raw": "{{baseUrl}}/api/userx/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "userx",
+                "me"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Update Current User",
@@ -65,15 +80,26 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"john.doe@example.com\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"john.doe@example.com\",\n    \"phone\": \"+39 377 377377\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/users/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users", "me"]
+              "raw": "{{baseUrl}}/api/userx/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "userx",
+                "me"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Delete Current User",
@@ -81,11 +107,18 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/users/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users", "me"]
+              "raw": "{{baseUrl}}/api/userx/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "userx",
+                "me"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get Current User Absences",
@@ -93,11 +126,19 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/users/me/absences",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "users", "me", "absences"]
+              "raw": "{{baseUrl}}/api/userx/me/absences",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "userx",
+                "me",
+                "absences"
+              ]
             }
-          }
+          },
+          "response": []
         }
       ]
     },
@@ -111,10 +152,16 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/admin",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get User by Id",
@@ -123,10 +170,17 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/admin/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "{{id}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Create User",
@@ -135,15 +189,25 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"username\": \"jane.doe\",\n    \"password\": \"securePassword123\",\n    \"firstName\": \"Jane\",\n    \"lastName\": \"Doe\",\n    \"email\": \"jane.doe@example.com\",\n    \"roles\": [\"EMPLOYEE\"]\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n    \"username\": \"jane\",\n    \"password\": \"securePassword123\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"email\": \"jane.doe@example.com\",\n    \"roles\": [\n        \"EMPLOYEE\",\n        \"BUILDING_ADMIN\"\n    ],\n    \"phone\": \"+39 377 377377\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/api/admin",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Update User",
@@ -152,27 +216,45 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"firstName\": \"Jane\",\n    \"lastName\": \"Smith\",\n    \"email\": \"jane.smith@example.com\",\n    \"roles\": [\"EMPLOYEE\"]\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n    \"firstName\": \"Jane\",\n    \"roles\": [\n        \"EMPLOYEE\"\n    ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{baseUrl}}/api/admin/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "{{id}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
-          "name": "Delete User",
+          "name": "Disable User",
           "request": {
             "method": "DELETE",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/admin/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "admin", "{{id}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         }
       ]
     },
@@ -185,11 +267,17 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/building",
-              "host": ["{{baseUrl}}"],
-              "path": ["building"]
+              "raw": "{{baseUrl}}/api/building",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "building"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get Building by Id",
@@ -197,11 +285,18 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/building/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["building", "{{id}}"]
+              "raw": "{{baseUrl}}/api/building/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "building",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get Building Rooms",
@@ -209,11 +304,19 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/building/{{id}}/rooms",
-              "host": ["{{baseUrl}}"],
-              "path": ["building", "{{id}}", "rooms"]
+              "raw": "{{baseUrl}}/api/building/{{id}}/rooms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "building",
+                "{{id}}",
+                "rooms"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Create Building",
@@ -223,14 +326,24 @@
             "body": {
               "mode": "raw",
               "raw": "{\n    \"name\": \"IT Old\",\n    \"addressId\": 1\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/building",
-              "host": ["{{baseUrl}}"],
-              "path": ["building"]
+              "raw": "{{baseUrl}}/api/building",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "building"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Update Building",
@@ -240,14 +353,25 @@
             "body": {
               "mode": "raw",
               "raw": "{\n    \"name\": \"IT - Old\",\n    \"addressId\": 60\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/building/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["building", "{{id}}"]
+              "raw": "{{baseUrl}}/api/building/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "building",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Delete Building",
@@ -255,11 +379,18 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/building/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["building", "{{id}}"]
+              "raw": "{{baseUrl}}/api/building/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "building",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         }
       ]
     },
@@ -272,11 +403,17 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/department",
-              "host": ["{{baseUrl}}"],
-              "path": ["department"]
+              "raw": "{{baseUrl}}/api/department",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "department"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get Department by Id",
@@ -284,11 +421,18 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/department/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["department", "{{id}}"]
+              "raw": "{{baseUrl}}/api/department/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "department",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get Department Rooms",
@@ -296,11 +440,19 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/department/{{id}}/rooms",
-              "host": ["{{baseUrl}}"],
-              "path": ["department", "{{id}}", "rooms"]
+              "raw": "{{baseUrl}}/api/department/{{id}}/rooms",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "department",
+                "{{id}}",
+                "rooms"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get Department Leader",
@@ -308,11 +460,19 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/department/{{id}}/leader",
-              "host": ["{{baseUrl}}"],
-              "path": ["department", "{{id}}", "leader"]
+              "raw": "{{baseUrl}}/api/department/{{id}}/leader",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "department",
+                "{{id}}",
+                "leader"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Create Department",
@@ -321,15 +481,25 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"Research\",\n    \"roomIds\": [],\n    \"departmentLeadId\": 1\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n    \"name\": \"Research\",\n    \"roomIds\": [],\n    \"departmentLeadId\": 4\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/department",
-              "host": ["{{baseUrl}}"],
-              "path": ["department"]
+              "raw": "{{baseUrl}}/api/department",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "department"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Update Department",
@@ -338,15 +508,26 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"Research (2)\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n    \"departmentLeadId\": 4\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/department/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["department", "{{id}}"]
+              "raw": "{{baseUrl}}/api/department/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "department",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Delete Department",
@@ -354,11 +535,18 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/department/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["department", "{{id}}"]
+              "raw": "{{baseUrl}}/api/department/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "department",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         }
       ]
     },
@@ -371,11 +559,17 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/room",
-              "host": ["{{baseUrl}}"],
-              "path": ["room"]
+              "raw": "{{baseUrl}}/api/room",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "room"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get Room by Id",
@@ -383,11 +577,18 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/room/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["room", "{{id}}"]
+              "raw": "{{baseUrl}}/api/room/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "room",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Create Room",
@@ -397,14 +598,24 @@
             "body": {
               "mode": "raw",
               "raw": "{\n    \"name\": \"Room 1\",\n    \"roomType\": \"OFFICE\",\n    \"minOccupancy\": 5,\n    \"departmentId\": 1,\n    \"buildingId\": 1\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/room",
-              "host": ["{{baseUrl}}"],
-              "path": ["room"]
+              "raw": "{{baseUrl}}/api/room",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "room"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Update Room",
@@ -414,14 +625,25 @@
             "body": {
               "mode": "raw",
               "raw": "{\n    \"name\": \"Updated Room\",\n    \"roomType\": \"OFFICE\",\n    \"minOccupancy\": 8\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/room/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["room", "{{id}}"]
+              "raw": "{{baseUrl}}/api/room/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "room",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Delete Room",
@@ -429,11 +651,18 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/room/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["room", "{{id}}"]
+              "raw": "{{baseUrl}}/api/room/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "room",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         }
       ]
     },
@@ -446,11 +675,17 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/address",
-              "host": ["{{baseUrl}}"],
-              "path": ["address"]
+              "raw": "{{baseUrl}}/api/address",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "address"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get Address by Id",
@@ -458,11 +693,18 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/address/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["address", "{{id}}"]
+              "raw": "{{baseUrl}}/api/address/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "address",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Create Address",
@@ -472,14 +714,24 @@
             "body": {
               "mode": "raw",
               "raw": "{\n    \"country\": \"Italy\",\n    \"zipCode\": \"4999\",\n    \"city\": \"Something\",\n    \"street\": \"N/A\",\n    \"houseNumber\": \"81/A\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/address",
-              "host": ["{{baseUrl}}"],
-              "path": ["address"]
+              "raw": "{{baseUrl}}/api/address",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "address"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Update Address",
@@ -489,14 +741,25 @@
             "body": {
               "mode": "raw",
               "raw": "{\n    \"extra\": \"Primary Address\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/address/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["address", "{{id}}"]
+              "raw": "{{baseUrl}}/api/address/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "address",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Delete Address",
@@ -504,11 +767,18 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/address/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["address", "{{id}}"]
+              "raw": "{{baseUrl}}/api/address/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "address",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         }
       ]
     },
@@ -521,11 +791,17 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/employeeProfile",
-              "host": ["{{baseUrl}}"],
-              "path": ["employeeProfile"]
+              "raw": "{{baseUrl}}/api/employeeprofile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "employeeprofile"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get EmployeeProfile by Id",
@@ -533,11 +809,18 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/employeeProfile/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["employeeProfile", "{{id}}"]
+              "raw": "{{baseUrl}}/api/employeeprofile/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "employeeprofile",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Create EmployeeProfile",
@@ -546,15 +829,25 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"userxId\": 2,\n    \"departmentId\": 2,\n    \"roomId\": 2\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n    \"userxId\": 3,\n    \"departmentId\": 1,\n    \"roomId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/employeeProfile",
-              "host": ["{{baseUrl}}"],
-              "path": ["employeeProfile"]
+              "raw": "{{baseUrl}}/api/employeeprofile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "employeeprofile"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Update EmployeeProfile",
@@ -564,14 +857,25 @@
             "body": {
               "mode": "raw",
               "raw": "{\n    \"departmentId\": 1,\n    \"roomId\": 1\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/employeeProfile/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["employeeProfile", "{{id}}"]
+              "raw": "{{baseUrl}}/api/employeeprofile/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "employeeprofile",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Delete EmployeeProfile",
@@ -579,11 +883,18 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/employeeProfile/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["employeeProfile", "{{id}}"]
+              "raw": "{{baseUrl}}/api/employeeprofile/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "employeeprofile",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         }
       ]
     },
@@ -596,11 +907,17 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/absence",
-              "host": ["{{baseUrl}}"],
-              "path": ["absence"]
+              "raw": "{{baseUrl}}/api/absence",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "absence"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get Absence by Id",
@@ -608,11 +925,18 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/absence/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["absence", "{{id}}"]
+              "raw": "{{baseUrl}}/api/absence/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "absence",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Create Absence",
@@ -621,15 +945,25 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"startDate\": \"2025-03-10T14:45:00\",\n    \"endDate\": \"2025-03-10T14:45:00\",\n    \"absenceType\": \"HOLIDAY\",\n    \"userxId\": 1\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n    \"startDate\": \"2025-03-10T14:45:00\",\n    \"endDate\": \"2025-03-10T14:45:00\",\n    \"absenceType\": \"HOLIDAY\",\n    \"userxId\": 4\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/absence",
-              "host": ["{{baseUrl}}"],
-              "path": ["absence"]
+              "raw": "{{baseUrl}}/api/absence",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "absence"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Update Absence",
@@ -639,14 +973,25 @@
             "body": {
               "mode": "raw",
               "raw": "{\n    \"startDate\": \"2025-03-11T09:00:00\",\n    \"endDate\": \"2025-03-12T09:00:00\",\n    \"absenceType\": \"SICK_LEAVE\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/absence/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["absence", "{{id}}"]
+              "raw": "{{baseUrl}}/api/absence/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "absence",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Delete Absence",
@@ -654,11 +999,270 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/absence/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["absence", "{{id}}"]
+              "raw": "{{baseUrl}}/api/absence/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "absence",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "RaspberryPi",
+      "item": [
+        {
+          "name": "Get All RaspberryPis",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bpi",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bpi"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get RaspberryPi by Id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bpi/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bpi",
+                "{{id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create RaspberryPi",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"hostName\": \"rpi-01\",\n    \"ipAddress\": \"192.168.1.100\",\n    \"deviceStatus\": \"ONLINE\",\n    \"roomId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bpi",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bpi"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update RaspberryPi",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"ipAddress\": \"192.168.1.101\",\n    \"deviceStatus\": \"MAINTENANCE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bpi/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bpi",
+                "{{id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete RaspberryPi",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bpi/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bpi",
+                "{{id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get RaspberryPi SensorStations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/bpi/{{id}}/sensor-stations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bpi",
+                "{{id}}",
+                "sensor-stations"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "SensorStation",
+      "item": [
+        {
+          "name": "Get All SensorStations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sensorstation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sensorstation"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get SensorStation by Id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sensorstation/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sensorstation",
+                "{{id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create SensorStation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Station A\",\n    \"deviceStatus\": \"ONLINE\",\n    \"measurementsPerSec\": 1.0,\n    \"raspberryPiId\": 1,\n    \"roomId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sensorstation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sensorstation"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update SensorStation",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Station A Updated\",\n    \"deviceStatus\": \"MAINTENANCE\",\n    \"measurementsPerSec\": 0.5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sensorstation/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sensorstation",
+                "{{id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete SensorStation",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sensorstation/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sensorstation",
+                "{{id}}"
+              ]
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -671,11 +1275,17 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/climate-hints",
-              "host": ["{{baseUrl}}"],
-              "path": ["climate-hints"]
+              "raw": "{{baseUrl}}/api/climate-hint",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "climate-hint"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get ClimateHint by Id",
@@ -683,11 +1293,18 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/climate-hints/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["climate-hints", "{{id}}"]
+              "raw": "{{baseUrl}}/api/climate-hint/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "climate-hint",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Create ClimateHint",
@@ -697,14 +1314,24 @@
             "body": {
               "mode": "raw",
               "raw": "{\n    \"metric\": \"TEMPERATURE\",\n    \"hintText\": \"Open windows when temperature is high\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/climate-hints",
-              "host": ["{{baseUrl}}"],
-              "path": ["climate-hints"]
+              "raw": "{{baseUrl}}/api/climate-hint",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "climate-hint"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Update ClimateHint",
@@ -714,14 +1341,25 @@
             "body": {
               "mode": "raw",
               "raw": "{\n    \"metric\": \"HUMIDITY\",\n    \"hintText\": \"Use a dehumidifier\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/climate-hints/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["climate-hints", "{{id}}"]
+              "raw": "{{baseUrl}}/api/climate-hint/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "climate-hint",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Delete ClimateHint",
@@ -729,11 +1367,18 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/climate-hints/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["climate-hints", "{{id}}"]
+              "raw": "{{baseUrl}}/api/climate-hint/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "climate-hint",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         }
       ]
     },
@@ -746,11 +1391,17 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/thresholds",
-              "host": ["{{baseUrl}}"],
-              "path": ["thresholds"]
+              "raw": "{{baseUrl}}/api/threshold",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "threshold"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get Threshold by Id",
@@ -758,11 +1409,18 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/thresholds/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["thresholds", "{{id}}"]
+              "raw": "{{baseUrl}}/api/threshold/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "threshold",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Create Threshold",
@@ -771,15 +1429,25 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"roomId\": 1,\n    \"metric\": \"TEMPERATURE\",\n    \"boundValue\": 25,\n    \"thresholdType\": \"MAX\",\n    \"climateHintIds\": [1, 2]\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n    \"roomId\": 1,\n    \"metric\": \"TEMPERATURE\",\n    \"boundValue\": 25,\n    \"thresholdType\": \"MAX\",\n    \"climateHintIds\": [\n        1,\n        2\n    ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/thresholds",
-              "host": ["{{baseUrl}}"],
-              "path": ["thresholds"]
+              "raw": "{{baseUrl}}/api/threshold",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "threshold"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Update Threshold",
@@ -789,14 +1457,25 @@
             "body": {
               "mode": "raw",
               "raw": "{\n    \"metric\": \"HUMIDITY\",\n    \"boundValue\": 60,\n    \"enabled\": true\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/thresholds/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["thresholds", "{{id}}"]
+              "raw": "{{baseUrl}}/api/threshold/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "threshold",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Delete Threshold",
@@ -804,11 +1483,210 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/thresholds/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["thresholds", "{{id}}"]
+              "raw": "{{baseUrl}}/api/threshold/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "threshold",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Measurement",
+      "item": [
+        {
+          "name": "Get All Measurements",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/measurement",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "measurement"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Measurement by Id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/measurement/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "measurement",
+                "{{id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Measurements by Room",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/measurement?roomId={{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "measurement"
+              ],
+              "query": [
+                {
+                  "key": "roomId",
+                  "value": "{{id}}",
+                  "description": "Filter by room ID"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Measurements by Room + Metric",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/measurement",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "measurement"
+              ],
+              "query": [
+                {
+                  "key": "roomId",
+                  "value": "{{id}}",
+                  "description": "Filter by room ID",
+                  "disabled": true
+                },
+                {
+                  "key": "metric",
+                  "value": "TEMPERATURE",
+                  "description": "One of: TEMPERATURE, HUMIDITY, PRESSURE, GAS",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Measurements by Time Range",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/measurement",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "measurement"
+              ],
+              "query": [
+                {
+                  "key": "from",
+                  "value": "2025-01-01T00:00:00",
+                  "description": "ISO-8601 start datetime",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "2025-12-31T23:59:59",
+                  "description": "ISO-8601 end datetime",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Measurements — All Filters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/measurement?roomId={{id}}&metric=TEMPERATURE&from=2025-01-01T00:00:00&to=2026-12-31T23:59:50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "measurement"
+              ],
+              "query": [
+                {
+                  "key": "roomId",
+                  "value": "{{id}}",
+                  "description": "Filter by room ID"
+                },
+                {
+                  "key": "metric",
+                  "value": "TEMPERATURE",
+                  "description": "One of: TEMPERATURE, HUMIDITY, PRESSURE, GAS"
+                },
+                {
+                  "key": "from",
+                  "value": "2025-01-01T00:00:00",
+                  "description": "ISO-8601 start datetime"
+                },
+                {
+                  "key": "to",
+                  "value": "2026-12-31T23:59:50",
+                  "description": "ISO-8601 end datetime"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Latest per Metric for Room",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/measurement/room/{{id}}/latest",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "measurement",
+                "room",
+                "{{id}}",
+                "latest"
+              ]
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -821,11 +1699,17 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/violations",
-              "host": ["{{baseUrl}}"],
-              "path": ["violations"]
+              "raw": "{{baseUrl}}/api/thresholdviolation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "thresholdviolation"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get Violation by Id",
@@ -833,11 +1717,18 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/violations/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["violations", "{{id}}"]
+              "raw": "{{baseUrl}}/api/threshold-violation/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "threshold-violation",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Create Violation",
@@ -846,15 +1737,25 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"metric\": \"TEMPERATURE\",\n    \"value\": 32,\n    \"startTime\": \"2026-04-13T10:00:00\",\n    \"thresholdId\": 1,\n    \"roomId\": 1,\n    \"measurementIds\": []\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n    \"metric\": \"TEMPERATURE\",\n    \"value\": 32,\n    \"startTime\": \"2026-04-13T10:00:00\",\n    \"thresholdId\": 1,\n    \"roomId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/violations",
-              "host": ["{{baseUrl}}"],
-              "path": ["violations"]
+              "raw": "{{baseUrl}}/api/threshold-violation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "threshold-violation"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Update Violation",
@@ -864,14 +1765,25 @@
             "body": {
               "mode": "raw",
               "raw": "{\n    \"value\": 28,\n    \"violationStatus\": \"RESOLVED\",\n    \"endTime\": \"2026-04-13T11:00:00\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
-              "raw": "{{baseUrl}}/violations/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["violations", "{{id}}"]
+              "raw": "{{baseUrl}}/api/threshold-violation/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "threshold-violation",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Delete Violation",
@@ -879,13 +1791,44 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/violations/{{id}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["violations", "{{id}}"]
+              "raw": "{{baseUrl}}/api/threshold-violation/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "threshold-violation",
+                "{{id}}"
+              ]
             }
-          }
+          },
+          "response": []
         }
       ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "id",
+      "value": "1"
     }
   ]
 }

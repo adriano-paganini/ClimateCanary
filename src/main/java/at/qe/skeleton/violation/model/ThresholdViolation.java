@@ -24,6 +24,8 @@ public class ThresholdViolation {
 
     @Column(name = "`value`")
     private Long value;
+
+    @Enumerated(EnumType.STRING)
     private ViolationStatus violationStatus;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
@@ -44,7 +46,7 @@ public class ThresholdViolation {
     )
     private List<Measurement> measurements = new ArrayList<>();
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 

@@ -1,14 +1,13 @@
 package at.qe.skeleton.violation.service;
 
-import at.qe.skeleton.violation.dto.ThresholdViolationCreateDTO;
-import at.qe.skeleton.violation.dto.ThresholdViolationUpdateDTO;
 import at.qe.skeleton.common.exceptions.ThresholdViolationNotFound;
-import at.qe.skeleton.violation.model.ThresholdViolation;
-import at.qe.skeleton.violation.model.ViolationStatus;
-import at.qe.skeleton.threshold.repository.ThresholdRepository;
-import at.qe.skeleton.violation.repository.ThresholdViolationRepository;
 import at.qe.skeleton.room.service.RoomService;
 import at.qe.skeleton.threshold.service.ThresholdService;
+import at.qe.skeleton.violation.dto.ThresholdViolationCreateDTO;
+import at.qe.skeleton.violation.dto.ThresholdViolationUpdateDTO;
+import at.qe.skeleton.violation.model.ThresholdViolation;
+import at.qe.skeleton.violation.model.ViolationStatus;
+import at.qe.skeleton.violation.repository.ThresholdViolationRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,15 +16,13 @@ import java.util.List;
 public class ThresholdViolationService {
 
     private final ThresholdViolationRepository thresholdViolationRepository;
-    private final ThresholdRepository thresholdRepository;
     private final RoomService roomService;
     private final ThresholdService thresholdService;
 
     public ThresholdViolationService(ThresholdViolationRepository thresholdViolationRepository,
-                                     ThresholdRepository thresholdRepository,
-                                     RoomService roomService, ThresholdService thresholdService) {
+                                     RoomService roomService,
+                                     ThresholdService thresholdService) {
         this.thresholdViolationRepository = thresholdViolationRepository;
-        this.thresholdRepository = thresholdRepository;
         this.roomService = roomService;
         this.thresholdService = thresholdService;
     }
@@ -78,7 +75,7 @@ public class ThresholdViolationService {
             entity.setRoom(roomService.getById(dto.roomId()));
         }
 
-        return entity;
+        return thresholdViolationRepository.save(entity);
     }
 
     public void delete(Long id) {

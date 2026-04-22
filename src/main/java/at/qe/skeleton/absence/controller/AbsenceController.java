@@ -16,14 +16,16 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/absence")
+@RequestMapping("/api/absence")
 public class AbsenceController {
 
     private final AbsenceService absenceService;
     private final AbsenceMapper absenceMapper;
     private final AbsenceCreateMapper absenceCreateMapper;
 
-    public AbsenceController(AbsenceService absenceService, AbsenceMapper absenceMapper, AbsenceCreateMapper absenceCreateMapper) {
+    public AbsenceController(AbsenceService absenceService,
+                             AbsenceMapper absenceMapper,
+                             AbsenceCreateMapper absenceCreateMapper) {
         this.absenceService = absenceService;
         this.absenceMapper = absenceMapper;
         this.absenceCreateMapper = absenceCreateMapper;

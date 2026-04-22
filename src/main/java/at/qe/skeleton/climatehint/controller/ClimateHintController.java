@@ -16,7 +16,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/climatehint")
+@RequestMapping("/api/climatehint")
 public class ClimateHintController {
 
     private final ClimateHintService climateHintService;

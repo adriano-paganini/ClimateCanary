@@ -23,6 +23,8 @@ public class Threshold {
     private Metric metric;
     private boolean enabled;
     private Long boundValue;
+
+    @Enumerated(EnumType.STRING)
     private ThresholdType thresholdType;
 
     @ManyToMany(mappedBy = "thresholds")

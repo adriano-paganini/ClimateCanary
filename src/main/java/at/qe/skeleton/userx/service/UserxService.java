@@ -3,6 +3,9 @@ package at.qe.skeleton.userx.service;
 import at.qe.skeleton.auth.service.AuthenticatedUserService;
 import at.qe.skeleton.common.exceptions.UserNotFoundException;
 import at.qe.skeleton.common.exceptions.UsernameDuplicateException;
+import at.qe.skeleton.department.model.Department;
+import at.qe.skeleton.department.repository.DepartmentRepository;
+import at.qe.skeleton.employeeprofile.repository.EmployeeProfileRepository;
 import at.qe.skeleton.userx.dto.UserxSelfUpdateDTO;
 import at.qe.skeleton.userx.dto.UserxUpdateDTO;
 import at.qe.skeleton.userx.model.Userx;
@@ -16,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -30,15 +34,19 @@ public class UserxService implements UserDetailsService {
     private final UserxRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticatedUserService authenticatedUserService;
+    private final DepartmentRepository departmentRepository;
 
     @Autowired
     public UserxService(UserxRepository userRepository,
                         PasswordEncoder passwordEncoder,
-                        AuthenticatedUserService authenticatedUserService)
+                        AuthenticatedUserService authenticatedUserService,
+                        DepartmentRepository departmentRepository,
+                        EmployeeProfileRepository employeeProfileRepository)
     {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticatedUserService = authenticatedUserService;
+        this.departmentRepository = departmentRepository;
     }
     
     /**
@@ -143,7 +151,24 @@ public class UserxService implements UserDetailsService {
         if (dto.email() != null) user.setEmail(dto.email());
         if (dto.phone() != null) user.setPhone(dto.phone());
         if (dto.roles() != null) user.setRoles(dto.roles());
-        if (dto.deleted() != null) user.setEnabled(dto.deleted());
+        if (dto.enabled() != null && dto.enabled()) user.setEnabled(true);
+
+        if (dto.enabled() != null && !dto.enabled()) {
+            user.setEnabled(false);
+            List<Department> ledDepartments = departmentRepository.findByDepartmentLeader(user);
+
+            for (Department dept : ledDepartments) {
+                dept.setDepartmentLeader(null);
+                departmentRepository.save(dept);
+            }
+
+            if (user.getEmployeeProfile() != null) {
+                user.getEmployeeProfile().setUser(null);
+                user.setEmployeeProfile(null);
+            }
+
+            user.getAbsences().clear();
+        }
 
         user.setUpdateUser(authenticatedUserService.getAuthenticatedUser());
         return userRepository.save(user);
