@@ -44,7 +44,7 @@ public class DepartmentService {
         Department savedDepartment = departmentRepository.save(d);
 
         log.info("Created department with id={}", savedDepartment.getId());
-        log.debug("Department details: id={}, name={}, leaderId={}",
+        log.debug("Created department details: id={}, name={}, leaderId={}",
                 savedDepartment.getId(),
                 savedDepartment.getName(),
                 savedDepartment.getDepartmentLeader() != null ? savedDepartment.getDepartmentLeader().getId() : null);

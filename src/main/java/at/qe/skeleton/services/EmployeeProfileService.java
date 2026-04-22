@@ -5,12 +5,14 @@ import at.qe.skeleton.common.exceptions.UserAlreadyExists;
 import at.qe.skeleton.dtos.EmployeeProfileUpdateDTO;
 import at.qe.skeleton.models.EmployeeProfile;
 import at.qe.skeleton.repositories.EmployeeProfileRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 public class EmployeeProfileService {
 
@@ -46,25 +48,47 @@ public class EmployeeProfileService {
             throw new UserAlreadyExists("User with id " + employeeProfile.getUser().getId() + " already has a profile");
         }
 
-        return employeeProfileRepository.save(employeeProfile);
+        EmployeeProfile savedProfile = employeeProfileRepository.save(employeeProfile);
+
+        log.info("Created employee profile with id={} for userId={}",
+                savedProfile.getId(),
+                savedProfile.getUser() != null ? savedProfile.getUser().getId() : null);
+        log.debug("Created employee profile details: id={}, userId={}, departmentId={}, roomId={}",
+                savedProfile.getId(),
+                savedProfile.getUser() != null ? savedProfile.getUser().getId() : null,
+                savedProfile.getDepartment() != null ? savedProfile.getDepartment().getId() : null,
+                savedProfile.getRoom() != null ? savedProfile.getRoom().getId() : null);
+
+        return savedProfile;
     }
 
     public EmployeeProfile update(Long id, EmployeeProfileUpdateDTO dto) {
         EmployeeProfile existing = getById(id);
 
+        StringBuilder debugInfo = new StringBuilder("Updated employee profile details:")
+                .append(" id=").append(id);
+
         if (dto.userxId() != null) {
             existing.setUser(userxService.getUserById(dto.userxId()));
+            debugInfo.append(", userxId=").append(dto.userxId());
         }
 
         if (dto.departmentId() != null) {
             existing.setDepartment(departmentService.getDepartmentById(dto.departmentId()));
+            debugInfo.append(", departmentId=").append(dto.departmentId());
         }
 
         if (dto.roomId() != null) {
             existing.setRoom(roomService.getById(dto.roomId()));
+            debugInfo.append(", roomId=").append(dto.roomId());
         }
 
-        return employeeProfileRepository.save(existing);
+        EmployeeProfile updatedProfile = employeeProfileRepository.save(existing);
+
+        log.info("Updated employee profile with id={}", id);
+        log.debug(debugInfo.toString());
+
+        return updatedProfile;
     }
 
     @Transactional
@@ -77,5 +101,8 @@ public class EmployeeProfileService {
         }
 
         employeeProfileRepository.deleteById(id);
+
+        log.info("Deleted employee profile with id={}", id);
+        log.debug("Removed user association before deleting employee profile id={}", id);
     }
 }

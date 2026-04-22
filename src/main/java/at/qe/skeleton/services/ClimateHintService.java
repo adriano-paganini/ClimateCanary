@@ -33,7 +33,7 @@ public class ClimateHintService {
         ClimateHint savedClimateHint = climateHintRepository.save(climateHint);
 
         log.info("Created climate hint with id={}", savedClimateHint.getId());
-        log.debug("Climate hint details: id={}, metric={}, hintText={}",
+        log.debug("Created climate hint details: id={}, metric={}, hintText={}",
                 savedClimateHint.getId(),
                 savedClimateHint.getMetric(),
                 savedClimateHint.getHintText());

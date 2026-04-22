@@ -39,7 +39,7 @@ public class BuildingService {
         Building savedBuilding = buildingRepository.save(building);
 
         log.info("Created building with id={}", savedBuilding.getId());
-        log.debug("Building details: id={}, name={}, addressId={}",
+        log.debug("Created building details: id={}, name={}, addressId={}",
                 savedBuilding.getId(),
                 savedBuilding.getName(),
                 savedBuilding.getAddress() != null ? savedBuilding.getAddress().getId() : null);
