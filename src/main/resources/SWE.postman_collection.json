@@ -272,6 +272,16 @@
             "disableBodyPruning": true
           },
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "body": {
@@ -279,13 +289,14 @@
               "raw": ""
             },
             "url": {
-              "raw": "http://localhost:8080/department",
+              "raw": "http://localhost:8080/api/department",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "department"
               ]
             }
@@ -298,20 +309,31 @@
             "disableBodyPruning": true
           },
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"IT\",\n    \"addressId\": 5\n}"
+              "raw": ""
             },
             "url": {
-              "raw": "http://localhost:8080/department/1/rooms",
+              "raw": "http://localhost:8080/api/department/1/rooms",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "department",
                 "1",
                 "rooms"
@@ -326,6 +348,16 @@
             "disableBodyPruning": true
           },
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "body": {
@@ -333,13 +365,14 @@
               "raw": "{\n    \"name\": \"IT\",\n    \"addressId\": 5\n}"
             },
             "url": {
-              "raw": "http://localhost:8080/department/1/leader",
+              "raw": "http://localhost:8080/api/department/1/leader",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "department",
                 "1",
                 "leader"
@@ -356,7 +389,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzU5OTM0MzYsImV4cCI6MTc3NjA3OTgzNiwianRpIjoiYjNmMGZjODMtNWI1MC00NmM1LTlkZDYtOTI2NzJjYjliNmE4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiQURNSU4iXSwibmFtZSI6IkFkbWluIElzdHJhdG9yIiwidXNlcm5hbWUiOiJhZG1pbiJ9.PNJ5fBxi66Is-i-OnWaQD_3lUXsx6xd3YLUNUY-hIF_whUqoC07ZSJNOv-Hcmvm3Ts447NeNZPCOo_L6an-oMw",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
                   "type": "string"
                 }
               ]
@@ -373,13 +406,14 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/department",
+              "raw": "http://localhost:8080/api/department",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "department"
               ]
             }
@@ -390,20 +424,28 @@
           "name": "Get Department by id",
           "request": {
             "auth": {
-              "type": "noauth"
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
             },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/department/2",
+              "raw": "http://localhost:8080/api/department/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "department",
-                "2"
+                "1"
               ]
             }
           },
@@ -417,7 +459,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzYwMDUwMzksImV4cCI6MTc3NjA5MTQzOSwianRpIjoiMjQzODViYjgtNGVlZi00M2M0LTk5MjAtNTRiMTVjMmU1MDkyIiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.uTitZK8FDAmDm-KMbur7KIlt4U_d3vQ_sGt-ARI7U_tDAtS_c_wYWcU1C0cSNoL19q_GLxXV-1EFFzsCXMq80w",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
                   "type": "string"
                 }
               ]
@@ -434,15 +476,16 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/department/3",
+              "raw": "http://localhost:8080/api/department/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "department",
-                "3"
+                "1"
               ]
             }
           },
@@ -451,16 +494,27 @@
         {
           "name": "Delete a department",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/department/1",
+              "raw": "http://localhost:8080/api/department/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "department",
                 "1"
               ]
