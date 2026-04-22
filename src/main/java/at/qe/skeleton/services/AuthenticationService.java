@@ -7,6 +7,7 @@
 
 package at.qe.skeleton.services;
 
+import lombok.extern.slf4j.Slf4j;
 import at.qe.skeleton.configs.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -14,6 +15,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
@@ -32,7 +34,17 @@ public class AuthenticationService {
      * @return the authentication object
      */
     public Authentication authenticateLoginRequest(String username, String password) {
-        return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(username, password)
+        );
+
+        log.info("Authentication successful for username={}", username);
+        log.debug("Authentication details: username={}, authenticated={}, authorities={}",
+                username,
+                authentication.isAuthenticated(),
+                authentication.getAuthorities());
+
+        return authentication;
     }
 
     /**
@@ -41,7 +53,13 @@ public class AuthenticationService {
      * @return the generated JWT token
      */
     public String generateToken(Authentication authentication) {
-        return tokenProvider.generate(authentication);
-    }
+        String token = tokenProvider.generate(authentication);
 
+        log.info("Generated JWT token for username={}", authentication.getName());
+        log.debug("Token generated for principal={}, authorities={}",
+                authentication.getName(),
+                authentication.getAuthorities());
+
+        return token;
+    }
 }
