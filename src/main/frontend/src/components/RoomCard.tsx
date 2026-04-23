@@ -70,7 +70,7 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, measurements, violations }) =
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     borderRadius: '6px', zIndex: 10,
                 }}>
-                    <span style={{ fontWeight: 600, color: '#374151' }}>Keine Daten</span>
+                    <span style={{ fontWeight: 600, color: '#374151' }}>No Data</span>
                 </div>
             )}
 
@@ -87,7 +87,7 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, measurements, violations }) =
 
             {/* Temperature */}
             <div className="flex align-items-center gap-2 mb-2">
-                <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>Temperatur:</span>
+                <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>Temperature:</span>
                 <span style={{ fontWeight: 600 }}>
                     {latestTemp?.measurement !== undefined ? `${latestTemp.measurement} °C` : '—'}
                 </span>
@@ -95,7 +95,7 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, measurements, violations }) =
 
             {/* Air quality indicator */}
             <div className="flex align-items-center gap-2 mb-3">
-                <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>Luftqualität:</span>
+                <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>Air Quality:</span>
                 <div style={{
                     width: '18px', height: '18px', borderRadius: '3px',
                     backgroundColor: qualityColor, border: '1px solid rgba(0,0,0,0.12)',

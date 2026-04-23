@@ -11,7 +11,10 @@ export type MenuItemConfig = {
 
 export const menuConfig: MenuItemConfig[] = [
     {
-        label: 'Dashboard', icon: 'pi pi-home', route: ROUTES.DASHBOARD,
+        label: 'Home', icon: 'pi pi-home', route: ROUTES.HOME,
+    },
+    {
+        label: 'Dashboard', icon: 'pi pi-chart-bar', route: ROUTES.DASHBOARD,
         roles: [UserxRole.EMPLOYEE, UserxRole.DEPARTMENT_LEAD, UserxRole.MANAGEMENT],
     },
     {
