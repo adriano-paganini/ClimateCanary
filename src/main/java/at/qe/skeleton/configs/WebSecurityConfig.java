@@ -93,7 +93,7 @@ public class WebSecurityConfig {
                                                         .requestMatchers("/api/sensor").permitAll()
                                                         .requestMatchers("/api/sensor/query/latest").permitAll()
 
-                                                        .requestMatchers("/api/admin/**").hasAnyAuthority("ADMIN")
+                                                        .requestMatchers("/api/admin/**").hasAnyAuthority("SYSTEM_ADMIN")
                                                         .requestMatchers("/api/**").authenticated()
                                                         .anyRequest().authenticated())
                                         // Add the token authentication filter before the
