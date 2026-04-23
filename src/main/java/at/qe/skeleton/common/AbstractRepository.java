@@ -23,7 +23,7 @@ public interface AbstractRepository<T, ID extends Serializable> extends Reposito
     /**
      * Deletes an entity.
      *
-     * @param entity The entity to be deleted.
+     * @param entity The entity to be enabled.
      * @throws IllegalArgumentException If the given entity is (@literal null}.
      */
     void delete(T entity);

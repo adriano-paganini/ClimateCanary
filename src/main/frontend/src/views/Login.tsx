@@ -11,8 +11,14 @@ import {Password} from "primereact/password";
 
 import '../styles/Login.css';
 
+import {jwtDecode, JwtPayload} from "jwt-decode";
 import {useNavigate} from 'react-router-dom';
 import {useUser} from "../Contexts/AuthenticatedUserContext";
+import {BEARER_TOKEN_LOCAL_STORAGE_KEY} from "../config/config";
+import {UserxRole} from "../generated-skeleton-api";
+import {ROUTES} from "../utilities/routes.paths";
+
+type CustomJwtPayload = JwtPayload & { roles: string[] };
 
 /**
  * Login component
@@ -30,15 +36,22 @@ const Login = () => {
 
     const navigate = useNavigate();
 
+    const getRoleBasedRedirect = (): string => {
+        const token = localStorage.getItem(BEARER_TOKEN_LOCAL_STORAGE_KEY);
+        if (!token) return ROUTES.DASHBOARD;
+        try {
+            const decoded = jwtDecode<CustomJwtPayload>(token);
+            const roles = new Set(decoded.roles ?? []);
+            if (roles.has(UserxRole.SYSTEM_ADMIN))    return ROUTES.MANAGE_USERS;
+            if (roles.has(UserxRole.BUILDING_ADMIN))  return ROUTES.THRESHOLDS;
+            if (roles.has(UserxRole.MANAGEMENT))      return ROUTES.MANAGEMENT_DASHBOARD;
+            if (roles.has(UserxRole.DEPARTMENT_LEAD)) return ROUTES.DEPARTMENT_DASHBOARD;
+        } catch {
+            // fall through to default
+        }
+        return ROUTES.DASHBOARD; // EMPLOYEE default
+    };
 
-    /**
-     * Handle login event and send login request to the server
-     * @param e Form event
-     *
-     * Sets error eventMessage if login fails
-     * Redirects to home page if login is successful
-     *
-     */
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         if (loading) {
@@ -50,8 +63,7 @@ const Login = () => {
 
         try {
             await login({username, password});
-            // Redirect to home page
-            navigate("/", {replace: true});
+            navigate(getRoleBasedRedirect(), {replace: true});
         } catch (err: any) {
             const status = err?.response?.status as number | undefined;
             if (status === 401 || status === 403) {
@@ -61,9 +73,9 @@ const Login = () => {
             } else if (status === undefined) {
                 setError('No connection to server. Try again later');
             } else {
-                setError('Login failed. Please try again.')
+                setError('Login failed. Please try again.');
             }
-            console.error('Login failed:', error);
+            console.error('Login failed:', err);
         } finally {
             setPassword("");
             setLoading(false);
@@ -99,7 +111,7 @@ const Login = () => {
                         />
                         <label htmlFor="password">Password:</label>
                     </FloatLabel>
-                    <Button type="submit" label="Login" className="loginButton"/>
+                    <Button type="submit" label="Login" loading={loading} className="loginButton"/>
                 </form>
                 {error && <p style={{color: 'red', marginTop: 25}}>{error}</p>}
             </div>

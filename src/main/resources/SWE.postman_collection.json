@@ -1,9 +1,10 @@
 {
   "info": {
-    "_postman_id": "b5596062-a618-49dd-b00f-98abcfd41fe9",
+    "_postman_id": "73b30df1-e257-42d2-b06c-3328ccd8a612",
     "name": "SWE",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "_exporter_id": "40382670"
+    "_exporter_id": "54201523",
+    "_collection_link": "https://go.postman.co/collection/54201523-73b30df1-e257-42d2-b06c-3328ccd8a612?source=collection_link"
   },
   "item": [
     {
@@ -49,6 +50,16 @@
             "disableBodyPruning": true
           },
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "body": {
@@ -56,13 +67,14 @@
               "raw": "{\n    \"name\": \"IT\",\n    \"addressId\": 5\n}"
             },
             "url": {
-              "raw": "http://localhost:8080/building",
+              "raw": "http://localhost:8080/api/building",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "building"
               ]
             }
@@ -75,20 +87,31 @@
             "disableBodyPruning": true
           },
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"IT\",\n    \"addressId\": 5\n}"
+              "raw": ""
             },
             "url": {
-              "raw": "http://localhost:8080/building/1/rooms",
+              "raw": "http://localhost:8080/api/building/1/rooms",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "building",
                 "1",
                 "rooms"
@@ -100,6 +123,16 @@
         {
           "name": "Create building",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [],
             "body": {
@@ -112,13 +145,14 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/building",
+              "raw": "http://localhost:8080/api/building",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "building"
               ]
             }
@@ -129,18 +163,26 @@
           "name": "Get building by id",
           "request": {
             "auth": {
-              "type": "noauth"
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
             },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/building/1",
+              "raw": "http://localhost:8080/api/building/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "building",
                 "1"
               ]
@@ -152,13 +194,20 @@
           "name": "Update building",
           "request": {
             "auth": {
-              "type": "noauth"
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
             },
             "method": "PATCH",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"IT - Old\",\n    \"addressId\": 60\n}",
+              "raw": "{\n    \"name\": \"Still OLD IT\",\n    \"addressId\": 1\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -166,15 +215,16 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/building/2",
+              "raw": "http://localhost:8080/api/building/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "building",
-                "2"
+                "1"
               ]
             }
           },
@@ -183,16 +233,27 @@
         {
           "name": "Delete a building",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/building/1",
+              "raw": "http://localhost:8080/api/building/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "building",
                 "1"
               ]
@@ -211,6 +272,16 @@
             "disableBodyPruning": true
           },
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "body": {
@@ -218,13 +289,14 @@
               "raw": ""
             },
             "url": {
-              "raw": "http://localhost:8080/department",
+              "raw": "http://localhost:8080/api/department",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "department"
               ]
             }
@@ -237,20 +309,31 @@
             "disableBodyPruning": true
           },
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"IT\",\n    \"addressId\": 5\n}"
+              "raw": ""
             },
             "url": {
-              "raw": "http://localhost:8080/department/1/rooms",
+              "raw": "http://localhost:8080/api/department/1/rooms",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "department",
                 "1",
                 "rooms"
@@ -265,6 +348,16 @@
             "disableBodyPruning": true
           },
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "body": {
@@ -272,13 +365,14 @@
               "raw": "{\n    \"name\": \"IT\",\n    \"addressId\": 5\n}"
             },
             "url": {
-              "raw": "http://localhost:8080/department/1/leader",
+              "raw": "http://localhost:8080/api/department/1/leader",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "department",
                 "1",
                 "leader"
@@ -295,7 +389,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzU5OTM0MzYsImV4cCI6MTc3NjA3OTgzNiwianRpIjoiYjNmMGZjODMtNWI1MC00NmM1LTlkZDYtOTI2NzJjYjliNmE4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiQURNSU4iXSwibmFtZSI6IkFkbWluIElzdHJhdG9yIiwidXNlcm5hbWUiOiJhZG1pbiJ9.PNJ5fBxi66Is-i-OnWaQD_3lUXsx6xd3YLUNUY-hIF_whUqoC07ZSJNOv-Hcmvm3Ts447NeNZPCOo_L6an-oMw",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
                   "type": "string"
                 }
               ]
@@ -312,13 +406,14 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/department",
+              "raw": "http://localhost:8080/api/department",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "department"
               ]
             }
@@ -329,20 +424,28 @@
           "name": "Get Department by id",
           "request": {
             "auth": {
-              "type": "noauth"
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
             },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/department/2",
+              "raw": "http://localhost:8080/api/department/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "department",
-                "2"
+                "1"
               ]
             }
           },
@@ -356,7 +459,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzYwMDUwMzksImV4cCI6MTc3NjA5MTQzOSwianRpIjoiMjQzODViYjgtNGVlZi00M2M0LTk5MjAtNTRiMTVjMmU1MDkyIiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.uTitZK8FDAmDm-KMbur7KIlt4U_d3vQ_sGt-ARI7U_tDAtS_c_wYWcU1C0cSNoL19q_GLxXV-1EFFzsCXMq80w",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
                   "type": "string"
                 }
               ]
@@ -373,15 +476,16 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/department/3",
+              "raw": "http://localhost:8080/api/department/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "department",
-                "3"
+                "1"
               ]
             }
           },
@@ -390,16 +494,27 @@
         {
           "name": "Delete a department",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/department/1",
+              "raw": "http://localhost:8080/api/department/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "department",
                 "1"
               ]
@@ -419,7 +534,14 @@
           },
           "request": {
             "auth": {
-              "type": "noauth"
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
             },
             "method": "GET",
             "header": [],
@@ -428,13 +550,14 @@
               "raw": ""
             },
             "url": {
-              "raw": "http://localhost:8080/room",
+              "raw": "http://localhost:8080/api/room",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "room"
               ]
             }
@@ -444,6 +567,16 @@
         {
           "name": "Create Room",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [],
             "body": {
@@ -456,13 +589,14 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/room",
+              "raw": "http://localhost:8080/api/room",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "room"
               ]
             }
@@ -473,20 +607,28 @@
           "name": "Get Room by id",
           "request": {
             "auth": {
-              "type": "noauth"
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
             },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/room/2",
+              "raw": "http://localhost:8080/api/room/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "room",
-                "2"
+                "1"
               ]
             }
           },
@@ -496,13 +638,20 @@
           "name": "Update room",
           "request": {
             "auth": {
-              "type": "noauth"
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
             },
             "method": "PATCH",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"new updated building\",\n    \"addressId\": 60\n}",
+              "raw": "{\n    \"name\": \"new updated building\",\n    \"addressId\": 1\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -510,13 +659,14 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/building/1",
+              "raw": "http://localhost:8080/api/building/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "building",
                 "1"
               ]
@@ -527,18 +677,29 @@
         {
           "name": "Delete a room",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/room/3",
+              "raw": "http://localhost:8080/api/room/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "room",
-                "3"
+                "1"
               ]
             }
           },
@@ -552,16 +713,27 @@
         {
           "name": "Get addresses",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/address",
+              "raw": "http://localhost:8080/api/address",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "address"
               ]
             }
@@ -571,16 +743,27 @@
         {
           "name": "Get address by id",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/address/1",
+              "raw": "http://localhost:8080/api/address/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "address",
                 "1"
               ]
@@ -591,6 +774,16 @@
         {
           "name": "Create address",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "                                eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NjgwMTcsImV4cCI6MTc3Njk1NDQxNywianRpIjoiYjgxMzE0ZmYtMmI5NS00MThjLWI1Y2YtNWY2YTIxZjJhY2UwIiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.d-Tk7AYhKBy3QESrAHnDfF_4j2TRNPBLCbYlcP115CANbJhCzREcO-MUdCh2fEOZnXlu7SYROOoY8qyx5lYtnQ",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [],
             "body": {
@@ -603,13 +796,14 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/address",
+              "raw": "http://localhost:8080/api/address",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "address"
               ]
             }
@@ -619,6 +813,16 @@
         {
           "name": "Update address",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "PATCH",
             "header": [],
             "body": {
@@ -631,13 +835,14 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/address/1",
+              "raw": "http://localhost:8080/api/address/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "address",
                 "1"
               ]
@@ -648,6 +853,16 @@
         {
           "name": "Delete address",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
             "header": [],
             "body": {
@@ -655,15 +870,16 @@
               "raw": ""
             },
             "url": {
-              "raw": "http://localhost:8080/address/2",
+              "raw": "http://localhost:8080/api/address/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "address",
-                "2"
+                "1"
               ]
             }
           },
@@ -677,17 +893,28 @@
         {
           "name": "Get EmployeeProfiles",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/employeeProfile",
+              "raw": "http://localhost:8080/api/employeeprofile",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
-                "employeeProfile"
+                "api",
+                "employeeprofile"
               ]
             }
           },
@@ -696,17 +923,28 @@
         {
           "name": "Get EmployeeProfile by Id",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/employeeProfile/1",
+              "raw": "http://localhost:8080/api/employeeprofile/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
-                "employeeProfile",
+                "api",
+                "employeeprofile",
                 "1"
               ]
             }
@@ -716,11 +954,21 @@
         {
           "name": "Create EmployeeProfile",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"userxId\": 2,\n    \"departmentId\": 2,\n    \"roomId\": 2\n}",
+              "raw": "{\n    \"userxId\": 1,\n    \"departmentId\": 1,\n    \"roomId\": 1\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -728,14 +976,15 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/employeeProfile",
+              "raw": "http://localhost:8080/api/employeeprofile",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
-                "employeeProfile"
+                "api",
+                "employeeprofile"
               ]
             }
           },
@@ -744,6 +993,16 @@
         {
           "name": "Update EmployeeProfile",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "PATCH",
             "header": [],
             "body": {
@@ -756,14 +1015,15 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/address/1",
+              "raw": "http://localhost:8080/api/employeeprofile/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
-                "address",
+                "api",
+                "employeeprofile",
                 "1"
               ]
             }
@@ -773,6 +1033,16 @@
         {
           "name": "Delete EmployeeProfile",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
             "header": [],
             "body": {
@@ -780,15 +1050,16 @@
               "raw": ""
             },
             "url": {
-              "raw": "http://localhost:8080/employeeProfile/2",
+              "raw": "http://localhost:8080/api/employeeprofile/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
-                "employeeProfile",
-                "2"
+                "api",
+                "employeeprofile",
+                "1"
               ]
             }
           },
@@ -802,16 +1073,27 @@
         {
           "name": "Get Absences",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/absence",
+              "raw": "http://localhost:8080/api/absence",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "absence"
               ]
             }
@@ -821,16 +1103,27 @@
         {
           "name": "Get Absence by id",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/absence/1",
+              "raw": "http://localhost:8080/api/absence/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "absence",
                 "1"
               ]
@@ -841,6 +1134,16 @@
         {
           "name": "Create Absence",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [],
             "body": {
@@ -853,13 +1156,14 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/absence",
+              "raw": "http://localhost:8080/api/absence",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "absence"
               ]
             }
@@ -869,11 +1173,21 @@
         {
           "name": "Update Absence",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "PATCH",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"extra\": \"Primary Address\"\n}",
+              "raw": "{\n  \"startDate\": \"2026-04-22T19:11:35.668Z\",\n  \"endDate\": \"2026-04-22T19:11:35.668Z\",\n  \"absenceType\": \"HOLIDAY\",\n  \"userxId\": 1,\n  \"absenceStatus\": \"PLANNED\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -881,14 +1195,15 @@
               }
             },
             "url": {
-              "raw": "http://localhost:8080/address/1",
+              "raw": "http://localhost:8080/api/absence/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
-                "address",
+                "api",
+                "absence",
                 "1"
               ]
             }
@@ -898,6 +1213,16 @@
         {
           "name": "Delete Absence",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
             "header": [],
             "body": {
@@ -905,13 +1230,14 @@
               "raw": ""
             },
             "url": {
-              "raw": "http://localhost:8080/absence/1",
+              "raw": "http://localhost:8080/api/absence/1",
               "protocol": "http",
               "host": [
                 "localhost"
               ],
               "port": "8080",
               "path": [
+                "api",
                 "absence",
                 "1"
               ]
@@ -927,86 +1253,173 @@
         {
           "name": "Get all ClimateHints",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/climate-hints",
+              "raw": "http://localhost:8080/api/climatehint",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "8080",
-              "path": ["climate-hints"]
+              "path": [
+                "api",
+                "climatehint"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get ClimateHint by id",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/climate-hints/1",
+              "raw": "http://localhost:8080/api/climatehint/1",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "8080",
-              "path": ["climate-hints", "1"]
+              "path": [
+                "api",
+                "climatehint",
+                "1"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Create ClimateHint",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"metric\": \"TEMPERATURE\",\n  \"hintText\": \"Open windows when temperature is high\"\n}",
               "options": {
-                "raw": { "language": "json" }
+                "raw": {
+                  "language": "json"
+                }
               }
             },
             "url": {
-              "raw": "http://localhost:8080/climate-hints",
+              "raw": "http://localhost:8080/api/climatehint",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "8080",
-              "path": ["climate-hints"]
+              "path": [
+                "api",
+                "climatehint"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Update ClimateHint",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "PATCH",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"metric\": \"HUMIDITY\",\n  \"hintText\": \"Use a dehumidifier\"\n}",
+              "raw": "{\n  \"metric\": \"HUMIDITY\",\n  \"hintText\": \"Use a reverse-water-sprayer\"\n}",
               "options": {
-                "raw": { "language": "json" }
+                "raw": {
+                  "language": "json"
+                }
               }
             },
             "url": {
-              "raw": "http://localhost:8080/climate-hints/1",
+              "raw": "http://localhost:8080/api/climatehint/1",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "8080",
-              "path": ["climate-hints", "1"]
+              "path": [
+                "api",
+                "climatehint",
+                "1"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Delete ClimateHint",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4NzA4OTIsImV4cCI6MTc3Njk1NzI5MiwianRpIjoiYzY5ZTRlYTctOGM5Yy00ZmY5LTk5ODEtNjdjNjBmMjJhMWU1IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIkVNUExPWUVFIiwiU1lTVEVNX0FETUlOIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.6bpnqIb4sQtzMYi_asuCIzRjqel1R3q1BcJxTnIHjZIDhPXEVsLXlaSm8OpLWjIDw8q_04i4JHf7aMZuVskGtw",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/climate-hints/1",
+              "raw": "http://localhost:8080/api/climatehint/1",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "8080",
-              "path": ["climate-hints", "1"]
+              "path": [
+                "api",
+                "climatehint",
+                "1"
+              ]
             }
-          }
+          },
+          "response": []
         }
       ]
     },
@@ -1016,86 +1429,173 @@
         {
           "name": "Get all Thresholds",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/thresholds",
+              "raw": "http://localhost:8080/api/threshold",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "8080",
-              "path": ["thresholds"]
+              "path": [
+                "api",
+                "threshold"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get Threshold by id",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/thresholds/1",
+              "raw": "http://localhost:8080/api/threshold/1",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "8080",
-              "path": ["thresholds", "1"]
+              "path": [
+                "api",
+                "threshold",
+                "1"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Create Threshold",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"roomId\": 1,\n  \"metric\": \"TEMPERATURE\",\n  \"boundValue\": 25,\n  \"thresholdType\": \"MAX\",\n  \"climateHintIds\": [1, 2]\n}",
+              "raw": "{\n  \"roomId\": 1,\n  \"metric\": \"HUMIDITY\",\n  \"boundValue\": 0,\n  \"thresholdType\": \"LOWER\",\n  \"climateHintIds\": [\n    2\n  ]\n}",
               "options": {
-                "raw": { "language": "json" }
+                "raw": {
+                  "language": "json"
+                }
               }
             },
             "url": {
-              "raw": "http://localhost:8080/thresholds",
+              "raw": "http://localhost:8080/api/threshold",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "8080",
-              "path": ["thresholds"]
+              "path": [
+                "api",
+                "threshold"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Update Threshold",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "PATCH",
             "header": [],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"metric\": \"HUMIDITY\",\n  \"boundValue\": 60,\n  \"enabled\": true\n}",
               "options": {
-                "raw": { "language": "json" }
+                "raw": {
+                  "language": "json"
+                }
               }
             },
             "url": {
-              "raw": "http://localhost:8080/thresholds/1",
+              "raw": "http://localhost:8080/api/threshold/1",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "8080",
-              "path": ["thresholds", "1"]
+              "path": [
+                "api",
+                "threshold",
+                "1"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Delete Threshold",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/thresholds/1",
+              "raw": "http://localhost:8080/api/threshold/1",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "8080",
-              "path": ["thresholds", "1"]
+              "path": [
+                "api",
+                "threshold",
+                "1"
+              ]
             }
-          }
+          },
+          "response": []
         }
       ]
     },
@@ -1105,88 +1605,316 @@
         {
           "name": "Get all Violations",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/violations",
+              "raw": "http://localhost:8080/api/thresholdviolation",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "8080",
-              "path": ["violations"]
+              "path": [
+                "api",
+                "thresholdviolation"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Get Violation by id",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/violations/1",
+              "raw": "http://localhost:8080/api/thresholdviolation/1",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "8080",
-              "path": ["violations", "1"]
+              "path": [
+                "api",
+                "thresholdviolation",
+                "1"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Create Violation",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"metric\": \"TEMPERATURE\",\n  \"value\": 32,\n  \"startTime\": \"2026-04-13T10:00:00\",\n  \"thresholdId\": 1,\n  \"roomId\": 1,\n  \"measurementIds\": []\n}",
               "options": {
-                "raw": { "language": "json" }
+                "raw": {
+                  "language": "json"
+                }
               }
             },
             "url": {
-              "raw": "http://localhost:8080/violations",
+              "raw": "http://localhost:8080/api/thresholdviolation",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "8080",
-              "path": ["violations"]
+              "path": [
+                "api",
+                "thresholdviolation"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Update Violation",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "PATCH",
             "header": [],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"value\": 28,\n  \"violationStatus\": \"RESOLVED\",\n  \"endTime\": \"2026-04-13T11:00:00\"\n}",
               "options": {
-                "raw": { "language": "json" }
+                "raw": {
+                  "language": "json"
+                }
               }
             },
             "url": {
-              "raw": "http://localhost:8080/violations/1",
+              "raw": "http://localhost:8080/api/thresholdviolation/1",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "8080",
-              "path": ["violations", "1"]
+              "path": [
+                "api",
+                "thresholdviolation",
+                "1"
+              ]
             }
-          }
+          },
+          "response": []
         },
         {
           "name": "Delete Violation",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "http://localhost:8080/violations/1",
+              "raw": "http://localhost:8080/api/thresholdviolation/1",
               "protocol": "http",
-              "host": ["localhost"],
+              "host": [
+                "localhost"
+              ],
               "port": "8080",
-              "path": ["violations", "1"]
+              "path": [
+                "api",
+                "thresholdviolation",
+                "1"
+              ]
             }
-          }
+          },
+          "response": []
         }
       ]
+    },
+    {
+      "name": "Measurement",
+      "item": [
+        {
+          "name": "Get all measurements",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/measurement",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "measurement"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get by Id",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/measurement/1",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "measurement",
+                "1"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get latest from Room",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "eyJ0eXBlIjoiSldUIiwiYWxnIjoiSFM1MTIifQ.eyJpYXQiOjE3NzY4ODg5MjAsImV4cCI6MTc3Njk3NTMyMCwianRpIjoiZjU0YTMxMmEtNTM1MS00NWEzLThiMmMtYTY0ZDQ2NTFkMjU4IiwiaXNzIjoic2tlbC1hcGkiLCJhdWQiOlsic2tlbC11aSJdLCJzdWIiOiJhZG1pbiIsInJvbGVzIjpbIlNZU1RFTV9BRE1JTiIsIkVNUExPWUVFIl0sIm5hbWUiOiJBZG1pbiBJc3RyYXRvciIsInVzZXJuYW1lIjoiYWRtaW4ifQ.9_42sIYGzs8yGNHBvG_FF8nCVpLbQDp-AM77Js-mrTCMURQAarSe58iSRoZ0LcV6ywYtJ_T-_loc21xQwsO08g",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "http://localhost:8080/api/measurement/room/1/latest",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8080",
+              "path": [
+                "api",
+                "measurement",
+                "room",
+                "1",
+                "latest"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
     }
   ],
   "variable": [
