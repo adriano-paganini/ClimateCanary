@@ -13,6 +13,7 @@ import {UserxRole} from "./generated-skeleton-api";
 import {ROUTES} from "./utilities/routes.paths";
 
 const EmployeeDashboard = React.lazy(() => import('./views/EmployeeDashboard'));
+const RoomHistory = React.lazy(() => import('./views/RoomHistory'));
 
 const App: React.FC = () => {
     return (
@@ -28,6 +29,7 @@ const App: React.FC = () => {
                             <Route path={HomePageRoute.url} Component={HomePageRoute.component}/>
                             <Route path={LogoutsRoute.url} Component={LogoutsRoute.component}/>
                             <Route path={ROUTES.DASHBOARD} Component={EmployeeDashboard}/>
+                            <Route path={ROUTES.DASHBOARD_HISTORY} Component={RoomHistory}/>
                         </Route>
 
                         {/* Building Admin and System Admin only */}

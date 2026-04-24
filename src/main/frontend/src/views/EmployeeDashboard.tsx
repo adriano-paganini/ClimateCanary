@@ -1,5 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Message } from 'primereact/message';
 import 'primeicons/primeicons.css';
@@ -7,7 +6,6 @@ import 'primeicons/primeicons.css';
 import NavbarComponent from '../components/NavbarComponent';
 import RoomCard from '../components/RoomCard';
 import { useUser } from '../Contexts/AuthenticatedUserContext';
-import { ROUTES } from '../utilities/routes.paths';
 import { EmployeeProfileService } from '../services/EmployeeProfileService';
 import { MeasurementService } from '../services/MeasurementService';
 import { RoomService } from '../services/RoomService';
@@ -22,19 +20,23 @@ import {
     ThresholdViolationDTOViolationStatusEnum,
 } from '../generated-skeleton-api';
 
+type TabId = 'office' | 'common';
+
+const TABS: { id: TabId; label: string; icon: string }[] = [
+    { id: 'office', label: 'My Office',   icon: 'pi pi-briefcase' },
+    { id: 'common', label: 'Common Areas', icon: 'pi pi-building' },
+];
+
 const EmployeeDashboard: React.FC = () => {
     const { currentUser } = useUser();
-    const navigate = useNavigate();
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<TabId>('office');
     const [officeRoom, setOfficeRoom] = useState<RoomDTO | null>(null);
     const [commonRooms, setCommonRooms] = useState<RoomDTO[]>([]);
     const [measurementsByRoom, setMeasurementsByRoom] = useState<Record<number, MeasurementDTO[]>>({});
     const [violationsByRoom, setViolationsByRoom] = useState<Record<number, ThresholdViolationDTO[]>>({});
-
-    const officeRef = useRef<HTMLDivElement>(null);
-    const commonRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const load = async () => {
@@ -105,6 +107,10 @@ const EmployeeDashboard: React.FC = () => {
         void load();
     }, []);
 
+    const handleTabClick = (tab: TabId) => {
+        setActiveTab(tab);
+    };
+
     const totalActiveViolations = Object.values(violationsByRoom).flat().length;
 
     if (loading) {
@@ -132,51 +138,58 @@ const EmployeeDashboard: React.FC = () => {
     return (
         <div>
             <NavbarComponent />
-            <div className="flex" style={{ minHeight: 'calc(100vh - 60px)' }}>
 
-                {/* Sidebar */}
-                <nav style={{
-                    width: '200px',
-                    flexShrink: 0,
-                    borderRight: '1px solid #e5e7eb',
-                    padding: '1.5rem 0',
-                    backgroundColor: '#f9fafb',
+            <div style={{ padding: '1.5rem 2rem 0' }}>
+                <h2 style={{ margin: '0 0 1rem', color: '#111827' }}>
+                    Welcome{currentUser?.firstName ? `, ${currentUser.firstName}` : ''}
+                </h2>
+
+                {totalActiveViolations > 0 && (
+                    <div style={{ marginBottom: '1rem' }}>
+                        <Message
+                            severity="warn"
+                            text={`${totalActiveViolations} active threshold violation${totalActiveViolations > 1 ? 's' : ''} in your rooms.`}
+                        />
+                    </div>
+                )}
+
+                {/* Horizontal tab bar */}
+                <div style={{
+                    display: 'flex',
+                    borderBottom: '2px solid #e5e7eb',
+                    gap: '0.25rem',
                 }}>
-                    <SidebarItem
-                        label="Office"
-                        onClick={() => officeRef.current?.scrollIntoView({ behavior: 'smooth' })}
-                        active
-                    />
-                    <SidebarItem
-                        label="Common Areas"
-                        onClick={() => commonRef.current?.scrollIntoView({ behavior: 'smooth' })}
-                    />
-                    <SidebarItem
-                        label="Absences"
-                        onClick={() => navigate(ROUTES.ABSENCE)}
-                    />
-                </nav>
+                    {TABS.map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => handleTabClick(tab.id)}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.4rem',
+                                padding: '0.6rem 1.25rem',
+                                border: 'none',
+                                background: 'transparent',
+                                cursor: 'pointer',
+                                fontSize: '0.95rem',
+                                fontWeight: activeTab === tab.id ? 600 : 400,
+                                color: activeTab === tab.id ? '#0369a1' : '#374151',
+                                borderBottom: activeTab === tab.id ? '2px solid #0369a1' : '2px solid transparent',
+                                marginBottom: '-2px',
+                            }}
+                        >
+                            <i className={tab.icon} style={{ fontSize: '0.9rem' }} />
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
 
-                {/* Main content */}
-                <main style={{ flex: 1, padding: '1.5rem 2rem', overflowY: 'auto' }}>
-                    <h2 className="mt-0 mb-3" style={{ color: '#111827' }}>
-                        Welcome{currentUser?.firstName ? `, ${currentUser.firstName}` : ''}
-                    </h2>
-
-                    {totalActiveViolations > 0 && (
-                        <div className="mb-4">
-                            <Message
-                                severity="warn"
-                                text={`${totalActiveViolations} active threshold violation${totalActiveViolations > 1 ? 's' : ''} in your rooms.`}
-                            />
-                        </div>
-                    )}
-
-                    <section ref={officeRef} className="mb-5">
-                        <h3 className="mt-0 mb-3" style={{ color: '#374151' }}>
-                            <i className="pi pi-building mr-2" />
-                            My Office
-                        </h3>
+            {/* Content */}
+            <div style={{ padding: '2rem' }}>
+                {activeTab === 'office' && (
+                    <section>
+                        <h3 style={{ marginTop: 0, marginBottom: '1rem', color: '#374151' }}>My Office</h3>
                         {officeRoom ? (
                             <RoomCard
                                 room={officeRoom}
@@ -187,12 +200,11 @@ const EmployeeDashboard: React.FC = () => {
                             <p style={{ color: '#6b7280' }}>No office assigned.</p>
                         )}
                     </section>
+                )}
 
-                    <section ref={commonRef}>
-                        <h3 className="mt-0 mb-3" style={{ color: '#374151' }}>
-                            <i className="pi pi-th-large mr-2" />
-                            Common Areas
-                        </h3>
+                {activeTab === 'common' && (
+                    <section>
+                        <h3 style={{ marginTop: 0, marginBottom: '1rem', color: '#374151' }}>Common Areas</h3>
                         {commonRooms.length === 0 ? (
                             <p style={{ color: '#6b7280' }}>No common areas in your department.</p>
                         ) : (
@@ -208,37 +220,10 @@ const EmployeeDashboard: React.FC = () => {
                             </div>
                         )}
                     </section>
-                </main>
+                )}
             </div>
         </div>
     );
 };
-
-interface SidebarItemProps {
-    label: string;
-    onClick: () => void;
-    active?: boolean;
-}
-
-const SidebarItem: React.FC<SidebarItemProps> = ({ label, onClick, active = false }) => (
-    <button
-        onClick={onClick}
-        style={{
-            display: 'block',
-            width: '100%',
-            textAlign: 'left',
-            padding: '0.75rem 1.25rem',
-            border: 'none',
-            background: active ? '#e0f2fe' : 'transparent',
-            borderLeft: active ? '3px solid #0ea5e9' : '3px solid transparent',
-            cursor: 'pointer',
-            fontSize: '0.95rem',
-            fontWeight: active ? 600 : 400,
-            color: active ? '#0369a1' : '#374151',
-        }}
-    >
-        {label}
-    </button>
-);
 
 export default EmployeeDashboard;

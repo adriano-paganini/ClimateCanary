@@ -60,57 +60,83 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, measurements, violations }) =
     return (
         <Card
             onClick={handleClick}
-            style={{ position: 'relative', cursor: 'pointer', minWidth: '200px' }}
-            className="shadow-2 hover:shadow-4"
+            style={{
+                position: 'relative',
+                cursor: 'pointer',
+                minWidth: '260px',
+                border: '1px solid #d1d5db',
+                borderRadius: '10px',
+            }}
+            className="hover:shadow-4"
         >
             {noData && (
                 <div style={{
                     position: 'absolute', inset: 0,
                     backgroundColor: 'rgba(156,163,175,0.65)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    borderRadius: '6px', zIndex: 10,
+                    borderRadius: '10px', zIndex: 10,
                 }}>
-                    <span style={{ fontWeight: 600, color: '#374151' }}>No Data</span>
+                    <span style={{ fontWeight: 600, color: '#374151', fontSize: '0.95rem' }}>No Data</span>
                 </div>
             )}
 
-            {/* Header row: name + warning badge */}
-            <div className="flex justify-content-between align-items-center mb-3">
-                <span style={{ fontWeight: 700, fontSize: '1rem' }}>{room.name ?? '—'}</span>
-                {activeViolations.length > 0 && (
-                    <span className="flex align-items-center gap-1" style={{ color: '#ef4444' }}>
-                        <i className="pi pi-exclamation-triangle mr-1" />
-                        <Badge value={activeViolations.length} severity="danger" />
-                    </span>
-                )}
-            </div>
-
-            {/* Temperature */}
-            <div className="flex align-items-center gap-2 mb-2">
-                <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>Temperature:</span>
-                <span style={{ fontWeight: 600 }}>
-                    {latestTemp?.measurement !== undefined ? `${latestTemp.measurement} °C` : '—'}
+            {/* Header: room name + violation badge */}
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '1rem',
+                paddingBottom: '0.75rem',
+                borderBottom: '1px solid #f3f4f6',
+            }}>
+                <span style={{ fontWeight: 700, fontSize: '1.05rem', color: '#111827' }}>
+                    {room.name ?? '—'}
                 </span>
-            </div>
-
-            {/* Air quality indicator */}
-            <div className="flex align-items-center gap-2 mb-3">
-                <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>Air Quality:</span>
-                <div style={{
-                    width: '18px', height: '18px', borderRadius: '3px',
-                    backgroundColor: qualityColor, border: '1px solid rgba(0,0,0,0.12)',
-                    flexShrink: 0,
-                }} />
-                {latestGas?.measurement !== undefined && (
-                    <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>
-                        {latestGas.measurement}
+                {activeViolations.length > 0 && (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#ef4444' }}>
+                        <i className="pi pi-exclamation-triangle" style={{ fontSize: '1.3rem' }} />
+                        <Badge value={activeViolations.length} severity="danger" size="large" />
                     </span>
                 )}
             </div>
 
-            {/* Navigation arrow */}
-            <div className="flex justify-content-end">
-                <i className="pi pi-arrow-right" style={{ color: '#9ca3af' }} />
+            {/* Metrics */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#6b7280', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <i className="pi pi-sun mr-2" />
+                        Temperature
+                    </span>
+                    <span style={{ fontWeight: 600, color: '#111827' }}>
+                        {latestTemp?.measurement !== undefined ? `${latestTemp.measurement} °C` : '—'}
+                    </span>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#6b7280', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <i className="pi pi-cloud mr-2" />
+                        Air Quality
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div style={{
+                            width: '14px', height: '14px', borderRadius: '3px',
+                            backgroundColor: qualityColor,
+                            border: '1px solid rgba(0,0,0,0.15)',
+                            flexShrink: 0,
+                        }} />
+                        {latestGas?.measurement !== undefined && (
+                            <span style={{ fontWeight: 600, color: '#111827', fontSize: '0.9rem' }}>
+                                {latestGas.measurement}
+                            </span>
+                        )}
+                    </span>
+                </div>
+            </div>
+
+            {/* Footer: link hint */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', color: '#9ca3af', fontSize: '0.8rem', gap: '0.5rem' }}>
+                <span>View history</span>
+                <i className="pi pi-arrow-circle-right" style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center' }} />
             </div>
         </Card>
     );
