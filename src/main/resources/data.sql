@@ -158,3 +158,126 @@ INSERT INTO THRESHOLDVIOLATIONS (
              'TEMPERATURE',
              'RESOLVED'
          );
+
+
+-- Common-areas room (same building + department as Room 1)
+INSERT INTO ROOMS (ACTIVE, MIN_OCCUPANCY, BUILDING_ID, DEPARTMENT_ID, NAME, ROOM_TYPE)
+VALUES (
+           TRUE,
+           0,
+           (SELECT ID FROM BUILDINGS WHERE NAME = 'Still OLD IT'),
+           (SELECT ID FROM DEPARTMENTS WHERE NAME = 'Research (2)'),
+           'Common Area 1',
+           'COMMON_AREAS'
+       );
+
+-- EmployeeProfiles for user1 and user2
+--    Assumes users with USERNAME = 'user1' and 'user2' exist in USERX.
+INSERT INTO EMPLOYEEPROFILE (USERX_ID, DEPARTMENT_ID, ROOM_ID)
+VALUES (
+           (SELECT ID FROM USERX WHERE USERNAME = 'user1'),
+           (SELECT ID FROM DEPARTMENTS WHERE NAME = 'Research (2)'),
+           (SELECT ID FROM ROOMS WHERE NAME = 'Room 1')
+       );
+
+INSERT INTO EMPLOYEEPROFILE (USERX_ID, DEPARTMENT_ID, ROOM_ID)
+VALUES (
+           (SELECT ID FROM USERX WHERE USERNAME = 'user2'),
+           (SELECT ID FROM DEPARTMENTS WHERE NAME = 'Research (2)'),
+           (SELECT ID FROM ROOMS WHERE NAME = 'Common Area 1')
+       );
+
+-- RaspberryPi + SensorStation needed as FK for Measurements
+INSERT INTO RASPBERRYPIS (HOST_NAME, IP_ADDRESS, DEVICE_STATUS, ROOM_ID)
+VALUES (
+           'rpi-room1',
+           '192.168.1.10',
+           'ONLINE',
+           (SELECT ID FROM ROOMS WHERE NAME = 'Room 1')
+       );
+
+INSERT INTO SENSORSTATIONS (NAME, DEVICE_STATUS, MEASUREMENTS_PER_SEC, RASPBERRY_PI_ID, ROOM_ID)
+VALUES (
+           'Station A',
+           'ONLINE',
+           1.0,
+           (SELECT ID FROM RASPBERRYPIS WHERE HOST_NAME = 'rpi-room1'),
+           (SELECT ID FROM ROOMS WHERE NAME = 'Room 1')
+       );
+
+-- Measurements for Room 1 (gives Room Cards actual data to display)
+INSERT INTO MEASUREMENT (TIMESTAMP, MEASUREMENT, METRIC, ROOM_ID, SENSORSTATION_ID)
+VALUES (
+           TIMESTAMP '2026-04-23 08:00:00',
+           65,
+           'HUMIDITY',
+           (SELECT ID FROM ROOMS WHERE NAME = 'Room 1'),
+           (SELECT ID FROM SENSORSTATIONS WHERE NAME = 'Station A')
+       );
+
+INSERT INTO MEASUREMENT (TIMESTAMP, MEASUREMENT, METRIC, ROOM_ID, SENSORSTATION_ID)
+VALUES (
+           TIMESTAMP '2026-04-23 08:00:00',
+           22,
+           'TEMPERATURE',
+           (SELECT ID FROM ROOMS WHERE NAME = 'Room 1'),
+           (SELECT ID FROM SENSORSTATIONS WHERE NAME = 'Station A')
+       );
+
+-- Active ThresholdViolation (triggers the warning badge on Room Cards)
+--    Re-uses the existing HUMIDITY threshold on Room 1.
+INSERT INTO THRESHOLDVIOLATIONS (
+    END_TIME,
+    ROOM_ID,
+    START_TIME,
+    THRESHOLD_ID,
+    "value",
+    METRIC,
+    VIOLATION_STATUS
+) VALUES (
+             NULL,
+             (SELECT ID FROM ROOMS WHERE NAME = 'Room 1'),
+             TIMESTAMP '2026-04-23 07:45:00',
+             (SELECT ID FROM THRESHOLDS
+              WHERE ROOM_ID = (SELECT ID FROM ROOMS WHERE NAME = 'Room 1')
+                AND METRIC = 'HUMIDITY'
+                AND BOUND_VALUE = 60),
+             65,
+             'HUMIDITY',
+             'ACTIVE'
+         );
+
+INSERT INTO MEASUREMENT (TIMESTAMP, MEASUREMENT, METRIC, ROOM_ID, SENSORSTATION_ID)
+VALUES (
+           TIMESTAMP '2026-04-23 08:00:00',
+           400,
+           'GAS',
+           (SELECT ID FROM ROOMS WHERE NAME = 'Room 1'),
+           (SELECT ID FROM SENSORSTATIONS WHERE NAME = 'Station A')
+       );
+
+INSERT INTO RASPBERRYPIS (HOST_NAME, IP_ADDRESS, DEVICE_STATUS, ROOM_ID)
+VALUES (
+           'rpi-common1',
+           '192.168.1.11',
+           'ONLINE',
+           (SELECT ID FROM ROOMS WHERE NAME = 'Common Area 1')
+       );
+
+INSERT INTO SENSORSTATIONS (NAME, DEVICE_STATUS, MEASUREMENTS_PER_SEC, RASPBERRY_PI_ID, ROOM_ID)
+VALUES (
+           'Station B',
+           'ONLINE',
+           1.0,
+           (SELECT ID FROM RASPBERRYPIS WHERE HOST_NAME = 'rpi-common1'),
+           (SELECT ID FROM ROOMS WHERE NAME = 'Common Area 1')
+       );
+
+INSERT INTO MEASUREMENT (TIMESTAMP, MEASUREMENT, METRIC, ROOM_ID, SENSORSTATION_ID)
+VALUES (
+           TIMESTAMP '2026-04-23 08:00:00',
+           21,
+           'TEMPERATURE',
+           (SELECT ID FROM ROOMS WHERE NAME = 'Common Area 1'),
+           (SELECT ID FROM SENSORSTATIONS WHERE NAME = 'Station B')
+       );
