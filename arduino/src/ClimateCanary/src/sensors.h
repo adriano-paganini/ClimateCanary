@@ -1,19 +1,22 @@
 #ifndef SENSORS_H
 #define SENSORS_H
+
 #include <Arduino.h>
-#include "Adafruit_BME680.h"
+#include <Wire.h>
+#include "bsec.h"
 #define SEALEVELPRESSURE_HPA (1013.25)
 
-extern Adafruit_BME680 bme;
+extern Bsec bme;
 
 struct SensorData {
-    float temperature;
-    float humidity;
-    float pressure;
-    float gas_resistance;
+  float temperature;
+  float humidity;
+  float iaq;
+  float gas_resistance;
+  uint8_t iaq_accuracy;
 };
 
 bool setupSensors();
 SensorData readSensors();
-
+bool bmeAsyncReadingReady();
 #endif

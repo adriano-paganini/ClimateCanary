@@ -35,7 +35,7 @@ struct __attribute__((packed)) DeviceAuthenticationPacket {
 
 struct __attribute__((packed)) SensorDataPacket {
   uint32_t timestamp;
-  float pressure;
+  float iaq;
   float temperature;
   float humidity;
   uint32_t gasResistance;
