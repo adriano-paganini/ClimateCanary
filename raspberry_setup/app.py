@@ -113,40 +113,25 @@ async def verify_pi(piId: int):
     exists = piId == config.PI_ID
     return {"exists": exists, "pi_id": piId}
 
+
+class SetupPayload(BaseModel):
+    device_id:            int
+    measurement_interval: int = 10
+
+@app.post("/api/pi/setup/{address}")
+async def setup_station_by_address(address: str, payload: SetupPayload):
+    from setup_flow import run_setup
+    result = await run_setup(
+        device_id=payload.device_id,
+        measurement_interval=payload.measurement_interval,
+        address=address,
+    )
+    return result
+
 @app.get("/api/scan")
 async def scan():
     addresses = await scan_for_stations()
     return {"stations": addresses}
-
-@app.post("/api/pi/connect/{address}")
-async def connect_station(address: str):
-    try:
-        async with BleakClient(address, timeout=20.0) as client:
-            pi_id_bytes = config.PI_ID.to_bytes(8, byteorder='little')
-            await client.write_gatt_char(config.TRUSTED_RPI_UUID, pi_id_bytes)
-            print(f"[BLE] wrote TrustedRpiId={config.PI_ID} to {address}")
-
-        async with aiohttp.ClientSession() as session:
-            payload = {
-                "bluetoothAddress": address,
-                "piId":             config.PI_ID,
-                "roomId":           config.ROOM_ID,
-            }
-            async with session.post(
-                f"{SPRING_BOOT_URL}/sensorstation/register",
-                json=payload,
-                timeout=aiohttp.ClientTimeout(total=5)
-            ) as resp:
-                data = await resp.json()
-                config.SENSOR_STATION_ID = data["id"]
-                config.DEVICE_ADDR = address
-                print(f"[HTTP] station registered: id={config.SENSOR_STATION_ID}")
-                print(f"[HTTP] backend notified → {resp.status}")
-
-        return {"status": "ok", "address": address}
-    except Exception as e:
-        print(f"[BLE] connect failed for {address}: {e}")
-        return {"status": "error", "reason": str(e)}
 
 @app.post("/api/pi/{piId}/occupancy")
 async def receive_occupancy(piId: int, payload: OccupancyPayload):
