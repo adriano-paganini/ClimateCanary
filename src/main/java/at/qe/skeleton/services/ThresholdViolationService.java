@@ -5,6 +5,7 @@ import at.qe.skeleton.dtos.ThresholdViolationCreateDTO;
 import at.qe.skeleton.dtos.ThresholdViolationUpdateDTO;
 import at.qe.skeleton.mappers.ThresholdViolationCreateMapper;
 import at.qe.skeleton.models.ThresholdViolation;
+import at.qe.skeleton.models.ViolationStatus;
 import at.qe.skeleton.repositories.ThresholdViolationRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,8 +30,16 @@ public class ThresholdViolationService {
         this.thresholdViolationCreateMapper = thresholdViolationCreateMapper;
     }
 
-    public List<ThresholdViolation>  findAll() {
-        return thresholdViolationRepository.findAll();
+    public List<ThresholdViolation>  findAll(
+            ViolationStatus status,
+            Long roomId,
+            Long departmentId
+    ) {
+        if (status == null && roomId == null && departmentId == null) {
+            return thresholdViolationRepository.findAll();
+        }
+
+        return thresholdViolationRepository.search(status, roomId, departmentId);
     }
 
     public ThresholdViolation findById(Long id) {
