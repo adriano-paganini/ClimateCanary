@@ -1,14 +1,24 @@
 from fastapi import FastAPI
 import aiohttp
 import asyncio
-import uvicorn
+import yaml
+from pathlib import Path
+from pydantic import BaseModel
+from bleak import BleakClient
+
+import config
 from config import SPRING_BOOT_URL
 from ble_scanner import scan_for_stations
-from pydantic import BaseModel
+from state import set_privacy_mode
 
 app = FastAPI()
 
 http_session = None
+
+# geteilter Zustand mit main.py
+stations_event: asyncio.Event = asyncio.Event()
+selected_stations: list[dict] = []
+
 
 class ConfigPayload(BaseModel):
     id: int
@@ -17,24 +27,30 @@ class ConfigPayload(BaseModel):
 class OccupancyPayload(BaseModel):
     id: int
     roomId: int
-    belowMinOccupancy: bool
+    privacy_mode: bool
+
+class StationEntry(BaseModel):
+    address:   str
+    device_id: int
+    room_name: str
+
+class StationsPayload(BaseModel):
+    stations: list[StationEntry]
+
 
 @app.on_event("startup")
 async def startup_event():
-    """Wird aufgerufen, wenn FastAPI startet."""
     global http_session
     http_session = aiohttp.ClientSession()
     print("[SYS] HTTP Client Session gestartet.")
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """Wird aufgerufen, wenn FastAPI beendet wird."""
     global http_session
     if http_session:
         await http_session.close()
         print("[SYS] HTTP Client Session geschlossen.")
 
-# --- ENDPUNKTE ---
 
 @app.get("/")
 async def read_root():
@@ -58,48 +74,37 @@ async def give_string_to_backend():
 
 @app.get("/trigger-backend-call")
 async def trigger_external_call():
-    """Sendet einen Status-Check an das Spring Boot Backend."""
     global http_session
-
     if http_session is None:
         return {"status": "fehler", "error": "HTTP Session nicht initialisiert"}
-
     try:
         payload = {"message": "Aktueller Status vom Pi: Betriebsbereit"}
-
         async with http_session.post(
             SPRING_BOOT_URL,
             json=payload,
             timeout=aiohttp.ClientTimeout(total=5)
         ) as response:
-
             antwort_text = await response.text()
-
             return {
                 "status": "erfolgreich",
                 "http_code": response.status,
                 "backend_antwort": antwort_text
             }
-
     except Exception as e:
         return {"status": "fehler", "error": str(e)}
-
 
 @app.post("/api/pi/{piId}/config")
 async def receive_config(piId: int, payload: ConfigPayload):
     if Path("conf.yml").exists() and piId != config.PI_ID:
-            return {"status": "error", "reason": "ID mismatch"}
-
+        return {"status": "error", "reason": "ID mismatch"}
     cfg = {
-            "pi": {
-                "id": payload.id,
-                "room_id": payload.room_id
-            }
+        "pi": {
+            "id": payload.id,
+            "room_id": payload.room_id
         }
-
+    }
     Path("conf.yml").write_text(yaml.dump(cfg))
     config.load_config("conf.yml")
-
     print(f"[CFG] config written and reloaded: pi_id={config.PI_ID}, room_id={config.ROOM_ID}")
     return {"status": "ok", "pi_id": config.PI_ID}
 
@@ -118,7 +123,7 @@ async def connect_station(address: str):
     try:
         async with BleakClient(address, timeout=20.0) as client:
             pi_id_bytes = config.PI_ID.to_bytes(8, byteorder='little')
-            await client.write_gatt_char(TRUSTED_RPI_UUID, pi_id_bytes)
+            await client.write_gatt_char(config.TRUSTED_RPI_UUID, pi_id_bytes)
             print(f"[BLE] wrote TrustedRpiId={config.PI_ID} to {address}")
 
         async with aiohttp.ClientSession() as session:
@@ -139,23 +144,43 @@ async def connect_station(address: str):
                 print(f"[HTTP] backend notified → {resp.status}")
 
         return {"status": "ok", "address": address}
-
     except Exception as e:
         print(f"[BLE] connect failed for {address}: {e}")
         return {"status": "error", "reason": str(e)}
-
 
 @app.post("/api/pi/{piId}/occupancy")
 async def receive_occupancy(piId: int, payload: OccupancyPayload):
     if piId != config.PI_ID:
         return {"status": "error", "reason": "ID mismatch"}
 
-    config.BELOW_MIN_OCCUPANCY = payload.belowMinOccupancy
+    set_privacy_mode(payload.privacy_mode)
+    config.PRIVACY_MODE = payload.privacy_mode
 
-    await db.execute(
-        "INSERT OR REPLACE INTO pi_state (key, value) VALUES ('below_min_occupancy', ?)",
-        ("1" if payload.belowMinOccupancy else "0",)
-    )
-    await db.commit()
+    print(f"[CFG] privacy_mode={payload.privacy_mode}")
+    return {"status": "ok", "privacy_mode": config.PRIVACY_MODE}
 
-    return {"status": "ok", "below_min_occupancy": config.BELOW_MIN_OCCUPANCY}
+
+@app.post("/api/pi/{piId}/stations")
+async def receive_stations(piId: int, payload: StationsPayload):
+    """
+    Wird vom Backend aufgerufen sobald der User Stationen ausgewählt hat.
+    Weckt main.py über stations_event auf.
+
+    Body:
+    {
+      "stations": [
+        { "address": "7C:DE:CE:44:CC:B1", "device_id": 123456, "room_name": "Lab1" }
+      ]
+    }
+    """
+    if piId != config.PI_ID:
+        return {"status": "error", "reason": "ID mismatch"}
+
+    global selected_stations
+    selected_stations = [s.model_dump() for s in payload.stations]
+    print(f"[APP] received {len(selected_stations)} station(s) from backend.")
+
+    if stations_event:
+        stations_event.set()
+
+    return {"status": "ok", "count": len(selected_stations)}
