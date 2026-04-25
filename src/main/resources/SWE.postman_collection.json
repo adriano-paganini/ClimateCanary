@@ -226,7 +226,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"firstName\": \"Jane\",\n    \"roles\": [\n        \"EMPLOYEE\"\n    ]\n}",
+              "raw": "{\n    \"username\": \"test2\",\n    \"firstName\": \"Jane\",\n    \"roles\": [\n        \"EMPLOYEE\"\n    ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -818,6 +818,18 @@
               "path": [
                 "api",
                 "employeeprofile"
+              ],
+              "query": [
+                {
+                  "key": "userxId",
+                  "value": "5",
+                  "disabled": true
+                },
+                {
+                  "key": "departmentId",
+                  "value": "5",
+                  "disabled": true
+                }
               ]
             }
           },
@@ -843,13 +855,32 @@
           "response": []
         },
         {
+          "name": "Get My EmployeeProfile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/employeeprofile/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "employeeprofile",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
           "name": "Create EmployeeProfile",
           "request": {
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"userxId\": 3,\n    \"departmentId\": 1,\n    \"roomId\": 1\n}",
+              "raw": "{\n    \"userxId\": 2,\n    \"departmentId\": 2,\n    \"roomId\": 1\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -934,6 +965,18 @@
               "path": [
                 "api",
                 "absence"
+              ],
+              "query": [
+                {
+                  "key": "userxId",
+                  "value": "1",
+                  "disabled": true
+                },
+                {
+                  "key": "departmentId",
+                  "value": "3",
+                  "disabled": true
+                }
               ]
             }
           },
@@ -1418,6 +1461,20 @@
               "path": [
                 "api",
                 "threshold"
+              ],
+              "query": [
+                {
+                  "key": "metric",
+                  "value": "TEMPERATURE",
+                  "type": "text",
+                  "disabled": true
+                },
+                {
+                  "key": "roomId",
+                  "value": "1",
+                  "type": "text",
+                  "disabled": true
+                }
               ]
             }
           },
@@ -1449,7 +1506,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"roomId\": 1,\n    \"metric\": \"TEMPERATURE\",\n    \"boundValue\": 25,\n    \"thresholdType\": \"MAX\",\n    \"climateHintIds\": [\n        1,\n        2\n    ]\n}",
+              "raw": "{\n    \"roomId\": 1,\n    \"metric\": \"TEMPERATURE\",\n    \"boundValue\": 25,\n    \"thresholdType\": \"UPPER\",\n    \"climateHintIds\": [\n        1,\n        2\n    ]\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1715,13 +1772,30 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/thresholdviolation",
+              "raw": "{{baseUrl}}/api/thresholdviolation?violationStatus=RESOLVED&roomId=1&departmentId=1",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
                 "thresholdviolation"
+              ],
+              "query": [
+                {
+                  "key": "violationStatus",
+                  "value": "RESOLVED",
+                  "type": "text"
+                },
+                {
+                  "key": "roomId",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "departmentId",
+                  "value": "1",
+                  "type": "text"
+                }
               ]
             }
           },
