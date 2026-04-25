@@ -4,6 +4,7 @@ import at.qe.skeleton.dtos.ThresholdViolationCreateDTO;
 import at.qe.skeleton.dtos.ThresholdViolationDTO;
 import at.qe.skeleton.dtos.ThresholdViolationUpdateDTO;
 import at.qe.skeleton.mappers.ThresholdViolationMapper;
+import at.qe.skeleton.models.ViolationStatus;
 import at.qe.skeleton.services.ThresholdViolationService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -25,8 +26,12 @@ public class ThresholdViolationController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ThresholdViolationDTO>> getAll() {
-        return ResponseEntity.ok(thresholdViolationService.findAll()
+    public ResponseEntity<List<ThresholdViolationDTO>> getAll(
+            @RequestParam(required = false) ViolationStatus violationStatus,
+            @RequestParam(required = false) Long roomId,
+            @RequestParam(required = false) Long departmentId
+    ) {
+        return ResponseEntity.ok(thresholdViolationService.findAll(violationStatus, roomId, departmentId)
                 .stream()
                 .map(thresholdViolationMapper::mapTo)
                 .toList()

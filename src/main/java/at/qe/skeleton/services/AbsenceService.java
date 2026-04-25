@@ -28,8 +28,11 @@ public class AbsenceService {
         this.authenticatedUserService = authenticatedUserService;
     }
 
-    public List<Absence> getAll() {
-        return absenceRepository.findAll();
+    public List<Absence> getAll(Long userxId, Long departmentId) {
+        if (userxId == null && departmentId == null) {
+            return absenceRepository.findAll();
+        }
+        return absenceRepository.search(userxId, departmentId);
     }
 
     public Absence getById(Long id) {

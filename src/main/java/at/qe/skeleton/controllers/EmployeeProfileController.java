@@ -14,6 +14,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/employeeprofile")
@@ -32,11 +33,24 @@ public class EmployeeProfileController {
     }
 
     @GetMapping
-    public ResponseEntity<List<EmployeeProfileDTO>> getAll(){
-        List<EmployeeProfileDTO> profiles = employeeProfileService.getAll().stream()
+    public ResponseEntity<List<EmployeeProfileDTO>> getProfiles(
+            @RequestParam(required = false) Long userxId,
+            @RequestParam(required = false) Long departmentId
+    ){
+        List<EmployeeProfileDTO> profiles = employeeProfileService
+                .getAll(userxId, departmentId)
+                .stream()
                 .map(employeeProfileMapper::mapTo)
                 .toList();
         return ResponseEntity.ok(profiles);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<EmployeeProfileDTO> getMyProfile(){
+        Optional<EmployeeProfile> employeeProfile = employeeProfileService.getMyProfile();
+        return employeeProfile.map(profile ->
+                ResponseEntity.ok(employeeProfileMapper.mapTo(profile)))
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     @GetMapping("/{id}")

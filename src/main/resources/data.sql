@@ -74,6 +74,12 @@ VALUES (
            (SELECT ID FROM USERX WHERE USERNAME = 'admin')
        );
 
+INSERT INTO DEPARTMENTS (NAME, USERX_ID)
+VALUES (
+           'Sales',
+           (SELECT ID FROM USERX WHERE USERNAME = 'elvis')
+       );
+
 -- Room (create only; the "Update room" request in Postman actually targets /building/1)
 INSERT INTO ROOMS (ACTIVE, MIN_OCCUPANCY, BUILDING_ID, DEPARTMENT_ID, NAME, ROOM_TYPE)
 VALUES (
@@ -102,6 +108,45 @@ VALUES (
            'PLANNED',
            'HOLIDAY'
        );
+
+INSERT INTO ABSENCES (START_DATE, END_DATE, USERX_ID, ABSENCE_STATUS, ABSENCE_TYPE)
+VALUES (
+           TIMESTAMP '2026-04-10 09:00:00',
+           TIMESTAMP '2026-04-12 18:00:00',
+           (SELECT ID FROM USERX WHERE USERNAME = 'user1'),
+           'PLANNED',
+           'SICKNESS'
+       );
+
+INSERT INTO ABSENCES (START_DATE, END_DATE, USERX_ID, ABSENCE_STATUS, ABSENCE_TYPE)
+VALUES (
+           TIMESTAMP '2026-04-10 09:00:00',
+           TIMESTAMP '2026-04-12 18:00:00',
+           (SELECT ID FROM USERX WHERE USERNAME = 'elvis'),
+           'PLANNED',
+           'SICKNESS'
+       );
+
+-- user1 in Research (2)
+INSERT INTO ABSENCES (START_DATE, END_DATE, USERX_ID, ABSENCE_STATUS, ABSENCE_TYPE)
+VALUES (
+           TIMESTAMP '2026-04-05 08:00:00',
+           TIMESTAMP '2026-04-06 17:00:00',
+           (SELECT ID FROM USERX WHERE USERNAME = 'admin'),
+           'PLANNED',
+           'SICKNESS'
+       );
+
+-- evlis in Management
+INSERT INTO ABSENCES (START_DATE, END_DATE, USERX_ID, ABSENCE_STATUS, ABSENCE_TYPE)
+VALUES (
+           TIMESTAMP '2026-04-08 09:00:00',
+           TIMESTAMP '2026-04-09 18:00:00',
+           (SELECT ID FROM USERX WHERE USERNAME = 'elvis'),
+           'PLANNED',
+           'PARENTAL_LEAVE'
+       );
+
 
 -- ClimateHint (create + patch)
 -- Metric is stored as ordinal tinyint in this table. Based on the Metric enum
@@ -187,6 +232,13 @@ VALUES (
            (SELECT ID FROM ROOMS WHERE NAME = 'Common Area 1')
        );
 
+INSERT INTO EMPLOYEEPROFILE (USERX_ID, DEPARTMENT_ID, ROOM_ID)
+VALUES (
+           (SELECT ID FROM USERX WHERE USERNAME = 'elvis'),
+           (SELECT ID FROM DEPARTMENTS WHERE NAME = 'Management'),
+           (SELECT ID FROM ROOMS WHERE NAME = 'Common Area 2')
+       );
+
 -- RaspberryPi + SensorStation needed as FK for Measurements
 INSERT INTO RASPBERRYPIS (HOST_NAME, IP_ADDRESS, DEVICE_STATUS, ROOM_ID)
 VALUES (
@@ -246,3 +298,38 @@ INSERT INTO THRESHOLDVIOLATIONS (
              'HUMIDITY',
              'ACTIVE'
          );
+
+INSERT INTO MEASUREMENT (TIMESTAMP, MEASUREMENT, METRIC, ROOM_ID, SENSORSTATION_ID)
+VALUES (
+           TIMESTAMP '2026-04-23 08:00:00',
+           400,
+           'GAS',
+           (SELECT ID FROM ROOMS WHERE NAME = 'Room 1'),
+           (SELECT ID FROM SENSORSTATIONS WHERE NAME = 'Station A')
+       );
+
+INSERT INTO RASPBERRYPIS (HOST_NAME, IP_ADDRESS, DEVICE_STATUS, ROOM_ID)
+VALUES (
+           'rpi-common1',
+           '192.168.1.11',
+           'ONLINE',
+           (SELECT ID FROM ROOMS WHERE NAME = 'Common Area 1')
+       );
+
+INSERT INTO SENSORSTATIONS (NAME, DEVICE_STATUS, MEASUREMENTS_PER_SEC, RASPBERRY_PI_ID, ROOM_ID)
+VALUES (
+           'Station B',
+           'ONLINE',
+           1.0,
+           (SELECT ID FROM RASPBERRYPIS WHERE HOST_NAME = 'rpi-common1'),
+           (SELECT ID FROM ROOMS WHERE NAME = 'Common Area 1')
+       );
+
+INSERT INTO MEASUREMENT (TIMESTAMP, MEASUREMENT, METRIC, ROOM_ID, SENSORSTATION_ID)
+VALUES (
+           TIMESTAMP '2026-04-23 08:00:00',
+           21,
+           'TEMPERATURE',
+           (SELECT ID FROM ROOMS WHERE NAME = 'Common Area 1'),
+           (SELECT ID FROM SENSORSTATIONS WHERE NAME = 'Station B')
+       );
