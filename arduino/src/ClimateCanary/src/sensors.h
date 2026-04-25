@@ -12,7 +12,7 @@ struct SensorData {
   float temperature;
   float humidity;
   float iaq;
-  float gas_resistance;
+  float pressure;
   uint8_t iaq_accuracy;
 };
 
