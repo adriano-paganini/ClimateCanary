@@ -1,8 +1,8 @@
 package at.qe.skeleton.tests;
 
-import at.qe.skeleton.userx.model.Userx;
-import at.qe.skeleton.userx.model.UserxRole;
-import at.qe.skeleton.userx.service.UserxService;
+import at.qe.skeleton.models.Userx;
+import at.qe.skeleton.models.UserxRole;
+import at.qe.skeleton.services.UserxService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.internal.util.collections.Sets;
@@ -107,7 +107,7 @@ public class UserxServiceTest {
         userService.deleteUser(toBeDeletedUser);
 
         Assertions.assertEquals(3, userService.getAllUsers().size(),
-                "No user has been deleted after calling UserService.deleteUser");
+                "No user has been enabled after calling UserService.deleteUser");
         Optional<Userx> deletedUserOpt = userService.loadUser(deleteUserId);
         Assertions.assertTrue(deletedUserOpt.isEmpty(),
                 "Deleted User with id \"" + deleteUserId + "\" could still be loaded from test data source via UserService.loadUser");

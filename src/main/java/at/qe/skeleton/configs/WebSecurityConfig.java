@@ -86,8 +86,14 @@ public class WebSecurityConfig {
                                                         .permitAll()
                                                         .requestMatchers("/swagger-ui/**")
                                                         .permitAll()
+                                                        
+                                                        //Systemdurchstich
+                                                        .requestMatchers("/api/gateway/**").permitAll()
+                                                        .requestMatchers("/api/status").permitAll()
+                                                        .requestMatchers("/api/sensor").permitAll()
+                                                        .requestMatchers("/api/sensor/query/latest").permitAll()
 
-                                                        .requestMatchers("/api/admin/**").hasAnyAuthority("ADMIN")
+                                                        .requestMatchers("/api/admin/**").hasAnyAuthority("SYSTEM_ADMIN")
                                                         .requestMatchers("/api/**").authenticated()
                                                         .anyRequest().authenticated())
                                         // Add the token authentication filter before the

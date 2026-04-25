@@ -60,7 +60,7 @@ BLECharacteristic warningMessageAckRequestCharacteristic(
 void sendSensorPacket(SensorData data, BLECharacteristic& funcSensorDataCharacteristic) {
   SensorDataPacket packet;
   packet.timestamp = millis();
-  packet.pressure = data.pressure;
+  packet.iaq = data.iaq;
   packet.temperature = data.temperature;
   packet.humidity = data.humidity;
   packet.gasResistance = data.gas_resistance;

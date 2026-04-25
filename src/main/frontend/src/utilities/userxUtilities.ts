@@ -21,11 +21,15 @@ export type UserxValidationResult = {
 export const createUserxRoleArrayFromStrings = (roles: string[]): UserxRole[] => {
     return roles.map(role => {
         switch (role) {
-            case UserxRole.ADMIN.valueOf():
-                return UserxRole.ADMIN;
-            case UserxRole.MANAGER.valueOf():
-                return UserxRole.MANAGER;
-            case UserxRole.EMPLOYEE.valueOf():
+            case UserxRole.SYSTEM_ADMIN:
+                return UserxRole.SYSTEM_ADMIN;
+            case UserxRole.BUILDING_ADMIN:
+                return UserxRole.BUILDING_ADMIN;
+            case UserxRole.DEPARTMENT_LEAD:
+                return UserxRole.DEPARTMENT_LEAD;
+            case UserxRole.MANAGEMENT:
+                return UserxRole.MANAGEMENT;
+            case UserxRole.EMPLOYEE:
                 return UserxRole.EMPLOYEE;
             default:
                 throw new Error(`Invalid role: ${role}`);

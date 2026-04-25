@@ -9,7 +9,7 @@
 
 package at.qe.skeleton.configs;
 
-import at.qe.skeleton.userx.model.Userx;
+import at.qe.skeleton.models.Userx;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;

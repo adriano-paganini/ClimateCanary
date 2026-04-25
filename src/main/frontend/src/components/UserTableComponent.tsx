@@ -16,7 +16,7 @@ import UserDialog from "./UserDialog";
 
 import {createUserxRoleArrayFromStrings, UserxValidationResult} from '../utilities/userxUtilities';
 import {CheckboxChangeEvent} from "primereact/checkbox";
-import {AdminControllerApi, UserxCreateDTO, UserxDTO} from "../generated-skeleton-api";
+import {AdminControllerApi, UserxCreateDTO, UserxDTO, UserxUpdateDTO} from "../generated-skeleton-api";
 
 /**
  * Component for managing users.
@@ -74,7 +74,7 @@ const UserTable = () => {
         if (requirePassword && !pwd.trim()) fieldErrors.password = 'Required';
 
         // at least one role required (see also UserxCreateDTO in backend
-        if (!Array.isArray(user.roles) || user.roles.length === 0) {
+        if (!user.roles || user.roles.size === 0) {
             fieldErrors.roles = 'Required';
         }
 
@@ -88,7 +88,7 @@ const UserTable = () => {
      * Handle the submit event for the user dialog.
      */
     const handleSubmit = async () => {
-        const validationResult = validateUser(selectedUser, {requirePassword: isNewUser});
+        const validationResult = validateUser(selectedUser as UserxCreateDTO | null, {requirePassword: isNewUser});
         if (!validationResult.valid) {
             // Display an error eventMessage or handle the validation error
             setValidation(validationResult);
@@ -121,8 +121,8 @@ const UserTable = () => {
 
         try {
             const adminControllerAPI = new AdminControllerApi();
-            const newUser: UserxCreateDTO = await adminControllerAPI.createUser({userxCreateDTO: userToCreate}).then(response => response.data);
-            setUsers([...users, newUser]);
+            const newUser = await adminControllerAPI.createUser({userxCreateDTO: userToCreate}).then(response => response.data);
+            setUsers([...users, newUser as UserxDTO]);
         } catch (err: any) {
             console.error('Error saving user:', err);
             toast.current?.show({severity: 'error', summary: 'Error', detail: 'Error saving user', life: 3000});
@@ -143,7 +143,7 @@ const UserTable = () => {
         try {
             const adminControllerAPI = new AdminControllerApi();
             const updatedUser = await adminControllerAPI.updateUser({
-                userxDTO: userToUpdate,
+                userxUpdateDTO: userToUpdate as UserxUpdateDTO,
                 id: userToUpdate.id
             }).then(response => response.data);
             setUsers(users.map((user: UserxDTO) => user.id === updatedUser.id ? updatedUser : user));
@@ -176,7 +176,7 @@ const UserTable = () => {
             email: '',
             phone: '',
             enabled: true,
-            roles: [],
+            roles: new Set(),
             password: ''
         };
         setSelectedUser(newUser);
@@ -233,7 +233,7 @@ const UserTable = () => {
 
         const roles = createUserxRoleArrayFromStrings(event.value);
 
-        setSelectedUser({...selectedUser, roles: roles});
+        setSelectedUser({...selectedUser, roles: new Set(roles)});
     }
 
 
@@ -242,10 +242,10 @@ const UserTable = () => {
             {/* Button that opens a new user dialog on click */}
             <Button label="Add User" icon="pi pi-plus" className="p-button-raised p-button-rounded"
                     style={{marginBottom: "10px"}} onClick={openNewUserDialog}/>
-            <UserListComponent users={users} loading={loading} onEditUser={openEditDialog}/>
+            <UserListComponent users={users as any} loading={loading} onEditUser={openEditDialog}/>
 
             {/* Dialog for creating or editing a user */}
-            <UserDialog visible={dialogVisible} user={selectedUser} isNewUser={isNewUser} validation={validation}
+            <UserDialog visible={dialogVisible} user={selectedUser as any} isNewUser={isNewUser} validation={validation}
                         onHide={hideDialog} onSubmit={handleSubmit}
                         onInputChange={handleInputChange} onRolesChange={handleRolesChange}
                         onUserEnabledChange={handleUserEnabledChange}/>
