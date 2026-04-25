@@ -5,7 +5,7 @@ Bsec bme;
 SensorData lastValidData = {
   0.0,  // temperature
   0.0,  // humidity
-  0.0,  // iaq
+  50.0,  // iaq
   0.0,  // gas_resistance
   0     // iaq_accuracy
 };
@@ -79,12 +79,15 @@ SensorData readSensors() {
 
   if (bme.run()) {
     newBsecDataAvailable = true;
-
-    lastValidData.temperature = bme.temperature;
+    //after measuring the temperature in a climate controlled car, set to 21 degrees, an average of 5 degree
+    //to hot was realized. This occurs after about one hour of usage, and is due to the board warming up, to
+    //take measurements. This is hereby compensated so there can still be a great number of measurements,
+    //and that they stay as accurate as possible.
+    lastValidData.temperature = bme.temperature-5;
     lastValidData.humidity = bme.humidity;
     lastValidData.gas_resistance = bme.gasResistance;
 
-    if (bme.iaqAccuracy >= 2) {
+    if (bme.iaqAccuracy >= 1) {
       lastValidData.iaq = bme.iaq;
       lastValidData.iaq_accuracy = bme.iaqAccuracy;
     } else {
