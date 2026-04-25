@@ -5,11 +5,13 @@ import at.qe.skeleton.dtos.ThresholdUpdateDTO;
 import at.qe.skeleton.common.exceptions.ConflictException;
 import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.models.ClimateHint;
+import at.qe.skeleton.models.Metric;
 import at.qe.skeleton.models.Threshold;
 import at.qe.skeleton.repositories.ClimateHintRepository;
 import at.qe.skeleton.repositories.ThresholdRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.HashSet;
 import java.util.List;
@@ -30,7 +32,15 @@ public class ThresholdService {
         this.climateHintRepository = climateHintRepository;
     }
 
-    public List<Threshold> getAll(){
+    public List<Threshold> getAll(Long roomId, Metric metric){
+
+        if (roomId != null && metric != null) {
+            return thresholdRepository.findByRoom_IdAndMetric(roomId, metric);
+        }
+
+        if (roomId != null) return thresholdRepository.findByRoom_Id(roomId);
+        if (metric != null) return thresholdRepository.findByMetric(metric);
+
         return thresholdRepository.findAll();
     }
 
