@@ -41,9 +41,10 @@ public class SensorStationService {
         SensorStation savedStation = repo.save(s);
 
         log.info("Created sensor station with id={}", savedStation.getId());
-        log.debug("Created sensorStation details: id={}, name={}, deviceStatus={}, measurementInterval={}, raspberryPiId={}, roomId={}",
+        log.debug("Created sensorStation details: id={}, name={}, bleMac{}, deviceStatus={}, measurementInterval={}, raspberryPiId={}, roomId={}",
                 savedStation.getId(),
                 savedStation.getName(),
+                savedStation.getBleMac(),
                 savedStation.getDeviceStatus(),
                 savedStation.getMeasurementInterval(),
                 savedStation.getRaspberryPi() != null ? savedStation.getRaspberryPi().getId() : null,

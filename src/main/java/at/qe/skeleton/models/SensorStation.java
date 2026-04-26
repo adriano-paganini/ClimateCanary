@@ -20,6 +20,8 @@ public class SensorStation {
 
     private Integer measurementInterval;
 
+    private String bleMac;
+
     @ManyToOne
     @JoinColumn(name = "raspberry_pi_id", nullable = false)
     private RaspberryPi raspberryPi;
@@ -73,6 +75,13 @@ public class SensorStation {
 
     public void setRoom(Room room) {
         this.room = room;
+    }
+
+    public String getBleMac() {
+        return bleMac;
+    }
+    public void setBleMac(String bleMac) {
+        this.bleMac = bleMac;
     }
 
     public List<Measurement> getMeasurements() {
