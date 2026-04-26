@@ -16,7 +16,7 @@ public record ThresholdCreateDTO(
         Metric metric,
 
         @NotNull
-        Long boundValue,
+        Float boundValue,
 
         @NotNull
         ThresholdType thresholdType,

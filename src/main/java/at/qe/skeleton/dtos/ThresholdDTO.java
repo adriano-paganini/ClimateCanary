@@ -10,7 +10,7 @@ public record ThresholdDTO(
         Long id,
         Long roomId,
         Metric metric,
-        Long boundValue,
+        Float boundValue,
         ThresholdType thresholdType,
         List<Long> climateHintIds,
         Boolean enabled
