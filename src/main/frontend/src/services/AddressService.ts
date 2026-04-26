@@ -10,7 +10,7 @@ const api = new AddressControllerApi(apiConfig);
 
 export const AddressService = {
     getAll: (): Promise<AddressDTO[]> =>
-        api.getAll8().then(r => r.data),
+        api.getAll7().then(r => r.data),
 
     getById: (id: number): Promise<AddressDTO> =>
         api.getById9({ id }).then(r => r.data),

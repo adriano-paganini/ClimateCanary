@@ -11,7 +11,7 @@ const api = new BuildingControllerApi(apiConfig);
 
 export const BuildingService = {
     getAll: (): Promise<BuildingDTO[]> =>
-        api.getAll6().then(r => r.data),
+        api.getAll5().then(r => r.data),
 
     getById: (id: number): Promise<BuildingDTO> =>
         api.getById7({ id }).then(r => r.data),

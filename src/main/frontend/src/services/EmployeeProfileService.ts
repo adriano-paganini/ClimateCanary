@@ -9,6 +9,9 @@ import { apiConfig } from "./apiConfig";
 const api = new EmployeeProfileControllerApi(apiConfig);
 
 export const EmployeeProfileService = {
+    getMe: (): Promise<EmployeeProfileDTO> =>
+        api.getMyProfile().then(r => r.data),
+
     getAll: (): Promise<EmployeeProfileDTO[]> =>
         api.getAll4().then(r => r.data),
 

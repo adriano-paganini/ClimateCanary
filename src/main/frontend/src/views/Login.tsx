@@ -42,14 +42,16 @@ const Login = () => {
         try {
             const decoded = jwtDecode<CustomJwtPayload>(token);
             const roles = new Set(decoded.roles ?? []);
-            if (roles.has(UserxRole.SYSTEM_ADMIN))    return ROUTES.MANAGE_USERS;
-            if (roles.has(UserxRole.BUILDING_ADMIN))  return ROUTES.THRESHOLDS;
-            if (roles.has(UserxRole.MANAGEMENT))      return ROUTES.MANAGEMENT_DASHBOARD;
-            if (roles.has(UserxRole.DEPARTMENT_LEAD)) return ROUTES.DEPARTMENT_DASHBOARD;
+            // Admin roles go to Home — their specific views are not yet implemented
+            if (roles.has(UserxRole.SYSTEM_ADMIN) || roles.has(UserxRole.BUILDING_ADMIN))
+                return ROUTES.HOME;
+            // All employee-facing roles go to the employee dashboard
+            if (roles.has(UserxRole.MANAGEMENT) || roles.has(UserxRole.DEPARTMENT_LEAD) || roles.has(UserxRole.EMPLOYEE))
+                return ROUTES.DASHBOARD;
         } catch {
             // fall through to default
         }
-        return ROUTES.DASHBOARD; // EMPLOYEE default
+        return ROUTES.HOME;
     };
 
     const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
