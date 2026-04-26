@@ -10,7 +10,7 @@ const api = new EmployeeProfileControllerApi(apiConfig);
 
 export const EmployeeProfileService = {
     getMe: (): Promise<EmployeeProfileDTO> =>
-        api.getMe().then(r => r.data),
+        api.getMyProfile().then(r => r.data),
 
     getAll: (): Promise<EmployeeProfileDTO[]> =>
         api.getAll4().then(r => r.data),
