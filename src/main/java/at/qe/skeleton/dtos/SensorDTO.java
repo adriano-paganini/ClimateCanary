@@ -6,7 +6,7 @@ public class SensorDTO {
     private float temperature;
     private float humidity;
     private float pressure;
-    private long gasResistance;
+    private float airQuality;
 
     public long getTimestamp() { return timestamp; }
     public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
@@ -20,6 +20,6 @@ public class SensorDTO {
     public float getPressure() { return pressure; }
     public void setPressure(float pressure) { this.pressure = pressure; }
 
-    public long getGasResistance() { return gasResistance; }
-    public void setGasResistance(long gasResistance) { this.gasResistance = gasResistance; }
+    public float getAirQuality() { return airQuality; }
+    public void setAirQuality(float airQuality) { this.airQuality = airQuality; }
 }

@@ -8,7 +8,7 @@ import java.util.List;
 public record MeasurementDTO(
         Long id,
         LocalDateTime timestamp,
-        Long measurement,
+        Float measurement,
         Metric metric,
         Long roomId,
         Long sensorStationId,

@@ -150,7 +150,7 @@ VALUES (
 
 -- ClimateHint (create + patch)
 -- Metric is stored as ordinal tinyint in this table. Based on the Metric enum
--- ordering used elsewhere (GAS, HUMIDITY, PRESSURE, TEMPERATURE), HUMIDITY = 1.
+-- ordering used elsewhere (IAQ, HUMIDITY, PRESSURE, TEMPERATURE), HUMIDITY = 1.
 INSERT INTO CLIMATEHINTS (METRIC, HINT_TEXT)
 VALUES (1, 'Use a reverse-water-sprayer');
 
@@ -303,7 +303,7 @@ INSERT INTO MEASUREMENT (TIMESTAMP, MEASUREMENT, METRIC, ROOM_ID, SENSORSTATION_
 VALUES (
            TIMESTAMP '2026-04-23 08:00:00',
            400,
-           'GAS',
+           'IAQ',
            (SELECT ID FROM ROOMS WHERE NAME = 'Room 1'),
            (SELECT ID FROM SENSORSTATIONS WHERE NAME = 'Station A')
        );
