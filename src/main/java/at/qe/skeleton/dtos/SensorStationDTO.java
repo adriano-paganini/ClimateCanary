@@ -6,7 +6,7 @@ public record SensorStationDTO (
         Long id,
         String name,
         DeviceStatus deviceStatus,
-        Float measurementsPerSec,
+        Integer measurementInterval,
         Long raspberryPiId,
         Long roomId
 ) {}

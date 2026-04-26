@@ -37,11 +37,11 @@ public class SensorStationService {
         SensorStation savedStation = repo.save(s);
 
         log.info("Created sensor station with id={}", savedStation.getId());
-        log.debug("Created sensorStation details: id={}, name={}, deviceStatus={}, measurementsPerSec={}, raspberryPiId={}, roomId={}",
+        log.debug("Created sensorStation details: id={}, name={}, deviceStatus={}, measurementInterval={}, raspberryPiId={}, roomId={}",
                 savedStation.getId(),
                 savedStation.getName(),
                 savedStation.getDeviceStatus(),
-                savedStation.getMeasurementsPerSec(),
+                savedStation.getMeasurementInterval(),
                 savedStation.getRaspberryPi() != null ? savedStation.getRaspberryPi().getId() : null,
                 savedStation.getRoom() != null ? savedStation.getRoom().getId() : null);
 
@@ -63,11 +63,6 @@ public class SensorStationService {
         if (dto.deviceStatus() != null) {
             existing.setDeviceStatus(dto.deviceStatus());
             debugInfo.append(", deviceStatus=").append(dto.deviceStatus());
-        }
-
-        if (dto.measurementsPerSec() != null) {
-            existing.setMeasurementsPerSec(dto.measurementsPerSec());
-            debugInfo.append(", measurementsPerSec=").append(dto.measurementsPerSec());
         }
 
         if (dto.raspberryPiId() != null) {
