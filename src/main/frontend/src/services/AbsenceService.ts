@@ -10,7 +10,7 @@ const api = new AbsenceControllerApi(apiConfig);
 
 export const AbsenceService = {
     getAll: (): Promise<AbsenceDTO[]> =>
-        api.getAll9().then(r => r.data),
+        api.getAll8().then(r => r.data),
 
     getById: (id: number): Promise<AbsenceDTO> =>
         api.getById10({ id }).then(r => r.data),
