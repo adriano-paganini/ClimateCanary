@@ -23,6 +23,7 @@ public class SensorStationCreateMapper implements DTOMapper<SensorStation, Senso
         SensorStation station = new SensorStation();
         station.setName(dto.name());
         station.setDeviceStatus(dto.deviceStatus());
+        station.setBleMac(dto.bleMac());
         station.setMeasurementInterval(dto.measurementInterval());
         station.setRaspberryPi(raspberryPiService.getById(dto.raspberryPiId()));
         station.setRoom(roomService.getById(dto.roomId()));
