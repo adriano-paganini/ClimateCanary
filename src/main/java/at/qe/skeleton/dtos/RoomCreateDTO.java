@@ -3,7 +3,6 @@ package at.qe.skeleton.dtos;
 import at.qe.skeleton.models.RoomType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 
 public record RoomCreateDTO(
 
@@ -14,8 +13,7 @@ public record RoomCreateDTO(
         RoomType roomType,
 
         @NotNull
-        @Positive
-        Integer minOccupancy,
+        Boolean privacyMode,
 
         @NotNull
         Long departmentId,

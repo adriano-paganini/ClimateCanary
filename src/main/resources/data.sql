@@ -81,10 +81,10 @@ VALUES (
        );
 
 -- Room (create only; the "Update room" request in Postman actually targets /building/1)
-INSERT INTO ROOMS (ACTIVE, MIN_OCCUPANCY, BUILDING_ID, DEPARTMENT_ID, NAME, ROOM_TYPE)
+INSERT INTO ROOMS (ACTIVE, PRIVACY_MODE, BUILDING_ID, DEPARTMENT_ID, NAME, ROOM_TYPE)
 VALUES (
            TRUE,
-           5,
+           1,
            (SELECT ID FROM BUILDINGS WHERE NAME = 'Still OLD IT'),
            (SELECT ID FROM DEPARTMENTS WHERE NAME = 'Research (2)'),
            'Room 1',
@@ -206,10 +206,10 @@ INSERT INTO THRESHOLDVIOLATIONS (
 
 
 -- Common-areas room (same building + department as Room 1)
-INSERT INTO ROOMS (ACTIVE, MIN_OCCUPANCY, BUILDING_ID, DEPARTMENT_ID, NAME, ROOM_TYPE)
+INSERT INTO ROOMS (ACTIVE, PRIVACY_MODE, BUILDING_ID, DEPARTMENT_ID, NAME, ROOM_TYPE)
 VALUES (
            TRUE,
-           0,
+           FALSE,
            (SELECT ID FROM BUILDINGS WHERE NAME = 'Still OLD IT'),
            (SELECT ID FROM DEPARTMENTS WHERE NAME = 'Research (2)'),
            'Common Area 1',
