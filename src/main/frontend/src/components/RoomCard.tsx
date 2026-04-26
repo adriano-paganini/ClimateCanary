@@ -30,14 +30,14 @@ function airQualityColor(
     measurements: MeasurementDTO[],
     violations: ThresholdViolationDTO[],
 ): string {
-    const hasGasData = measurements.some(m => m.metric === MeasurementDTOMetricEnum.GAS);
-    if (!hasGasData) return '#9ca3af';
-    const gasViolation = violations.some(
+    const hasIaqData = measurements.some(m => m.metric === MeasurementDTOMetricEnum.IAQ);
+    if (!hasIaqData) return '#9ca3af';
+    const iaqViolation = violations.some(
         v =>
             v.violationStatus === ThresholdViolationDTOViolationStatusEnum.ACTIVE &&
-            v.metric === (ThresholdViolationDTOMetricEnum.GAS as string),
+            v.metric === (ThresholdViolationDTOMetricEnum.IAQ as string),
     );
-    return gasViolation ? '#ef4444' : '#22c55e';
+    return iaqViolation ? '#ef4444' : '#22c55e';
 }
 
 const RoomCard: React.FC<RoomCardProps> = ({ room, measurements, violations }) => {
@@ -48,7 +48,7 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, measurements, violations }) =
         v => v.violationStatus === ThresholdViolationDTOViolationStatusEnum.ACTIVE,
     );
     const latestTemp = latestMeasurement(measurements, MeasurementDTOMetricEnum.TEMPERATURE);
-    const latestGas = latestMeasurement(measurements, MeasurementDTOMetricEnum.GAS);
+    const latestIaq = latestMeasurement(measurements, MeasurementDTOMetricEnum.IAQ);
     const qualityColor = airQualityColor(measurements, violations);
 
     const handleClick = () => {
@@ -124,9 +124,9 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, measurements, violations }) =
                             border: '1px solid rgba(0,0,0,0.15)',
                             flexShrink: 0,
                         }} />
-                        {latestGas?.measurement !== undefined && (
+                        {latestIaq?.measurement !== undefined && (
                             <span style={{ fontWeight: 600, color: '#111827', fontSize: '0.9rem' }}>
-                                {latestGas.measurement}
+                                {latestIaq.measurement.toFixed(1)}
                             </span>
                         )}
                     </span>

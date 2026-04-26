@@ -11,7 +11,6 @@ import { MeasurementService } from '../services/MeasurementService';
 import { RoomService } from '../services/RoomService';
 import { ViolationService } from '../services/ViolationService';
 import { DepartmentService } from '../services/DepartmentService';
-import { UserService } from '../services/UserService';
 import {
     MeasurementDTO,
     RoomDTO,
@@ -41,15 +40,7 @@ const EmployeeDashboard: React.FC = () => {
     useEffect(() => {
         const load = async () => {
             try {
-                // JWT has no numeric id claim — fetch it from /api/userx/me
-                const user = await UserService.getCurrentUser();
-                if (!user.id) {
-                    setError('Could not load user profile.');
-                    return;
-                }
-
-                const profiles = await EmployeeProfileService.getAll();
-                const profile = profiles.find(p => p.userxId === user.id);
+                const profile = await EmployeeProfileService.getMe();
                 if (!profile?.roomId) {
                     setError('No employee profile with an assigned room found.');
                     return;
@@ -98,8 +89,10 @@ const EmployeeDashboard: React.FC = () => {
                         setViolationsByRoom(prev => ({ ...prev, ...violMap }));
                     }
                 }
-            } catch {
-                setError('Failed to load room data.');
+            } catch (err: unknown) {
+                const msg = err instanceof Error ? err.message : String(err);
+                console.error('Dashboard load error:', err);
+                setError(`Failed to load room data: ${msg}`);
             } finally {
                 setLoading(false);
             }
