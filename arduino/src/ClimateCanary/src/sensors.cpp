@@ -6,7 +6,7 @@ SensorData lastValidData = {
   0.0,  // temperature
   0.0,  // humidity
   50.0,  // iaq
-  0.0,  // gas_resistance
+  0.0, //pressure
   0     // iaq_accuracy
 };
 
@@ -54,8 +54,8 @@ bool setupSensors() {
     BSEC_OUTPUT_IAQ,
     BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_TEMPERATURE,
     BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_HUMIDITY,
-    BSEC_OUTPUT_RAW_GAS
-  };
+    BSEC_OUTPUT_RAW_PRESSURE
+    };
 
   bme.updateSubscription(
     sensorList,
@@ -85,7 +85,7 @@ SensorData readSensors() {
     //and that they stay as accurate as possible.
     lastValidData.temperature = bme.temperature-5;
     lastValidData.humidity = bme.humidity;
-    lastValidData.gas_resistance = bme.gasResistance;
+    lastValidData.pressure = bme.pressure;
 
     if (bme.iaqAccuracy >= 1) {
       lastValidData.iaq = bme.iaq;

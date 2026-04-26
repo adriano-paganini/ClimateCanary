@@ -42,11 +42,11 @@ public class RoomService {
         Room savedRoom = roomRepository.save(room);
 
         log.info("Created room with id={}", savedRoom.getId());
-        log.debug("Created room details: id={}, name={}, roomType={}, minOccupancy={}, departmentId={}, buildingId={}",
+        log.debug("Created room details: id={}, name={}, roomType={}, privacyMode={}, departmentId={}, buildingId={}",
                 savedRoom.getId(),
                 savedRoom.getName(),
                 savedRoom.getRoomType(),
-                savedRoom.getMinOccupancy(),
+                savedRoom.getPrivacyMode(),
                 savedRoom.getDepartment() != null ? savedRoom.getDepartment().getId() : null,
                 savedRoom.getBuilding() != null ? savedRoom.getBuilding().getId() : null);
 
@@ -69,9 +69,9 @@ public class RoomService {
             debugInfo.append(", roomType=").append(dto.roomType());
         }
 
-        if (dto.minOccupancy() != null) {
-            existing.setMinOccupancy(dto.minOccupancy());
-            debugInfo.append(", minOccupancy=").append(dto.minOccupancy());
+        if (dto.privacyMode() != null) {
+            existing.setPrivacyMode(dto.privacyMode());
+            debugInfo.append(", privacyMode=").append(dto.privacyMode());
         }
 
         if (dto.departmentId() != null) {

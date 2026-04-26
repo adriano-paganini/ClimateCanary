@@ -23,7 +23,7 @@ public class RoomCreateMapper implements DTOMapper<Room, RoomCreateDTO> {
         Room room = new Room();
         room.setName(dto.name());
         room.setRoomType(dto.roomType());
-        room.setMinOccupancy(dto.minOccupancy());
+        room.setPrivacyMode(dto.privacyMode());
         room.setDepartment(departmentService.getDepartmentById(dto.departmentId()));
         room.setBuilding(buildingService.getBuildingById(dto.buildingId()));
         room.setActive(true);

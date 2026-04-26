@@ -22,7 +22,7 @@ void prettySensorScreen(int smoothIndex, SensorData data){
     float tempC = data.temperature;
     float iaq = data.iaq;
     float humidityPct = data.humidity;
-    float gasKOhm = data.gas_resistance / 1000.0;
+    float pressure = data.pressure / 100.0;
 
     const int displayStep = 8;
     int screen = (smoothIndex / displayStep) % 4;
@@ -35,7 +35,7 @@ void prettySensorScreen(int smoothIndex, SensorData data){
 
     case 1:
         snprintf(line1, sizeof(line1), "   Air Quality");
-        snprintf(line2, sizeof(line2), "       %.0f,%d", iaq,data.iaq_accuracy);
+        snprintf(line2, sizeof(line2), "      %.0f,%d", iaq,data.iaq_accuracy);
         break;
 
     case 2:
@@ -44,8 +44,8 @@ void prettySensorScreen(int smoothIndex, SensorData data){
         break;
 
     case 3:
-        snprintf(line1, sizeof(line1), "      Gas");
-        snprintf(line2, sizeof(line2), "    %.0f kOhm", gasKOhm);
+        snprintf(line1, sizeof(line1), "    Pressure");
+        snprintf(line2, sizeof(line2), "    %.0f hPa", pressure);
         break;
     }
 
@@ -59,7 +59,7 @@ void prettySensorScreenOneLine(int smoothIndex, SensorData data, int line){
     float tempC = data.temperature;
     float iaq = data.iaq;
     float humidityPct = data.humidity;
-    float gasKOhm = data.gas_resistance / 1000.0;
+    float pressure = data.pressure / 100.0;
 
     const int displayStep = 8;
     int screen = (smoothIndex / displayStep) % 4;
@@ -78,7 +78,7 @@ void prettySensorScreenOneLine(int smoothIndex, SensorData data, int line){
         break;
 
     case 3:
-        snprintf(line2, sizeof(line2), "Gas: %.0f kOhm", gasKOhm);
+        snprintf(line2, sizeof(line2), "Press: %.0f hPa", pressure);
         break;
     }
     printScreen(line, String(line2));
@@ -90,7 +90,7 @@ void prettySensorScreenOneLineActiveWarning(int smoothIndex, RelevantDisplayData
     float tempC = data.sensorData.temperature;
     float iaq = data.sensorData.iaq;
     float humidityPct = data.sensorData.humidity;
-    float gasKOhm = data.sensorData.gas_resistance / 1000.0;
+    float pressure = data.sensorData.pressure / 100.0;
     uint16_t statusCode = data.statusCode;
     const int displayStep = 8;
     int screen = (smoothIndex / displayStep) % 4;
@@ -121,9 +121,9 @@ void prettySensorScreenOneLineActiveWarning(int smoothIndex, RelevantDisplayData
         break;
     case 3:
         if ((statusCode & 0xF000)){
-            snprintf(line2, sizeof(line2), "GAS: %.0f kOhm", gasKOhm);
+            snprintf(line2, sizeof(line2), "PRESS: %.0f hPa", pressure);
         }else{
-            snprintf(line2, sizeof(line2), "Gas: %.0f kOhm", gasKOhm);
+            snprintf(line2, sizeof(line2), "Press: %.0f hPa", pressure);
         }
         break;
     }
@@ -247,17 +247,6 @@ void printButtonScreen(ButtonState state){
     String line = "B:" + String(val1) + " " + String(val2) + " " + String(val3);
     printScreen(1, line);
 }
-
-void printSensorScreen(SensorData data){
-    char line[17];
-    snprintf(line, sizeof(line),
-        "T%.0f H%.0f P%.0f G%.0f",
-        data.temperature,
-        data.humidity,
-        data.iaq,
-        data.gas_resistance / 1000.0);
-        printScreen(0, String(line));
-};
 
 void clearScreen(){
     lcd.clear();

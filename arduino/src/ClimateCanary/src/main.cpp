@@ -115,7 +115,7 @@ void sensorDataRingBufferInsert(SensorData data){
   packet.iaq = data.iaq;
   packet.temperature = data.temperature;
   packet.humidity = data.humidity;
-  packet.gasResistance = data.gas_resistance;
+  packet.pressure = data.pressure;
   
   if (sensorDataRingBufferCount < sensorDataRingBufferSize){
     sensorDataRingBuffer.push_back(packet);

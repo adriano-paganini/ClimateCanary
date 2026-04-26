@@ -63,7 +63,7 @@ void sendSensorPacket(SensorData data, BLECharacteristic& funcSensorDataCharacte
   packet.iaq = data.iaq;
   packet.temperature = data.temperature;
   packet.humidity = data.humidity;
-  packet.gasResistance = data.gas_resistance;
+  packet.pressure = data.pressure;
 
   funcSensorDataCharacteristic.writeValue((const uint8_t*)&packet, sizeof(packet));
 }
