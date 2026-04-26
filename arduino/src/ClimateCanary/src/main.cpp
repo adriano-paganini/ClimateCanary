@@ -40,7 +40,7 @@ unsigned long lastButtonUpdate = 0;
 const unsigned long buttonInterval = 50;      // update button states every 50 ms
 
 unsigned long lastSensorUpdate = 0;
-unsigned long sensorInterval = 1000;          // update sensor data every 1000 ms
+unsigned long sensorInterval = 3000;          // update sensor data every 1000 ms
 
 unsigned long lastLightUpdate = 0;            // update LED using on/off timing
 
@@ -112,10 +112,10 @@ void sensorDataRingBufferInsert(SensorData data){
   Serial.println("Inserting new sensor data into ring buffer at index: " + String((sensorDataRingBufferIndex)? sensorDataRingBufferIndex : sensorDataRingBuffer.size()+1));
   SensorDataPacket packet;
   packet.timestamp = millis();
-  packet.pressure = data.pressure;
+  packet.iaq = data.iaq;
   packet.temperature = data.temperature;
   packet.humidity = data.humidity;
-  packet.gasResistance = data.gas_resistance;
+  packet.pressure = data.pressure;
   
   if (sensorDataRingBufferCount < sensorDataRingBufferSize){
     sensorDataRingBuffer.push_back(packet);
@@ -533,6 +533,7 @@ void onCachedSensorDataAckWritten(BLEDevice central, BLECharacteristic character
 
   sensorDataRingBufferTransmittedIndex++;
 }
+
 void bleTask()
 {
   currentState = "WAITING_FOR_KNOWN_CONNECTION";
@@ -660,8 +661,14 @@ void setStateData(){
 }
 
 void setup() {
-  if (!setupSensors()) while (1);
   setupScreen();
+
+  if (!setupSensors()) while (1){
+    printScreen(0,"SUKA");
+    String mills = String(millis());
+    printScreen(1,mills);
+    ThisThread::sleep_for(500);
+  };
   setupButtons();
   setupLight();
   setColorRGB(lightR, lightG, lightB);

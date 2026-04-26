@@ -5,5 +5,5 @@ public enum Metric {
     HUMIDITY,
     TEMPERATURE,
     PRESSURE,
-    GAS
+    IAQ
 }

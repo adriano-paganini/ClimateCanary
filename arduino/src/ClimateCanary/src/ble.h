@@ -38,7 +38,7 @@ struct __attribute__((packed)) SensorDataPacket {
   float pressure;
   float temperature;
   float humidity;
-  uint32_t gasResistance;
+  float iaq;
 };
 
 struct __attribute__((packed)) SensorStatusPacket {
