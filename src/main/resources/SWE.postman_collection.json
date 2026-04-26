@@ -16,7 +16,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"username\": \"admin\",\n    \"password\": \"passwd\"\n}",
+              "raw": "{\n    \"username\": \"elvis\",\n    \"password\": \"passwd\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -617,7 +617,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"Room 1\",\n    \"roomType\": \"OFFICE\",\n    \"minOccupancy\": 5,\n    \"departmentId\": 1,\n    \"buildingId\": 1\n}",
+              "raw": "{\n    \"name\": \"Room 1\",\n    \"roomType\": \"OFFICE\",\n    \"privacyMode\": false,\n    \"departmentId\": 1,\n    \"buildingId\": 1\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -644,7 +644,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"Updated Room\",\n    \"roomType\": \"OFFICE\",\n    \"minOccupancy\": 8\n}",
+              "raw": "{\n    \"name\": \"Updated Room\",\n    \"roomType\": \"OFFICE\",\n    \"privacyMode\": false\n}",
               "options": {
                 "raw": {
                   "language": "json"

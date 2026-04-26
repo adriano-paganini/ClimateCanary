@@ -8,6 +8,7 @@ import at.qe.skeleton.models.Room;
 import at.qe.skeleton.models.SensorStation;
 import at.qe.skeleton.repositories.RoomRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +39,7 @@ public class RoomService {
                 .orElseThrow(() -> new NotFoundException("Room with id " + id + " not found"));
     }
 
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public Room create(Room room) {
         Room savedRoom = roomRepository.save(room);
 
@@ -53,6 +55,7 @@ public class RoomService {
         return savedRoom;
     }
 
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public Room update(Long id, RoomUpdateDTO dto) {
         Room existing = getById(id);
 
@@ -96,6 +99,7 @@ public class RoomService {
      * Soft delete policy
      * @param id
      */
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     @Transactional
     public void delete(Long id) {
         Room room = getById(id);

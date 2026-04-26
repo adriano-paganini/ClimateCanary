@@ -7,6 +7,7 @@ import at.qe.skeleton.models.Address;
 import at.qe.skeleton.repositories.AddressRepository;
 import at.qe.skeleton.repositories.BuildingRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,21 +19,23 @@ public class AddressService {
     private final AddressRepository addressRepository;
     private final BuildingRepository buildingRepository;
 
-
     public AddressService(AddressRepository addressRepository, BuildingRepository buildingRepository) {
         this.addressRepository = addressRepository;
         this.buildingRepository = buildingRepository;
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public List<Address> getAll() {
         return addressRepository.findAll();
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public Address getById(Long id) {
         return addressRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException(String.format("Address with id %d not found", id)));
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public Address create(Address address) {
         Address savedAddress =  addressRepository.save(address);
 
@@ -50,6 +53,7 @@ public class AddressService {
         return savedAddress;
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public Address update(Long id, AddressUpdateDTO dto) {
         Address existing = getById(id);
 
@@ -89,6 +93,7 @@ public class AddressService {
         return updatedAddress;
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public void delete(Long id) {
         getById(id);
 

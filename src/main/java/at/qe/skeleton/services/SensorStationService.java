@@ -5,6 +5,7 @@ import at.qe.skeleton.dtos.SensorStationUpdateDTO;
 import at.qe.skeleton.models.SensorStation;
 import at.qe.skeleton.repositories.SensorStationRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,14 +26,17 @@ public class SensorStationService {
         this.roomService = roomService;
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public List<SensorStation> getAll() {
         return repo.findAllActive();
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public SensorStation getById(Long id) {
         return repo.findById(id).orElseThrow(() -> new NotFoundException("SensorStation with id " + id + " not found"));
     }
 
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public SensorStation create(SensorStation s) {
         SensorStation savedStation = repo.save(s);
 
@@ -48,8 +52,8 @@ public class SensorStationService {
         return savedStation;
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public SensorStation update(Long id, SensorStationUpdateDTO dto) {
-
         SensorStation existing = getById(id);
 
         StringBuilder debugInfo = new StringBuilder("Updated sensor station details:")
@@ -83,6 +87,7 @@ public class SensorStationService {
         return updatedStation;
     }
 
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public void delete(Long id) {
         repo.deleteById(id);
         log.info("Deleted sensor station with id={}", id);
