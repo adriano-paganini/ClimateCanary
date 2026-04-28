@@ -100,31 +100,44 @@ int16_t skipText = 1;
 // ============================================================
 // Buffer Management
 // ============================================================
+constexpr int16_t SENSOR_DATA_RING_BUFFER_SIZE = 1000;
 
-std::vector<SensorDataPacket> sensorDataRingBuffer;
+SensorDataPacket sensorDataRingBuffer[SENSOR_DATA_RING_BUFFER_SIZE];
+
 int16_t sensorDataRingBufferIndex = 0;
-int16_t sensorDataRingBufferSize = 2000; // close to max safe value
 int16_t sensorDataRingBufferCount = 0;
-int16_t sensorDataRingBufferInsertionCounter = 0; // counts how many values have been seen, to determine, when to safe the next one.
-int16_t sensorDataRingBufferTransmittedIndex = 0; // index of the next packet to transmit
+int16_t sensorDataRingBufferInsertionCounter = 0;
+int16_t sensorDataRingBufferTransmittedIndex = 0;
 
-void sensorDataRingBufferInsert(SensorData data){
-  Serial.println("Inserting new sensor data into ring buffer at index: " + String((sensorDataRingBufferIndex)? sensorDataRingBufferIndex : sensorDataRingBuffer.size()+1));
+void sensorDataRingBufferInsert(SensorData data) {
+  Serial.println("Inserting new sensor data into ring buffer at index: " + String(sensorDataRingBufferIndex));
+
   SensorDataPacket packet;
   packet.timestamp = millis();
   packet.iaq = data.iaq;
   packet.temperature = data.temperature;
   packet.humidity = data.humidity;
   packet.pressure = data.pressure;
-  
-  if (sensorDataRingBufferCount < sensorDataRingBufferSize){
-    sensorDataRingBuffer.push_back(packet);
-    sensorDataRingBufferCount++;
-  }else{
-    sensorDataRingBuffer[sensorDataRingBufferIndex] = packet;
-    sensorDataRingBufferIndex = (sensorDataRingBufferIndex + 1) % sensorDataRingBufferSize;
-  }
 
+  sensorDataRingBuffer[sensorDataRingBufferIndex] = packet;
+
+  sensorDataRingBufferIndex =
+      (sensorDataRingBufferIndex + 1) % SENSOR_DATA_RING_BUFFER_SIZE;
+
+  if (sensorDataRingBufferCount < SENSOR_DATA_RING_BUFFER_SIZE) {
+    sensorDataRingBufferCount++;
+  } else {
+    // Buffer ist voll: ältester nicht gesendeter Eintrag wurde überschrieben.
+    sensorDataRingBufferTransmittedIndex =
+        (sensorDataRingBufferTransmittedIndex + 1) % SENSOR_DATA_RING_BUFFER_SIZE;
+  }
+}
+
+void resetSensorDataRingBuffer() {
+  sensorDataRingBufferIndex = 0;
+  sensorDataRingBufferCount = 0;
+  sensorDataRingBufferInsertionCounter = 0;
+  sensorDataRingBufferTransmittedIndex = 0;
 }
 
 void evaluateMeasurementStatus(BLEDevice central, BLECharacteristic characteristic) {
@@ -287,25 +300,24 @@ void onBleConnected(BLEDevice central) {
 void onBleDisconnected(BLEDevice central) {
   bleClientConnected = false;
   bleClientAuthenticated = false;
-  //reset all relevant variables
+
+  // reset all relevant variables
   roomName = "";
   smoothString = "";
   smoothIndex = 0;
   altView = false;
   statusCode = 0;
-  warningStatus= 0;
-  //not resetting, to avoid having to synchronize access
-  //currentWarningMessages.clear();
-  //write acknowledged
+  warningStatus = 0;
+
+  // not resetting, to avoid having to synchronize access
+  // currentWarningMessages.clear();
+
+  // write acknowledged
   if (warningAcknowledgedCharacteristic.writeValue(false)) {
     Serial.println("Failed to reset warning acknowledgment.");
   }
 
-  sensorDataRingBufferIndex = 0;
-  sensorDataRingBufferCount = 0;
-  sensorDataRingBufferInsertionCounter = 0;
-  sensorDataRingBufferTransmittedIndex = 0;
-  sensorDataRingBuffer.clear();
+  resetSensorDataRingBuffer();
 
   BLE.stopAdvertise();
   BLE.setDeviceName("G5T4CC");
@@ -486,10 +498,11 @@ void onWarningAcknowledgedWritten(BLEDevice central, BLECharacteristic character
   }
 }
 
-void onCachedSensorDataAckWritten(BLEDevice central, BLECharacteristic characteristic){
+void onCachedSensorDataAckWritten(BLEDevice central, BLECharacteristic characteristic) {
   if (!bleClientAuthenticated) {
     Serial.println("Unauthenticated client tried to write cached sensor data acknowledgment. Disconnecting...");
     central.disconnect();
+
     currentState = "WAITING_FOR_KNOWN_CONNECTION";
     stateChanged = true;
     return;
@@ -497,7 +510,7 @@ void onCachedSensorDataAckWritten(BLEDevice central, BLECharacteristic character
 
   bool ack = false;
   int n = characteristic.readValue((byte*)&ack, sizeof(ack));
-  if (n != sizeof(ack) || !ack){
+  if (n != sizeof(ack) || !ack) {
     Serial.println("Packet malformed or ACK was false");
     return;
   }
@@ -509,18 +522,18 @@ void onCachedSensorDataAckWritten(BLEDevice central, BLECharacteristic character
 
   if (sensorDataRingBufferTransmittedIndex >= sensorDataRingBufferCount) {
     Serial.println("All cached sensor data packets have been acknowledged by the client.");
-
-    sensorDataRingBufferIndex = 0;
-    sensorDataRingBufferCount = 0;
-    sensorDataRingBufferInsertionCounter = 0;
-    sensorDataRingBufferTransmittedIndex = 0;
-    sensorDataRingBuffer.clear();
+    resetSensorDataRingBuffer();
     return;
   }
 
-  SensorDataPacket packetToSend = sensorDataRingBuffer[sensorDataRingBufferTransmittedIndex];
+  SensorDataPacket packetToSend =
+      sensorDataRingBuffer[sensorDataRingBufferTransmittedIndex];
 
-  bool ok = cachedSensorDataCharacteristic.writeValue((byte*)&packetToSend, sizeof(packetToSend));
+  bool ok = cachedSensorDataCharacteristic.writeValue(
+      (byte*)&packetToSend,
+      sizeof(packetToSend)
+  );
+
   Serial.println(String("cached write ok=") + (ok ? "true" : "false"));
 
   if (!ok) {
@@ -549,15 +562,18 @@ void bleTask()
   cachedSensorDataAckCharacteristic.setEventHandler(BLEWritten, onCachedSensorDataAckWritten);
 
   if (sensorDataRingBufferCount > 0) {
-    SensorDataPacket packetToSend = sensorDataRingBuffer[sensorDataRingBufferTransmittedIndex];
-    if (cachedSensorDataCharacteristic.writeValue((byte*)&packetToSend, sizeof(packetToSend))){
-      Serial.println("Failed to write cached sensor data packet.");
-    }else{      
-      Serial.print("Sent cached sensor data packet with timestamp: ");
-      Serial.println(packetToSend.timestamp);
-    }
-    sensorDataRingBufferTransmittedIndex = (sensorDataRingBufferTransmittedIndex + 1) % sensorDataRingBufferSize; 
+  SensorDataPacket packetToSend =
+      sensorDataRingBuffer[sensorDataRingBufferTransmittedIndex];
+
+  if (cachedSensorDataCharacteristic.writeValue((byte*)&packetToSend, sizeof(packetToSend))) {
+    Serial.println("Failed to write cached sensor data packet.");
+  } else {
+    Serial.print("Sent cached sensor data packet with timestamp: ");
+    Serial.println(packetToSend.timestamp);
   }
+
+  sensorDataRingBufferTransmittedIndex++;
+}
 
   uint32_t lastSend = 0;
 
