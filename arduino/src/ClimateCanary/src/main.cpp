@@ -108,6 +108,7 @@ int16_t sensorDataRingBufferIndex = 0;
 int16_t sensorDataRingBufferCount = 0;
 int16_t sensorDataRingBufferInsertionCounter = 0;
 int16_t sensorDataRingBufferTransmittedIndex = 0;
+int16_t sensorDataRingBufferSendCount = 0;
 
 void sensorDataRingBufferInsert(SensorData data) {
   Serial.println("Inserting new sensor data into ring buffer at index: " + String(sensorDataRingBufferIndex));
@@ -138,6 +139,7 @@ void resetSensorDataRingBuffer() {
   sensorDataRingBufferCount = 0;
   sensorDataRingBufferInsertionCounter = 0;
   sensorDataRingBufferTransmittedIndex = 0;
+  sensorDataRingBufferSendCount = 0;
 }
 
 void evaluateMeasurementStatus(BLEDevice central, BLECharacteristic characteristic) {
@@ -372,6 +374,12 @@ void onAuthenticationPacketWritten(BLEDevice central, BLECharacteristic characte
   roomName = String(safeRoomName);
   bleClientAuthenticated = true;
 
+  sensorDataRingBufferTransmittedIndex =
+      (sensorDataRingBufferIndex - sensorDataRingBufferCount + SENSOR_DATA_RING_BUFFER_SIZE)
+      % SENSOR_DATA_RING_BUFFER_SIZE;
+
+  sensorDataRingBufferSendCount = 0;
+
   Serial.println("Client authenticated successfully.");
   Serial.print("Room Name: ");
   Serial.println(roomName);
@@ -403,8 +411,7 @@ void onWarningmessageLengthWritten(BLEDevice central, BLECharacteristic characte
   warningMessageAck = 0;
   warningMessageBuffer = "";
   currentState = "CONNECTED_ACTIVE_WARNING";
-  stateChanged = true;
-  
+  stateChanged = true;   
 
   Serial.print("Received new warning message length: ");
   Serial.println(warningMessageLength);
@@ -520,7 +527,7 @@ void onCachedSensorDataAckWritten(BLEDevice central, BLECharacteristic character
     return;
   }
 
-  if (sensorDataRingBufferTransmittedIndex >= sensorDataRingBufferCount) {
+  if (sensorDataRingBufferSendCount >= sensorDataRingBufferCount) {
     Serial.println("All cached sensor data packets have been acknowledged by the client.");
     resetSensorDataRingBuffer();
     return;
@@ -544,11 +551,13 @@ void onCachedSensorDataAckWritten(BLEDevice central, BLECharacteristic character
   Serial.print("Prepared cached sensor data packet with timestamp: ");
   Serial.println(packetToSend.timestamp);
 
-  sensorDataRingBufferTransmittedIndex++;
+  sensorDataRingBufferTransmittedIndex =
+      (sensorDataRingBufferTransmittedIndex + 1) % SENSOR_DATA_RING_BUFFER_SIZE;
+
+  sensorDataRingBufferSendCount++;
 }
 
-void bleTask()
-{
+void bleTask() {
   currentState = "WAITING_FOR_KNOWN_CONNECTION";
   stateChanged = true;
 
@@ -560,20 +569,6 @@ void bleTask()
   warningMessageChunkCharacteristic.setEventHandler(BLEWritten, onCharPacketWritten);
   warningAcknowledgedCharacteristic.setEventHandler(BLEWritten, onWarningAcknowledgedWritten);
   cachedSensorDataAckCharacteristic.setEventHandler(BLEWritten, onCachedSensorDataAckWritten);
-
-  if (sensorDataRingBufferCount > 0) {
-  SensorDataPacket packetToSend =
-      sensorDataRingBuffer[sensorDataRingBufferTransmittedIndex];
-
-  if (cachedSensorDataCharacteristic.writeValue((byte*)&packetToSend, sizeof(packetToSend))) {
-    Serial.println("Failed to write cached sensor data packet.");
-  } else {
-    Serial.print("Sent cached sensor data packet with timestamp: ");
-    Serial.println(packetToSend.timestamp);
-  }
-
-  sensorDataRingBufferTransmittedIndex++;
-}
 
   uint32_t lastSend = 0;
 
@@ -656,8 +651,8 @@ void setStateData(){
       lightOffMs=75;
       lightR = 255;
       lightG = 0;
-      lightB = 0;  
-
+      lightB = 0;
+  
   }else if( currentState == "ACTIVE_WARNING_ACKNOWLEDGED"){
       smoothString = roomName;
       screenUpdateFunction = &acknowledgedWarningsScreen;
@@ -799,8 +794,7 @@ void loop() {
   }
     sensorDataRingBufferInsertionCounter++;
   }
-
-
+  
   if (currentMillis - lastScreenUpdate >= screenInterval) {
     lastScreenUpdate = currentMillis;
 
