@@ -282,53 +282,126 @@ const AbsenceView: React.FC = () => {
                 </div>
 
                 {/* Past absences */}
-                <div style={cardStyle}>
-                    <h3 style={{ margin: '0 0 1.25rem', color: '#374151', fontSize: '1rem' }}>
+                <div>
+                    <h3 style={{ margin: '0 0 1.5rem', color: '#374151', fontSize: '1rem' }}>
                         <i className="pi pi-calendar" style={{ marginRight: '0.5rem', color: '#0369a1' }} />
                         Past Absences
                     </h3>
 
                     {absences.length === 0 ? (
-                        <p style={{ color: '#6b7280', margin: 0 }}>No absences recorded yet.</p>
+                        <div style={{
+                            padding: '2rem',
+                            textAlign: 'center',
+                            background: '#f9fafb',
+                            borderRadius: '8px',
+                            border: '1px dashed #d1d5db',
+                        }}>
+                            <i className="pi pi-inbox" style={{ fontSize: '2rem', color: '#d1d5db', marginBottom: '0.5rem' }} />
+                            <p style={{ color: '#6b7280', margin: '0.5rem 0 0' }}>No absences recorded yet.</p>
+                        </div>
                     ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                            {absences.map(a => (
-                                <div
-                                    key={a.id}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        padding: '0.75rem 1rem',
-                                        background: '#f9fafb',
-                                        borderRadius: '6px',
-                                        border: '1px solid #e5e7eb',
-                                        flexWrap: 'wrap',
-                                        gap: '0.5rem',
-                                    }}
-                                >
-                                    <span style={{ color: '#374151', fontWeight: 500, minWidth: '260px' }}>
-                                        {formatDisplayRange(a.startDate, a.endDate)}
-                                    </span>
-                                    <span style={{ color: '#6b7280', minWidth: '100px' }}>
-                                        {absenceTypeLabel(a.absenceType)}
-                                    </span>
-                                    <Tag
-                                        value={statusLabel(a.absenceStatus)}
-                                        severity={statusSeverity(a.absenceStatus) ?? undefined}
-                                        style={{ minWidth: '90px', textAlign: 'center' }}
-                                    />
-                                    {canCancel(a) && (
-                                        <Button
-                                            label="Cancel"
-                                            icon="pi pi-times"
-                                            className="p-button-outlined p-button-danger p-button-sm"
-                                            loading={cancelling === a.id}
-                                            onClick={() => void handleCancel(a)}
-                                        />
-                                    )}
-                                </div>
-                            ))}
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+                            gap: '1.25rem',
+                        }}>
+                            {absences.map(a => {
+                                const typeIcon = a.absenceType === 'HOLIDAY' ? 'pi-sun' :
+                                               a.absenceType === 'SICKNESS' ? 'pi-heart' :
+                                               a.absenceType === 'PARENTAL_LEAVE' ? 'pi-user-plus' :
+                                               'pi-exclamation-circle';
+                                const typeColor = a.absenceType === 'HOLIDAY' ? '#f59e0b' :
+                                                a.absenceType === 'SICKNESS' ? '#ef4444' :
+                                                a.absenceType === 'PARENTAL_LEAVE' ? '#10b981' :
+                                                '#8b5cf6';
+
+                                return (
+                                    <div
+                                        key={a.id}
+                                        style={{
+                                            background: '#fff',
+                                            border: '1px solid #e5e7eb',
+                                            borderRadius: '12px',
+                                            padding: '1.5rem',
+                                            transition: 'all 0.3s ease',
+                                            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            cursor: 'default',
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            const el = e.currentTarget as HTMLElement;
+                                            el.style.boxShadow = '0 10px 25px rgba(0,0,0,0.1)';
+                                            el.style.transform = 'translateY(-2px)';
+                                            el.style.borderColor = '#d1d5db';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            const el = e.currentTarget as HTMLElement;
+                                            el.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+                                            el.style.transform = 'translateY(0)';
+                                            el.style.borderColor = '#e5e7eb';
+                                        }}
+                                    >
+                                        {/* Header with type icon and status */}
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                                            <div style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.75rem',
+                                            }}>
+                                                <div style={{
+                                                    background: typeColor,
+                                                    borderRadius: '50%',
+                                                    width: '40px',
+                                                    height: '40px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                }}>
+                                                    <i className={`pi ${typeIcon}`} style={{ color: '#fff', fontSize: '1.25rem' }} />
+                                                </div>
+                                                <div>
+                                                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                                        {absenceTypeLabel(a.absenceType)}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <Tag
+                                                value={statusLabel(a.absenceStatus)}
+                                                severity={statusSeverity(a.absenceStatus) ?? undefined}
+                                                style={{
+                                                    fontSize: '0.75rem',
+                                                    padding: '0.35rem 0.75rem',
+                                                    textAlign: 'center',
+                                                    fontWeight: 600,
+                                                }}
+                                            />
+                                        </div>
+
+                                        {/* Date range */}
+                                        <div style={{ marginBottom: '1.5rem', flex: 1 }}>
+                                            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#9ca3af', marginBottom: '0.25rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                                Duration
+                                            </div>
+                                            <div style={{ fontSize: '1.1rem', fontWeight: 600, color: '#111827', lineHeight: '1.5' }}>
+                                                {formatDisplayRange(a.startDate, a.endDate)}
+                                            </div>
+                                        </div>
+
+                                        {/* Cancel button */}
+                                        {canCancel(a) && (
+                                            <Button
+                                                label="Cancel"
+                                                icon="pi pi-times"
+                                                className="p-button-outlined p-button-danger p-button-sm"
+                                                loading={cancelling === a.id}
+                                                onClick={() => void handleCancel(a)}
+                                                style={{ width: '100%' }}
+                                            />
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </div>
