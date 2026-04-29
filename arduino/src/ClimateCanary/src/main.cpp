@@ -9,9 +9,8 @@
 #include <vector>
 #include <string>
 
-//TODO:data buffering
-
 using namespace rtos;
+using namespace std::chrono_literals;
 
 // ============================================================
 // BLE / RTOS
@@ -95,7 +94,7 @@ uint16_t warningMessageLength = 0;
 uint16_t warningMessageAck = 0;
 
 String warningMessageBuffer = "";
-int16_t skipText = 1;
+uint skipText = 1;
 
 // ============================================================
 // Buffer Management
@@ -260,7 +259,7 @@ void bleFirstSetup(){
 
   while(true){
     BLE.poll();
-    ThisThread::sleep_for(10);
+    ThisThread::sleep_for(10ms);
   }
 }
 
@@ -586,7 +585,7 @@ void bleTask() {
         lastSend = now;
       }
     }
-    ThisThread::sleep_for(10);
+    ThisThread::sleep_for(10ms);
   }
 }
 
@@ -674,12 +673,7 @@ void setStateData(){
 void setup() {
   setupScreen();
 
-  if (!setupSensors()) while (1){
-    printScreen(0,"SUKA");
-    String mills = String(millis());
-    printScreen(1,mills);
-    ThisThread::sleep_for(500);
-  };
+  if (!setupSensors()) while (1);
   setupButtons();
   setupLight();
   setColorRGB(lightR, lightG, lightB);
@@ -708,7 +702,7 @@ void setup() {
       bleThread.start(bleFirstSetup);
   }
   //sleep 2 seconds to ensure stable startup of sensors and ble
-  ThisThread::sleep_for(2000);
+  ThisThread::sleep_for(2s);
 }
 
 void loop() {
