@@ -12,7 +12,7 @@ const api = new DepartmentControllerApi(apiConfig);
 
 export const DepartmentService = {
     getAll: (): Promise<DepartmentDTO[]> =>
-        api.getAll5().then(r => r.data),
+        api.getAll4().then(r => r.data),
 
     getById: (id: number): Promise<DepartmentDTO> =>
         api.getById5({ id }).then(r => r.data),

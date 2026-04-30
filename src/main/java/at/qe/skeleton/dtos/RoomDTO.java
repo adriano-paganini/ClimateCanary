@@ -7,7 +7,7 @@ public record RoomDTO(
         Long id,
         String name,
         RoomType roomType,
-        Integer minOccupancy,
+        Boolean privacyMode,
         Long departmentId,
         Long buildingId,
         boolean active

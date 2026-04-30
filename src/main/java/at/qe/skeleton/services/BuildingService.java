@@ -7,6 +7,7 @@ import at.qe.skeleton.models.Room;
 import at.qe.skeleton.repositories.BuildingRepository;
 import at.qe.skeleton.repositories.RoomRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,15 +27,18 @@ public class BuildingService {
         this.roomRepository = roomRepository;
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public List<Building> getAllBuildings() {
         return buildingRepository.findAll();
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public Building getBuildingById(long id) {
         return buildingRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Building with id " + id + " not found"));
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public Building create(Building building) {
         Building savedBuilding = buildingRepository.save(building);
 
@@ -47,6 +51,7 @@ public class BuildingService {
         return savedBuilding;
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public Building update(Long id, BuildingUpdateDTO dto) {
         Building building = getBuildingById(id);
 
@@ -71,6 +76,7 @@ public class BuildingService {
         return updatedBuilding;
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     @Transactional
     public void delete(Long id) {
         Building building = getBuildingById(id);

@@ -6,6 +6,8 @@ import at.qe.skeleton.dtos.EmployeeProfileUpdateDTO;
 import at.qe.skeleton.models.EmployeeProfile;
 import at.qe.skeleton.repositories.EmployeeProfileRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,19 +22,35 @@ public class EmployeeProfileService {
     private final UserxService userxService;
     private final DepartmentService departmentService;
     private final RoomService roomService;
+    private final AuthenticatedUserService authentication;
 
     public EmployeeProfileService(EmployeeProfileRepository employeeProfileRepository,
                                   UserxService userxService,
                                   DepartmentService departmentService,
-                                  RoomService roomService) {
+                                  RoomService roomService,
+                                  AuthenticatedUserService authentication) {
         this.employeeProfileRepository = employeeProfileRepository;
         this.userxService = userxService;
         this.departmentService = departmentService;
         this.roomService = roomService;
+        this.authentication = authentication;
     }
 
-    public List<EmployeeProfile> getAll() {
+    public List<EmployeeProfile> getAll(Long userId, Long departmentId) {
+
+        if (userId != null && departmentId != null) {
+            return employeeProfileRepository.findByUser_IdAndDepartment_Id(userId, departmentId);
+        }
+
+        if (userId != null) return employeeProfileRepository.findByUser_Id(userId);
+        if (departmentId != null) return employeeProfileRepository.findByDepartment_Id(departmentId);
+
         return employeeProfileRepository.findAll();
+    }
+
+    public Optional<EmployeeProfile> getMyProfile() {
+        Long id = authentication.getAuthenticatedUser().getId();
+        return employeeProfileRepository.getByUser_Id(id);
     }
 
     public EmployeeProfile getById(Long id) {

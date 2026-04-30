@@ -8,6 +8,7 @@ import at.qe.skeleton.models.Room;
 import at.qe.skeleton.models.SensorStation;
 import at.qe.skeleton.repositories.RoomRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,21 +39,23 @@ public class RoomService {
                 .orElseThrow(() -> new NotFoundException("Room with id " + id + " not found"));
     }
 
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public Room create(Room room) {
         Room savedRoom = roomRepository.save(room);
 
         log.info("Created room with id={}", savedRoom.getId());
-        log.debug("Created room details: id={}, name={}, roomType={}, minOccupancy={}, departmentId={}, buildingId={}",
+        log.debug("Created room details: id={}, name={}, roomType={}, privacyMode={}, departmentId={}, buildingId={}",
                 savedRoom.getId(),
                 savedRoom.getName(),
                 savedRoom.getRoomType(),
-                savedRoom.getMinOccupancy(),
+                savedRoom.getPrivacyMode(),
                 savedRoom.getDepartment() != null ? savedRoom.getDepartment().getId() : null,
                 savedRoom.getBuilding() != null ? savedRoom.getBuilding().getId() : null);
 
         return savedRoom;
     }
 
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public Room update(Long id, RoomUpdateDTO dto) {
         Room existing = getById(id);
 
@@ -69,9 +72,9 @@ public class RoomService {
             debugInfo.append(", roomType=").append(dto.roomType());
         }
 
-        if (dto.minOccupancy() != null) {
-            existing.setMinOccupancy(dto.minOccupancy());
-            debugInfo.append(", minOccupancy=").append(dto.minOccupancy());
+        if (dto.privacyMode() != null) {
+            existing.setPrivacyMode(dto.privacyMode());
+            debugInfo.append(", privacyMode=").append(dto.privacyMode());
         }
 
         if (dto.departmentId() != null) {
@@ -96,6 +99,7 @@ public class RoomService {
      * Soft delete policy
      * @param id
      */
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     @Transactional
     public void delete(Long id) {
         Room room = getById(id);

@@ -1,5 +1,5 @@
 import {
-    GetAll10MetricEnum,
+    GetAll9MetricEnum,
     MeasurementControllerApi,
     MeasurementDTO,
 } from "../generated-skeleton-api";
@@ -7,16 +7,16 @@ import { apiConfig } from "./apiConfig";
 
 const api = new MeasurementControllerApi(apiConfig);
 
-export { GetAll10MetricEnum as MetricEnum };
+export { GetAll9MetricEnum as MetricEnum };
 
 export const MeasurementService = {
     getAll: (params: {
         roomId?: number;
-        metric?: GetAll10MetricEnum;
+        metric?: GetAll9MetricEnum;
         from?: string;
         to?: string;
     } = {}): Promise<MeasurementDTO[]> =>
-        api.getAll10(params).then(r => r.data),
+        api.getAll9(params).then(r => r.data),
 
     getById: (id: number): Promise<MeasurementDTO> =>
         api.getById11({ id }).then(r => r.data),

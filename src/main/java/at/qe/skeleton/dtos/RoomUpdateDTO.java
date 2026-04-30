@@ -1,7 +1,6 @@
 package at.qe.skeleton.dtos;
 
 import at.qe.skeleton.models.RoomType;
-import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 public record RoomUpdateDTO (
@@ -11,8 +10,7 @@ public record RoomUpdateDTO (
 
         RoomType roomType,
 
-        @Positive
-        Integer minOccupancy,
+        Boolean privacyMode,
 
         Long departmentId,
 

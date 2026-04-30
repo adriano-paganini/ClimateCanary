@@ -10,6 +10,7 @@ import at.qe.skeleton.repositories.DepartmentRepository;
 import at.qe.skeleton.repositories.EmployeeProfileRepository;
 import at.qe.skeleton.repositories.RoomRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -30,15 +31,18 @@ public class DepartmentService {
         this.employeeProfileRepository = employeeProfileRepository;
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN', 'DEPARTMENT_LEAD', 'MANAGEMENT', 'EMPLOYEE')")
     public List<Department> getAll() {
         return departmentRepository.findAll();
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN', 'DEPARTMENT_LEAD', 'MANAGEMENT', 'EMPLOYEE')")
     public Department getDepartmentById(Long id) {
         return departmentRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Department with id " + id + " not found"));
     }
 
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public Department create(Department d) {
         Department savedDepartment = departmentRepository.save(d);
 
@@ -51,6 +55,7 @@ public class DepartmentService {
         return savedDepartment;
     }
 
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public Department update(Long id, DepartmentUpdateDTO dto) {
         Department existing = getDepartmentById(id);
 
@@ -88,6 +93,7 @@ public class DepartmentService {
         return updatedDepartment;
     }
 
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public void delete(Long id) {
         Department department = getDepartmentById(id);
 

@@ -5,6 +5,7 @@ import at.qe.skeleton.dtos.SensorStationUpdateDTO;
 import at.qe.skeleton.models.SensorStation;
 import at.qe.skeleton.repositories.SensorStationRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,31 +26,35 @@ public class SensorStationService {
         this.roomService = roomService;
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public List<SensorStation> getAll() {
         return repo.findAllActive();
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public SensorStation getById(Long id) {
         return repo.findById(id).orElseThrow(() -> new NotFoundException("SensorStation with id " + id + " not found"));
     }
 
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public SensorStation create(SensorStation s) {
         SensorStation savedStation = repo.save(s);
 
         log.info("Created sensor station with id={}", savedStation.getId());
-        log.debug("Created sensorStation details: id={}, name={}, deviceStatus={}, measurementsPerSec={}, raspberryPiId={}, roomId={}",
+        log.debug("Created sensorStation details: id={}, name={}, bleMac{}, deviceStatus={}, measurementInterval={}, raspberryPiId={}, roomId={}",
                 savedStation.getId(),
                 savedStation.getName(),
+                savedStation.getBleMac(),
                 savedStation.getDeviceStatus(),
-                savedStation.getMeasurementsPerSec(),
+                savedStation.getMeasurementInterval(),
                 savedStation.getRaspberryPi() != null ? savedStation.getRaspberryPi().getId() : null,
                 savedStation.getRoom() != null ? savedStation.getRoom().getId() : null);
 
         return savedStation;
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public SensorStation update(Long id, SensorStationUpdateDTO dto) {
-
         SensorStation existing = getById(id);
 
         StringBuilder debugInfo = new StringBuilder("Updated sensor station details:")
@@ -63,11 +68,6 @@ public class SensorStationService {
         if (dto.deviceStatus() != null) {
             existing.setDeviceStatus(dto.deviceStatus());
             debugInfo.append(", deviceStatus=").append(dto.deviceStatus());
-        }
-
-        if (dto.measurementsPerSec() != null) {
-            existing.setMeasurementsPerSec(dto.measurementsPerSec());
-            debugInfo.append(", measurementsPerSec=").append(dto.measurementsPerSec());
         }
 
         if (dto.raspberryPiId() != null) {
@@ -88,6 +88,7 @@ public class SensorStationService {
         return updatedStation;
     }
 
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public void delete(Long id) {
         repo.deleteById(id);
         log.info("Deleted sensor station with id={}", id);

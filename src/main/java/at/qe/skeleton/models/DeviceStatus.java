@@ -6,5 +6,8 @@ public enum DeviceStatus {
     OFFLINE,
     MAINTENANCE,
     DEGRADED,
-    DECOMMISSIONED
+    DECOMMISSIONED,
+    AVAILABLE,
+    CONNECTED,
+    CONNECTION_FAILED
 }

@@ -12,8 +12,11 @@ public record SensorStationCreateDTO (
         @NotBlank
         DeviceStatus deviceStatus,
 
+        @NotBlank
+        String bleMac,
+
         @NotNull
-        Float measurementsPerSec,
+        Integer measurementInterval,
 
         @NotNull
         Long raspberryPiId,

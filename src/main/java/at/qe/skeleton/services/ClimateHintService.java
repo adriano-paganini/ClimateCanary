@@ -5,6 +5,7 @@ import at.qe.skeleton.dtos.ClimateHintUpdateDTO;
 import at.qe.skeleton.models.ClimateHint;
 import at.qe.skeleton.repositories.ClimateHintRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,15 +21,18 @@ public class ClimateHintService {
         this.climateHintRepository = climateHintRepository;
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public List<ClimateHint> findAll() {
         return climateHintRepository.findAll();
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public ClimateHint getClimateHintById(Long id) {
         return climateHintRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Climate hint not found with id: " + id));
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public ClimateHint create(ClimateHint climateHint) {
         ClimateHint savedClimateHint = climateHintRepository.save(climateHint);
 
@@ -41,6 +45,7 @@ public class ClimateHintService {
         return savedClimateHint;
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public ClimateHint update(Long id, ClimateHintUpdateDTO dto) {
         ClimateHint climateHint = getClimateHintById(id);
 
@@ -65,6 +70,7 @@ public class ClimateHintService {
         return updatedClimateHint;
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     @Transactional
     public void delete(Long id) {
         ClimateHint entity = climateHintRepository.findById(id)

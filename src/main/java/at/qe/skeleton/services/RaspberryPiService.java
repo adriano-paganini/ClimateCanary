@@ -7,6 +7,7 @@ import at.qe.skeleton.repositories.RaspberryPiRepository;
 import at.qe.skeleton.models.SensorStation;
 import at.qe.skeleton.repositories.SensorStationRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,14 +26,17 @@ public class RaspberryPiService {
         this.sensorStationRepository = sensorStationRepository;
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public List<RaspberryPi> getAll() {
         return repo.findAllActive();
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public RaspberryPi getById(Long id) {
         return repo.findById(id).orElseThrow(() -> new NotFoundException("RaspberryPi with id " + id + " not found"));
     }
 
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public RaspberryPi create(RaspberryPi pi) {
         RaspberryPi savedPi = repo.save(pi);
 
@@ -46,6 +50,7 @@ public class RaspberryPiService {
         return savedPi;
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public RaspberryPi update(Long id, RaspberryPiUpdateDTO dto) {
         RaspberryPi existing = getById(id);
 
@@ -89,11 +94,13 @@ public class RaspberryPiService {
         return updatedPi;
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public List<SensorStation> getSensorStations(Long raspberryPiId) {
         RaspberryPi pi = getById(raspberryPiId);
         return pi.getSensorStations();
     }
 
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public void delete(Long id) {
         repo.deleteById(id);
         log.info("Deleted raspberry pi with id={}", id);

@@ -19,6 +19,7 @@ public class RaspberryPiCreateMapper implements DTOMapper<RaspberryPi, Raspberry
     public RaspberryPi mapFrom(RaspberryPiCreateDTO dto) {
         RaspberryPi pi = new RaspberryPi();
         pi.setRoom(roomService.getById(dto.roomId()));
+        pi.setHostName(dto.hostName());
         return pi;
     }
 

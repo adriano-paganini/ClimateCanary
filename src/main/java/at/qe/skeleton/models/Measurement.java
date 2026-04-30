@@ -15,7 +15,7 @@ public class Measurement {
 
     private LocalDateTime timestamp;
 
-    private Long measurement;
+    private Float measurement;
 
     @Enumerated(EnumType.STRING)
     private Metric metric;
@@ -43,11 +43,11 @@ public class Measurement {
         this.timestamp = timestamp;
     }
 
-    public Long getMeasurement() {
+    public Float getMeasurement() {
         return measurement;
     }
 
-    public void setMeasurement(Long measurement) {
+    public void setMeasurement(Float measurement) {
         this.measurement = measurement;
     }
 

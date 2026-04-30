@@ -18,7 +18,7 @@ public class Threshold {
     @Enumerated(EnumType.STRING)
     private Metric metric;
     private boolean enabled;
-    private Long boundValue;
+    private Float boundValue;
 
     @Enumerated(EnumType.STRING)
     private ThresholdType thresholdType;
@@ -53,11 +53,11 @@ public class Threshold {
         this.enabled = enabled;
     }
 
-    public Long getBoundValue() {
+    public Float getBoundValue() {
         return boundValue;
     }
 
-    public void setBoundValue(Long boundValue) {
+    public void setBoundValue(Float boundValue) {
         this.boundValue = boundValue;
     }
 
