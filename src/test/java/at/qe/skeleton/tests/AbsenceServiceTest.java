@@ -66,7 +66,7 @@ class AbsenceServiceTest {
     }
 
     @Test
-    @DisplayName("Get all Absences without applying any filters")
+    @DisplayName("Get all absences without filters returns all")
     void getAll_noFilters_returnsAllAbsences(){
         Mockito.when(absenceRepository.findAll()).thenReturn(List.of(absence));
         List<Absence> result = absenceService.getAll(null, null);
@@ -77,7 +77,7 @@ class AbsenceServiceTest {
     }
 
     @Test
-    @DisplayName("Get all Absences with Userx Id")
+    @DisplayName("Get all absences with user id calls search")
     void getAll_withUserxId_callsSearch() {
         Mockito.when(absenceRepository.search(2L, null)).thenReturn(List.of(absence));
 
@@ -89,7 +89,7 @@ class AbsenceServiceTest {
     }
 
     @Test
-    @DisplayName("Get All Absences with specified Department Id")
+    @DisplayName("Get all absences with department id calls search")
     void getAll_withDepartmentId_callsSearch() {
         Mockito.when(absenceRepository.search(null, 5L)).thenReturn(List.of(absence));
 
@@ -100,7 +100,7 @@ class AbsenceServiceTest {
     }
 
     @Test
-    @DisplayName("Get All absences with combined Userx Id and Department Id")
+    @DisplayName("Get all absences with both filters calls search")
     void getAll_withBothFilters_callsSearch() {
         Mockito.when(absenceRepository.search(2L, 5L)).thenReturn(List.of(absence));
 
@@ -111,6 +111,7 @@ class AbsenceServiceTest {
     }
 
     @Test
+    @DisplayName("Get absence by id returns absence")
     void getById_existingId_returnsAbsence() {
         Mockito.when(absenceRepository.findById(10L)).thenReturn(Optional.of(absence));
 
@@ -120,6 +121,7 @@ class AbsenceServiceTest {
     }
 
     @Test
+    @DisplayName("Get absence by id throws when not found")
     void getById_nonExistingId_throwsNotFoundException() {
         Mockito.when(absenceRepository.findById(99L)).thenReturn(Optional.empty());
 
@@ -130,12 +132,14 @@ class AbsenceServiceTest {
 
 
     @Test
+    @DisplayName("Get absences for null user throws not found")
     void getAbsencesForUser_nullUser_throwsNotFoundException() {
         Assertions.assertThatThrownBy(() -> absenceService.getAbsencesForUser(null))
                 .isInstanceOf(NotFoundException.class);
     }
 
     @Test
+    @DisplayName("Get absences for self returns absences")
     void getAbsencesForUser_selfAccess_returnsAbsences() {
         Mockito.when(authenticatedUserService.getAuthenticatedUser()).thenReturn(regularUser);
         Mockito.when(absenceRepository.findByUser(regularUser)).thenReturn(List.of(absence));
@@ -146,6 +150,7 @@ class AbsenceServiceTest {
     }
 
     @Test
+    @DisplayName("Get absences for admin accessing other user returns absences")
     void getAbsencesForUser_adminAccessOtherUser_returnsAbsences() {
         Mockito.when(authenticatedUserService.getAuthenticatedUser()).thenReturn(adminUser);
         Mockito.when(absenceRepository.findByUser(regularUser)).thenReturn(List.of(absence));
@@ -156,6 +161,7 @@ class AbsenceServiceTest {
     }
 
     @Test
+    @DisplayName("Get absences for non admin accessing other user throws access denied")
     void getAbsencesForUser_nonAdminAccessOtherUser_throwsAccessDeniedException() {
         Mockito.when(authenticatedUserService.getAuthenticatedUser()).thenReturn(otherUser);
 
@@ -167,6 +173,7 @@ class AbsenceServiceTest {
 
 
     @Test
+    @DisplayName("Create absence with valid dates saves and returns")
     void create_validDates_savesAndReturnsAbsence() {
         Mockito.when(absenceRepository.save(absence)).thenReturn(absence);
 
@@ -177,6 +184,7 @@ class AbsenceServiceTest {
     }
 
     @Test
+    @DisplayName("Create absence with end date before start date throws")
     void create_endDateBeforeStartDate_throwsIllegalArgumentException() {
         absence.setStartDate(LocalDateTime.of(2025, 6, 10, 12, 0));
         absence.setEndDate(LocalDateTime.of(2025, 6, 1, 12, 0));
@@ -189,6 +197,7 @@ class AbsenceServiceTest {
     }
 
     @Test
+    @DisplayName("Create absence with equal start and end date succeeds")
     void create_endDateEqualsStartDate_savesSuccessfully() {
         absence.setStartDate(LocalDateTime.of(2025, 6, 5, 12, 0));
         absence.setEndDate(LocalDateTime.of(2025, 6, 5, 12, 0));
@@ -198,6 +207,7 @@ class AbsenceServiceTest {
     }
 
     @Test
+    @DisplayName("Create absence with null start date succeeds")
     void create_nullStartDate_savesSuccessfully() {
         absence.setStartDate(null);
         Mockito.when(absenceRepository.save(absence)).thenReturn(absence);
@@ -206,6 +216,7 @@ class AbsenceServiceTest {
     }
 
     @Test
+    @DisplayName("Create absence with null end date succeeds")
     void create_nullEndDate_savesSuccessfully() {
         absence.setEndDate(null);
         Mockito.when(absenceRepository.save(absence)).thenReturn(absence);
@@ -214,6 +225,7 @@ class AbsenceServiceTest {
     }
 
     @Test
+    @DisplayName("Create absence with both dates null succeeds")
     void create_bothDatesNull_savesSuccessfully() {
         absence.setStartDate(null);
         absence.setEndDate(null);
@@ -224,6 +236,7 @@ class AbsenceServiceTest {
     }
 
     @Test
+    @DisplayName("Update absence with all fields updates and returns")
     void update_allFieldsProvided_updatesAndReturnsAbsence() {
         Userx newUser = new Userx();
         newUser.setId(5L);
@@ -251,6 +264,7 @@ class AbsenceServiceTest {
     }
 
     @Test
+    @DisplayName("Update absence with only start date changes start date")
     void update_onlyStartDateProvided_onlyStartDateChanged() {
         LocalDateTime originalEnd = absence.getEndDate();
         Userx originalUser = absence.getUser();
@@ -270,8 +284,8 @@ class AbsenceServiceTest {
     }
 
     @Test
-    void
-    update_emptyDto_nothingChanged() {
+    @DisplayName("Update absence with empty dto does not change anything")
+    void update_emptyDto_nothingChanged() {
         Userx originalUser = absence.getUser();
         LocalDateTime originalStart = absence.getStartDate();
         LocalDateTime originalEnd = absence.getEndDate();
@@ -290,6 +304,7 @@ class AbsenceServiceTest {
     }
 
     @Test
+    @DisplayName("Update absence with non existing id throws not found")
     void update_nonExistingId_throwsNotFoundException() {
         AbsenceUpdateDTO dto = new AbsenceUpdateDTO(null, null, null, null, null);
         Mockito.when(absenceRepository.findById(99L)).thenReturn(Optional.empty());
@@ -302,6 +317,7 @@ class AbsenceServiceTest {
     }
 
     @Test
+    @DisplayName("Delete absence with existing id calls delete")
     void delete_existingId_callsDeleteById() {
         Mockito.when(absenceRepository.findById(10L)).thenReturn(Optional.of(absence));
 
@@ -311,6 +327,7 @@ class AbsenceServiceTest {
     }
 
     @Test
+    @DisplayName("Delete absence with non existing id throws not found")
     void delete_nonExistingId_throwsNotFoundException() {
         Mockito.when(absenceRepository.findById(99L)).thenReturn(Optional.empty());
 

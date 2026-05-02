@@ -9,6 +9,7 @@ import at.qe.skeleton.repositories.BuildingRepository;
 import at.qe.skeleton.services.AddressService;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -45,6 +46,7 @@ class AddressServiceTest {
     }
 
     @Test
+    @DisplayName("Get all addresses returns all")
     void getAll_returnsAllAddresses() {
         Mockito.when(addressRepository.findAll()).thenReturn(List.of(address));
 
@@ -55,6 +57,7 @@ class AddressServiceTest {
     }
 
     @Test
+    @DisplayName("Get all addresses empty returns empty list")
     void getAll_empty_returnsEmptyList() {
         Mockito.when(addressRepository.findAll()).thenReturn(List.of());
 
@@ -63,9 +66,9 @@ class AddressServiceTest {
         Assertions.assertThat(result).isEmpty();
     }
 
-    // ── getById ───────────────────────────────────────────────────────────────
 
     @Test
+    @DisplayName("Get address by id returns address")
     void getById_existingId_returnsAddress() {
         Mockito.when(addressRepository.findById(1L)).thenReturn(Optional.of(address));
 
@@ -75,6 +78,7 @@ class AddressServiceTest {
     }
 
     @Test
+    @DisplayName("Get address by id throws when not found")
     void getById_missingId_throwsNotFoundException() {
         Mockito.when(addressRepository.findById(99L)).thenReturn(Optional.empty());
 
@@ -83,9 +87,8 @@ class AddressServiceTest {
                 .hasMessageContaining("99");
     }
 
-    // ── create ────────────────────────────────────────────────────────────────
-
     @Test
+    @DisplayName("Create address with valid data saves and returns")
     void create_validAddress_savesAndReturns() {
         Mockito.when(addressRepository.save(address)).thenReturn(address);
 
@@ -96,6 +99,7 @@ class AddressServiceTest {
     }
 
     @Test
+    @DisplayName("Create minimal address saves successfully")
     void create_minimalAddress_savesSuccessfully() {
         Address minimal = new Address();
         minimal.setCountry("Germany");
@@ -109,6 +113,7 @@ class AddressServiceTest {
 
 
     @Test
+    @DisplayName("Update address with all fields updates all fields")
     void update_allFieldsProvided_updatesAllFields() {
         AddressUpdateDTO dto = new AddressUpdateDTO(
                 "Germany", "10115", "Berlin",
@@ -129,6 +134,7 @@ class AddressServiceTest {
     }
 
     @Test
+    @DisplayName("Update address with no fields keeps existing values")
     void update_noFieldsProvided_keepsExistingValues() {
         AddressUpdateDTO dto = new AddressUpdateDTO(null, null, null, null, null, null);
 
@@ -146,6 +152,7 @@ class AddressServiceTest {
     }
 
     @Test
+    @DisplayName("Update address with partial fields updates only provided fields")
     void update_partialFields_onlyUpdatesProvidedFields() {
         AddressUpdateDTO dto = new AddressUpdateDTO(null, "10115", "Berlin", null, null, null);
 
@@ -161,6 +168,7 @@ class AddressServiceTest {
     }
 
     @Test
+    @DisplayName("Update address with non existing id throws not found")
     void update_nonExistentId_throwsNotFoundException() {
         AddressUpdateDTO dto = new AddressUpdateDTO(null, null, null, null, null, null);
         Mockito.when(addressRepository.findById(99L)).thenReturn(Optional.empty());
@@ -169,9 +177,9 @@ class AddressServiceTest {
                 .isInstanceOf(NotFoundException.class);
     }
 
-    // ── delete ────────────────────────────────────────────────────────────────
 
     @Test
+    @DisplayName("Delete address not referenced by building deletes successfully")
     void delete_existingIdNotReferencedByBuilding_deletesSuccessfully() {
         Mockito.when(addressRepository.findById(1L)).thenReturn(Optional.of(address));
         Mockito.when(buildingRepository.existsBuildingByAddressId(1L)).thenReturn(false);
@@ -182,6 +190,7 @@ class AddressServiceTest {
     }
 
     @Test
+    @DisplayName("Delete address referenced by building throws conflict")
     void delete_addressReferencedByBuilding_throwsConflictException() {
         Mockito.when(addressRepository.findById(1L)).thenReturn(Optional.of(address));
         Mockito.when(buildingRepository.existsBuildingByAddressId(1L)).thenReturn(true);
@@ -194,6 +203,7 @@ class AddressServiceTest {
     }
 
     @Test
+    @DisplayName("Delete address with non existing id throws not found")
     void delete_nonExistentId_throwsNotFoundException() {
         Mockito.when(addressRepository.findById(99L)).thenReturn(Optional.empty());
 
