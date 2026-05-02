@@ -9,6 +9,7 @@ import at.qe.skeleton.services.DepartmentService;
 import at.qe.skeleton.services.RoomService;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -58,6 +59,7 @@ class RoomServiceTest {
     }
 
     @Test
+    @DisplayName("getAll returns only active rooms")
     void getAll_returnsOnlyActiveRooms() {
         List<Room> activeRooms = List.of(room);
         Mockito.when(roomRepository.findAllByActiveTrue()).thenReturn(activeRooms);
@@ -69,6 +71,7 @@ class RoomServiceTest {
     }
 
     @Test
+    @DisplayName("getAll returns empty list when no active rooms exist")
     void getAll_returnsEmptyList_NoActiveRooms() {
         Mockito.when(roomRepository.findAllByActiveTrue()).thenReturn(List.of());
 
@@ -76,6 +79,7 @@ class RoomServiceTest {
     }
 
     @Test
+    @DisplayName("getById returns room when it exists and is active")
     void getById_returnsRoom_whenExists() {
         Mockito.when(roomRepository.findByIdAndActiveTrue(1L)).thenReturn(Optional.of(room));
 
@@ -85,6 +89,7 @@ class RoomServiceTest {
     }
 
     @Test
+    @DisplayName("getById throws NotFoundException when room is not found")
     void getById_throwsNotFoundException_NotFound() {
         Mockito.when(roomRepository.findByIdAndActiveTrue(99L)).thenReturn(Optional.empty());
 
@@ -94,6 +99,7 @@ class RoomServiceTest {
     }
 
     @Test
+    @DisplayName("getById throws NotFoundException when room is inactive")
     void getById_throwsNotFoundException_RoomIsInactive() {
         Mockito.when(roomRepository.findByIdAndActiveTrue(1L)).thenReturn(Optional.empty());
 
@@ -103,6 +109,7 @@ class RoomServiceTest {
 
     @Test
     @WithMockUser(authorities = "SYSTEM_ADMIN")
+    @DisplayName("create saves and returns room")
     void create_savesAndReturnsRoom() {
         Mockito.when(roomRepository.save(room)).thenReturn(room);
 
@@ -114,6 +121,7 @@ class RoomServiceTest {
 
     @Test
     @WithMockUser(authorities = "SYSTEM_ADMIN")
+    @DisplayName("create persists room with null department and building")
     void create_persistsRoomWithNullDepartmentAndBuilding() {
         Room minimal = new Room();
         minimal.setName("Minimal");
@@ -130,6 +138,7 @@ class RoomServiceTest {
 
     @Test
     @WithMockUser(authorities = "SYSTEM_ADMIN")
+    @DisplayName("update applies all fields from DTO")
     void update_appliesAllFieldsFromDTO() {
         Department newDept = new Department();
         Building newBuilding = new Building();
@@ -152,6 +161,7 @@ class RoomServiceTest {
 
     @Test
     @WithMockUser(authorities = "SYSTEM_ADMIN")
+    @DisplayName("update ignores null fields and keeps existing values")
     void update_ignoresNullFields_leavingExistingValuesIntact() {
         RoomUpdateDTO dto = new RoomUpdateDTO(null, null, null, null, null);
 
@@ -167,6 +177,7 @@ class RoomServiceTest {
 
     @Test
     @WithMockUser(authorities = "SYSTEM_ADMIN")
+    @DisplayName("update throws NotFoundException when room does not exist")
     void update_throwsNotFoundException_whenRoomDoesNotExist() {
         RoomUpdateDTO dto = new RoomUpdateDTO("X", null, null, null, null);
         Mockito.when(roomRepository.findByIdAndActiveTrue(99L)).thenReturn(Optional.empty());
@@ -179,6 +190,7 @@ class RoomServiceTest {
 
     @Test
     @WithMockUser(authorities = "SYSTEM_ADMIN")
+    @DisplayName("delete marks room inactive and clears associations")
     void delete_marksRoomInactiveAndClearsAssociations() {
         department.getRooms().add(room);
         building.getRooms().add(room);
@@ -197,6 +209,7 @@ class RoomServiceTest {
 
     @Test
     @WithMockUser(authorities = "SYSTEM_ADMIN")
+    @DisplayName("delete decommissions all sensor stations in the room")
     void delete_decommissionsSensorStations() {
         SensorStation ss = new SensorStation();
         ss.setDeviceStatus(DeviceStatus.AVAILABLE);
@@ -211,6 +224,7 @@ class RoomServiceTest {
 
     @Test
     @WithMockUser(authorities = "SYSTEM_ADMIN")
+    @DisplayName("delete decommissions raspberry pi when present")
     void delete_decommissionsRaspberryPi_whenPresent() {
         RaspberryPi pi = new RaspberryPi();
         pi.setDeviceStatus(DeviceStatus.AVAILABLE);
@@ -225,6 +239,7 @@ class RoomServiceTest {
 
     @Test
     @WithMockUser(authorities = "SYSTEM_ADMIN")
+    @DisplayName("delete removes room reference from all employee profiles")
     void delete_nullsRoomOnEmployeeProfiles() {
         EmployeeProfile ep1 = new EmployeeProfile();
         ep1.setRoom(room);
@@ -244,6 +259,7 @@ class RoomServiceTest {
 
     @Test
     @WithMockUser(authorities = "SYSTEM_ADMIN")
+    @DisplayName("delete handles null department and building gracefully")
     void delete_handlesNullDepartmentAndBuilding_gracefully() {
         room.setDepartment(null);
         room.setBuilding(null);
@@ -257,6 +273,7 @@ class RoomServiceTest {
 
     @Test
     @WithMockUser(authorities = "SYSTEM_ADMIN")
+    @DisplayName("delete handles null raspberry pi gracefully")
     void delete_handlesNullRaspberryPi_gracefully() {
         room.setRaspberryPi(null);
 
@@ -268,6 +285,7 @@ class RoomServiceTest {
 
     @Test
     @WithMockUser(authorities = "SYSTEM_ADMIN")
+    @DisplayName("delete throws NotFoundException when room does not exist")
     void delete_throwsNotFoundException_RoomDoesNotExist() {
         Mockito.when(roomRepository.findByIdAndActiveTrue(99L)).thenReturn(Optional.empty());
 
