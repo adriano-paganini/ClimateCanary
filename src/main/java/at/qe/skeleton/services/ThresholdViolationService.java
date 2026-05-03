@@ -3,13 +3,16 @@ package at.qe.skeleton.services;
 import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.ThresholdViolationCreateDTO;
 import at.qe.skeleton.dtos.ThresholdViolationUpdateDTO;
+import at.qe.skeleton.dtos.ViolationActiveDTO;
 import at.qe.skeleton.mappers.ThresholdViolationCreateMapper;
-import at.qe.skeleton.models.ThresholdViolation;
-import at.qe.skeleton.models.ViolationStatus;
+import at.qe.skeleton.models.*;
+import at.qe.skeleton.repositories.MeasurementRepository;
+import at.qe.skeleton.repositories.ThresholdRepository;
 import at.qe.skeleton.repositories.ThresholdViolationRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -20,17 +23,21 @@ public class ThresholdViolationService {
     private final RoomService roomService;
     private final ThresholdService thresholdService;
     private final ThresholdViolationCreateMapper thresholdViolationCreateMapper;
+    private final ThresholdRepository thresholdRepository;
+    private final MeasurementService measurementService;
 
     public ThresholdViolationService(ThresholdViolationRepository thresholdViolationRepository,
                                      RoomService roomService,
-                                     ThresholdService thresholdService, ThresholdViolationCreateMapper thresholdViolationCreateMapper) {
+                                     ThresholdService thresholdService, ThresholdViolationCreateMapper thresholdViolationCreateMapper, ThresholdRepository thresholdRepository, MeasurementService measurementService) {
         this.thresholdViolationRepository = thresholdViolationRepository;
         this.roomService = roomService;
         this.thresholdService = thresholdService;
         this.thresholdViolationCreateMapper = thresholdViolationCreateMapper;
+        this.thresholdRepository = thresholdRepository;
+        this.measurementService = measurementService;
     }
 
-    public List<ThresholdViolation>  findAll(
+    public List<ThresholdViolation> findAll(
             ViolationStatus status,
             Long roomId,
             Long departmentId
@@ -62,6 +69,20 @@ public class ThresholdViolationService {
                 savedViolation.getViolationStatus());
 
         return savedViolation;
+    }
+
+
+
+    public ThresholdViolation create(Long roomId, ViolationActiveDTO dto) {
+        //TODO: parse dto time-string
+        LocalDateTime time = LocalDateTime.now();
+
+        Long thresholdId = determineThreshold(roomId,dto.metric(),dto.avgValue()).getId();
+        List<Long> measurementIds = measurementService.getFiltered(roomId,dto.metric(),time,LocalDateTime.now()).stream().map(Measurement::getId).toList();
+
+        ThresholdViolationCreateDTO createDTO = new ThresholdViolationCreateDTO(dto.metric(),dto.avgValue(),time,thresholdId,roomId,measurementIds);
+        ThresholdViolation entity = thresholdViolationCreateMapper.mapFrom(createDTO);
+        return thresholdViolationRepository.save(entity);
     }
 
     public ThresholdViolation update(Long id, ThresholdViolationUpdateDTO dto) {
@@ -111,6 +132,35 @@ public class ThresholdViolationService {
         log.debug(debugInfo.toString());
 
         return updatedViolation;
+    }
+
+    private Threshold determineThreshold(Long roomId, Metric metric, Float avgValue) {
+        List<Threshold> thresholds = thresholdRepository.findByRoom_IdAndMetric(roomId, metric);
+        Threshold relevantThreshold = null;
+        if (thresholds.isEmpty() || thresholds.size()>2) throw new NotFoundException("Cannot specify threshold choice for room " + roomId + " and metric " + metric);
+        else if(thresholds.size()==1){
+            relevantThreshold = thresholds.getFirst();
+        }else{
+            for (Threshold threshold : thresholds) {
+                switch (threshold.getThresholdType()) {
+                    case ThresholdType.UPPER:
+                    {
+                        if (avgValue >= threshold.getBoundValue()){
+                            relevantThreshold = threshold;
+                        }
+                        break;
+                    }
+                    case ThresholdType.LOWER:
+                    {
+                        if (avgValue <= threshold.getBoundValue()){
+                            relevantThreshold = threshold;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        return relevantThreshold;
     }
 
     public void delete(Long id) {

@@ -3,11 +3,13 @@ package at.qe.skeleton.controllers;
 
 import at.qe.skeleton.dtos.RPMeasurementDTO;
 import at.qe.skeleton.dtos.RaspberryPiUpdateDTO;
+import at.qe.skeleton.dtos.ViolationActiveDTO;
 import at.qe.skeleton.helper.PiConfigYamlBuilder;
 import at.qe.skeleton.models.DeviceStatus;
 import at.qe.skeleton.services.MeasurementService;
 import at.qe.skeleton.services.RaspberryPiService;
 import at.qe.skeleton.services.SensorStationService;
+import at.qe.skeleton.services.ThresholdViolationService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -24,13 +26,15 @@ public class RaspberryPiClientController {
     private final RaspberryPiService raspberryPiService;
     private final SensorStationService sensorStationService;
     private final PiConfigYamlBuilder piConfigYamlBuilder;
+    private final ThresholdViolationService thresholdViolationService;
 
 
-    public RaspberryPiClientController(MeasurementService measurementService, RaspberryPiService raspberryPiService, SensorStationService sensorStationService, PiConfigYamlBuilder piConfigYamlBuilder) {
+    public RaspberryPiClientController(MeasurementService measurementService, RaspberryPiService raspberryPiService, SensorStationService sensorStationService, PiConfigYamlBuilder piConfigYamlBuilder, ThresholdViolationService thresholdViolationService) {
         this.measurementService = measurementService;
         this.raspberryPiService = raspberryPiService;
         this.sensorStationService = sensorStationService;
         this.piConfigYamlBuilder = piConfigYamlBuilder;
+        this.thresholdViolationService = thresholdViolationService;
     }
 
     @PostMapping("/{piId}/measurements")
@@ -68,6 +72,13 @@ public class RaspberryPiClientController {
                                                           @PathVariable Long sensorStationId,
                                                           @RequestBody DeviceStatus status){
         sensorStationService.update(piId,sensorStationId,status);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{piId}/violation")
+    public ResponseEntity<Void> receiveActiveViolation(@PathVariable Long piId,
+                                                       @Valid @RequestBody ViolationActiveDTO dto){
+        thresholdViolationService.create(piId,dto);
         return ResponseEntity.ok().build();
     }
 }

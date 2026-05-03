@@ -10,9 +10,7 @@ import at.qe.skeleton.services.RoomService;
 import at.qe.skeleton.services.SensorStationService;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,11 +35,8 @@ public class RPMeasurementMapper implements DTOMapper<List<Measurement>, RPMeasu
 
         Room room = roomService.getById(dto.roomId());
         SensorStation sensorStation = sensorStationService.getById(dto.sensorStationId());
-        //TODO: UPDATE TIMESTAMP LOGIC ACCORDING TO RPI
-        LocalDateTime timestamp = LocalDateTime.ofInstant(
-                Instant.ofEpochSecond(dto.timestamp()),
-                ZoneOffset.UTC
-        );
+        //TODO: parse time-string to LocalDateTime
+        LocalDateTime timestamp = LocalDateTime.now();
         List<Measurement> measurementList = new ArrayList<>();
         Measurement tempMeasurement = new Measurement();
         tempMeasurement.setRoom(room);
