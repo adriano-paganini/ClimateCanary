@@ -2,6 +2,7 @@ package at.qe.skeleton.services;
 
 import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.SensorStationUpdateDTO;
+import at.qe.skeleton.models.DeviceStatus;
 import at.qe.skeleton.models.SensorStation;
 import at.qe.skeleton.repositories.SensorStationRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -51,6 +53,13 @@ public class SensorStationService {
                 savedStation.getRoom() != null ? savedStation.getRoom().getId() : null);
 
         return savedStation;
+    }
+
+    public SensorStation update(Long piId,Long id, DeviceStatus status){
+        SensorStation station = getById(id);
+        if (!Objects.equals(station.getRaspberryPi().getId(), piId)) throw new NotFoundException("SensorStation with id " + id + " not found");
+        station.setDeviceStatus(status);
+        return repo.save(station);
     }
 
     @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")

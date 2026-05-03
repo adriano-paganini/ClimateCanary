@@ -3,8 +3,11 @@ package at.qe.skeleton.controllers;
 
 import at.qe.skeleton.dtos.RPMeasurementDTO;
 import at.qe.skeleton.dtos.RaspberryPiUpdateDTO;
+import at.qe.skeleton.models.DeviceStatus;
+import at.qe.skeleton.models.SensorStation;
 import at.qe.skeleton.services.MeasurementService;
 import at.qe.skeleton.services.RaspberryPiService;
+import at.qe.skeleton.services.SensorStationService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,10 +21,12 @@ public class RaspberryPiClientController {
 
     private final MeasurementService measurementService;
     private final RaspberryPiService raspberryPiService;
+    private final SensorStationService sensorStationService;
 
-    public RaspberryPiClientController(MeasurementService measurementService, RaspberryPiService raspberryPiService) {
+    public RaspberryPiClientController(MeasurementService measurementService, RaspberryPiService raspberryPiService, SensorStationService sensorStationService) {
         this.measurementService = measurementService;
         this.raspberryPiService = raspberryPiService;
+        this.sensorStationService = sensorStationService;
     }
 
     @PostMapping("/{piId}/measurements")
@@ -50,6 +55,14 @@ public class RaspberryPiClientController {
     public ResponseEntity<Void> receiveAvailableSensorStations(@PathVariable Long piId,
                                                                @RequestBody List<String> sensorStationBleMacs){
         raspberryPiService.addAvailableSensorStations(piId,sensorStationBleMacs);
+        return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("/{piId}/{sensorStationId}")
+    public ResponseEntity<Void> updateSensorStationStatus(@PathVariable Long piId,
+                                                          @PathVariable Long sensorStationId,
+                                                          @RequestBody DeviceStatus status){
+        sensorStationService.update(piId,sensorStationId,status);
         return ResponseEntity.ok().build();
     }
 }
