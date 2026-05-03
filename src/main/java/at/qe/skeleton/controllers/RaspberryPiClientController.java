@@ -3,18 +3,20 @@ package at.qe.skeleton.controllers;
 
 import at.qe.skeleton.dtos.RPMeasurementDTO;
 import at.qe.skeleton.dtos.RaspberryPiUpdateDTO;
+import at.qe.skeleton.helper.PiConfigYamlBuilder;
 import at.qe.skeleton.models.DeviceStatus;
 import at.qe.skeleton.models.SensorStation;
 import at.qe.skeleton.services.MeasurementService;
 import at.qe.skeleton.services.RaspberryPiService;
 import at.qe.skeleton.services.SensorStationService;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-
+@Slf4j
 @RestController
 @RequestMapping("/api/cpi")
 public class RaspberryPiClientController {
@@ -22,11 +24,14 @@ public class RaspberryPiClientController {
     private final MeasurementService measurementService;
     private final RaspberryPiService raspberryPiService;
     private final SensorStationService sensorStationService;
+    private final PiConfigYamlBuilder piConfigYamlBuilder;
 
-    public RaspberryPiClientController(MeasurementService measurementService, RaspberryPiService raspberryPiService, SensorStationService sensorStationService) {
+
+    public RaspberryPiClientController(MeasurementService measurementService, RaspberryPiService raspberryPiService, SensorStationService sensorStationService, PiConfigYamlBuilder piConfigYamlBuilder) {
         this.measurementService = measurementService;
         this.raspberryPiService = raspberryPiService;
         this.sensorStationService = sensorStationService;
+        this.piConfigYamlBuilder = piConfigYamlBuilder;
     }
 
     @PostMapping("/{piId}/measurements")
@@ -47,8 +52,9 @@ public class RaspberryPiClientController {
 
     @GetMapping("/{piId}/config")
     public ResponseEntity<String> getConfigYaml(@PathVariable Long piId){
-        //TODO: define yaml-structure
-        return ResponseEntity.ok("Not Yet Implemented");
+        String configYaml = piConfigYamlBuilder.buildYaml(piId);
+        log.warn(configYaml);
+        return ResponseEntity.ok(configYaml);
     }
 
     @PostMapping("/{piId}/discovered")
