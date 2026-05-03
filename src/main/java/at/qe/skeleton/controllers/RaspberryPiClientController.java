@@ -37,4 +37,10 @@ public class RaspberryPiClientController {
         raspberryPiService.update(piId,dto);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/{piId}/config")
+    public ResponseEntity<String> getConfigYaml(@PathVariable Long piId){
+        //TODO: define yaml-structure
+        return ResponseEntity.ok("Not Yet Implemented");
+    }
 }

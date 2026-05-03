@@ -50,6 +50,7 @@ public class RaspberryPiController {
         return ResponseEntity.ok(raspberryPiMapper.mapTo(raspberryPiService.getById(id)));
     }
 
+    //TODO: update to match the expected yaml info and structure
     @PostMapping
     public ResponseEntity<RaspberryPiDTO> create(@Valid @RequestBody RaspberryPiCreateDTO dto) {
 
