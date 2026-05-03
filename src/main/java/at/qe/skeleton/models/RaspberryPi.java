@@ -62,6 +62,10 @@ public class RaspberryPi {
         this.sensorStations = sensorStations;
     }
 
+    public void removeSensorStation(SensorStation sensorStation) {
+        sensorStations.remove(sensorStation);
+    }
+
     public Room getRoom() {
         return room;
     }

@@ -7,6 +7,7 @@ import at.qe.skeleton.models.RaspberryPi;
 import at.qe.skeleton.repositories.RaspberryPiRepository;
 import at.qe.skeleton.models.SensorStation;
 import at.qe.skeleton.repositories.SensorStationRepository;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -107,6 +108,7 @@ public class RaspberryPiService {
         log.info("Deleted raspberry pi with id={}", id);
     }
 
+    @Transactional
     public void addAvailableSensorStations(Long id, List<String> stationBleMacs){
         //this is intended, as we still need to manage RPi authentication.
         RaspberryPi pi = getById(id);
@@ -119,5 +121,12 @@ public class RaspberryPiService {
             temp.setDeviceStatus(DeviceStatus.AVAILABLE);
             sensorStationRepository.save(temp);
         }
+    }
+    @Transactional
+    public void removeAvailableSensorStationAfterScanTimeOut(Long piId, Long stationId){
+        RaspberryPi pi = getById(piId);
+        SensorStation station = sensorStationRepository.findById(stationId).orElseThrow();
+        pi.removeSensorStation(station);
+        sensorStationRepository.delete(station);
     }
 }
