@@ -5,7 +5,6 @@ import at.qe.skeleton.dtos.RPMeasurementDTO;
 import at.qe.skeleton.dtos.RaspberryPiUpdateDTO;
 import at.qe.skeleton.helper.PiConfigYamlBuilder;
 import at.qe.skeleton.models.DeviceStatus;
-import at.qe.skeleton.models.SensorStation;
 import at.qe.skeleton.services.MeasurementService;
 import at.qe.skeleton.services.RaspberryPiService;
 import at.qe.skeleton.services.SensorStationService;
