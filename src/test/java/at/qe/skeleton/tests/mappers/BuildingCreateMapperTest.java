@@ -28,7 +28,7 @@ class BuildingCreateMapperTest {
 
         Mockito.when(addressService.getById(10L))
                 .thenReturn(address);
-gi
+
         BuildingCreateDTO dto = new BuildingCreateDTO(
                 "Main Building",
                 10L
