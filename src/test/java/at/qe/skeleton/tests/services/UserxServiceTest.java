@@ -1,7 +1,13 @@
-package at.qe.skeleton.tests;
+package at.qe.skeleton.tests.services;
 
+import at.qe.skeleton.common.exceptions.NotFoundException;
+import at.qe.skeleton.dtos.UserxSelfUpdateDTO;
+import at.qe.skeleton.dtos.UserxUpdateDTO;
+import at.qe.skeleton.models.Department;
+import at.qe.skeleton.models.EmployeeProfile;
 import at.qe.skeleton.models.Userx;
 import at.qe.skeleton.models.UserxRole;
+import at.qe.skeleton.repositories.DepartmentRepository;
 import at.qe.skeleton.services.UserxService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -13,7 +19,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.web.WebAppConfiguration;
 
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Some very basic tests for {@link UserxService}.
@@ -29,6 +37,9 @@ public class UserxServiceTest {
 
     @Autowired
     UserxService userService;
+
+    @Autowired
+    DepartmentRepository departmentRepository;
 
     @Test
     @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
@@ -298,5 +309,203 @@ public class UserxServiceTest {
                     "Call to userService.loadUser returned wrong user");
             userService.deleteUser(user);
         });
+    }
+
+    @Test
+    @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
+    public void testGetUserByIdFound() {
+        Userx user = userService.getUserById(2000L);
+        Assertions.assertNotNull(user,
+                "getUserById should return a user for a valid id");
+        Assertions.assertEquals(2000L, user.getId(),
+                "getUserById returned a user with the wrong id");
+    }
+
+    @Test
+    @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
+    public void testGetUserByIdNotFound() {
+        Assertions.assertThrows(NotFoundException.class,
+                () -> userService.getUserById(9999L),
+                "getUserById should throw NotFoundException for an unknown id");
+    }
+
+    @Test
+    public void testGetUserByUsernameFound() {
+        Userx user = userService.getUserByUsername("user1");
+        Assertions.assertNotNull(user,
+                "getUserByUsername should return a user for a known username");
+        Assertions.assertEquals("user1", user.getUsername(),
+                "getUserByUsername returned a user with the wrong username");
+    }
+
+    @Test
+    public void testGetUserByUsernameNotFound() {
+        Userx user = userService.getUserByUsername("doesnotexist");
+        Assertions.assertNull(user,
+                "getUserByUsername should return null for an unknown username");
+    }
+
+    @DirtiesContext
+    @Test
+    @WithMockUser(username = "user1", authorities = {"EMPLOYEE"})
+    public void testSaveCurrentUserUpdatesFields() {
+        UserxSelfUpdateDTO dto = new UserxSelfUpdateDTO(
+                "UpdatedFirst", "UpdatedLast", "updated@example.com", "+43 512 000000"
+        );
+
+        Userx updated = userService.saveCurrentUser(dto);
+
+        Assertions.assertEquals("UpdatedFirst", updated.getFirstName(),
+                "saveCurrentUser did not update firstName");
+        Assertions.assertEquals("UpdatedLast", updated.getLastName(),
+                "saveCurrentUser did not update lastName");
+        Assertions.assertEquals("updated@example.com", updated.getEmail(),
+                "saveCurrentUser did not update email");
+        Assertions.assertEquals("+43 512 000000", updated.getPhone(),
+                "saveCurrentUser did not update phone");
+        Assertions.assertNotNull(updated.getUpdateUser(),
+                "saveCurrentUser did not set updateUser");
+        Assertions.assertNotNull(updated.getUpdateDate(),
+                "saveCurrentUser did not set updateDate");
+    }
+
+    @DirtiesContext
+    @Test
+    @WithMockUser(username = "user1", authorities = {"EMPLOYEE"})
+    public void testSaveCurrentUserSkipsNullFields() {
+        // Load the original values so we can assert they were not overwritten
+        Userx original = userService.getUserByUsername("user1");
+        String originalFirstName = original.getFirstName();
+        String originalEmail    = original.getEmail();
+
+        // Only update phone; leave all other fields null
+        UserxSelfUpdateDTO dto = new UserxSelfUpdateDTO(null, null, null, "+43 512 999999");
+
+        Userx updated = userService.saveCurrentUser(dto);
+
+        Assertions.assertEquals(originalFirstName, updated.getFirstName(),
+                "saveCurrentUser must not overwrite firstName when DTO field is null");
+        Assertions.assertEquals(originalEmail, updated.getEmail(),
+                "saveCurrentUser must not overwrite email when DTO field is null");
+        Assertions.assertEquals("+43 512 999999", updated.getPhone(),
+                "saveCurrentUser did not update the phone field");
+    }
+
+    @DirtiesContext
+    @Test
+    @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
+    public void testAdminUpdateUserFields() {
+        Long userId = 3000L;
+        UserxUpdateDTO dto = new UserxUpdateDTO(
+                "admin-updated@example.com",
+                new HashSet<>(Set.of(UserxRole.MANAGEMENT)),
+                "AdminFirst",
+                "AdminLast",
+                "+1 000 0000",
+                null
+        );
+
+        Userx updated = userService.updateUser(userId, dto);
+
+        Assertions.assertEquals("AdminFirst", updated.getFirstName(),
+                "updateUser did not update firstName");
+        Assertions.assertEquals("AdminLast", updated.getLastName(),
+                "updateUser did not update lastName");
+        Assertions.assertEquals("admin-updated@example.com", updated.getEmail(),
+                "updateUser did not update email");
+        Assertions.assertEquals("+1 000 0000", updated.getPhone(),
+                "updateUser did not update phone");
+        Assertions.assertTrue(updated.getRoles().contains(UserxRole.MANAGEMENT),
+                "updateUser did not update roles");
+        Assertions.assertNotNull(updated.getUpdateUser(),
+                "updateUser did not set updateUser");
+        Assertions.assertNotNull(updated.getUpdateDate(),
+                "updateUser did not set updateDate");
+    }
+
+    @DirtiesContext
+    @Test
+    @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
+    public void testAdminUpdateUserEnablesUser() {
+        Long userId = 3000L;
+
+        // Disable first so there is a meaningful state transition to test
+        userService.updateUser(userId, new UserxUpdateDTO(null, null, null, null, null, false));
+
+        UserxUpdateDTO enableDto = new UserxUpdateDTO(null, null, null, null, null, true);
+        Userx updated = userService.updateUser(userId, enableDto);
+
+        Assertions.assertTrue(updated.isEnabled(),
+                "updateUser with enabled=true should enable the user");
+    }
+
+    @DirtiesContext
+    @Test
+    @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
+    public void testAdminUpdateUserDisablesClearsDepartmentLeader() {
+        Long userId = 3000L;
+        Userx user = userService.getUserById(userId);
+
+        Department dept = new Department();
+        dept.setName("Test Department");
+        dept.setDepartmentLeader(user);
+        dept = departmentRepository.save(dept);
+        Long deptId = dept.getId();
+
+        UserxUpdateDTO dto = new UserxUpdateDTO(null, null, null, null, null, false);
+        Userx updated = userService.updateUser(userId, dto);
+
+        Assertions.assertFalse(updated.isEnabled(),
+                "updateUser with enabled=false should disable the user");
+
+        Department reloaded = departmentRepository.findById(deptId).orElseThrow();
+        Assertions.assertNull(reloaded.getDepartmentLeader(),
+                "Disabling a user should clear them as department leader");
+    }
+
+    @DirtiesContext
+    @Test
+    @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
+    public void testAdminUpdateUserDisablesClearsEmployeeProfileAndAbsences() {
+        Long userId = 3000L;
+        Userx user = userService.getUserById(userId);
+
+        // Attach an employee profile directly via the user entity and re-save
+        EmployeeProfile profile = new EmployeeProfile();
+        profile.setUser(user);
+        user.setEmployeeProfile(profile);
+        userService.saveUser(user);
+
+        UserxUpdateDTO dto = new UserxUpdateDTO(null, null, null, null, null, false);
+        Userx updated = userService.updateUser(userId, dto);
+
+        Assertions.assertNull(updated.getEmployeeProfile(),
+                "Disabling a user should clear their employee profile");
+        Assertions.assertTrue(updated.getAbsences().isEmpty(),
+                "Disabling a user should clear their absences");
+    }
+
+    @Test
+    @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
+    public void testAdminUpdateUserNotFoundThrows() {
+        UserxUpdateDTO dto = new UserxUpdateDTO(null, null, null, null, null, null);
+
+        Assertions.assertThrows(NotFoundException.class,
+                () -> userService.updateUser(9999L, dto),
+                "updateUser should throw NotFoundException for an unknown id");
+    }
+
+    @DirtiesContext
+    @Test
+    @WithMockUser(username = "user2", authorities = {"EMPLOYEE"})
+    public void testDeleteCurrentUser() {
+        Userx before = userService.getUserByUsername("user2");
+        Assertions.assertNotNull(before, "user2 should exist before deletion");
+
+        userService.deleteCurrentUser();
+
+        Userx after = userService.getUserByUsername("user2");
+        Assertions.assertNull(after,
+                "user2 should no longer exist after deleteCurrentUser");
     }
 }
