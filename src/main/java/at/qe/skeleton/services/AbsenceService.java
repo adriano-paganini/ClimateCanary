@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -44,9 +45,15 @@ public class AbsenceService {
         if (user == null) {
             throw new NotFoundException("User cannot be null");
         }
+
         Userx authenticatedUser = authenticatedUserService.getAuthenticatedUser();
-        boolean isSelf = authenticatedUser.getId().equals(user.getId());
+        if (authenticatedUser == null) {
+            throw new AccessDeniedException("No authenticated user found.");
+        }
+
+        boolean isSelf = Objects.equals(authenticatedUser.getId(), user.getId());
         boolean isAdmin = authenticatedUser.getRoles().contains(UserxRole.SYSTEM_ADMIN);
+
         if (!isSelf && !isAdmin) {
             throw new AccessDeniedException("You may only view your own absences.");
         }
