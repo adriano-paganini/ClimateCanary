@@ -2,6 +2,7 @@ package at.qe.skeleton.services;
 
 import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.RaspberryPiUpdateDTO;
+import at.qe.skeleton.models.DeviceStatus;
 import at.qe.skeleton.models.RaspberryPi;
 import at.qe.skeleton.repositories.RaspberryPiRepository;
 import at.qe.skeleton.models.SensorStation;
@@ -104,5 +105,19 @@ public class RaspberryPiService {
     public void delete(Long id) {
         repo.deleteById(id);
         log.info("Deleted raspberry pi with id={}", id);
+    }
+
+    public void addAvailableSensorStations(Long id, List<String> stationBleMacs){
+        //this is intended, as we still need to manage RPi authentication.
+        RaspberryPi pi = getById(id);
+        for (String mac : stationBleMacs) {
+            SensorStation temp = sensorStationRepository.findByBleMac(mac).orElse(new SensorStation());
+            temp.setBleMac(mac);
+            temp.setRaspberryPi(pi);
+            temp.setRoom(pi.getRoom());
+            temp.setName(mac);
+            temp.setDeviceStatus(DeviceStatus.AVAILABLE);
+            sensorStationRepository.save(temp);
+        }
     }
 }

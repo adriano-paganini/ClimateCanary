@@ -9,6 +9,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 @RestController
 @RequestMapping("/api/cpi")
@@ -42,5 +44,12 @@ public class RaspberryPiClientController {
     public ResponseEntity<String> getConfigYaml(@PathVariable Long piId){
         //TODO: define yaml-structure
         return ResponseEntity.ok("Not Yet Implemented");
+    }
+
+    @PostMapping("/{piId}/discovered")
+    public ResponseEntity<Void> receiveAvailableSensorStations(@PathVariable Long piId,
+                                                               @RequestBody List<String> sensorStationBleMacs){
+        raspberryPiService.addAvailableSensorStations(piId,sensorStationBleMacs);
+        return ResponseEntity.ok().build();
     }
 }
