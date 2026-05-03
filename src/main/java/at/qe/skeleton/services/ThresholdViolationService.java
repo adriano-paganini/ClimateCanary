@@ -4,6 +4,7 @@ import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.ThresholdViolationCreateDTO;
 import at.qe.skeleton.dtos.ThresholdViolationUpdateDTO;
 import at.qe.skeleton.dtos.ViolationActiveDTO;
+import at.qe.skeleton.dtos.ViolationResolvedDTO;
 import at.qe.skeleton.mappers.ThresholdViolationCreateMapper;
 import at.qe.skeleton.models.*;
 import at.qe.skeleton.repositories.MeasurementRepository;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -25,16 +27,18 @@ public class ThresholdViolationService {
     private final ThresholdViolationCreateMapper thresholdViolationCreateMapper;
     private final ThresholdRepository thresholdRepository;
     private final MeasurementService measurementService;
+    private final RaspberryPiService raspberryPiService;
 
     public ThresholdViolationService(ThresholdViolationRepository thresholdViolationRepository,
                                      RoomService roomService,
-                                     ThresholdService thresholdService, ThresholdViolationCreateMapper thresholdViolationCreateMapper, ThresholdRepository thresholdRepository, MeasurementService measurementService) {
+                                     ThresholdService thresholdService, ThresholdViolationCreateMapper thresholdViolationCreateMapper, ThresholdRepository thresholdRepository, MeasurementService measurementService, RaspberryPiService raspberryPiService) {
         this.thresholdViolationRepository = thresholdViolationRepository;
         this.roomService = roomService;
         this.thresholdService = thresholdService;
         this.thresholdViolationCreateMapper = thresholdViolationCreateMapper;
         this.thresholdRepository = thresholdRepository;
         this.measurementService = measurementService;
+        this.raspberryPiService = raspberryPiService;
     }
 
     public List<ThresholdViolation> findAll(
@@ -73,9 +77,12 @@ public class ThresholdViolationService {
 
 
 
-    public ThresholdViolation create(Long roomId, ViolationActiveDTO dto) {
+    public ThresholdViolation create(Long piId, ViolationActiveDTO dto) {
         //TODO: parse dto time-string
         LocalDateTime time = LocalDateTime.now();
+        RaspberryPi raspberryPi = raspberryPiService.getById(piId);
+        Long roomId = raspberryPi.getRoom().getId();
+        if (!Objects.equals(roomId, dto.roomId())) throw new NotFoundException("Raspberry Pi is not in room " + dto.roomId());
 
         Long thresholdId = determineThreshold(roomId,dto.metric(),dto.avgValue()).getId();
         List<Long> measurementIds = measurementService.getFiltered(roomId,dto.metric(),time,LocalDateTime.now()).stream().map(Measurement::getId).toList();
@@ -132,6 +139,24 @@ public class ThresholdViolationService {
         log.debug(debugInfo.toString());
 
         return updatedViolation;
+    }
+
+    public ThresholdViolation update(Long piId, ViolationResolvedDTO dto){
+        RaspberryPi raspberryPi = raspberryPiService.getById(piId);
+        Long roomId = raspberryPi.getRoom().getId();
+        if (!Objects.equals(roomId, dto.roomId())) throw new NotFoundException("Raspberry Pi is not in room " + dto.roomId());
+        LocalDateTime time = LocalDateTime.now();
+
+        ThresholdViolation violation =
+                thresholdViolationRepository.findByRoomIdAndMetricAndViolationStatus(roomId,dto.metric(),ViolationStatus.ACTIVE)
+                        .orElseThrow(() -> new NotFoundException("No active threshold violation for room " + roomId + " and metric " + dto.metric()));
+
+        List<Measurement> measurements = measurementService.getFiltered(roomId,dto.metric(),violation.getStartTime(),time);
+
+        violation.setEndTime(time);
+        violation.setViolationStatus(ViolationStatus.RESOLVED);
+        violation.setMeasurements(measurements);
+        return thresholdViolationRepository.save(violation);
     }
 
     private Threshold determineThreshold(Long roomId, Metric metric, Float avgValue) {

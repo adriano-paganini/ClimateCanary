@@ -4,6 +4,7 @@ package at.qe.skeleton.controllers;
 import at.qe.skeleton.dtos.RPMeasurementDTO;
 import at.qe.skeleton.dtos.RaspberryPiUpdateDTO;
 import at.qe.skeleton.dtos.ViolationActiveDTO;
+import at.qe.skeleton.dtos.ViolationResolvedDTO;
 import at.qe.skeleton.helper.PiConfigYamlBuilder;
 import at.qe.skeleton.models.DeviceStatus;
 import at.qe.skeleton.services.MeasurementService;
@@ -79,6 +80,13 @@ public class RaspberryPiClientController {
     public ResponseEntity<Void> receiveActiveViolation(@PathVariable Long piId,
                                                        @Valid @RequestBody ViolationActiveDTO dto){
         thresholdViolationService.create(piId,dto);
+        return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("/{piId}/violation/resolve")
+    public ResponseEntity<Void> deactivateActiveViolation(@PathVariable Long piId,
+                                                          @Valid @RequestBody ViolationResolvedDTO dto){
+        thresholdViolationService.update(piId,dto);
         return ResponseEntity.ok().build();
     }
 }
