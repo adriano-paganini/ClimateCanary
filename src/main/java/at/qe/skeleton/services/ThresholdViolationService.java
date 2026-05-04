@@ -10,6 +10,7 @@ import at.qe.skeleton.models.*;
 import at.qe.skeleton.repositories.MeasurementRepository;
 import at.qe.skeleton.repositories.ThresholdRepository;
 import at.qe.skeleton.repositories.ThresholdViolationRepository;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -28,10 +29,12 @@ public class ThresholdViolationService {
     private final ThresholdRepository thresholdRepository;
     private final MeasurementService measurementService;
     private final RaspberryPiService raspberryPiService;
+    private final RaspberryPiServerService raspberryPiServerService;
+
 
     public ThresholdViolationService(ThresholdViolationRepository thresholdViolationRepository,
                                      RoomService roomService,
-                                     ThresholdService thresholdService, ThresholdViolationCreateMapper thresholdViolationCreateMapper, ThresholdRepository thresholdRepository, MeasurementService measurementService, RaspberryPiService raspberryPiService) {
+                                     ThresholdService thresholdService, ThresholdViolationCreateMapper thresholdViolationCreateMapper, ThresholdRepository thresholdRepository, MeasurementService measurementService, RaspberryPiService raspberryPiService, RaspberryPiServerService raspberryPiServerService) {
         this.thresholdViolationRepository = thresholdViolationRepository;
         this.roomService = roomService;
         this.thresholdService = thresholdService;
@@ -39,6 +42,7 @@ public class ThresholdViolationService {
         this.thresholdRepository = thresholdRepository;
         this.measurementService = measurementService;
         this.raspberryPiService = raspberryPiService;
+        this.raspberryPiServerService = raspberryPiServerService;
     }
 
     public List<ThresholdViolation> findAll(
@@ -92,8 +96,11 @@ public class ThresholdViolationService {
         return thresholdViolationRepository.save(entity);
     }
 
+    @Transactional
     public ThresholdViolation update(Long id, ThresholdViolationUpdateDTO dto) {
         ThresholdViolation entity = findById(id);
+
+        ViolationStatus previousStatus = entity.getViolationStatus();
 
         StringBuilder debugInfo = new StringBuilder("Updated threshold violation details:")
                 .append(" id=").append(id);
@@ -106,11 +113,6 @@ public class ThresholdViolationService {
         if (dto.value() != null) {
             entity.setValue(dto.value());
             debugInfo.append(", value=").append(dto.value());
-        }
-
-        if (dto.violationStatus() != null) {
-            entity.setViolationStatus(dto.violationStatus());
-            debugInfo.append(", violationStatus=").append(dto.violationStatus());
         }
 
         if (dto.startTime() != null) {
@@ -133,12 +135,72 @@ public class ThresholdViolationService {
             debugInfo.append(", roomId=").append(dto.roomId());
         }
 
+        boolean shouldNotifyPiAboutResolution = false;
+
+        if (dto.violationStatus() != null) {
+            entity.setViolationStatus(dto.violationStatus());
+            debugInfo.append(", violationStatus=").append(dto.violationStatus());
+
+            shouldNotifyPiAboutResolution =
+                    previousStatus != ViolationStatus.RESOLVED
+                            && dto.violationStatus() == ViolationStatus.RESOLVED;
+
+            if (shouldNotifyPiAboutResolution && entity.getEndTime() == null) {
+                entity.setEndTime(LocalDateTime.now());
+                debugInfo.append(", endTime=").append(entity.getEndTime());
+            }
+        }
+
         ThresholdViolation updatedViolation = thresholdViolationRepository.save(entity);
+
+        if (shouldNotifyPiAboutResolution) {
+            notifyRaspberryPiAboutResolvedViolation(updatedViolation);
+        }
 
         log.info("Updated threshold violation with id={}", id);
         log.debug(debugInfo.toString());
 
         return updatedViolation;
+    }
+
+    private void notifyRaspberryPiAboutResolvedViolation(ThresholdViolation violation) {
+        Long piId = getRaspberryPiIdOrNull(violation);
+
+        if (piId == null) {
+            log.warn("Could not notify Raspberry Pi about resolved violation with id={} because no Raspberry Pi is assigned",
+                    violation.getId());
+            throw new IllegalStateException("Cannot resolve violation on Raspberry Pi because no Raspberry Pi is assigned");
+        }
+
+        if (violation.getRoom() == null) {
+            throw new IllegalStateException("Cannot resolve violation on Raspberry Pi because violation has no room");
+        }
+        //TODO: map this timestamp correctly according to RPI
+        String endTimestamp = violation.getEndTime().toString();
+
+        PiRequestResult result = raspberryPiServerService.resolveActiveViolation(
+                piId,
+                new ViolationResolvedDTO(
+                        violation.getMetric(),
+                        violation.getRoom().getId(),
+                        endTimestamp
+                )
+        );
+
+        if (result != PiRequestResult.SUCCESS) {
+            log.warn("Failed to resolve violation with id={} on Raspberry Pi {}: result={}",
+                    violation.getId(), piId, result);
+            throw new IllegalStateException("Violation could not be resolved on Raspberry Pi");
+        }
+
+        log.info("Resolved violation with id={} on Raspberry Pi {}", violation.getId(), piId);
+    }
+
+    private Long getRaspberryPiIdOrNull(ThresholdViolation thresholdViolation) {
+        if (thresholdViolation == null || thresholdViolation.getRoom() == null || thresholdViolation.getRoom().getRaspberryPi() == null) {
+            return null;
+        }
+        return thresholdViolation.getRoom().getRaspberryPi().getId();
     }
 
     public ThresholdViolation update(Long piId, ViolationResolvedDTO dto){
