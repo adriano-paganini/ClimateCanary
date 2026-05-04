@@ -59,11 +59,6 @@ async def init_db(db: aiosqlite.Connection) -> None:
     await db.commit()
     print("[DB] schema initialised.")
 
-
-# ---------------------------------------------------------------------------
-# db_writer – drains BLE queue into sensor_data
-# ---------------------------------------------------------------------------
-
 async def db_writer(
     queue: asyncio.Queue,
     db: aiosqlite.Connection,
@@ -97,10 +92,6 @@ async def db_writer(
         finally:
             queue.task_done()
 
-
-# ---------------------------------------------------------------------------
-# Station persistence
-# ---------------------------------------------------------------------------
 
 async def save_station(db: aiosqlite.Connection, station: dict) -> None:
     """

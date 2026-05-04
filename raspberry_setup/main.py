@@ -22,11 +22,6 @@ from app import app
 from thresholds import load_thresholds_from_db
 from violation_tracker import load_window_seconds
 
-
-# ---------------------------------------------------------------------------
-# Station dataclass
-# ---------------------------------------------------------------------------
-
 @dataclass
 class Station:
     address:             str    # bleMac
@@ -133,11 +128,6 @@ async def fetch_config_from_backend() -> None:
     except Exception as e:
         print(f"[CFG] could not fetch config: {e}")
 
-
-# ---------------------------------------------------------------------------
-# Station management
-# ---------------------------------------------------------------------------
-
 async def wait_for_stations(db: aiosqlite.Connection) -> list[Station]:
     await app_module.stations_event.wait()
     app_module.stations_event.clear()
@@ -158,11 +148,6 @@ async def device_loop(
 
     while True:
         try:
-            # ------------------------------------------------------------------
-            # First-time setup: Arduino is in setup mode (AVAILABLE)
-            # Write TrustedRpiId + measurementInterval, then wait for reboot.
-            # After reboot the backend will re-send /stations with CONNECTED.
-            # ------------------------------------------------------------------
             if station.device_status == "AVAILABLE":
                 print(f"[BLE:{station.address}] setup mode — writing config…")
                 success = await run_setup(
@@ -172,14 +157,10 @@ async def device_loop(
                 )
                 if success:
                     print(f"[BLE:{station.address}] setup done — waiting for reboot.")
-                    # Task will be replaced once backend sends updated /stations
                     return
                 else:
                     print(f"[BLE:{station.address}] setup failed — retrying in {delay}s…")
 
-            # ------------------------------------------------------------------
-            # Normal operation: Arduino is in normal mode (CONNECTED)
-            # ------------------------------------------------------------------
             else:
                 print(
                     f"[BLE:{station.address}] connecting "
@@ -234,32 +215,22 @@ async def station_manager(
                 active_tasks[station.address] = task
 
 
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
-
 async def main() -> None:
-    # 1. Load local config first so PI_ID / BACKEND_URL are available
     load_config("conf.yml")
 
-    # 2. Try to refresh config from backend (returns raw YAML string)
     if cfg.BACKEND_URL:
         await fetch_config_from_backend()
 
-    # 3. Apply privacy mode to state module
     set_privacy_mode(cfg.PRIVACY_MODE)
 
-    # 4. Announce ourselves to the backend
     await post_booted()
 
-    # 5. BLE scan and report found devices
     addresses = await scan_for_all_devices()
     if addresses:
         await post_discovered(addresses)
     else:
         print("[SYS] no devices found during scan.")
 
-    # 6. Open DB, start all services
     queue: asyncio.Queue = asyncio.Queue()
 
     async with aiosqlite.connect(DB_PATH) as db:

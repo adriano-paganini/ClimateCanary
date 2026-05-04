@@ -12,8 +12,8 @@ Per-metric state is keyed by (ble_address, metric) so each sensor station
 tracks its metrics independently.
 
 Violation lifecycle:
-    CONFIRMED  → stored in local SQLite + POSTed to backend
-    RESOLVED   → local row updated + PATCHed to backend
+    CONFIRMED  => stored in local SQLite + POSTed to backend
+    RESOLVED   => local row updated + PATCHed to backend
 
 Alert-flooding prevention:
     Once a violation is active, no new POST is sent for 15 minutes
@@ -32,18 +32,11 @@ import aiosqlite
 import config
 from thresholds import get_threshold, get_hint_text
 
-# ---------------------------------------------------------------------------
-# Constants
-# ---------------------------------------------------------------------------
 
-VIOLATION_WINDOW_SECONDS: int = 300     # 5-minute sliding window
-ALERT_COOLDOWN_SECONDS:   int = 900     # 15-minute re-alert cooldown
+VIOLATION_WINDOW_SECONDS: int = 300
+ALERT_COOLDOWN_SECONDS:   int = 900
 
 ALL_METRICS = ("temperature", "humidity", "pressure", "air_quality")
-
-# ---------------------------------------------------------------------------
-# Per-metric runtime state
-# ---------------------------------------------------------------------------
 
 @dataclass
 class _MetricState:
@@ -54,7 +47,6 @@ class _MetricState:
     last_alert_time:      float         = 0.0   # wall-clock time of last POST
 
 
-# Keyed by (ble_address, metric)
 _states: dict[tuple[str, str], _MetricState] = {}
 
 
@@ -63,11 +55,6 @@ def _get_state(address: str, metric: str) -> _MetricState:
     if key not in _states:
         _states[key] = _MetricState()
     return _states[key]
-
-
-# ---------------------------------------------------------------------------
-# Classification
-# ---------------------------------------------------------------------------
 
 def _classify(value: float, metric: str) -> int:
     """
@@ -102,11 +89,6 @@ def _classify(value: float, metric: str) -> int:
 def _is_breaching(status: int) -> bool:
     return status in {3, 4}
 
-
-# ---------------------------------------------------------------------------
-# Main entry point called from ble_worker
-# ---------------------------------------------------------------------------
-
 async def process_measurement(
     pkt: dict,
     db: aiosqlite.Connection,
@@ -120,7 +102,6 @@ async def process_measurement(
         statuses      – {metric: int}  BLE status codes for the Arduino
         hint_messages – [str]          ClimateHint texts for newly confirmed violations
     """
-    # Parse ISO string into datetime for sliding window comparisons
     now               = datetime.fromisoformat(pkt["timestamp"])
     sensor_station_id = pkt["sensor_station_id"]
     room_id           = pkt["room_id"]
@@ -138,7 +119,6 @@ async def process_measurement(
     for metric, value in metric_values.items():
         state = _get_state(ble_tag, metric)
 
-        # --- Update sliding window ---
         state.samples.append((now, value))
         cutoff = now - timedelta(seconds=VIOLATION_WINDOW_SECONDS)
         while state.samples and state.samples[0][0] < cutoff:
@@ -151,7 +131,6 @@ async def process_measurement(
         is_breaching = _is_breaching(avg_status)
         now_wall     = time.time()
 
-        # --- Violation opened ---
         if is_breaching and not state.violation_open:
             state.violation_open  = True
             state.last_alert_time = now_wall
@@ -171,14 +150,12 @@ async def process_measurement(
             print(f"[VIOL:{ble_tag}] CONFIRMED {metric} "
                   f"(avg={avg:.2f}, localId={vid})")
 
-        # --- Violation still active: re-alert after cooldown ---
         elif is_breaching and state.violation_open:
             if now_wall - state.last_alert_time >= ALERT_COOLDOWN_SECONDS:
                 state.last_alert_time = now_wall
                 await _post_violation(session, metric, room_id, now, avg, ble_tag)
                 print(f"[VIOL:{ble_tag}] REMINDER {metric} (avg={avg:.2f})")
 
-        # --- Violation resolved ---
         elif not is_breaching and state.violation_open:
             state.violation_open = False
             raw_status = 5
@@ -199,11 +176,6 @@ async def process_measurement(
         statuses[metric] = raw_status
 
     return statuses, hint_messages
-
-
-# ---------------------------------------------------------------------------
-# SQLite helpers
-# ---------------------------------------------------------------------------
 
 async def _open_violation(
     db: aiosqlite.Connection,
@@ -239,11 +211,6 @@ async def _resolve_violation(
         (end_time.timestamp(), violation_id),
     )
     await db.commit()
-
-
-# ---------------------------------------------------------------------------
-# Backend HTTP helpers
-# ---------------------------------------------------------------------------
 
 async def _post_violation(
     session: aiohttp.ClientSession,
@@ -299,10 +266,6 @@ async def _patch_violation(
     except Exception as e:
         print(f"[VIOL:{tag}] PATCH resolve failed: {e}")
 
-
-# ---------------------------------------------------------------------------
-# Startup helper
-# ---------------------------------------------------------------------------
 
 async def load_window_seconds(db: aiosqlite.Connection) -> None:
     """

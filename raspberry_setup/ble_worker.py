@@ -25,10 +25,6 @@ from state import get_privacy_mode
 from violation_tracker import process_measurement
 
 
-# ---------------------------------------------------------------------------
-# BLE packet builders
-# ---------------------------------------------------------------------------
-
 def _build_auth(pi_id: int, room_name: str) -> bytes:
     """Write TrustedRpiId + room_name into warningAuthCharacteristic."""
     room_bytes = room_name.encode("ascii")
@@ -59,10 +55,6 @@ def _build_warning_stream(messages: list[str]) -> bytes:
     """Concatenate null-terminated UTF-8 strings into the wire format."""
     return b"".join(m.encode("utf-8") + b"\x00" for m in messages)
 
-
-# ---------------------------------------------------------------------------
-# Warning transfer
-# ---------------------------------------------------------------------------
 
 async def _send_warning(client: BleakClient, messages: list[str], tag: str) -> None:
     stream = _build_warning_stream(messages)
@@ -105,11 +97,6 @@ async def _send_warning(client: BleakClient, messages: list[str], tag: str) -> N
     finally:
         await client.stop_notify(WARNING_ACK_REQUEST_UUID)
 
-
-# ---------------------------------------------------------------------------
-# Timestamp helpers
-# ---------------------------------------------------------------------------
-
 def _make_iso(anchor_pi_time: float, anchor_arduino_millis: int, pkt_millis: int) -> str:
     """
     Convert Arduino-relative millis to a Pi wall-clock ISO 8601 string.
@@ -119,10 +106,6 @@ def _make_iso(anchor_pi_time: float, anchor_arduino_millis: int, pkt_millis: int
     unix_seconds = anchor_pi_time + (pkt_millis - anchor_arduino_millis) / 1000.0
     return datetime.fromtimestamp(unix_seconds).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
 
-
-# ---------------------------------------------------------------------------
-# Main BLE worker
-# ---------------------------------------------------------------------------
 
 async def ble_worker(
     queue: asyncio.Queue,
@@ -134,7 +117,6 @@ async def ble_worker(
 ) -> None:
     tag = client.address
 
-    # Authenticate: write TrustedRpiId + room_name into warningAuthCharacteristic
     await client.write_gatt_char(
         AUTH_CHAR_UUID,
         _build_auth(config.PI_ID, config.ROOM_NAME),
@@ -142,8 +124,6 @@ async def ble_worker(
     )
     print(f"[BLE:{tag}] authenticated (pi_id={config.PI_ID}, room={config.ROOM_NAME!r})")
 
-    # Timestamp anchor — set once on the first packet received this connection.
-    # Resets naturally on every reconnect (local variables).
     anchor_pi_time:        float | None = None
     anchor_arduino_millis: int   | None = None
 
@@ -158,9 +138,7 @@ async def ble_worker(
     def _timestamp(pkt_millis: int) -> str:
         return _make_iso(anchor_pi_time, anchor_arduino_millis, pkt_millis)
 
-    # ------------------------------------------------------------------
-    # Drain cached data (measurements buffered while disconnected)
-    # ------------------------------------------------------------------
+
     print(f"[BLE:{tag}] reading cached sensor data…")
     cached_count = 0
     while True:
@@ -179,15 +157,11 @@ async def ble_worker(
             "pressure":          press,
             "air_quality":       gas,
         }
-        # Cached data: persist only if privacy mode is off
         if not get_privacy_mode():
             queue.put_nowait(pkt)
         cached_count += 1
     print(f"[BLE:{tag}] cached packets: {cached_count}")
 
-    # ------------------------------------------------------------------
-    # Live notifications
-    # ------------------------------------------------------------------
     async with aiohttp.ClientSession() as http_session:
 
         warning_active        = False
@@ -224,16 +198,13 @@ async def ble_worker(
             print(f"[BLE:{tag}] {pkt['timestamp']}: {temp:.1f}°C  {hum:.1f}%  "
                   f"{press:.1f}hPa  {gas}Ω")
 
-            # Threshold checks always run regardless of privacy mode
             statuses, hint_messages = await process_measurement(
                 pkt, db, http_session, tag
             )
 
-            # Persistent storage only when privacy mode is off
             if not get_privacy_mode():
                 queue.put_nowait(pkt)
 
-            # Report CONNECTED to backend on first data packet received
             nonlocal first_packet_reported
             if not first_packet_reported:
                 first_packet_reported = True
@@ -247,7 +218,6 @@ async def ble_worker(
                 except Exception as e:
                     print(f"[BLE:{tag}] PATCH CONNECTED failed: {e}")
 
-            # BLE status feedback to Arduino always runs
             press_s = statuses.get("pressure",    0)
             temp_s  = statuses.get("temperature", 0)
             hum_s   = statuses.get("humidity",    0)

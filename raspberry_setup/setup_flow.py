@@ -72,11 +72,6 @@ async def run_setup(
                     SETUP_CONFIG_UUID, payload, response=True,
                 )
                 print(f"[SETUP:{tag}] config written — Arduino will reboot.")
-                # Connection will drop here as Arduino reboots; that is expected.
-
-            # Write succeeded — backend will send /stations again after reboot
-            # so we don't PATCH CONNECTED here; that happens in ble_worker
-            # after the first data packet arrives in normal mode.
             return True
 
         except Exception as e:

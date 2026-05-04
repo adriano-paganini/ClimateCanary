@@ -2,9 +2,6 @@ import yaml
 import socket
 from pathlib import Path
 
-# ---------------------------------------------------------------------------
-# BLE constants
-# ---------------------------------------------------------------------------
 BLE_NAME_NORMAL   = "G5T4CC"
 BLE_NAME_SETUP    = "G5T4SETUP"
 MANUF_DATA_NORMAL = b"11LCK"
@@ -14,9 +11,6 @@ SVC_SETUP         = "94050000-af44-4a64-b339-8b04d5565014"
 SETUP_CONFIG_UUID = "94050001-af44-4a64-b339-8b04d5565014"
 SCAN_DURATION     = 10.0
 
-# ---------------------------------------------------------------------------
-# BLE characteristic UUIDs
-# ---------------------------------------------------------------------------
 
 # Environmental Sensing Service (UUID 181A)
 DATA_CHAR_UUID       = "4b8e0001-2581-4c5c-8a61-deb186a46179"  # Sensor Packet        Read, Notify
@@ -33,9 +27,7 @@ WARNING_ACK_REQUEST_UUID = "bda70005-24ff-4f28-af24-8293a69561ca"  # Warning Mes
 
 STATUS_CHAR_UUID = SENSOR_STATUS_UUID
 
-# ---------------------------------------------------------------------------
-# Runtime config — populated by load_config() / load_config_from_string()
-# ---------------------------------------------------------------------------
+# runtime config
 DB_PATH      = "sensor.db"
 SEND_INTERVAL = 5
 SENSOR_STRUCT = "<LfffL"   # uint32 ts | float press | float temp | float hum | uint32 gas
