@@ -32,10 +32,17 @@ public class RaspberryPiService {
     public List<RaspberryPi> getAll() {
         return repo.findAllActive();
     }
+    public List<RaspberryPi> getAllInternal(){
+        return repo.findAll();
+    }
 
     @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public RaspberryPi getById(Long id) {
         return repo.findById(id).orElseThrow(() -> new NotFoundException("RaspberryPi with id " + id + " not found"));
+    }
+
+    public RaspberryPi getByIdInternal(Long id){
+        return repo.findById(id).orElseThrow();
     }
 
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
@@ -50,6 +57,10 @@ public class RaspberryPiService {
                 savedPi.getRoom() != null ? savedPi.getRoom().getId() : null);
 
         return savedPi;
+    }
+
+    public RaspberryPi updateInternal(Long id, RaspberryPiUpdateDTO dto){
+        return update(id, dto);
     }
 
     @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")

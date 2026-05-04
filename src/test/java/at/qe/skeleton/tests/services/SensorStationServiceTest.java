@@ -1,12 +1,12 @@
 package at.qe.skeleton.tests.services;
 
 import at.qe.skeleton.common.exceptions.NotFoundException;
+import at.qe.skeleton.dtos.SensorStationDTO;
 import at.qe.skeleton.dtos.SensorStationUpdateDTO;
+import at.qe.skeleton.mappers.SensorStationMapper;
 import at.qe.skeleton.models.*;
 import at.qe.skeleton.repositories.SensorStationRepository;
-import at.qe.skeleton.services.RaspberryPiService;
-import at.qe.skeleton.services.RoomService;
-import at.qe.skeleton.services.SensorStationService;
+import at.qe.skeleton.services.*;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,6 +34,12 @@ class SensorStationServiceTest {
     @Mock
     private RoomService roomService;
 
+    @Mock
+    private RaspberryPiServerService raspberryPiServerService;
+
+    @Mock
+    private SensorStationMapper sensorStationMapper;
+
     @InjectMocks
     private SensorStationService service;
 
@@ -41,11 +47,36 @@ class SensorStationServiceTest {
 
     @BeforeEach
     void setUp() {
+        RaspberryPi pi = new RaspberryPi();
+        pi.setId(1L);
+
+        Room room = new Room();
+        room.setId(1L);
+
         station = new SensorStation();
+        station.setId(1L);
         station.setName("Station A");
         station.setBleMac("AA:BB:CC:DD:EE:FF");
         station.setDeviceStatus(DeviceStatus.AVAILABLE);
         station.setMeasurementInterval(30);
+        station.setRaspberryPi(pi);
+        station.setRoom(room);
+
+        Mockito.lenient().when(sensorStationMapper.mapTo(Mockito.any(SensorStation.class)))
+                .thenReturn(new SensorStationDTO(
+                        1L,
+                        "Station A",
+                        "AA:BB:CC:DD:EE:FF",
+                        DeviceStatus.AVAILABLE,
+                        30,
+                        1L,
+                        1L
+                ));
+
+        Mockito.lenient().when(raspberryPiServerService.setupStation(
+                Mockito.eq(1L),
+                Mockito.any(SensorStationDTO.class)
+        )).thenReturn(PiRequestResult.SUCCESS);
     }
 
     @Test
@@ -245,6 +276,7 @@ class SensorStationServiceTest {
         SensorStationUpdateDTO dto = new SensorStationUpdateDTO(1L, null, null, null);
 
         Mockito.when(repo.findById(1L)).thenReturn(Optional.of(station));
+        Mockito.when(raspberryPiService.getById(1L)).thenReturn(station.getRaspberryPi());
         Mockito.when(repo.save(Mockito.any())).thenAnswer(inv -> inv.getArgument(0));
 
         Assertions.assertThatCode(() -> service.update(1L, dto)).doesNotThrowAnyException();

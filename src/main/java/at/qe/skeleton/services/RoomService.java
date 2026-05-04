@@ -1,9 +1,9 @@
 package at.qe.skeleton.services;
 
 import at.qe.skeleton.common.exceptions.NotFoundException;
-import at.qe.skeleton.models.EmployeeProfile;
 import at.qe.skeleton.dtos.RoomUpdateDTO;
 import at.qe.skeleton.models.DeviceStatus;
+import at.qe.skeleton.models.EmployeeProfile;
 import at.qe.skeleton.models.Room;
 import at.qe.skeleton.models.SensorStation;
 import at.qe.skeleton.repositories.RoomRepository;
@@ -12,9 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Slf4j
 @Service
@@ -23,15 +21,13 @@ public class RoomService {
     private final RoomRepository roomRepository;
     private final DepartmentService departmentService;
     private final BuildingService buildingService;
-    private final EmployeeProfileService employeeProfileService;
 
     public RoomService(RoomRepository repo,
                        DepartmentService departmentService,
-                       BuildingService buildingService, EmployeeProfileService employeeProfileService) {
+                       BuildingService buildingService) {
         this.roomRepository = repo;
         this.departmentService = departmentService;
         this.buildingService = buildingService;
-        this.employeeProfileService = employeeProfileService;
     }
 
     public List<Room> getAll() {
@@ -41,17 +37,6 @@ public class RoomService {
     public Room getById(Long id) {
         return roomRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new NotFoundException("Room with id " + id + " not found"));
-    }
-
-    public Set<Room> getRoomsByUserIds(List<Long> userIds){
-        Set<Room> rooms = new HashSet<>();
-        List<EmployeeProfile> profiles= employeeProfileService.getAll(null,null);
-        for(Long userId : userIds){
-            if (profiles.stream().anyMatch(ep -> ep.getUser().getId().equals(userId))) {
-                rooms.add(profiles.stream().filter(ep -> ep.getUser().getId().equals(userId)).findFirst().get().getRoom());
-            }
-        }
-        return rooms;
     }
 
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")

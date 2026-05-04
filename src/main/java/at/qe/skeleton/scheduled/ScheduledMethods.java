@@ -88,7 +88,7 @@ public class ScheduledMethods {
     @Scheduled(cron = "*/30 * * * * *")
     @Transactional
     public void checkHeartbeat() {
-        List<RaspberryPi> pis = raspberryPiService.getAll();
+        List<RaspberryPi> pis = raspberryPiService.getAllInternal();
 
         for (RaspberryPi pi : pis) {
             boolean isAlive = Boolean.TRUE.equals(raspberryPiServerService.getHeartbeat(pi.getId()));
@@ -105,7 +105,7 @@ public class ScheduledMethods {
                         null
                 );
 
-                raspberryPiService.update(pi.getId(), dto);
+                raspberryPiService.updateInternal(pi.getId(), dto);
             }
         }
     }

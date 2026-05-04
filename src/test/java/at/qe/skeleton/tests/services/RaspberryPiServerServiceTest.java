@@ -52,14 +52,16 @@ class RaspberryPiServerServiceTest {
     private WireMockServer wireMockServer;
 
     private RaspberryPiServerService clientService;
+    private RaspberryPiService raspberryPiService;
+    private RoomService roomService;
 
     @BeforeEach
     void setUp() {
         wireMockServer = new WireMockServer(8080);
         wireMockServer.start();
 
-        RaspberryPiService raspberryPiService = mock(RaspberryPiService.class);
-        RoomService roomService = mock(RoomService.class);
+        raspberryPiService = mock(RaspberryPiService.class);
+        roomService = mock(RoomService.class);
 
         RestClient restClient = RestClient.builder()
                 .requestFactory(new JdkClientHttpRequestFactory(
@@ -254,6 +256,10 @@ class RaspberryPiServerServiceTest {
 
     @Test
     void getHeartbeat_shouldReturnTrue_whenPiReturns2xx() {
+        RaspberryPi pi = mock(RaspberryPi.class);
+        when(pi.getIpAddress()).thenReturn(PI_IP_ADDRESS);
+        when(raspberryPiService.getById(PI_ID)).thenReturn(pi);
+        when(raspberryPiService.getByIdInternal(PI_ID)).thenReturn(pi);
         wireMockServer.stubFor(get(urlEqualTo("/api/spi/1/heartbeat"))
                 .willReturn(ok()));
 
@@ -266,6 +272,10 @@ class RaspberryPiServerServiceTest {
 
     @Test
     void getHeartbeat_shouldReturnFalse_whenPiReturns4xx() {
+        RaspberryPi pi = mock(RaspberryPi.class);
+        when(pi.getIpAddress()).thenReturn(PI_IP_ADDRESS);
+        when(raspberryPiService.getById(PI_ID)).thenReturn(pi);
+        when(raspberryPiService.getByIdInternal(PI_ID)).thenReturn(pi);
         wireMockServer.stubFor(get(urlEqualTo("/api/spi/1/heartbeat"))
                 .willReturn(badRequest()));
 
@@ -276,6 +286,10 @@ class RaspberryPiServerServiceTest {
 
     @Test
     void getHeartbeat_shouldReturnFalse_whenPiReturns5xx() {
+        RaspberryPi pi = mock(RaspberryPi.class);
+        when(pi.getIpAddress()).thenReturn(PI_IP_ADDRESS);
+        when(raspberryPiService.getById(PI_ID)).thenReturn(pi);
+        when(raspberryPiService.getByIdInternal(PI_ID)).thenReturn(pi);
         wireMockServer.stubFor(get(urlEqualTo("/api/spi/1/heartbeat"))
                 .willReturn(serverError()));
 
@@ -286,6 +300,10 @@ class RaspberryPiServerServiceTest {
 
     @Test
     void getHeartbeat_shouldReturnFalse_whenPiCannotBeReached() {
+        RaspberryPi pi = mock(RaspberryPi.class);
+        when(pi.getIpAddress()).thenReturn(PI_IP_ADDRESS);
+        when(raspberryPiService.getById(PI_ID)).thenReturn(pi);
+        when(raspberryPiService.getByIdInternal(PI_ID)).thenReturn(pi);
         wireMockServer.stop();
 
         Boolean result = clientService.getHeartbeat(PI_ID);

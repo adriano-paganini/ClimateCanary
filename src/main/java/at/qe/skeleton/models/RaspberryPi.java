@@ -73,5 +73,9 @@ public class RaspberryPi {
     public void setRoom(Room room) {
         this.room = room;
     }
+
+    public void setId(Long id){
+        this.id = id;
+    }
 }
 

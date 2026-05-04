@@ -154,7 +154,7 @@ public class RaspberryPiServerService {
     }
 
     public Boolean getHeartbeat(Long piId) {
-        RaspberryPi pi = raspberryPiService.getById(piId);
+        RaspberryPi pi = raspberryPiService.getByIdInternal(piId);
         String url = buildPiUrl(pi, piId + "/heartbeat");
 
         try {
