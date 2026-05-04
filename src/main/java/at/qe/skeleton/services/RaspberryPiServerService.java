@@ -16,7 +16,7 @@ import java.util.List;
 
 @Slf4j
 @Service
-public class RaspberryPiClientService {
+public class RaspberryPiServerService {
 
     private static final String URL_PROTOCOL = "http://";
     private static final String API_BASE_PATH = ":8080/api/spi/";
@@ -25,7 +25,7 @@ public class RaspberryPiClientService {
     private final RestClient restClient;
     private final RoomService roomService;
 
-    public RaspberryPiClientService(RaspberryPiService raspberryPiService, RestClient restClient, RoomService roomService) {
+    public RaspberryPiServerService(RaspberryPiService raspberryPiService, RestClient restClient, RoomService roomService) {
         this.raspberryPiService = raspberryPiService;
         this.restClient = restClient;
         this.roomService = roomService;

@@ -9,7 +9,7 @@ import at.qe.skeleton.models.RaspberryPi;
 import at.qe.skeleton.models.Room;
 import at.qe.skeleton.models.ThresholdType;
 import at.qe.skeleton.services.PiRequestResult;
-import at.qe.skeleton.services.RaspberryPiClientService;
+import at.qe.skeleton.services.RaspberryPiServerService;
 import at.qe.skeleton.services.RaspberryPiService;
 import at.qe.skeleton.services.RoomService;
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -26,7 +26,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class RaspberryPiClientServiceTest {
+class RaspberryPiServerServiceTest {
 
     private static final Long PI_ID = 1L;
     private static final Long ROOM_ID = 1L;
@@ -51,7 +51,7 @@ class RaspberryPiClientServiceTest {
 
     private WireMockServer wireMockServer;
 
-    private RaspberryPiClientService clientService;
+    private RaspberryPiServerService clientService;
 
     @BeforeEach
     void setUp() {
@@ -69,7 +69,7 @@ class RaspberryPiClientServiceTest {
                 ))
                 .build();
 
-        clientService = new RaspberryPiClientService(
+        clientService = new RaspberryPiServerService(
                 raspberryPiService,
                 restClient,
                 roomService
