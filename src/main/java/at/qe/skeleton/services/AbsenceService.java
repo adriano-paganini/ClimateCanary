@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -38,6 +39,10 @@ public class AbsenceService {
     public Absence getById(Long id) {
         return absenceRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Absence with id " + id + " not found"));
+    }
+
+    public List<Absence> getByTimeframe(LocalDateTime from, LocalDateTime to) {
+        return absenceRepository.findByTimeframe(from,to);
     }
 
     public Collection<Absence> getAbsencesForUser(Userx user) {
