@@ -2,10 +2,10 @@ package at.qe.skeleton.scheduled;
 
 import at.qe.skeleton.dtos.RaspberryPiUpdateDTO;
 import at.qe.skeleton.dtos.RoomUpdateDTO;
-import at.qe.skeleton.mappers.RaspberryPiMapper;
 import at.qe.skeleton.models.*;
 import at.qe.skeleton.services.*;
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 public class ScheduledMethods {
 
@@ -78,18 +79,20 @@ public class ScheduledMethods {
                             room.getId(),
                             new RoomUpdateDTO(null, null, newPrivacyMode, null, null)
                     );
+                    log.info("Scheduled update of privacy mode for room " + room.getId() + ": " + newPrivacyMode);
                 }
             }
         }
     }
 
-    @Scheduled(cron = "*/15 * * * * *")
+    @Scheduled(cron = "*/30 * * * * *")
     @Transactional
     public void checkHeartbeat() {
         List<RaspberryPi> pis = raspberryPiService.getAll();
 
         for (RaspberryPi pi : pis) {
             boolean isAlive = Boolean.TRUE.equals(raspberryPiServerService.getHeartbeat(pi.getId()));
+            log.info("Scheduled update of heartbeat for pi " + pi.getId() + ": " + isAlive);
 
             DeviceStatus newStatus = isAlive ? DeviceStatus.ONLINE : DeviceStatus.OFFLINE;
 
