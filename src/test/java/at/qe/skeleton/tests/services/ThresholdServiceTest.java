@@ -36,6 +36,9 @@ class ThresholdServiceTest {
     @Mock
     private ClimateHintRepository climateHintRepository;
 
+    @Mock
+    private ThresholdMapper thresholdMapper;
+
     @InjectMocks
     private ThresholdService thresholdService;
 
