@@ -50,8 +50,9 @@ public class RaspberryPiService {
         RaspberryPi savedPi = repo.save(pi);
 
         log.info("Created raspberry pi with id={}", savedPi.getId());
-        log.debug("Created raspberryPi details: id={}, ipAddress={}, deviceStatus={}, roomId={}",
+        log.debug("Created raspberryPi details: id={}, hostName={}, ipAddress={}, deviceStatus={}, roomId={}",
                 savedPi.getId(),
+                savedPi.getHostName(),
                 savedPi.getIpAddress(),
                 savedPi.getDeviceStatus(),
                 savedPi.getRoom() != null ? savedPi.getRoom().getId() : null);
@@ -78,6 +79,10 @@ public class RaspberryPiService {
         if (dto.deviceStatus() != null) {
             existing.setDeviceStatus(dto.deviceStatus());
             debugInfo.append(", deviceStatus=").append(dto.deviceStatus());
+        }
+        if (dto.hostName() != null) {
+            existing.setHostName(dto.hostName());
+            debugInfo.append(", hostName=").append(dto.hostName());
         }
 
         if (dto.roomId() != null) {

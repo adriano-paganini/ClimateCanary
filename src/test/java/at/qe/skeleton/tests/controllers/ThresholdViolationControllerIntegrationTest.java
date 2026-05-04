@@ -34,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
 @WithMockUser(authorities = "SYSTEM_ADMIN")
-public class ThresholdViolationControllerIntegrationTest {
+class ThresholdViolationControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -107,7 +107,7 @@ public class ThresholdViolationControllerIntegrationTest {
 
     @Test
     void getAll_filterByStatus_returns200() throws Exception {
-        when(thresholdViolationService.findAll(eq(ViolationStatus.ACTIVE), eq(null), eq(null)))
+        when(thresholdViolationService.findAll(ViolationStatus.ACTIVE, null, null))
                 .thenReturn(List.of(v1));
 
         when(thresholdViolationMapper.mapTo(v1)).thenReturn(dto1);
@@ -166,7 +166,7 @@ public class ThresholdViolationControllerIntegrationTest {
     void update_valid_returns200() throws Exception {
         ThresholdViolationUpdateDTO updateDTO = mock(ThresholdViolationUpdateDTO.class);
 
-        when(thresholdViolationService.update(eq(1L), any())).thenReturn(v1);
+        when(thresholdViolationService.update(eq(1L), (ThresholdViolationUpdateDTO) any())).thenReturn(v1);
         when(thresholdViolationMapper.mapTo(v1)).thenReturn(dto1);
 
         mockMvc.perform(patch("/api/thresholdviolation/1")
@@ -175,7 +175,7 @@ public class ThresholdViolationControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(1)));
 
-        verify(thresholdViolationService).update(eq(1L), any());
+        verify(thresholdViolationService).update(eq(1L), (ThresholdViolationUpdateDTO) any());
     }
 
     @Test

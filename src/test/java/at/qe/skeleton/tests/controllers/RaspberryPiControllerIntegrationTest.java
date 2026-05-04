@@ -5,11 +5,14 @@ import at.qe.skeleton.dtos.RaspberryPiCreateDTO;
 import at.qe.skeleton.dtos.RaspberryPiDTO;
 import at.qe.skeleton.dtos.RaspberryPiUpdateDTO;
 import at.qe.skeleton.dtos.SensorStationDTO;
+import at.qe.skeleton.helper.PiConfigYamlBuilder;
 import at.qe.skeleton.mappers.RaspberryPiCreateMapper;
 import at.qe.skeleton.mappers.RaspberryPiMapper;
 import at.qe.skeleton.mappers.SensorStationMapper;
 import at.qe.skeleton.models.RaspberryPi;
 import at.qe.skeleton.models.SensorStation;
+import at.qe.skeleton.services.PiRequestResult;
+import at.qe.skeleton.services.RaspberryPiServerService;
 import at.qe.skeleton.services.RaspberryPiService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
 @WithMockUser(roles = "EMPLOYEE")
-public class RaspberryPiControllerIntegrationTest {
+class RaspberryPiControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -43,6 +46,12 @@ public class RaspberryPiControllerIntegrationTest {
 
     @MockitoBean
     private RaspberryPiMapper raspberryPiMapper;
+
+    @MockitoBean
+    private RaspberryPiServerService raspberryPiServerService;
+
+    @MockitoBean
+    private PiConfigYamlBuilder piConfigYamlBuilder;
 
     @MockitoBean
     private RaspberryPiCreateMapper raspberryPiCreateMapper;
@@ -147,8 +156,17 @@ public class RaspberryPiControllerIntegrationTest {
         RaspberryPiUpdateDTO updateDTO =
                 new RaspberryPiUpdateDTO(null, "new-name", null, null, null);
 
-        when(raspberryPiService.update(eq(1L), any())).thenReturn(pi1);
-        when(raspberryPiMapper.mapTo(pi1)).thenReturn(dto1);
+        when(raspberryPiService.update(eq(1L), any()))
+                .thenReturn(pi1);
+
+        when(piConfigYamlBuilder.buildYaml(1L))
+                .thenReturn("dummy-yaml");
+
+        when(raspberryPiServerService.sendConfig(1L, "dummy-yaml"))
+                .thenReturn(PiRequestResult.SUCCESS);
+
+        when(raspberryPiMapper.mapTo(pi1))
+                .thenReturn(dto1);
 
         mockMvc.perform(patch("/api/bpi/1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -157,6 +175,9 @@ public class RaspberryPiControllerIntegrationTest {
                 .andExpect(jsonPath("$.id", is(1)));
 
         verify(raspberryPiService).update(eq(1L), any());
+        verify(piConfigYamlBuilder).buildYaml(1L);
+        verify(raspberryPiServerService).sendConfig(1L, "dummy-yaml");
+        verify(raspberryPiMapper).mapTo(pi1);
     }
 
     @Test
