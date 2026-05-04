@@ -5,9 +5,12 @@ import at.qe.skeleton.dtos.SensorStationDTO;
 import at.qe.skeleton.dtos.SensorStationUpdateDTO;
 import at.qe.skeleton.mappers.SensorStationCreateMapper;
 import at.qe.skeleton.mappers.SensorStationMapper;
+import at.qe.skeleton.models.DeviceStatus;
+import at.qe.skeleton.models.RaspberryPi;
 import at.qe.skeleton.models.SensorStation;
 import at.qe.skeleton.services.PiRequestResult;
 import at.qe.skeleton.services.RaspberryPiServerService;
+import at.qe.skeleton.services.RaspberryPiService;
 import at.qe.skeleton.services.SensorStationService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -25,14 +28,16 @@ public class SensorStationController {
     private final SensorStationMapper sensorStationMapper;
     private final SensorStationCreateMapper sensorStationCreateMapper;
     private final RaspberryPiServerService raspberryPiServerService;
+    private final RaspberryPiService raspberryPiService;
 
     public SensorStationController(SensorStationService sensorStationService,
                                    SensorStationMapper sensorStationMapper,
-                                   SensorStationCreateMapper sensorStationCreateMapper, RaspberryPiServerService raspberryPiServerService) {
+                                   SensorStationCreateMapper sensorStationCreateMapper, RaspberryPiServerService raspberryPiServerService, RaspberryPiService raspberryPiService) {
         this.sensorStationService = sensorStationService;
         this.sensorStationMapper = sensorStationMapper;
         this.sensorStationCreateMapper = sensorStationCreateMapper;
         this.raspberryPiServerService = raspberryPiServerService;
+        this.raspberryPiService = raspberryPiService;
     }
 
     @GetMapping
@@ -67,7 +72,12 @@ public class SensorStationController {
     public ResponseEntity<SensorStationDTO> update(@PathVariable Long id,
                                                    @Valid @RequestBody SensorStationUpdateDTO dto) {
         SensorStation updated = sensorStationService.update(id, dto);
-        return ResponseEntity.ok(sensorStationMapper.mapTo(updated));
+        SensorStationDTO stationDTO = sensorStationMapper.mapTo(updated);
+        if (updated.getDeviceStatus() == DeviceStatus.AVAILABLE){
+            RaspberryPi pi = raspberryPiService.getAll().stream().filter(p -> p.getSensorStations().contains(updated)).findFirst().orElse(null);
+            raspberryPiServerService.setupStation(pi.getId(), stationDTO);
+        }
+        return ResponseEntity.ok(stationDTO);
     }
 
     @DeleteMapping("/{id}")
