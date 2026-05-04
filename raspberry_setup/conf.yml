@@ -1,0 +1,7 @@
+pi:
+  id: 1
+  room_id: 1
+  room_name: "Test Room"
+  host_name: "test-pi"
+  backend_url: "http://localhost:8080"
+  privacy_mode: false

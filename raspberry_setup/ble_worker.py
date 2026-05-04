@@ -1,8 +1,14 @@
 import asyncio
 import struct
 import time
+from datetime import datetime
+
+import aiohttp
+import aiosqlite
 from bleak import BleakClient
 
+import config
+import aiohttp as _aiohttp
 from config import (
     DATA_CHAR_UUID,
     AUTH_CHAR_UUID,
@@ -15,22 +21,32 @@ from config import (
     WARNING_CHAR_PACK_UUID,
     WARNING_ACK_REQUEST_UUID,
 )
+from state import get_privacy_mode
+from violation_tracker import process_measurement
 
-def _build_auth(device_id: int, room_name: str) -> bytes:
+
+# ---------------------------------------------------------------------------
+# BLE packet builders
+# ---------------------------------------------------------------------------
+
+def _build_auth(pi_id: int, room_name: str) -> bytes:
+    """Write TrustedRpiId + room_name into warningAuthCharacteristic."""
     room_bytes = room_name.encode("ascii")
-    room_len = len(room_bytes)
-    assert room_len <= 32, "room_name darf max. 32 Zeichen haben"
-    return struct.pack("<I32sB", device_id, room_bytes.ljust(32, b"\x00"), room_len)
+    room_len   = len(room_bytes)
+    assert room_len <= 32, "room_name must be ≤ 32 characters"
+    return struct.pack("<I32sB", pi_id, room_bytes.ljust(32, b"\x00"), room_len)
 
 
-def _build_status(timestamp_ms: int,
-                  pressure_s: int = 0, temp_s: int = 0,
-                  hum_s: int = 0, gas_s: int = 0) -> bytes:
+def _build_status(
+    timestamp_ms: int,
+    pressure_s: int = 0, temp_s: int = 0,
+    hum_s: int = 0, gas_s: int = 0,
+) -> bytes:
     code = (
         (pressure_s & 0xF)
-        | ((temp_s  & 0xF) << 4)
-        | ((hum_s   & 0xF) << 8)
-        | ((gas_s   & 0xF) << 12)
+        | ((temp_s & 0xF) << 4)
+        | ((hum_s  & 0xF) << 8)
+        | ((gas_s  & 0xF) << 12)
     )
     return struct.pack("<IH", timestamp_ms, code)
 
@@ -39,45 +55,14 @@ def _build_all_good(timestamp_ms: int) -> bytes:
     return _build_status(timestamp_ms, 5, 5, 5, 5)
 
 
-def _is_critical(*statuses: int) -> bool:
-    return any(s in {3, 4} for s in statuses)
-
-
 def _build_warning_stream(messages: list[str]) -> bytes:
+    """Concatenate null-terminated UTF-8 strings into the wire format."""
     return b"".join(m.encode("utf-8") + b"\x00" for m in messages)
 
 
-def _evaluate(pkt: dict) -> tuple[int, int, int, int]:
-    def classify(v, lo_warn, lo_crit, hi_warn, hi_crit):
-        if   v < lo_crit:  return 3
-        elif v > hi_crit:  return 4
-        elif v < lo_warn:  return 1
-        elif v > hi_warn:  return 2
-        else:              return 0
-
-    return (
-        classify(pkt["pressure"],        950,   930,  1050, 1070),
-        classify(pkt["temperature"],      16,    10,    30,   35),
-        classify(pkt["humidity"],         30,    20,    70,   80),
-        classify(pkt["air_quality"], 5000,  2000, 50000, 100000),
-    )
-
-
-def _warning_messages(pkt: dict, press_s, temp_s, hum_s, gas_s) -> list[str]:
-    labels = {
-        "Druck":            (press_s, pkt["pressure"],       "hPa"),
-        "Temperatur":       (temp_s,  pkt["temperature"],    "°C"),
-        "Luftfeuchtigkeit": (hum_s,   pkt["humidity"],       "%"),
-        "Gaswiderstand":    (gas_s,   pkt["air_quality"], "Ω"),
-    }
-    desc = {3: "langfristig zu niedrig", 4: "langfristig zu hoch"}
-    msgs = [
-        f"{name} {desc[s]}: {val:.1f} {unit}"
-        for name, (s, val, unit) in labels.items()
-        if s in {3, 4}
-    ]
-    return msgs or ["Kritischer Umgebungszustand erkannt"]
-
+# ---------------------------------------------------------------------------
+# Warning transfer
+# ---------------------------------------------------------------------------
 
 async def _send_warning(client: BleakClient, messages: list[str], tag: str) -> None:
     stream = _build_warning_stream(messages)
@@ -120,34 +105,62 @@ async def _send_warning(client: BleakClient, messages: list[str], tag: str) -> N
     finally:
         await client.stop_notify(WARNING_ACK_REQUEST_UUID)
 
+
+# ---------------------------------------------------------------------------
+# Timestamp helpers
+# ---------------------------------------------------------------------------
+
+def _make_iso(anchor_pi_time: float, anchor_arduino_millis: int, pkt_millis: int) -> str:
+    """
+    Convert Arduino-relative millis to a Pi wall-clock ISO 8601 string.
+    anchor_pi_time and anchor_arduino_millis are captured together on the
+    first packet so relative timing between measurements is preserved.
+    """
+    unix_seconds = anchor_pi_time + (pkt_millis - anchor_arduino_millis) / 1000.0
+    return datetime.fromtimestamp(unix_seconds).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
+
+
+# ---------------------------------------------------------------------------
+# Main BLE worker
+# ---------------------------------------------------------------------------
+
 async def ble_worker(
     queue: asyncio.Queue,
     client: BleakClient,
-    device_id: int,
-    room_name: str,
+    sensor_station_id: int,
+    room_id: int,
+    measurement_interval: int,
+    db: aiosqlite.Connection,
 ) -> None:
-    """
-    Vollständiger BLE-Workflow für genau ein Gerät.
-    Wird von main.py pro Station in einer eigenen Task aufgerufen.
-
-    device_id und room_name kommen vom Backend, nicht mehr aus config.
-    """
     tag = client.address
 
-    payload = _build_auth(device_id, room_name)
-    await client.write_gatt_char(AUTH_CHAR_UUID, payload, response=True)
-    print(f"[BLE:{tag}] authenticated (deviceId={device_id}, room={room_name!r})")
+    # Authenticate: write TrustedRpiId + room_name into warningAuthCharacteristic
+    await client.write_gatt_char(
+        AUTH_CHAR_UUID,
+        _build_auth(config.PI_ID, config.ROOM_NAME),
+        response=True,
+    )
+    print(f"[BLE:{tag}] authenticated (pi_id={config.PI_ID}, room={config.ROOM_NAME!r})")
 
-    boot_offset: float | None = None
+    # Timestamp anchor — set once on the first packet received this connection.
+    # Resets naturally on every reconnect (local variables).
+    anchor_pi_time:        float | None = None
+    anchor_arduino_millis: int   | None = None
 
-    def register_ts(device_ms: int) -> None:
-        nonlocal boot_offset
-        if boot_offset is None:
-            boot_offset = time.time() - device_ms / 1000.0
+    def _set_anchor(pkt_millis: int) -> None:
+        nonlocal anchor_pi_time, anchor_arduino_millis
+        if anchor_pi_time is None:
+            anchor_pi_time        = time.time()
+            anchor_arduino_millis = pkt_millis
+            print(f"[BLE:{tag}] timestamp anchor set at pi={anchor_pi_time:.3f}, "
+                  f"arduino_ms={anchor_arduino_millis}")
 
-    def to_unix(device_ms: int) -> float:
-        return (boot_offset or 0.0) + device_ms / 1000.0
+    def _timestamp(pkt_millis: int) -> str:
+        return _make_iso(anchor_pi_time, anchor_arduino_millis, pkt_millis)
 
+    # ------------------------------------------------------------------
+    # Drain cached data (measurements buffered while disconnected)
+    # ------------------------------------------------------------------
     print(f"[BLE:{tag}] reading cached sensor data…")
     cached_count = 0
     while True:
@@ -156,77 +169,115 @@ async def ble_worker(
         if not raw or len(raw) < 20:
             break
         ts, press, temp, hum, gas = struct.unpack(SENSOR_STRUCT, bytes(raw))
-        register_ts(ts)
-        queue.put_nowait({
-            "timestamp":      ts,
-            "unix_time":      to_unix(ts),
-            "temperature":    temp,
-            "humidity":       hum,
-            "pressure":       press,
-            "air_quality": gas,
-            "device_id":      device_id,
-            "room_name":      room_name,
-        })
+        _set_anchor(ts)
+        pkt = {
+            "sensor_station_id": sensor_station_id,
+            "room_id":           room_id,
+            "timestamp":         _timestamp(ts),   # ISO string → stored + sent to backend
+            "temperature":       temp,
+            "humidity":          hum,
+            "pressure":          press,
+            "air_quality":       gas,
+        }
+        # Cached data: persist only if privacy mode is off
+        if not get_privacy_mode():
+            queue.put_nowait(pkt)
         cached_count += 1
     print(f"[BLE:{tag}] cached packets: {cached_count}")
 
-    warning_active = False
+    # ------------------------------------------------------------------
+    # Live notifications
+    # ------------------------------------------------------------------
+    async with aiohttp.ClientSession() as http_session:
 
-    def on_warning_ack(sender, data: bytearray) -> None:
-        nonlocal warning_active
-        if data and data[0]:
-            print(f"[BLE:{tag}] warning acknowledged.")
-            warning_active = False
+        warning_active        = False
+        first_packet_reported = False  # PATCH CONNECTED after first data packet
 
-    await client.start_notify(WARNING_ACK_UUID, on_warning_ack)
+        def on_warning_ack(sender, data: bytearray) -> None:
+            nonlocal warning_active
+            if data and data[0]:
+                print(f"[BLE:{tag}] warning acknowledged by Arduino.")
+                warning_active = False
 
-    async def handle_notification(sender, data: bytearray) -> None:
-        nonlocal warning_active
+        await client.start_notify(WARNING_ACK_UUID, on_warning_ack)
+
+        async def handle_notification(sender, data: bytearray) -> None:
+            nonlocal warning_active
+
+            try:
+                ts, press, temp, hum, gas = struct.unpack(SENSOR_STRUCT, bytes(data))
+            except Exception as e:
+                print(f"[BLE:{tag}] parse error: {e}")
+                return
+
+            _set_anchor(ts)
+            pkt = {
+                "sensor_station_id": sensor_station_id,
+                "room_id":           room_id,
+                "timestamp":         _timestamp(ts),   # ISO string → stored + sent to backend
+                "temperature":       temp,
+                "humidity":          hum,
+                "pressure":          press,
+                "air_quality":       gas,
+            }
+
+            print(f"[BLE:{tag}] {pkt['timestamp']}: {temp:.1f}°C  {hum:.1f}%  "
+                  f"{press:.1f}hPa  {gas}Ω")
+
+            # Threshold checks always run regardless of privacy mode
+            statuses, hint_messages = await process_measurement(
+                pkt, db, http_session, tag
+            )
+
+            # Persistent storage only when privacy mode is off
+            if not get_privacy_mode():
+                queue.put_nowait(pkt)
+
+            # Report CONNECTED to backend on first data packet received
+            nonlocal first_packet_reported
+            if not first_packet_reported:
+                first_packet_reported = True
+                try:
+                    url = f"{config.BACKEND_URL}/api/cpi/{config.PI_ID}/{sensor_station_id}"
+                    async with http_session.patch(
+                        url, json={"deviceStatus": "CONNECTED"},
+                        timeout=_aiohttp.ClientTimeout(total=5),
+                    ) as resp:
+                        print(f"[BLE:{tag}] PATCH CONNECTED → {resp.status}")
+                except Exception as e:
+                    print(f"[BLE:{tag}] PATCH CONNECTED failed: {e}")
+
+            # BLE status feedback to Arduino always runs
+            press_s = statuses.get("pressure",    0)
+            temp_s  = statuses.get("temperature", 0)
+            hum_s   = statuses.get("humidity",    0)
+            gas_s   = statuses.get("air_quality", 0)
+
+            status_payload = _build_status(ts, press_s, temp_s, hum_s, gas_s)
+            await client.write_gatt_char(
+                SENSOR_STATUS_UUID, status_payload, response=True
+            )
+
+            if hint_messages and not warning_active:
+                warning_active = True
+                await _send_warning(client, hint_messages, tag)
+                await client.write_gatt_char(
+                    SENSOR_STATUS_UUID, status_payload, response=True
+                )
+
+            if all(s == 5 for s in (press_s, temp_s, hum_s, gas_s)) and warning_active:
+                await client.write_gatt_char(
+                    SENSOR_STATUS_UUID, _build_all_good(ts), response=True
+                )
+                print(f"[BLE:{tag}] all-good sent.")
+                warning_active = False
+
+        await client.start_notify(DATA_CHAR_UUID, handle_notification)
+        print(f"[BLE:{tag}] subscribed to notifications")
 
         try:
-            ts, press, temp, hum, gas = struct.unpack(SENSOR_STRUCT, bytes(data))
-        except Exception as e:
-            print(f"[BLE:{tag}] parse error: {e}")
-            return
-
-        register_ts(ts)
-        pkt = {
-            "timestamp":      ts,
-            "unix_time":      to_unix(ts),
-            "temperature":    temp,
-            "humidity":       hum,
-            "pressure":       press,
-            "air_quality": gas,
-            "device_id":      device_id,
-            "room_name":      room_name,
-        }
-        queue.put_nowait(pkt)
-        print(f"[BLE:{tag}] {ts}: {temp:.1f}°C {hum:.1f}% {press:.1f}hPa {gas}Ω")
-
-        press_s, temp_s, hum_s, gas_s = _evaluate(pkt)
-
-        status_payload = _build_status(ts, press_s, temp_s, hum_s, gas_s)
-        await client.write_gatt_char(SENSOR_STATUS_UUID, status_payload, response=True)
-
-        if _is_critical(press_s, temp_s, hum_s, gas_s) and not warning_active:
-            warning_active = True
-            msgs = _warning_messages(pkt, press_s, temp_s, hum_s, gas_s)
-            await _send_warning(client, msgs, tag)
-            await client.write_gatt_char(SENSOR_STATUS_UUID, status_payload, response=True)
-
-        if warning_active and all(s == 5 for s in (press_s, temp_s, hum_s, gas_s)):
-            await client.write_gatt_char(
-                SENSOR_STATUS_UUID, _build_all_good(ts), response=True
-            )
-            print(f"[BLE:{tag}] all-good sent (0x5555).")
-            warning_active = False
-
-    await client.start_notify(DATA_CHAR_UUID, handle_notification)
-    print(f"[BLE:{tag}] subscribed to notifications")
-
-    try:
-        while True:
-            await asyncio.sleep(1)
-    finally:
-        await client.stop_notify(DATA_CHAR_UUID)
-        await client.stop_notify(WARNING_ACK_UUID)
+            while True:
+                await asyncio.sleep(1)
+        finally:
+            await client.stop_notify(DATA_CHAR_UUID)
+            await client.stop_notify(WARNING_ACK_UUID)

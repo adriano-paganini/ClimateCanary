@@ -1,61 +1,158 @@
-import aiosqlite
 import asyncio
-import config
-from config import DB_PATH, LED_COLOUR_UUID
+import aiosqlite
 from bleak import BleakClient
 
 
-async def init_db(db: aiosqlite.Connection):
-    await db.execute("""
+async def init_db(db: aiosqlite.Connection) -> None:
+    await db.executescript(
+        """
         CREATE TABLE IF NOT EXISTS sensor_data (
             id                INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp         INTEGER,
-            temperature       REAL,
-            humidity          REAL,
-            pressure          REAL,
-            air_quality       INTEGER,
-            room_id           INTEGER,
-            sensor_station_id TEXT,
-            sent              INTEGER DEFAULT 0
-        )
-    """)
-    await db.execute("""
+            sensor_station_id INTEGER NOT NULL,
+            room_id           INTEGER NOT NULL,
+            timestamp         TEXT    NOT NULL,
+            temperature       REAL    NOT NULL,
+            humidity          REAL    NOT NULL,
+            pressure          REAL    NOT NULL,
+            air_quality       REAL    NOT NULL,
+            sent              INTEGER NOT NULL DEFAULT 0
+        );
+
+        CREATE TABLE IF NOT EXISTS thresholds (
+            metric      TEXT PRIMARY KEY,
+            upper_bound REAL,
+            lower_bound REAL,
+            hint_text   TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS threshold_violations (
+            id                INTEGER PRIMARY KEY AUTOINCREMENT,
+            sensor_station_id INTEGER NOT NULL,
+            metric            TEXT    NOT NULL,
+            room_id           INTEGER NOT NULL,
+            status            TEXT    NOT NULL DEFAULT 'ACTIVE',
+            start_time        REAL    NOT NULL,
+            end_time          REAL,
+            value_at_trigger  REAL    NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS pi_config (
+            key   TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        );
+
         CREATE TABLE IF NOT EXISTS pi_state (
             key   TEXT PRIMARY KEY,
             value TEXT
-        )
-    """)
+        );
+
+        CREATE TABLE IF NOT EXISTS stations (
+            address              TEXT    PRIMARY KEY,
+            sensor_station_id    INTEGER NOT NULL,
+            room_id              INTEGER NOT NULL,
+            name                 TEXT    NOT NULL,
+            device_status        TEXT    NOT NULL,
+            measurement_interval INTEGER NOT NULL
+        );
+        """
+    )
     await db.commit()
+    print("[DB] schema initialised.")
 
 
-async def db_writer(queue: asyncio.Queue, db: aiosqlite.Connection, client: BleakClient):
+# ---------------------------------------------------------------------------
+# db_writer – drains BLE queue into sensor_data
+# ---------------------------------------------------------------------------
+
+async def db_writer(
+    queue: asyncio.Queue,
+    db: aiosqlite.Connection,
+    client: BleakClient,
+) -> None:
     while True:
-        payload = await queue.get()
+        pkt: dict = await queue.get()
         try:
             await db.execute(
-                """INSERT INTO sensor_data
-                   (timestamp, temperature, humidity, pressure, air_quality,
-                    room_id, sensor_station_id)
-                   VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                """
+                INSERT INTO sensor_data
+                    (sensor_station_id, room_id, timestamp,
+                     temperature, humidity, pressure, air_quality, sent)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 0)
+                """,
                 (
-                    payload["timestamp"],
-                    payload["temperature"],
-                    payload["humidity"],
-                    payload["pressure"],
-                    payload["air_quality"],
-                    config.ROOM_ID,
-                    config.SENSOR_STATION_ID,
+                    pkt["sensor_station_id"],
+                    pkt["room_id"],
+                    pkt["timestamp"],
+                    pkt["temperature"],
+                    pkt["humidity"],
+                    pkt["pressure"],
+                    pkt["air_quality"],
                 ),
             )
             await db.commit()
-            print(f"[DB] saved row ts={payload['timestamp']}")
-
-            if payload["temperature"] > 30.0:
-                await client.write_gatt_char(LED_COLOUR_UUID, bytearray([255, 0, 0]))
-            else:
-                await client.write_gatt_char(LED_COLOUR_UUID, bytearray([0, 255, 0]))
-
+            print(f"[DB] saved row timestamp={pkt['timestamp']} "
+                  f"station={pkt['sensor_station_id']} room={pkt['room_id']}")
         except Exception as e:
             print(f"[DB] write error: {e}")
         finally:
             queue.task_done()
+
+
+# ---------------------------------------------------------------------------
+# Station persistence
+# ---------------------------------------------------------------------------
+
+async def save_station(db: aiosqlite.Connection, station: dict) -> None:
+    """
+    Upserts a single station by BLE address.
+    Called whenever POST /api/spi/{piId}/stations delivers an assignment.
+    Existing stations are preserved — only the upserted address is updated.
+    """
+    await db.execute(
+        """
+        INSERT INTO stations
+            (address, sensor_station_id, room_id, name, device_status, measurement_interval)
+        VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT(address) DO UPDATE SET
+            sensor_station_id    = excluded.sensor_station_id,
+            room_id              = excluded.room_id,
+            name                 = excluded.name,
+            device_status        = excluded.device_status,
+            measurement_interval = excluded.measurement_interval
+        """,
+        (
+            station["bleMac"],
+            station["id"],
+            station["roomId"],
+            station["name"],
+            station["deviceStatus"],
+            station["measurementInterval"],
+        ),
+    )
+    await db.commit()
+    print(f"[DB] upserted station address={station['bleMac']} id={station['id']}")
+
+
+async def load_stations(db: aiosqlite.Connection) -> list[dict]:
+    """
+    Reads all known station assignments from SQLite.
+    Returns snake_case keys matching the Station dataclass in main.py.
+    Used on boot and whenever station_manager wakes up.
+    """
+    async with db.execute(
+        """SELECT address, sensor_station_id, room_id,
+                  name, device_status, measurement_interval
+           FROM stations"""
+    ) as cursor:
+        rows = await cursor.fetchall()
+    return [
+        {
+            "address":             row[0],
+            "sensor_station_id":   row[1],
+            "room_id":             row[2],
+            "name":                row[3],
+            "device_status":       row[4],
+            "measurement_interval": row[5],
+        }
+        for row in rows
+    ]

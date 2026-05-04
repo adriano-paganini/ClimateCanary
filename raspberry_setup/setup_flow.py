@@ -1,101 +1,85 @@
 """
-Einmalige Erstkonfiguration eines Arduinos im Setup-Modus.
-Wird von app.py über POST /api/pi/setup/{address} aufgerufen.
+setup_flow.py
+-------------
+UC-10: Erstkonfiguration einer Sensorstation (Arduino im Setup-Modus).
+
+Called from device_loop in main.py when station.device_status == 'AVAILABLE'.
+
+Flow:
+  1. Connect to Arduino (already in setup mode, address known from SensorStationDTO)
+  2. Write DeviceSetupConfig (measurementInterval + PI_ID as TrustedRpiId)
+  3. Arduino reboots → BLE connection drops (expected)
+  4. PATCH backend with CONNECTED or CONNECTION_FAILED
 """
 
-import asyncio
 import struct
-from bleak import BleakClient, BleakScanner
-from bleak.backends.device import BLEDevice
-from bleak.backends.scanner import AdvertisementData
-from config import BLE_NAME_NORMAL, MANUF_DATA_NORMAL, SVC_ENV_NORMAL, SCAN_DURATION
+import aiohttp
+from bleak import BleakClient
+
+import config
 from config import SETUP_CONFIG_UUID
 
-def _build_setup_config(measurement_interval: int, device_id: int) -> bytes:
+
+def _build_setup_config(measurement_interval: int, pi_id: int) -> bytes:
     """
-    DeviceSetupConfig: uint8 measurementInterval | uint32 deviceId  →  5 Byte LE
-    Beispiel: interval=10, deviceId=123456 → 0A 40 E2 01 00
+    DeviceSetupConfig: uint8 measurementInterval | uint32 deviceId  →  5 bytes LE
+    Example: interval=10, pi_id=123456 → 0A 40 E2 01 00
     """
-    assert 1 <= measurement_interval <= 255, "measurementInterval muss 1–255 sein"
-    return struct.pack("<BI", measurement_interval, device_id)
+    assert 1 <= measurement_interval <= 255, "measurementInterval must be 1–255"
+    return struct.pack("<BI", measurement_interval, pi_id)
 
 
-async def _scan_for_setup_device() -> BLEDevice | None:
-    """
-    Scannt nach einem Gerät im Setup-Modus.
-    Filter: Name == G5T4SETUP  AND  ManufData enthält 00RDY  AND  Service 94050000-…
-    """
-    found: BLEDevice | None = None
-    stop = asyncio.Event()
+async def patch_station_status(
+    session: aiohttp.ClientSession,
+    sensor_station_id: int,
+    status: str,
+    tag: str,
+) -> None:
+    """PATCH /api/cpi/{piId}/{sensorStationId} with the given DeviceStatus."""
+    url = f"{config.BACKEND_URL}/api/cpi/{config.PI_ID}/{sensor_station_id}"
+    try:
+        async with session.patch(
+            url, json={"deviceStatus": status},
+            timeout=aiohttp.ClientTimeout(total=5),
+        ) as resp:
+            print(f"[SETUP:{tag}] PATCH status={status} → {resp.status}")
+    except Exception as e:
+        print(f"[SETUP:{tag}] PATCH failed: {e}")
 
-    def callback(device: BLEDevice, adv: AdvertisementData) -> None:
-        nonlocal found
-        if found:
-            return
-        if device.name != _BLE_NAME_SETUP:
-            return
-        manuf_match = any(
-            _MANUF_DATA_SETUP in payload
-            for payload in adv.manufacturer_data.values()
-        )
-        if not manuf_match:
-            return
-        adv_svcs = [str(s).lower() for s in adv.service_uuids]
-        if not any(_SVC_SETUP in s or s in _SVC_SETUP for s in adv_svcs):
-            return
-        print(f"[SETUP] found: {device.name}  {device.address}")
-        found = device
-        stop.set()
-
-    async with BleakScanner(detection_callback=callback):
-        print(f"[SETUP] scanning {_SCAN_DURATION}s for {_BLE_NAME_SETUP!r}…")
-        try:
-            await asyncio.wait_for(stop.wait(), timeout=_SCAN_DURATION)
-        except asyncio.TimeoutError:
-            print("[SETUP] scan timeout – no setup device found.")
-
-    return found
 
 async def run_setup(
-    device_id: int,
-    measurement_interval: int = 10,
-    address: str | None = None,
-) -> dict:
+    address: str,
+    sensor_station_id: int,
+    measurement_interval: int,
+) -> bool:
     """
-    Vollständiger Setup-Workflow (§7):
-      1. Gerät suchen (Scan) – oder direkt per Adresse verbinden falls angegeben
-      2. DeviceSetupConfig schreiben
-      3. Disconnect abwarten (Gerät startet neu – gewolltes Verhalten laut Spec)
+    Writes TrustedRpiId + measurementInterval to the Arduino's
+    deviceSetupCharacteristic. The Arduino reboots afterwards — the
+    connection drop is expected and not treated as an error.
 
-    Gibt ein dict mit status + details zurück (für FastAPI-Response).
+    Returns True if the write succeeded, False otherwise.
+    In both cases the backend is PATCHed with the appropriate status.
     """
-    if address:
-        target_address = address
-        print(f"[SETUP] connecting directly to {target_address}…")
-    else:
-        device = await _scan_for_setup_device()
-        if device is None:
-            return {"status": "error", "reason": "no setup device found during scan"}
-        target_address = device.address
+    tag     = address
+    payload = _build_setup_config(measurement_interval, config.PI_ID)
+    print(f"[SETUP:{tag}] writing config: interval={measurement_interval}s "
+          f"pi_id={config.PI_ID}  payload={payload.hex()}")
 
-    payload = _build_setup_config(measurement_interval, device_id)
-    print(f"[SETUP] writing config: interval={measurement_interval}s "
-          f"deviceId={device_id}  payload={payload.hex()}")
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with BleakClient(address, timeout=20.0) as client:
+                await client.write_gatt_char(
+                    SETUP_CONFIG_UUID, payload, response=True,
+                )
+                print(f"[SETUP:{tag}] config written — Arduino will reboot.")
+                # Connection will drop here as Arduino reboots; that is expected.
 
-    try:
-        async with BleakClient(target_address, timeout=20.0) as client:
-            await client.write_gatt_char(SETUP_CONFIG_UUID, payload, response=True)
-            print("[SETUP] config written. Device will reboot – connection will drop.")
-            await asyncio.sleep(2)
+            # Write succeeded — backend will send /stations again after reboot
+            # so we don't PATCH CONNECTED here; that happens in ble_worker
+            # after the first data packet arrives in normal mode.
+            return True
 
-        return {
-            "status":               "ok",
-            "address":              target_address,
-            "device_id":            device_id,
-            "measurement_interval": measurement_interval,
-            "note":                 "Device is rebooting into normal mode."
-        }
-
-    except Exception as e:
-        print(f"[SETUP] failed: {e}")
-        return {"status": "error", "reason": str(e)}
+        except Exception as e:
+            print(f"[SETUP:{tag}] failed: {e}")
+            await patch_station_status(session, sensor_station_id, "CONNECTION_FAILED", tag)
+            return False

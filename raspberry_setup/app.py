@@ -1,171 +1,168 @@
-from fastapi import FastAPI
-import aiohttp
+from fastapi import FastAPI, HTTPException, Request
 import asyncio
-import yaml
-from pathlib import Path
+import aiosqlite
 from pydantic import BaseModel
-from bleak import BleakClient
+from typing import Optional
 
 import config
-from config import SPRING_BOOT_URL
-from ble_scanner import scan_for_stations
 from state import set_privacy_mode
+from database import save_station, load_stations
 
 app = FastAPI()
 
-http_session = None
-
-# geteilter Zustand mit main.py
+db_connection: aiosqlite.Connection | None = None
 stations_event: asyncio.Event = asyncio.Event()
-selected_stations: list[dict] = []
 
 
-class ConfigPayload(BaseModel):
-    id: int
-    room_id: int
+# ---------------------------------------------------------------------------
+# DTOs
+# ---------------------------------------------------------------------------
 
-class OccupancyPayload(BaseModel):
-    id: int
-    roomId: int
-    privacy_mode: bool
+class SensorStationDTO(BaseModel):
+    id:                  int
+    bleMac:              str
+    name:                str
+    deviceStatus:        str
+    measurementInterval: int
+    raspberryPiId:       int
+    roomId:              int
 
-class StationEntry(BaseModel):
-    address:   str
-    device_id: int
-    room_name: str
+class OccupancyDTO(BaseModel):
+    id:          int
+    roomName:    str
+    privacyMode: bool
 
-class StationsPayload(BaseModel):
-    stations: list[StationEntry]
+class ThresholdItem(BaseModel):
+    metric:     str
+    upperBound: Optional[float] = None
+    lowerBound: Optional[float] = None
+    hintText:   Optional[str]   = None
 
+class ThresholdConfigDTO(BaseModel):
+    thresholds: list[ThresholdItem]
 
-@app.on_event("startup")
-async def startup_event():
-    global http_session
-    http_session = aiohttp.ClientSession()
-    print("[SYS] HTTP Client Session gestartet.")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    global http_session
-    if http_session:
-        await http_session.close()
-        print("[SYS] HTTP Client Session geschlossen.")
+class ViolationResolvedDTO(BaseModel):
+    metric:   str
+    roomId:   int
+    endTime:  int   # epoch time
+    status:   str   # "RESOLVED"
 
 
-@app.get("/")
-async def read_root():
-    return {
-        "message": "Raspberry Pi Gateway (FastAPI)",
-        "status": "online",
-        "info": "Nutzt aiohttp für asynchrone Requests"
-    }
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
-@app.get("/test")
-async def read_test():
-    return {
-        "device": "Raspberry Pi",
-        "tech": "FastAPI",
-        "ble_ready": True
-    }
+def _check_pi_id(piId: int) -> None:
+    if piId != config.PI_ID:
+        raise HTTPException(status_code=403, detail="piId mismatch")
 
-@app.get("/data-from-pi")
-async def give_string_to_backend():
-    return "Hallo Backend, hier spricht dein Raspberry Pi!"
+def _check_db() -> aiosqlite.Connection:
+    if db_connection is None:
+        raise HTTPException(status_code=503, detail="DB not ready")
+    return db_connection
 
-@app.get("/trigger-backend-call")
-async def trigger_external_call():
-    global http_session
-    if http_session is None:
-        return {"status": "fehler", "error": "HTTP Session nicht initialisiert"}
-    try:
-        payload = {"message": "Aktueller Status vom Pi: Betriebsbereit"}
-        async with http_session.post(
-            SPRING_BOOT_URL,
-            json=payload,
-            timeout=aiohttp.ClientTimeout(total=5)
-        ) as response:
-            antwort_text = await response.text()
-            return {
-                "status": "erfolgreich",
-                "http_code": response.status,
-                "backend_antwort": antwort_text
-            }
-    except Exception as e:
-        return {"status": "fehler", "error": str(e)}
 
-@app.post("/api/pi/{piId}/config")
-async def receive_config(piId: int, payload: ConfigPayload):
-    if Path("conf.yml").exists() and piId != config.PI_ID:
-        return {"status": "error", "reason": "ID mismatch"}
-    cfg = {
-        "pi": {
-            "id": payload.id,
-            "room_id": payload.room_id
-        }
-    }
-    Path("conf.yml").write_text(yaml.dump(cfg))
-    config.load_config("conf.yml")
-    print(f"[CFG] config written and reloaded: pi_id={config.PI_ID}, room_id={config.ROOM_ID}")
-    return {"status": "ok", "pi_id": config.PI_ID}
+# ---------------------------------------------------------------------------
+# Endpoints
+# ---------------------------------------------------------------------------
 
-@app.get("/api/setup/verify/{piId}")
+@app.get("/api/spi/setup/verify/{piId}")
 async def verify_pi(piId: int):
-    exists = piId == config.PI_ID
-    return {"exists": exists, "pi_id": piId}
+    """Backend verifies this Pi's ID exists in the system."""
+    _check_pi_id(piId)
+    return {"exists": True, "pi_id": piId}
 
 
-class SetupPayload(BaseModel):
-    device_id:            int
-    measurement_interval: int = 10
+@app.post("/api/spi/{piId}/config")
+async def receive_config(piId: int, request: Request):
+    """
+    Backend sends updated config as a raw YAML string.
+    Pi reloads its runtime config immediately.
+    """
+    _check_pi_id(piId)
+    yaml_text = (await request.body()).decode("utf-8")
+    config.load_config_from_string(yaml_text)
+    set_privacy_mode(config.PRIVACY_MODE)
+    print(f"[CFG] config reloaded from backend: pi_id={config.PI_ID}, room_id={config.ROOM_ID}")
+    return {"status": "ok"}
 
-@app.post("/api/pi/setup/{address}")
-async def setup_station_by_address(address: str, payload: SetupPayload):
-    from setup_flow import run_setup
-    result = await run_setup(
-        device_id=payload.device_id,
-        measurement_interval=payload.measurement_interval,
-        address=address,
-    )
-    return result
 
-@app.get("/api/scan")
-async def scan():
+@app.post("/api/spi/{piId}/occupancy")
+async def receive_occupancy(piId: int, payload: OccupancyDTO):
+    """Backend pushes current occupancy / privacy mode for this Pi's room."""
+    _check_pi_id(piId)
+    set_privacy_mode(payload.privacyMode)
+    config.PRIVACY_MODE = payload.privacyMode
+    print(f"[CFG] privacy_mode={payload.privacyMode}, room={payload.roomName}")
+    return {"status": "ok"}
+
+
+@app.get("/api/spi/{piId}/heartbeat")
+async def heartbeat(piId: int):
+    """Backend checks if this Pi is alive."""
+    _check_pi_id(piId)
+    return {"status": "ok"}
+
+
+@app.post("/api/spi/{piId}/scan")
+async def trigger_scan(piId: int):
+    """
+    Backend manually triggers a BLE scan for available sensor stations.
+    Not needed in daily operations.
+    """
+    _check_pi_id(piId)
+    from ble_scanner import scan_for_stations
     addresses = await scan_for_stations()
-    return {"stations": addresses}
-
-@app.post("/api/pi/{piId}/occupancy")
-async def receive_occupancy(piId: int, payload: OccupancyPayload):
-    if piId != config.PI_ID:
-        return {"status": "error", "reason": "ID mismatch"}
-
-    set_privacy_mode(payload.privacy_mode)
-    config.PRIVACY_MODE = payload.privacy_mode
-
-    print(f"[CFG] privacy_mode={payload.privacy_mode}")
-    return {"status": "ok", "privacy_mode": config.PRIVACY_MODE}
+    return {"addresses": addresses}
 
 
-@app.post("/api/pi/{piId}/stations")
-async def receive_stations(piId: int, payload: StationsPayload):
+@app.post("/api/spi/{piId}/stations")
+async def receive_stations(piId: int, payload: SensorStationDTO):
     """
-    Wird vom Backend aufgerufen sobald der User Stationen ausgewählt hat.
-    Weckt main.py über stations_event auf.
-
-    Body:
-    {
-      "stations": [
-        { "address": "7C:DE:CE:44:CC:B1", "device_id": 123456, "room_name": "Lab1" }
-      ]
-    }
+    Backend tells Pi which single station to connect to.
+    Saved to DB immediately, wakes station_manager.
     """
-    if piId != config.PI_ID:
-        return {"status": "error", "reason": "ID mismatch"}
+    _check_pi_id(piId)
+    db = _check_db()
 
-    global selected_stations
-    selected_stations = [s.model_dump() for s in payload.stations]
-    print(f"[APP] received {len(selected_stations)} station(s) from backend.")
+    await save_station(db, payload.model_dump())
+    print(f"[APP] station received: id={payload.id}, mac={payload.bleMac}, name={payload.name!r}")
+    stations_event.set()
 
-    if stations_event:
-        stations_event.set()
+    return {"status": "ok"}
 
-    return {"status": "ok", "count": len(selected_stations)}
+
+
+@app.post("/api/spi/{piId}/config/thresholds")
+async def receive_thresholds(piId: int, body: ThresholdConfigDTO):
+    """Backend pushes new threshold configuration."""
+    _check_pi_id(piId)
+    db = _check_db()
+
+    from thresholds import update_thresholds
+    updates = [item.model_dump() for item in body.thresholds]
+    await update_thresholds(updates, db)
+    return {"status": "ok", "updated": len(updates)}
+
+
+@app.post("/api/spi/{piId}/config/thresholds/remove")
+async def remove_thresholds(piId: int, body: ThresholdConfigDTO):
+    """Backend tells Pi to delete existing thresholds."""
+    _check_pi_id(piId)
+    db = _check_db()
+
+    from thresholds import remove_thresholds
+    metrics = [item.metric for item in body.thresholds]
+    await remove_thresholds(metrics, db)
+    return {"status": "ok", "removed": len(metrics)}
+
+
+@app.post("/api/spi/{piId}/violation/resolve")
+async def resolve_violation(piId: int, payload: ViolationResolvedDTO):
+    """Backend tells Pi to manually turn off the violation warning on the Arduino."""
+    _check_pi_id(piId)
+
+    from violation_tracker import resolve_violation as do_resolve
+    await do_resolve(payload.metric, payload.roomId)
+    print(f"[VIO] manual resolve: metric={payload.metric}, room={payload.roomId}, end={payload.endTime}")
+    return {"status": "ok"}
