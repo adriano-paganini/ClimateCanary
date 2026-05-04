@@ -1,9 +1,11 @@
 package at.qe.skeleton.services;
 
 import at.qe.skeleton.common.exceptions.NotFoundException;
-import at.qe.skeleton.models.Metric;
-import at.qe.skeleton.models.Measurement;
+import at.qe.skeleton.dtos.RPMeasurementDTO;
+import at.qe.skeleton.mappers.RPMeasurementMapper;
+import at.qe.skeleton.models.*;
 import at.qe.skeleton.repositories.MeasurementRepository;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -18,18 +20,26 @@ import java.util.stream.Collectors;
 @Service
 public class MeasurementService {
 
-    private final MeasurementRepository repository;
+    private final MeasurementRepository measurementRepository;
+    private final SensorStationService sensorStationService;
+    private final RaspberryPiService raspberryPiService;
+    private final RoomService roomService;
+    private final RPMeasurementMapper rPmeasurementMapper;
 
-    public MeasurementService(MeasurementRepository repository) {
-        this.repository = repository;
+    public MeasurementService(MeasurementRepository measurementRepository, SensorStationService sensorStationService, RaspberryPiService raspberryPiService, RoomService roomService, RPMeasurementMapper rPmeasurementMapper) {
+        this.measurementRepository = measurementRepository;
+        this.sensorStationService = sensorStationService;
+        this.raspberryPiService = raspberryPiService;
+        this.roomService = roomService;
+        this.rPmeasurementMapper = rPmeasurementMapper;
     }
 
     public List<Measurement> getAll() {
-        return repository.findAll();
+        return measurementRepository.findAll();
     }
 
     public Measurement getById(Long id) {
-        return repository.findById(id)
+        return measurementRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Measurement with id " + id + " not found"));
     }
 
@@ -45,22 +55,22 @@ public class MeasurementService {
                 roomId, metric, from, to);
 
         if (hasRoom && hasMetric && hasRange)
-            return repository.findByRoomIdAndMetricAndTimestampBetween(roomId, metric, from, to);
+            return measurementRepository.findByRoomIdAndMetricAndTimestampBetween(roomId, metric, from, to);
         if (hasRoom && hasMetric)
-            return repository.findByRoomIdAndMetric(roomId, metric);
+            return measurementRepository.findByRoomIdAndMetric(roomId, metric);
         if (hasRoom && hasRange)
-            return repository.findByRoomIdAndTimestampBetween(roomId, from, to);
+            return measurementRepository.findByRoomIdAndTimestampBetween(roomId, from, to);
         if (hasRoom)
-            return repository.findByRoomId(roomId);
+            return measurementRepository.findByRoomId(roomId);
         if (hasRange)
-            return repository.findByTimestampBetween(from, to);
+            return measurementRepository.findByTimestampBetween(from, to);
 
-        return repository.findAll();
+        return measurementRepository.findAll();
     }
 
     public Map<Metric, Measurement> getLatestPerMetric(Long roomId) {
         Map<Metric, Measurement> latestMeasurements = Arrays.stream(Metric.values())
-                .map(metric -> repository.findLatestByRoomIdAndMetric(roomId, metric))
+                .map(metric -> measurementRepository.findLatestByRoomIdAndMetric(roomId, metric))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toMap(Measurement::getMetric, m -> m));
@@ -70,4 +80,24 @@ public class MeasurementService {
 
         return latestMeasurements;
     }
+
+    @Transactional
+    public void saveMeasurementsFromRaspberryPi(Long piId, RPMeasurementDTO dto){
+         List<Measurement> measurements = rPmeasurementMapper.mapFrom(dto);
+
+         RaspberryPi pi = raspberryPiService.getById(piId);
+         SensorStation station = sensorStationService.getById(dto.sensorStationId());
+
+        if (!(pi.getSensorStations().contains(station))){
+            throw new NotFoundException("Sensor station not found for Raspberry Pi");
+        }
+        if (null != (roomService.getById(dto.roomId()))){
+            throw new NotFoundException("Room not found");
+        }
+
+        for (Measurement measurement : measurements) {
+            measurementRepository.save(measurement);
+        }
+    }
+
 }

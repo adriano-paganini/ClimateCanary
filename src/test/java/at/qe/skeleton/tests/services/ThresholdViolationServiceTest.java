@@ -220,7 +220,7 @@ class ThresholdViolationServiceTest {
     void update_violationStatusOnly_updatesStatus() {
         ThresholdViolationUpdateDTO dto =
                 new ThresholdViolationUpdateDTO(
-                        null, null, ViolationStatus.RESOLVED,
+                        null, null, ViolationStatus.DISABLED,
                         null, null, null, null, null);
 
         when(thresholdViolationRepository.findById(1L)).thenReturn(Optional.of(violation));
@@ -228,7 +228,7 @@ class ThresholdViolationServiceTest {
 
         ThresholdViolation result = thresholdViolationService.update(1L, dto);
 
-        assertThat(result.getViolationStatus()).isEqualTo(ViolationStatus.RESOLVED);
+        assertThat(result.getViolationStatus()).isEqualTo(ViolationStatus.DISABLED);
     }
 
     @Test

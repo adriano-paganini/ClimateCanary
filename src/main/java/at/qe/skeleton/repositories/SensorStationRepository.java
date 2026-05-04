@@ -5,6 +5,7 @@ import at.qe.skeleton.models.SensorStation;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface SensorStationRepository extends AbstractRepository<SensorStation, Long> {
     List<SensorStation> findAllById(Iterable<Long> longs);
@@ -13,4 +14,6 @@ public interface SensorStationRepository extends AbstractRepository<SensorStatio
 
     @Query("SELECT r FROM SensorStation r WHERE r.room.active = true")
     List<SensorStation> findAllActive();
+
+    Optional<SensorStation> findByBleMac(String bleMac);
 }

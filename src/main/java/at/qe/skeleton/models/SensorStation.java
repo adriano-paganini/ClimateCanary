@@ -87,4 +87,8 @@ public class SensorStation {
     public List<Measurement> getMeasurements() {
         return measurements;
     }
+
+    public void setId(Long id){
+        this.id = id;
+    }
 }
