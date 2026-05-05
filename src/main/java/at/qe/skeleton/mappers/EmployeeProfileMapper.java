@@ -10,9 +10,12 @@ public class EmployeeProfileMapper implements DTOMapper<EmployeeProfile, Employe
 
     @Override
     public EmployeeProfileDTO mapTo(EmployeeProfile entity) {
+
         return new EmployeeProfileDTO(
                 entity.getId(),
                 entity.getUser().getId(),
+                entity.getUser().getFirstName(),
+                entity.getUser().getLastName(),
                 entity.getDepartment() == null ? null : entity.getDepartment().getId(),
                 entity.getRoom() == null ? null : entity.getRoom().getId()
         );
