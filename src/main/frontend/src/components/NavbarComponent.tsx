@@ -10,6 +10,7 @@ import {menuConfig, MenuItemConfig} from "../config/menuConfig";
 import {UserxRole} from "../generated-skeleton-api";
 import {MenuItem} from "primereact/menuitem";
 import {Link} from "react-router-dom";
+import {ROUTES} from "../utilities/routes.paths";
 
 /**
  * Navbar component.
@@ -79,9 +80,25 @@ const NavbarComponent: React.FC = () => {
         return null;
     }
 
+    const initials = `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase();
+
+    const profileEnd = (
+        <Link to={ROUTES.PROFILE} title="My Profile" style={{ textDecoration: 'none' }}>
+            <div style={{
+                width: '34px', height: '34px', borderRadius: '50%',
+                background: '#0369a1', color: '#fff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
+                marginRight: '0.5rem',
+            }}>
+                {initials || <i className="pi pi-user" style={{ fontSize: '0.9rem' }} />}
+            </div>
+        </Link>
+    );
+
     return (
         <div className="card">
-            <Menubar model={model}/>
+            <Menubar model={model} end={profileEnd}/>
         </div>
     );
 }

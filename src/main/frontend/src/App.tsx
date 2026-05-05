@@ -15,6 +15,7 @@ import {ROUTES} from "./utilities/routes.paths";
 const EmployeeDashboard = React.lazy(() => import('./views/EmployeeDashboard'));
 const RoomHistory = React.lazy(() => import('./views/RoomHistory'));
 const AbsenceView = React.lazy(() => import('./views/AbsenceView'));
+const UserProfileView = React.lazy(() => import('./views/UserProfileView'));
 
 const App: React.FC = () => {
     return (
@@ -31,6 +32,7 @@ const App: React.FC = () => {
                             <Route path={LogoutsRoute.url} Component={LogoutsRoute.component}/>
                             <Route path={ROUTES.DASHBOARD} Component={EmployeeDashboard}/>
                             <Route path={ROUTES.DASHBOARD_HISTORY} Component={RoomHistory}/>
+                            <Route path={ROUTES.PROFILE} Component={UserProfileView}/>
                         </Route>
 
                         {/* Employee and Department Lead */}
