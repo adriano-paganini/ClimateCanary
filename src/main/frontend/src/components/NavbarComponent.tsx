@@ -16,7 +16,7 @@ import {ROUTES} from "../utilities/routes.paths";
  * Navbar component.
  */
 const NavbarComponent: React.FC = () => {
-    const {currentUser: user} = useUser();
+    const { currentUser: user, fullUser } = useUser();
 
     const filterMenu = React.useCallback((items: MenuItemConfig[]): MenuItemConfig[] => {
         if (!user) return [];
@@ -80,7 +80,8 @@ const NavbarComponent: React.FC = () => {
         return null;
     }
 
-    const initials = `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase();
+    const displayUser = fullUser ?? user;
+    const initials = `${displayUser.firstName?.[0] ?? ''}${displayUser.lastName?.[0] ?? ''}`.toUpperCase();
 
     const profileEnd = (
         <Link to={ROUTES.PROFILE} title="My Profile" style={{ textDecoration: 'none' }}>

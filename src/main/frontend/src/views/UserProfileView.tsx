@@ -7,6 +7,7 @@ import { Tag } from 'primereact/tag';
 import 'primeicons/primeicons.css';
 
 import NavbarComponent from '../components/NavbarComponent';
+import { useUser } from '../Contexts/AuthenticatedUserContext';
 import { UserService } from '../services/UserService';
 import { UserxDTO, UserxRole } from '../generated-skeleton-api';
 
@@ -43,9 +44,9 @@ const fieldRowStyle: React.CSSProperties = {
 };
 
 const UserProfileView: React.FC = () => {
+    const { fullUser, refreshCurrentUser } = useUser();
     const [user, setUser] = useState<UserxDTO | null>(null);
     const [loading, setLoading] = useState(true);
-    const [loadError, setLoadError] = useState<string | null>(null);
 
     const [editing, setEditing] = useState(false);
     const [firstName, setFirstName] = useState('');
@@ -58,17 +59,15 @@ const UserProfileView: React.FC = () => {
     const [saveSuccess, setSaveSuccess] = useState(false);
 
     useEffect(() => {
-        UserService.getCurrentUser()
-            .then(u => {
-                setUser(u);
-                setFirstName(u.firstName ?? '');
-                setLastName(u.lastName ?? '');
-                setEmail(u.email ?? '');
-                setPhone(u.phone ?? '');
-            })
-            .catch(err => setLoadError(err instanceof Error ? err.message : String(err)))
-            .finally(() => setLoading(false));
-    }, []);
+        if (fullUser) {
+            setUser(fullUser);
+            setFirstName(fullUser.firstName ?? '');
+            setLastName(fullUser.lastName ?? '');
+            setEmail(fullUser.email ?? '');
+            setPhone(fullUser.phone ?? '');
+            setLoading(false);
+        }
+    }, [fullUser]);
 
     const handleEdit = () => {
         setSaveError(null);
@@ -97,6 +96,7 @@ const UserProfileView: React.FC = () => {
                 phone,
             });
             setUser(updated);
+            await refreshCurrentUser();
             setSaveSuccess(true);
             setEditing(false);
         } catch (err) {
@@ -117,12 +117,12 @@ const UserProfileView: React.FC = () => {
         );
     }
 
-    if (loadError || !user) {
+    if (!user) {
         return (
             <div>
                 <NavbarComponent />
                 <div className="m-4">
-                    <Message severity="error" text={`Failed to load profile: ${loadError}`} />
+                    <Message severity="error" text="Failed to load profile." />
                 </div>
             </div>
         );
