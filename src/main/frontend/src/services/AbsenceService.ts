@@ -9,8 +9,11 @@ import { apiConfig } from "./apiConfig";
 const api = new AbsenceControllerApi(apiConfig);
 
 export const AbsenceService = {
-    getAll: (): Promise<AbsenceDTO[]> =>
-        api.getAll8().then(r => r.data),
+    getAll: (params: {
+        userxId?: number;
+        departmentId?: number;
+    } = {}): Promise<AbsenceDTO[]> =>
+        api.getAll8(params).then(r => r.data),
 
     getById: (id: number): Promise<AbsenceDTO> =>
         api.getById10({ id }).then(r => r.data),
