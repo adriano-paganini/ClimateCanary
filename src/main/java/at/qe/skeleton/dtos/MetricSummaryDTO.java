@@ -1,9 +1,9 @@
 package at.qe.skeleton.dtos;
 
 public record MetricSummaryDTO(
-        Long latest,
-        Long avg,
-        Long min,
-        Long max,
+        Double latest,
+        Double avg,
+        Double min,
+        Double max,
         Long count
 ) {}

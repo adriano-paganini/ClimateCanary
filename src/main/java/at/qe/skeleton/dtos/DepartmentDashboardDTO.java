@@ -8,5 +8,5 @@ public record DepartmentDashboardDTO(
         Long departmentId,
         String departmentName,
         int activeViolations,
-        Map<Metric, Long> avgMetrics
+        Map<Metric, Double> avgMetrics
 ) {}
