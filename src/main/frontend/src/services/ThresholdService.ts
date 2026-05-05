@@ -1,4 +1,5 @@
 import {
+    GetAll1MetricEnum,
     ThresholdControllerApi,
     ThresholdCreateDTO,
     ThresholdDTO,
@@ -8,9 +9,14 @@ import { apiConfig } from "./apiConfig";
 
 const api = new ThresholdControllerApi(apiConfig);
 
+export { GetAll1MetricEnum as ThresholdMetricEnum };
+
 export const ThresholdService = {
-    getAll: (): Promise<ThresholdDTO[]> =>
-        api.getAll1().then(r => r.data),
+    getAll: (params: {
+        roomId?: number;
+        metric?: GetAll1MetricEnum;
+    } = {}): Promise<ThresholdDTO[]> =>
+        api.getAll1(params).then(r => r.data),
 
     getById: (id: number): Promise<ThresholdDTO> =>
         api.getById1({ id }).then(r => r.data),
