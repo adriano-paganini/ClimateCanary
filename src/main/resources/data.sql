@@ -1,3 +1,5 @@
+-- noinspection SqlNoDataSourceInspectionForFile
+
 -- Drop the not null constraint (you can use ALTER TABLE depending on your database)
 ALTER TABLE USERX ALTER COLUMN CREATE_USER_ID DROP NOT NULL;
 
