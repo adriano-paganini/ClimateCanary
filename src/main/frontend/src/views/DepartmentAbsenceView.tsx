@@ -116,8 +116,12 @@ const DepartmentAbsenceView: React.FC = () => {
 
     const filteredAbsences = absences.filter(a => {
         if (statusFilter && a.absenceStatus !== statusFilter) return false;
-        if (dateRange[0] && a.endDate && new Date(a.endDate) < dateRange[0]) return false;
-        if (dateRange[1] && a.startDate && new Date(a.startDate) > dateRange[1]) return false;
+        const [rangeStart, rangeEnd] = dateRange;
+        if (rangeStart && a.endDate && new Date(a.endDate) < rangeStart) return false;
+        if (rangeEnd) {
+            const endOfDay = new Date(rangeEnd.getFullYear(), rangeEnd.getMonth(), rangeEnd.getDate(), 23, 59, 59, 999);
+            if (a.startDate && new Date(a.startDate) > endOfDay) return false;
+        }
         return true;
     });
 
@@ -226,16 +230,34 @@ const DepartmentAbsenceView: React.FC = () => {
                             color: '#374151',
                             marginBottom: '0.5rem',
                         }}>
-                            Date Range
+                            From
                         </label>
                         <Calendar
-                            value={dateRange}
-                            onChange={e => setDateRange((e.value as [Date | null, Date | null]) ?? [null, null])}
-                            selectionMode="range"
-                            readOnlyInput
-                            placeholder="Filter by period"
+                            value={dateRange[0]}
+                            onChange={e => setDateRange([e.value as Date | null, dateRange[1]])}
+                            placeholder="Start"
                             showButtonBar
-                            style={{ width: '100%' }}
+                            showIcon
+                            maxDate={dateRange[1] ?? undefined}
+                        />
+                    </div>
+                    <div>
+                        <label style={{
+                            display: 'block',
+                            fontSize: '0.875rem',
+                            fontWeight: 600,
+                            color: '#374151',
+                            marginBottom: '0.5rem',
+                        }}>
+                            To
+                        </label>
+                        <Calendar
+                            value={dateRange[1]}
+                            onChange={e => setDateRange([dateRange[0], e.value as Date | null])}
+                            placeholder="End"
+                            showButtonBar
+                            showIcon
+                            minDate={dateRange[0] ?? undefined}
                         />
                     </div>
                 </div>
