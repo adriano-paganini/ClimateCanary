@@ -59,6 +59,8 @@ class EmployeeProfileMapperTest {
                 1L,
                 99L,
                 null,
+                null,
+                null,
                 null
         );
 
