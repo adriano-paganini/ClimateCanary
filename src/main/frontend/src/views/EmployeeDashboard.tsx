@@ -9,14 +9,13 @@ import { useUser } from '../Contexts/AuthenticatedUserContext';
 import { EmployeeProfileService } from '../services/EmployeeProfileService';
 import { MeasurementService } from '../services/MeasurementService';
 import { RoomService } from '../services/RoomService';
-import { ViolationService } from '../services/ViolationService';
+import { ViolationService, ViolationStatusEnum } from '../services/ViolationService';
 import { DepartmentService } from '../services/DepartmentService';
 import {
     MeasurementDTO,
     RoomDTO,
     RoomType,
     ThresholdViolationDTO,
-    ThresholdViolationDTOViolationStatusEnum,
 } from '../generated-skeleton-api';
 
 type TabId = 'office' | 'common';
@@ -49,17 +48,16 @@ const EmployeeDashboard: React.FC = () => {
                 const [room, latestOffice, allViolations] = await Promise.all([
                     RoomService.getById(profile.roomId),
                     MeasurementService.getLatestPerMetric(profile.roomId),
-                    ViolationService.getAll(),
+                    ViolationService.getAll({
+                        violationStatus: ViolationStatusEnum.ACTIVE,
+                        ...(profile.departmentId ? { departmentId: profile.departmentId } : {}),
+                    }),
                 ]);
 
                 setOfficeRoom(room);
 
                 const activeForRoom = (roomId: number): ThresholdViolationDTO[] =>
-                    allViolations.filter(
-                        v =>
-                            v.roomId === roomId &&
-                            v.violationStatus === ThresholdViolationDTOViolationStatusEnum.ACTIVE,
-                    );
+                    allViolations.filter(v => v.roomId === roomId);
 
                 setMeasurementsByRoom({ [profile.roomId]: Object.values(latestOffice) });
                 setViolationsByRoom({ [profile.roomId]: activeForRoom(profile.roomId) });

@@ -3,9 +3,12 @@ package at.qe.skeleton.controllers;
 import at.qe.skeleton.dtos.RaspberryPiCreateDTO;
 import at.qe.skeleton.dtos.RaspberryPiDTO;
 import at.qe.skeleton.dtos.RaspberryPiUpdateDTO;
+import at.qe.skeleton.helper.PiConfigYamlBuilder;
 import at.qe.skeleton.mappers.RaspberryPiCreateMapper;
 import at.qe.skeleton.mappers.RaspberryPiMapper;
 import at.qe.skeleton.models.RaspberryPi;
+import at.qe.skeleton.models.SensorStation;
+import at.qe.skeleton.services.RaspberryPiServerService;
 import at.qe.skeleton.services.RaspberryPiService;
 import at.qe.skeleton.dtos.SensorStationDTO;
 import at.qe.skeleton.mappers.SensorStationMapper;
@@ -25,15 +28,19 @@ public class RaspberryPiController {
     private final RaspberryPiMapper raspberryPiMapper;
     private final RaspberryPiCreateMapper raspberryPiCreateMapper;
     private final SensorStationMapper sensorStationMapper;
+    private final RaspberryPiServerService raspberryPiServerService;
+    private final PiConfigYamlBuilder piConfigYamlBuilder;
 
     public RaspberryPiController(RaspberryPiService raspberryPiService,
                                  RaspberryPiMapper raspberryPiMapper,
                                  RaspberryPiCreateMapper raspberryPiCreateMapper,
-                                 SensorStationMapper sensorStationMapper) {
+                                 SensorStationMapper sensorStationMapper, RaspberryPiServerService raspberryPiServerService, PiConfigYamlBuilder piConfigYamlBuilder) {
         this.raspberryPiService = raspberryPiService;
         this.raspberryPiMapper = raspberryPiMapper;
         this.raspberryPiCreateMapper = raspberryPiCreateMapper;
         this.sensorStationMapper = sensorStationMapper;
+        this.raspberryPiServerService = raspberryPiServerService;
+        this.piConfigYamlBuilder = piConfigYamlBuilder;
     }
 
     @GetMapping
@@ -50,6 +57,7 @@ public class RaspberryPiController {
         return ResponseEntity.ok(raspberryPiMapper.mapTo(raspberryPiService.getById(id)));
     }
 
+    //TODO: update to match the expected yaml info and structure
     @PostMapping
     public ResponseEntity<RaspberryPiDTO> create(@Valid @RequestBody RaspberryPiCreateDTO dto) {
 
@@ -68,6 +76,8 @@ public class RaspberryPiController {
     public ResponseEntity<RaspberryPiDTO> update(@PathVariable Long id,
                                                  @Valid @RequestBody RaspberryPiUpdateDTO dto) {
         RaspberryPi updated = raspberryPiService.update(id, dto);
+        //send updated config to RPI
+        raspberryPiServerService.sendConfig(id,piConfigYamlBuilder.buildYaml(id));
         return ResponseEntity.ok(raspberryPiMapper.mapTo(updated));
     }
 

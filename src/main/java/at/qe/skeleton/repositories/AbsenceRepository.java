@@ -6,6 +6,7 @@ import at.qe.skeleton.models.Userx;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface AbsenceRepository extends AbstractRepository<Absence, Long> {
@@ -22,4 +23,12 @@ public interface AbsenceRepository extends AbstractRepository<Absence, Long> {
           AND (:departmentId IS NULL OR e.department.id = :departmentId)
     """)
     List<Absence> search(@Param("userId") Long userId, @Param("departmentId") Long departmentId);
+
+    @Query("""
+        SELECT a
+        FROM Absence a
+        WHERE a.startDate <= :to
+          AND a.endDate >= :from
+""")
+    List<Absence> findByTimeframe(@Param("from")LocalDateTime from,@Param("to") LocalDateTime to);
 }

@@ -3,6 +3,7 @@ package at.qe.skeleton;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 
 /**
@@ -13,6 +14,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
  * course "Software Engineering" offered by the University of Innsbruck.
 */
 @SpringBootApplication
+@EnableScheduling
 @EnableMethodSecurity(prePostEnabled = true)
 public class Main extends SpringBootServletInitializer {
 

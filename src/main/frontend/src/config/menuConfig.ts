@@ -22,6 +22,10 @@ export const menuConfig: MenuItemConfig[] = [
         roles: [UserxRole.EMPLOYEE, UserxRole.DEPARTMENT_LEAD],
     },
     {
+        label: 'Department', icon: 'pi pi-sitemap', route: ROUTES.DEPARTMENT_DASHBOARD,
+        roles: [UserxRole.DEPARTMENT_LEAD],
+    },
+    {
         label: 'Rooms', icon: 'pi pi-building', route: ROUTES.ROOMS,
         roles: [UserxRole.BUILDING_ADMIN],
     },

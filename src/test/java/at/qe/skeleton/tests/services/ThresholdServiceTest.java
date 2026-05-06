@@ -4,6 +4,7 @@ import at.qe.skeleton.common.exceptions.ConflictException;
 import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.ThresholdCreateDTO;
 import at.qe.skeleton.dtos.ThresholdUpdateDTO;
+import at.qe.skeleton.mappers.ThresholdMapper;
 import at.qe.skeleton.models.*;
 import at.qe.skeleton.repositories.ClimateHintRepository;
 import at.qe.skeleton.repositories.ThresholdRepository;
@@ -34,6 +35,9 @@ class ThresholdServiceTest {
 
     @Mock
     private ClimateHintRepository climateHintRepository;
+
+    @Mock
+    private ThresholdMapper thresholdMapper;
 
     @InjectMocks
     private ThresholdService thresholdService;
