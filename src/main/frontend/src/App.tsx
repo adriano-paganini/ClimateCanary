@@ -17,6 +17,7 @@ const RoomHistory = React.lazy(() => import('./views/RoomHistory'));
 const AbsenceView = React.lazy(() => import('./views/AbsenceView'));
 const UserProfileView = React.lazy(() => import('./views/UserProfileView'));
 const DepartmentDashboard = React.lazy(() => import('./views/DepartmentDashboard'));
+const ManagementDashboard = React.lazy(() => import('./views/ManagementDashboard'));
 
 const App: React.FC = () => {
     return (
@@ -44,6 +45,11 @@ const App: React.FC = () => {
                         {/* Department Lead only */}
                         <Route element={<PrivateRoute roles={[UserxRole.DEPARTMENT_LEAD]}/>}>
                             <Route path={ROUTES.DEPARTMENT_DASHBOARD} Component={DepartmentDashboard}/>
+                        </Route>
+
+                        {/* Management only */}
+                        <Route element={<PrivateRoute roles={[UserxRole.MANAGEMENT]}/>}>
+                            <Route path={ROUTES.MANAGEMENT_DASHBOARD} Component={ManagementDashboard}/>
                         </Route>
 
                         {/* Building Admin and System Admin only */}
