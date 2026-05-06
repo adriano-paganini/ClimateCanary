@@ -47,7 +47,7 @@ public class EmployeeProfileControllerIntegrationTest {
         profile = new EmployeeProfile();
         ReflectionTestUtils.setField(profile, "id", 1L);
 
-        dto = new EmployeeProfileDTO(1L,10L,null,null);
+        dto = new EmployeeProfileDTO(1L,10L,null,null, null, null);
     }
 
     @Test
