@@ -26,6 +26,10 @@ export const menuConfig: MenuItemConfig[] = [
         roles: [UserxRole.DEPARTMENT_LEAD],
     },
     {
+        label: 'Team Absences', icon: 'pi pi-calendar-times', route: ROUTES.DEPARTMENT_ABSENCES,
+        roles: [UserxRole.DEPARTMENT_LEAD],
+    },
+    {
         label: 'Overview', icon: 'pi pi-chart-bar', route: ROUTES.MANAGEMENT_DASHBOARD,
         roles: [UserxRole.MANAGEMENT],
     },

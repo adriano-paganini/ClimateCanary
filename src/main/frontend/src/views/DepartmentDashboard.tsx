@@ -128,12 +128,11 @@ const DepartmentDashboard: React.FC = () => {
                         )}
                     </div>
 
-                    {/* Quick link to absence overview (dependency #16) */}
                     <Button
-                        label="View Absences"
-                        icon="pi pi-calendar"
+                        label="Team Absences"
+                        icon="pi pi-calendar-times"
                         className="p-button-outlined"
-                        onClick={() => navigate(ROUTES.ABSENCE)}
+                        onClick={() => navigate(ROUTES.DEPARTMENT_ABSENCES)}
                         style={{ borderColor: '#0369a1', color: '#0369a1' }}
                     />
                 </div>
