@@ -537,7 +537,12 @@ public class AnalyticsService {
     }
 
     private boolean isLeaderOf(Userx user, Department department) {
-        return department.getDepartmentLeader() != null && department.getDepartmentLeader().getId().equals(user.getId());
+        if (user == null || department == null) return false;
+
+        Userx leader = department.getDepartmentLeader();
+        if (leader == null) return false;
+
+        return Objects.equals(leader.getId(), user.getId());
     }
 
     private MetricSummaryDTO buildMetricSummary(List<Measurement> all, Metric metric) {
