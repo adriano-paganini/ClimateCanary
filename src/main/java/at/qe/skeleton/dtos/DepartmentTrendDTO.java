@@ -4,10 +4,8 @@ import at.qe.skeleton.models.Metric;
 
 import java.util.List;
 
-public record RoomTrendDTO(
-        Long roomId,
+public record DepartmentTrendDTO(
         Metric metric,
         String bucketSize,
-        boolean granularityReduced,
         List<TrendPointDTO> points
 ) {}

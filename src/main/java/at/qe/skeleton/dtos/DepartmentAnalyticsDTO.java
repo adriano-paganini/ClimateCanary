@@ -9,5 +9,6 @@ public record DepartmentAnalyticsDTO(
         String departmentName,
         int roomCount,
         int activeViolations,
-        Map<Metric, Double> avgMetrics
+        Map<Metric, Double> avgMetrics,
+        Map<Metric, Double> currentMetrics
 ) {}
