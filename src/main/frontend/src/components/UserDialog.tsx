@@ -11,11 +11,11 @@ import {InputMaskChangeEvent} from "primereact/inputmask";
 import {CheckboxChangeEvent} from "primereact/checkbox";
 import {UserxValidationResult} from "../utilities/userxUtilities";
 import {Message} from "primereact/message";
-import {UserxCreateDTO} from "../generated-skeleton-api";
+import {UserxCreateDTO, UserxDTO} from "../generated-skeleton-api";
 
 interface UserDialogProps {
     visible: boolean;
-    user: UserxCreateDTO | null;
+    user: UserxDTO | UserxCreateDTO | null;
     isNewUser: boolean;
     validation: UserxValidationResult;
     onHide: () => void;
