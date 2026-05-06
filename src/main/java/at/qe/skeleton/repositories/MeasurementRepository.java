@@ -30,4 +30,5 @@ public interface MeasurementRepository extends AbstractRepository<Measurement, L
     Optional<Measurement> findLatestByRoomIdAndMetric(
             @Param("roomId") Long roomId,
             @Param("metric") Metric metric);
+
 }
