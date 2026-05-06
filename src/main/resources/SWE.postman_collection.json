@@ -1903,102 +1903,116 @@
           "name": "Get Room Summary",
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/analytics/rooms/{{roomId}}/summary",
+              "raw": "{{baseUrl}}/api/analytics/rooms/{{roomId}}/summary?from={{from}}&to={{to}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "analytics", "rooms", "{{roomId}}", "summary"]
+              "path": ["api", "analytics", "rooms", "{{roomId}}", "summary"],
+              "query": [
+                { "key": "from", "value": "", "type": "text" },
+                { "key": "to", "value": "", "type": "text" }
+              ]
             }
-          },
-          "response": []
+          }
         },
         {
           "name": "Get Room Trend",
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/analytics/rooms/{{roomId}}/trends?metric=TEMPERATURE&from=2026-04-22T00:00:00&to=2026-04-23T00:00:00",
+              "raw": "{{baseUrl}}/api/analytics/rooms/{{roomId}}/trends?metric={{metric}}&from={{from}}&to={{to}}",
               "host": ["{{baseUrl}}"],
               "path": ["api", "analytics", "rooms", "{{roomId}}", "trends"],
               "query": [
                 { "key": "metric", "value": "TEMPERATURE", "type": "text" },
-                { "key": "from", "value": "2026-04-22T00:00:00", "type": "text" },
-                { "key": "to", "value": "2026-04-23T00:00:00", "type": "text" }
+                { "key": "from", "value": "", "type": "text" },
+                { "key": "to", "value": "", "type": "text" }
               ]
             }
-          },
-          "response": []
+          }
         },
         {
           "name": "Get Department Summary",
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/analytics/departments/{{departmentId}}/summary",
+              "raw": "{{baseUrl}}/api/analytics/departments/{{departmentId}}/summary?from={{from}}&to={{to}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "analytics", "departments", "{{departmentId}}", "summary"]
+              "path": ["api", "analytics", "departments", "{{departmentId}}", "summary"],
+              "query": [
+                { "key": "from", "value": "", "type": "text" },
+                { "key": "to", "value": "", "type": "text" }
+              ]
             }
-          },
-          "response": []
+          }
         },
         {
           "name": "Get Department Violations",
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/analytics/departments/{{departmentId}}/violations",
               "host": ["{{baseUrl}}"],
               "path": ["api", "analytics", "departments", "{{departmentId}}", "violations"]
             }
-          },
-          "response": []
+          }
+        },
+        {
+          "name": "Get Department Trend",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/analytics/departments/{{departmentId}}/trends?metric={{metric}}&from={{from}}&to={{to}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "analytics", "departments", "{{departmentId}}", "trends"],
+              "query": [
+                { "key": "metric", "value": "TEMPERATURE", "type": "text" },
+                { "key": "from", "value": "", "type": "text" },
+                { "key": "to", "value": "", "type": "text" }
+              ]
+            }
+          }
         },
         {
           "name": "Get Company Dashboard",
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/analytics/company/dashboard",
+              "raw": "{{baseUrl}}/api/analytics/company/dashboard?from={{from}}&to={{to}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "analytics", "company", "dashboard"]
+              "path": ["api", "analytics", "company", "dashboard"],
+              "query": [
+                { "key": "from", "value": "", "type": "text" },
+                { "key": "to", "value": "", "type": "text" }
+              ]
             }
-          },
-          "response": []
+          }
         },
         {
           "name": "Get Company Violations",
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/analytics/company/violations",
               "host": ["{{baseUrl}}"],
               "path": ["api", "analytics", "company", "violations"]
             }
-          },
-          "response": []
+          }
         },
         {
           "name": "Get Company Trend",
           "request": {
             "method": "GET",
-            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/analytics/company/trends?metric=IAQ&from=2026-04-20T00:00:00&to=2026-04-27T00:00:00",
+              "raw": "{{baseUrl}}/api/analytics/company/trends?metric={{metric}}&from={{from}}&to={{to}}",
               "host": ["{{baseUrl}}"],
               "path": ["api", "analytics", "company", "trends"],
               "query": [
-                { "key": "metric", "value": "IAQ", "type": "text" },
-                { "key": "from", "value": "2026-04-20T00:00:00", "type": "text" },
-                { "key": "to", "value": "2026-04-27T00:00:00", "type": "text" }
+                { "key": "metric", "value": "TEMPERATURE", "type": "text" },
+                { "key": "from", "value": "", "type": "text" },
+                { "key": "to", "value": "", "type": "text" }
               ]
             }
-          },
-          "response": []
+          }
         }
       ]
     }
