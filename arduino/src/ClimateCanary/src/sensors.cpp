@@ -1,61 +1,133 @@
 #include "sensors.h"
 
-Adafruit_BME680 bme;
+Bsec bme;
 
-unsigned long bmeEndTime = 0;
-bool bmeReading = false;
-int bmeReadingBreak = 0;
-SensorData lastValidData = {0, 0, 0, 0};
+SensorData lastValidData = {
+  0.0,  // temperature
+  0.0,  // humidity
+  50.0,  // iaq
+  0.0, //pressure
+  0     // iaq_accuracy
+};
 
-void startBmeReading() {
-  bmeEndTime = bme.beginReading();
-  if (bmeEndTime != 0) {
-    bmeReading = true;
+bool newBsecDataAvailable = false;
+
+void checkBsecStatus() {
+  if (bme.bsecStatus < BSEC_OK) {
+    Serial.print(F("BSEC error code: "));
+    Serial.println(bme.bsecStatus);
+  } else if (bme.bsecStatus > BSEC_OK) {
+    Serial.print(F("BSEC warning code: "));
+    Serial.println(bme.bsecStatus);
+  }
+
+  if (bme.bme68xStatus < BME68X_OK) {
+    Serial.print(F("BME680 error code: "));
+    Serial.println(bme.bme68xStatus);
+  } else if (bme.bme68xStatus > BME68X_OK) {
+    Serial.print(F("BME680 warning code: "));
+    Serial.println(bme.bme68xStatus);
   }
 }
 
 bool setupSensors() {
-  if (!bme.begin()) {
-    Serial.println(F("Could not find a valid BME680 sensor, check wiring!"));
+  Wire.begin();
+
+  Serial.println(F("Initializing BME680 with BSEC..."));
+
+  bme.begin(BME68X_I2C_ADDR_LOW, Wire);
+  checkBsecStatus();
+
+  if (bme.bme68xStatus < BME68X_OK) {
+    Serial.println(F("LOW address failed, trying HIGH address..."));
+
+    bme.begin(BME68X_I2C_ADDR_HIGH, Wire);
+    checkBsecStatus();
+
+    if (bme.bme68xStatus < BME68X_OK) {
+      Serial.println(F("Could not find BME680 sensor."));
+      return false;
+    }
+  }
+
+  bsec_virtual_sensor_t sensorList[] = {
+    BSEC_OUTPUT_IAQ,
+    BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_TEMPERATURE,
+    BSEC_OUTPUT_SENSOR_HEAT_COMPENSATED_HUMIDITY,
+    BSEC_OUTPUT_RAW_PRESSURE
+    };
+
+  bme.updateSubscription(
+    sensorList,
+    sizeof(sensorList) / sizeof(sensorList[0]),
+    BSEC_SAMPLE_RATE_LP
+  );
+
+  checkBsecStatus();
+
+  if (bme.bsecStatus < BSEC_OK) {
+    Serial.println(F("BSEC setup failed."));
     return false;
   }
 
-  bme.setTemperatureOversampling(BME680_OS_8X);
-  bme.setHumidityOversampling(BME680_OS_2X);
-  bme.setPressureOversampling(BME680_OS_4X);
-  bme.setIIRFilterSize(BME680_FILTER_SIZE_3);
-  bme.setGasHeater(320, 200);
-
-  startBmeReading();
-
+  Serial.println(F("BME680/BSEC setup successful."));
   return true;
 }
 
-
 SensorData readSensors() {
-    if (bmeReading && millis() >= bmeEndTime) {
-        if (bme.endReading()) {
-            lastValidData.temperature = bme.temperature;
-            lastValidData.humidity = bme.humidity;
-            lastValidData.pressure = bme.pressure; 
-            lastValidData.gas_resistance = bme.gas_resistance;
-            
-            bmeReading = false;
-        }
+  newBsecDataAvailable = false;
+
+  if (bme.run()) {
+    newBsecDataAvailable = true;
+    //after measuring the temperature in a climate controlled car, set to 21 degrees, an average of 5 degree
+    //to hot was realized. This occurs after about one hour of usage, and is due to the board warming up, to
+    //take measurements. This is hereby compensated so there can still be a great number of measurements,
+    //and that they stay as accurate as possible.
+    lastValidData.temperature = bme.temperature-5;
+    lastValidData.humidity = bme.humidity;
+    lastValidData.pressure = bme.pressure;
+
+    if (bme.iaqAccuracy >= 1) {
+      lastValidData.iaq = bme.iaq;
+      lastValidData.iaq_accuracy = bme.iaqAccuracy;
+    } else {
+      lastValidData.iaq_accuracy = bme.iaqAccuracy;
     }
-    //allow the sensors to cool down. performs as well as not using the gas heater at all!
-    if (!bmeReading){
-      if (bmeReadingBreak >=10){
-        startBmeReading();
-        bmeReadingBreak = 0;
-      }else{
-        bmeReadingBreak++;
-      }
-    }
-    
-    return lastValidData;
+
+    Serial.println(F("----- BME680 / BSEC Reading -----"));
+
+    Serial.print(F("Temperature: "));
+    Serial.print(bme.temperature);
+    Serial.println(F(" °C"));
+
+    Serial.print(F("Humidity: "));
+    Serial.print(bme.humidity);
+    Serial.println(F(" %"));
+
+    Serial.print(F("Gas resistance: "));
+    Serial.print(bme.gasResistance);
+    Serial.println(F(" Ohm"));
+
+    Serial.print(F("Current IAQ: "));
+    Serial.println(bme.iaq);
+
+    Serial.print(F("IAQ accuracy: "));
+    Serial.println(bme.iaqAccuracy);
+
+    Serial.print(F("Stored reliable IAQ: "));
+    Serial.println(lastValidData.iaq);
+
+    Serial.print(F("Stored IAQ accuracy: "));
+    Serial.println(lastValidData.iaq_accuracy);
+
+    Serial.println(F("--------------------------------"));
+  } else {
+    checkBsecStatus();
+  }
+
+  return lastValidData;
 }
 
-bool bmeAsyncReadingReady(){
-    return bmeReading && millis() >= bmeEndTime;
+bool bmeAsyncReadingReady() {
+  return newBsecDataAvailable;
 }

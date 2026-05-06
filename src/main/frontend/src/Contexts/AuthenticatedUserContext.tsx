@@ -2,15 +2,18 @@
  * This code is part of the skeleton project provided for students of the course "Software
  * Engineering" offered by Innsbruck University.
  */
-import React, {createContext, useContext, useEffect, useMemo, useState} from 'react';
+import React, {createContext, useCallback, useContext, useEffect, useMemo, useState} from 'react';
 import {BEARER_TOKEN_LOCAL_STORAGE_KEY} from "../config/config";
 import {jwtDecode, JwtPayload} from "jwt-decode";
 import {LoginRequestDTO, UserxDTO, UserxRole} from '../generated-skeleton-api';
 import {AuthApi} from "../utilities/authApi";
+import {UserService} from "../services/UserService";
 
 
 interface UserContextType {
     currentUser: UserxDTO | null;
+    fullUser: UserxDTO | null;
+    refreshCurrentUser: () => Promise<void>;
     login: (loginRequestDTO: LoginRequestDTO) => Promise<void>;
     logout: () => void;
     error: Error | null;
@@ -29,6 +32,7 @@ type CustomJwtPayload = JwtPayload & { roles: string[], name: string, username: 
 export function UserProvider({children}: { children: React.ReactNode }) {
 
     const [error, setError] = useState<Error | null>(null);
+    const [fullUser, setFullUser] = useState<UserxDTO | null>(null);
 
     const [token, setToken] = useState<string | null>(() => {
         return localStorage.getItem(BEARER_TOKEN_LOCAL_STORAGE_KEY);
@@ -45,6 +49,23 @@ export function UserProvider({children}: { children: React.ReactNode }) {
         window.addEventListener("storage", handler);
         return () => window.removeEventListener("storage", handler);
     }, []);
+
+    const refreshCurrentUser = useCallback(async () => {
+        try {
+            const user = await UserService.getCurrentUser();
+            setFullUser(user);
+        } catch {
+            setFullUser(null);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (token) {
+            void refreshCurrentUser();
+        } else {
+            setFullUser(null);
+        }
+    }, [token, refreshCurrentUser]);
 
     const login = async (loginDto: LoginRequestDTO): Promise<void> => {
         const {bearerToken} = await AuthApi.login(loginDto);
@@ -122,6 +143,8 @@ export function UserProvider({children}: { children: React.ReactNode }) {
         <UserContext.Provider
             value={{
                 currentUser,
+                fullUser,
+                refreshCurrentUser,
                 login,
                 logout,
                 error,

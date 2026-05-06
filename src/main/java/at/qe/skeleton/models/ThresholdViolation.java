@@ -19,7 +19,7 @@ public class ThresholdViolation {
     private Metric metric;
 
     @Column(name = "`value`")
-    private Long value;
+    private Float value;
 
     @Enumerated(EnumType.STRING)
     private ViolationStatus violationStatus;
@@ -54,11 +54,11 @@ public class ThresholdViolation {
         this.metric = metric;
     }
 
-    public Long getValue() {
+    public Float getValue() {
         return value;
     }
 
-    public void setValue(Long value) {
+    public void setValue(Float value) {
         this.value = value;
     }
 
@@ -104,6 +104,10 @@ public class ThresholdViolation {
 
     public List<Measurement> getMeasurements() {
         return measurements;
+    }
+
+    public void setMeasurements(List<Measurement> measurements) {
+        this.measurements = measurements;
     }
 
     @Override

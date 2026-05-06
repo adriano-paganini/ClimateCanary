@@ -16,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
 import java.util.List;
@@ -186,6 +187,7 @@ public class UserxService implements UserDetailsService {
     }
 
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
+    @Transactional
     public Userx updateUser(Long id, UserxUpdateDTO dto) {
         Userx user = userRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("User with id " + id + " not found"));

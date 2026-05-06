@@ -8,7 +8,7 @@ import java.util.List;
 
 public record ThresholdViolationUpdateDTO(
         Metric metric,
-        Long value,
+        Float value,
         ViolationStatus violationStatus,
         LocalDateTime endTime,
         LocalDateTime startTime,

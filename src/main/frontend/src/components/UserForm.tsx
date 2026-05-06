@@ -8,13 +8,13 @@ import {InputText} from "primereact/inputtext";
 import {Password} from "primereact/password";
 import {MultiSelect} from "primereact/multiselect";
 import {Checkbox, CheckboxChangeEvent} from "primereact/checkbox";
-import {UserxCreateDTO, UserxRole} from "../generated-skeleton-api";
+import {UserxCreateDTO, UserxDTO, UserxRole} from "../generated-skeleton-api";
 
 
 interface UserFormProps {
-    user: UserxCreateDTO,
+    user: UserxDTO | UserxCreateDTO,
     isNewUser: boolean,
-    fieldErrors?: Partial<Record<keyof UserxCreateDTO, string>>,
+    fieldErrors?: Partial<Record<keyof UserxCreateDTO, string>> | Partial<Record<keyof UserxDTO, string>>,
     onInputChange: (event: React.ChangeEvent<HTMLInputElement> | InputMaskChangeEvent) => void,
     onRolesChange: (event: { value: string[] }) => void,
     onUserEnabledChange: (event: CheckboxChangeEvent) => void
@@ -87,7 +87,7 @@ const UserForm: React.FC<UserFormProps> =
                         {isNewUser && (
                             <div className="flex-auto mb-3">
                                 <label htmlFor="password" className="font-bold block">Password</label>
-                                <Password inputId="password" name="password" value={user.password}
+                                <Password inputId="password" name="password" value={(user as UserxCreateDTO).password}
                                           onChange={onInputChange}
                                           placeholder="Password"
                                           autoComplete="off"
@@ -98,7 +98,7 @@ const UserForm: React.FC<UserFormProps> =
                         )}
                         <div className="flex-auto mb-3">
                             <label htmlFor="roles" className="font-bold block">Roles</label>
-                            <MultiSelect inputId="roles" name="roles" value={user.roles} onChange={onRolesChange}
+                            <MultiSelect inputId="roles" name="roles" value={[...(user.roles ?? [])]} onChange={onRolesChange}
                                          options={userRoles} optionLabel="label"
                                          placeholder="Select Roles"
                                          className="w-full md:w-20rem"

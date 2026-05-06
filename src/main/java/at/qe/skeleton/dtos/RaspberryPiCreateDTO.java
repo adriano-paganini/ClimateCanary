@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotNull;
 
 public record RaspberryPiCreateDTO(
         @NotNull
-        Long roomId
+        Long roomId,
+        @NotNull
+        String hostName
 ) {
 }

@@ -8,6 +8,7 @@ import {Button} from "primereact/button";
 import {Card} from 'primereact/card';
 import {InputMaskChangeEvent} from "primereact/inputmask";
 import {Toast} from 'primereact/toast';
+import {ConfirmDialog, confirmDialog} from 'primereact/confirmdialog';
 import 'primeicons/primeicons.css';
 
 import UserListComponent from "./UserListComponent";
@@ -43,16 +44,14 @@ const UserTable = () => {
             } catch (err: any) {
                 console.error('Error fetching users:', err);
             } finally {
-                setLoading(false); // Set loading to false regardless of success or failure
+                setLoading(false);
             }
         };
-        void fetchUsers(); // ignore the returned promise; void explicit so ESLint doesn’t complain
-    }, []); // empty dependency array means this effect will only run once on mount
+        void fetchUsers();
+    }, []);
 
     /**
      * Validate the user object.
-     * @param user
-     * @param opts
      */
     const validateUser = (user: UserxCreateDTO | null, opts: {
         requirePassword?: boolean
@@ -147,7 +146,6 @@ const UserTable = () => {
                 id: userToUpdate.id
             }).then(response => response.data);
             setUsers(users.map((user: UserxDTO) => user.id === updatedUser.id ? updatedUser : user));
-            hideDialog();
         } catch (err: any) {
             console.error('Error updating user:', err);
             toast.current?.show({severity: 'error', summary: 'Error', detail: 'Error updating user', life: 3000});
@@ -155,8 +153,37 @@ const UserTable = () => {
     }
 
     /**
+     * Delete a user and update the state.
+     */
+    const deleteUser = async (user: UserxDTO) => {
+        if (!user.id) return;
+
+        try {
+            const adminControllerAPI = new AdminControllerApi();
+            await adminControllerAPI.deleteUser({id: user.id});
+            setUsers(users.filter(u => u.id !== user.id));
+            toast.current?.show({severity: 'success', summary: 'Deleted', detail: `User "${user.username}" deleted`, life: 3000});
+        } catch (err: any) {
+            console.error('Error deleting user:', err);
+            toast.current?.show({severity: 'error', summary: 'Error', detail: 'Error deleting user', life: 3000});
+        }
+    }
+
+    /**
+     * Show a confirmation dialog before deleting a user.
+     */
+    const confirmDeleteUser = (user: UserxDTO) => {
+        confirmDialog({
+            message: `Are you sure you want to delete user "${user.username}"?`,
+            header: 'Confirm Delete',
+            icon: 'pi pi-exclamation-triangle',
+            acceptClassName: 'p-button-danger',
+            accept: () => deleteUser(user),
+        });
+    };
+
+    /**
      * Open the edit dialog for a user.
-     * @param user
      */
     const openEditDialog = (user: UserxDTO) => {
         setSelectedUser(user);
@@ -184,26 +211,16 @@ const UserTable = () => {
         setIsNewUser(true);
     }
 
-    /**
-     * Show the dialog.
-     */
     const showDialog = () => {
         setValidation({valid: true});
         setDialogVisible(true);
     }
 
-    /**
-     * Hide the dialog.
-     */
     const hideDialog = () => {
         setValidation({valid: true});
         setDialogVisible(false);
     };
 
-    /**
-     * Handle input changes for the user dialog.
-     * @param event
-     */
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement> | InputMaskChangeEvent) => {
         if (!selectedUser) return;
 
@@ -212,10 +229,6 @@ const UserTable = () => {
         setSelectedUser({...selectedUser, [name]: value});
     }
 
-    /**
-     * Handle user enabled change for the user dialog.
-     * @param event
-     */
     const handleUserEnabledChange = (event: CheckboxChangeEvent) => {
         if (!selectedUser) return;
 
@@ -224,10 +237,6 @@ const UserTable = () => {
         setSelectedUser({...selectedUser, [name]: checked});
     }
 
-    /**
-     * Handle roles change for the user dialog.
-     * @param event
-     */
     const handleRolesChange = (event: { value: string[] }) => {
         if (!selectedUser) return;
 
@@ -239,13 +248,12 @@ const UserTable = () => {
 
     return (<Card title="User List" className="m-4">
             <Toast ref={toast}/>
-            {/* Button that opens a new user dialog on click */}
+            <ConfirmDialog/>
             <Button label="Add User" icon="pi pi-plus" className="p-button-raised p-button-rounded"
                     style={{marginBottom: "10px"}} onClick={openNewUserDialog}/>
-            <UserListComponent users={users as any} loading={loading} onEditUser={openEditDialog}/>
+            <UserListComponent users={users} loading={loading} onEditUser={openEditDialog} onDeleteUser={confirmDeleteUser}/>
 
-            {/* Dialog for creating or editing a user */}
-            <UserDialog visible={dialogVisible} user={selectedUser as any} isNewUser={isNewUser} validation={validation}
+            <UserDialog visible={dialogVisible} user={selectedUser} isNewUser={isNewUser} validation={validation}
                         onHide={hideDialog} onSubmit={handleSubmit}
                         onInputChange={handleInputChange} onRolesChange={handleRolesChange}
                         onUserEnabledChange={handleUserEnabledChange}/>

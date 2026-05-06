@@ -62,12 +62,20 @@ public class RaspberryPi {
         this.sensorStations = sensorStations;
     }
 
+    public void removeSensorStation(SensorStation sensorStation) {
+        sensorStations.remove(sensorStation);
+    }
+
     public Room getRoom() {
         return room;
     }
 
     public void setRoom(Room room) {
         this.room = room;
+    }
+
+    public void setId(Long id){
+        this.id = id;
     }
 }
 

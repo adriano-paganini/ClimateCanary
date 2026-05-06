@@ -32,8 +32,13 @@ public class AbsenceController {
     }
 
     @GetMapping
-    public ResponseEntity<List<AbsenceDTO>> getAll() {
-        List<AbsenceDTO> absences = absenceService.getAll().stream()
+    public ResponseEntity<List<AbsenceDTO>> getAll(
+            @RequestParam(required = false) Long userxId,
+            @RequestParam(required = false) Long departmentId
+    ) {
+        List<AbsenceDTO> absences = absenceService
+                .getAll(userxId, departmentId)
+                .stream()
                 .map(absenceMapper::mapTo)
                 .toList();
         return ResponseEntity.ok(absences);

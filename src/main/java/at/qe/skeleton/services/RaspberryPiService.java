@@ -2,11 +2,14 @@ package at.qe.skeleton.services;
 
 import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.RaspberryPiUpdateDTO;
+import at.qe.skeleton.models.DeviceStatus;
 import at.qe.skeleton.models.RaspberryPi;
 import at.qe.skeleton.repositories.RaspberryPiRepository;
 import at.qe.skeleton.models.SensorStation;
 import at.qe.skeleton.repositories.SensorStationRepository;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,20 +28,31 @@ public class RaspberryPiService {
         this.sensorStationRepository = sensorStationRepository;
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public List<RaspberryPi> getAll() {
         return repo.findAllActive();
     }
+    public List<RaspberryPi> getAllInternal(){
+        return repo.findAll();
+    }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public RaspberryPi getById(Long id) {
         return repo.findById(id).orElseThrow(() -> new NotFoundException("RaspberryPi with id " + id + " not found"));
     }
 
+    public RaspberryPi getByIdInternal(Long id){
+        return repo.findById(id).orElseThrow();
+    }
+
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public RaspberryPi create(RaspberryPi pi) {
         RaspberryPi savedPi = repo.save(pi);
 
         log.info("Created raspberry pi with id={}", savedPi.getId());
-        log.debug("Created raspberryPi details: id={}, ipAddress={}, deviceStatus={}, roomId={}",
+        log.debug("Created raspberryPi details: id={}, hostName={}, ipAddress={}, deviceStatus={}, roomId={}",
                 savedPi.getId(),
+                savedPi.getHostName(),
                 savedPi.getIpAddress(),
                 savedPi.getDeviceStatus(),
                 savedPi.getRoom() != null ? savedPi.getRoom().getId() : null);
@@ -46,6 +60,11 @@ public class RaspberryPiService {
         return savedPi;
     }
 
+    public RaspberryPi updateInternal(Long id, RaspberryPiUpdateDTO dto){
+        return update(id, dto);
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public RaspberryPi update(Long id, RaspberryPiUpdateDTO dto) {
         RaspberryPi existing = getById(id);
 
@@ -60,6 +79,10 @@ public class RaspberryPiService {
         if (dto.deviceStatus() != null) {
             existing.setDeviceStatus(dto.deviceStatus());
             debugInfo.append(", deviceStatus=").append(dto.deviceStatus());
+        }
+        if (dto.hostName() != null) {
+            existing.setHostName(dto.hostName());
+            debugInfo.append(", hostName=").append(dto.hostName());
         }
 
         if (dto.roomId() != null) {
@@ -89,13 +112,37 @@ public class RaspberryPiService {
         return updatedPi;
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public List<SensorStation> getSensorStations(Long raspberryPiId) {
         RaspberryPi pi = getById(raspberryPiId);
         return pi.getSensorStations();
     }
 
+    @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public void delete(Long id) {
         repo.deleteById(id);
         log.info("Deleted raspberry pi with id={}", id);
+    }
+
+    @Transactional
+    public void addAvailableSensorStations(Long id, List<String> stationBleMacs){
+        //this is intended, as we still need to manage RPi authentication.
+        RaspberryPi pi = getById(id);
+        for (String mac : stationBleMacs) {
+            SensorStation temp = sensorStationRepository.findByBleMac(mac).orElse(new SensorStation());
+            temp.setBleMac(mac);
+            temp.setRaspberryPi(pi);
+            temp.setRoom(pi.getRoom());
+            temp.setName(mac);
+            temp.setDeviceStatus(DeviceStatus.AVAILABLE);
+            sensorStationRepository.save(temp);
+        }
+    }
+    @Transactional
+    public void removeAvailableSensorStationAfterScanTimeOut(Long piId, Long stationId){
+        RaspberryPi pi = getById(piId);
+        SensorStation station = sensorStationRepository.findById(stationId).orElseThrow();
+        pi.removeSensorStation(station);
+        sensorStationRepository.delete(station);
     }
 }

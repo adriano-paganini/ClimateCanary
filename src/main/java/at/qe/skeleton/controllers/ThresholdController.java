@@ -4,6 +4,7 @@ import at.qe.skeleton.dtos.ThresholdCreateDTO;
 import at.qe.skeleton.dtos.ThresholdDTO;
 import at.qe.skeleton.dtos.ThresholdUpdateDTO;
 import at.qe.skeleton.mappers.ThresholdMapper;
+import at.qe.skeleton.models.Metric;
 import at.qe.skeleton.models.Threshold;
 import at.qe.skeleton.services.ThresholdService;
 import jakarta.validation.Valid;
@@ -26,8 +27,11 @@ public class ThresholdController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ThresholdDTO>> getAll() {
-        List<ThresholdDTO> result = thresholdService.getAll()
+    public ResponseEntity<List<ThresholdDTO>> getAll(
+            @RequestParam(required = false) Long roomId,
+            @RequestParam(required = false) Metric metric
+    ) {
+        List<ThresholdDTO> result = thresholdService.getAll(roomId, metric)
                 .stream()
                 .map(thresholdMapper::mapTo)
                 .toList();

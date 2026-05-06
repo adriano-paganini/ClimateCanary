@@ -8,7 +8,7 @@ import java.util.List;
 public record ThresholdUpdateDTO(
         Long roomId,
         Metric metric,
-        Long boundValue,
+        Float boundValue,
         ThresholdType thresholdType,
         List<Long> climateHintIds,
         Boolean enabled

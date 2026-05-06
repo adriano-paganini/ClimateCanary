@@ -11,7 +11,7 @@ const api = new RaspberryPiControllerApi(apiConfig);
 
 export const RaspberryPiService = {
     getAll: (): Promise<RaspberryPiDTO[]> =>
-        api.getAll7().then(r => r.data),
+        api.getAll6().then(r => r.data),
 
     getById: (id: number): Promise<RaspberryPiDTO> =>
         api.getById8({ id }).then(r => r.data),
