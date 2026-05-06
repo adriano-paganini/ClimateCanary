@@ -61,17 +61,20 @@ const DepartmentAbsenceView: React.FC = () => {
                 setDepartment(myDept);
 
                 const absenceApi = new AbsenceControllerApi();
-                const adminApi = new AdminControllerApi();
-
-                const [absenceData, userData] = await Promise.all([
-                    absenceApi.getAll8({ departmentId: myDept.id }).then(r => r.data),
-                    adminApi.getAllUsers().then(r => r.data),
-                ]);
-
+                const absenceData = await absenceApi.getAll8({ departmentId: myDept.id }).then(r => r.data);
                 setAbsences(absenceData);
-                const map: Record<number, UserxDTO> = {};
-                userData.forEach(u => { if (u.id !== undefined) map[u.id] = u; });
-                setUserMap(map);
+
+                // User names are loaded via admin API — may not be accessible for all roles.
+                // If 403, the table falls back to showing userxId.
+                try {
+                    const adminApi = new AdminControllerApi();
+                    const userData = await adminApi.getAllUsers().then(r => r.data);
+                    const map: Record<number, UserxDTO> = {};
+                    userData.forEach(u => { if (u.id !== undefined) map[u.id] = u; });
+                    setUserMap(map);
+                } catch {
+                    // insufficient permissions — userxId shown as fallback
+                }
             } catch (err: unknown) {
                 const msg = err instanceof Error ? err.message : String(err);
                 console.error('DepartmentAbsenceView load error:', err);
