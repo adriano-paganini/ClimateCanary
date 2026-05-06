@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Message } from 'primereact/message';
-import { DataTable } from 'primereact/datatable';
-import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
 import { Tag } from 'primereact/tag';
 import { Dropdown } from 'primereact/dropdown';
 import { Calendar } from 'primereact/calendar';
 import { Toast } from 'primereact/toast';
+import { Badge } from 'primereact/badge';
+import 'primeicons/primeicons.css';
 
 import NavbarComponent from '../components/NavbarComponent';
 import { FooterComponent } from '../components/FooterComponent';
@@ -28,6 +28,13 @@ const STATUS_SEVERITY: Record<string, 'success' | 'warning' | 'danger' | 'info'>
     REJECTED: 'danger',
     PLANNED: 'info',
     CANCELLED: 'warning',
+};
+
+const STATUS_ICON: Record<string, string> = {
+    APPROVED: 'pi-check-circle',
+    REJECTED: 'pi-times-circle',
+    PLANNED: 'pi-clock',
+    CANCELLED: 'pi-ban',
 };
 
 const DepartmentAbsenceView: React.FC = () => {
@@ -114,7 +121,7 @@ const DepartmentAbsenceView: React.FC = () => {
         return true;
     });
 
-    const employeeBody = (row: AbsenceDTO) => {
+    const getEmployeeName = (row: AbsenceDTO) => {
         if (row.userxId === undefined) return '—';
         const user = userMap[row.userxId];
         if (!user) return `User ${row.userxId}`;
@@ -122,37 +129,20 @@ const DepartmentAbsenceView: React.FC = () => {
         return name || user.username || `User ${row.userxId}`;
     };
 
-    const periodBody = (row: AbsenceDTO) => {
-        const from = row.startDate ? new Date(row.startDate).toLocaleDateString() : '?';
-        const to = row.endDate ? new Date(row.endDate).toLocaleDateString() : '?';
+    const getPeriodString = (row: AbsenceDTO) => {
+        const from = row.startDate ? new Date(row.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '?';
+        const to = row.endDate ? new Date(row.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '?';
         return `${from} – ${to}`;
     };
 
-    const statusBody = (row: AbsenceDTO) => {
-        if (!row.absenceStatus) return null;
-        return <Tag value={row.absenceStatus} severity={STATUS_SEVERITY[row.absenceStatus] ?? 'info'} />;
-    };
-
-    const actionsBody = (row: AbsenceDTO) => {
-        if (row.absenceStatus !== AbsenceDTOAbsenceStatusEnum.PLANNED) return null;
-        return (
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <Button
-                    label="Approve"
-                    icon="pi pi-check"
-                    severity="success"
-                    size="small"
-                    onClick={() => updateStatus(row, AbsenceUpdateDTOAbsenceStatusEnum.APPROVED)}
-                />
-                <Button
-                    label="Reject"
-                    icon="pi pi-times"
-                    severity="danger"
-                    size="small"
-                    onClick={() => updateStatus(row, AbsenceUpdateDTOAbsenceStatusEnum.REJECTED)}
-                />
-            </div>
-        );
+    const getAbsenceTypeLabel = (type?: string): string => {
+        switch (type) {
+            case 'HOLIDAY': return 'Holiday';
+            case 'SICKNESS': return 'Sick Leave';
+            case 'PARENTAL_LEAVE': return 'Parental Leave';
+            case 'OTHER': return 'Other';
+            default: return type ?? '—';
+        }
     };
 
     const statusOptions = Object.values(AbsenceDTOAbsenceStatusEnum).map(s => ({ label: s, value: s }));
@@ -184,29 +174,60 @@ const DepartmentAbsenceView: React.FC = () => {
             <NavbarComponent />
             <Toast ref={toast} />
 
-            <div style={{ padding: '1.5rem 2rem' }}>
-                <h2 style={{ margin: '0 0 0.25rem', color: '#111827' }}>Team Absences</h2>
-                {department && (
-                    <p style={{ margin: '0 0 1.5rem', color: '#6b7280', fontSize: '0.95rem' }}>
-                        <i className="pi pi-sitemap" style={{ marginRight: '0.4rem' }} />
-                        {department.name}
-                    </p>
-                )}
+            <div style={{ padding: '1.5rem 2rem', maxWidth: '1400px', margin: '0 auto' }}>
+                {/* Header */}
+                <div style={{ marginBottom: '2rem' }}>
+                    <h1 style={{ margin: '0 0 0.5rem', color: '#111827', fontSize: '2rem', fontWeight: 700 }}>
+                        Team Absences
+                    </h1>
+                    {department && (
+                        <p style={{ margin: 0, color: '#6b7280', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <i className="pi pi-sitemap" />
+                            {department.name}
+                        </p>
+                    )}
+                </div>
 
-                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                {/* Filters */}
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gap: '1rem',
+                    marginBottom: '2rem',
+                    padding: '1.5rem',
+                    backgroundColor: '#f9fafb',
+                    borderRadius: '10px',
+                    border: '1px solid #e5e7eb',
+                }}>
                     <div>
-                        <label className="font-bold block" style={{ marginBottom: '0.3rem' }}>Status</label>
+                        <label style={{
+                            display: 'block',
+                            fontSize: '0.875rem',
+                            fontWeight: 600,
+                            color: '#374151',
+                            marginBottom: '0.5rem',
+                        }}>
+                            Status
+                        </label>
                         <Dropdown
                             value={statusFilter}
                             onChange={e => setStatusFilter(e.value)}
                             options={statusOptions}
                             placeholder="All statuses"
                             showClear
-                            style={{ minWidth: '170px' }}
+                            style={{ width: '100%' }}
                         />
                     </div>
                     <div>
-                        <label className="font-bold block" style={{ marginBottom: '0.3rem' }}>Date Range</label>
+                        <label style={{
+                            display: 'block',
+                            fontSize: '0.875rem',
+                            fontWeight: 600,
+                            color: '#374151',
+                            marginBottom: '0.5rem',
+                        }}>
+                            Date Range
+                        </label>
                         <Calendar
                             value={dateRange}
                             onChange={e => setDateRange((e.value as [Date | null, Date | null]) ?? [null, null])}
@@ -214,24 +235,166 @@ const DepartmentAbsenceView: React.FC = () => {
                             readOnlyInput
                             placeholder="Filter by period"
                             showButtonBar
-                            style={{ minWidth: '220px' }}
+                            style={{ width: '100%' }}
                         />
                     </div>
                 </div>
 
-                <DataTable
-                    value={filteredAbsences}
-                    emptyMessage="No absences found."
-                    stripedRows
-                    sortField="startDate"
-                    sortOrder={-1}
-                >
-                    <Column header="Employee" body={employeeBody} />
-                    <Column header="Period" body={periodBody} />
-                    <Column field="absenceType" header="Type" />
-                    <Column header="Status" body={statusBody} />
-                    <Column header="Actions" body={actionsBody} style={{ minWidth: '14rem' }} />
-                </DataTable>
+                {/* Stats Bar */}
+                {filteredAbsences.length > 0 && (
+                    <div style={{
+                        display: 'flex',
+                        gap: '1rem',
+                        marginBottom: '1.5rem',
+                        flexWrap: 'wrap',
+                    }}>
+                        <div style={{
+                            padding: '0.75rem 1rem',
+                            backgroundColor: '#f0f9ff',
+                            border: '1px solid #bfdbfe',
+                            borderRadius: '8px',
+                            fontSize: '0.875rem',
+                            color: '#1e40af',
+                        }}>
+                            <i className="pi pi-list" style={{ marginRight: '0.5rem' }} />
+                            {filteredAbsences.length} absence{filteredAbsences.length !== 1 ? 's' : ''}
+                        </div>
+                        <div style={{
+                            padding: '0.75rem 1rem',
+                            backgroundColor: '#fef3c7',
+                            border: '1px solid #fcd34d',
+                            borderRadius: '8px',
+                            fontSize: '0.875rem',
+                            color: '#92400e',
+                        }}>
+                            <i className="pi pi-clock" style={{ marginRight: '0.5rem' }} />
+                            {filteredAbsences.filter(a => a.absenceStatus === AbsenceDTOAbsenceStatusEnum.PLANNED).length} pending approval
+                        </div>
+                    </div>
+                )}
+
+                {/* Absences Grid */}
+                {filteredAbsences.length === 0 ? (
+                    <div style={{
+                        padding: '3rem',
+                        textAlign: 'center',
+                        backgroundColor: '#f9fafb',
+                        borderRadius: '10px',
+                        border: '1px solid #e5e7eb',
+                    }}>
+                        <i className="pi pi-inbox" style={{ fontSize: '2rem', color: '#d1d5db', marginBottom: '1rem', display: 'block' }} />
+                        <p style={{ color: '#6b7280', margin: 0 }}>No absences found for the selected criteria.</p>
+                    </div>
+                ) : (
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+                        gap: '1.5rem',
+                    }}>
+                        {filteredAbsences.map((absence) => (
+                            <div
+                                key={absence.id}
+                                style={{
+                                    backgroundColor: '#fff',
+                                    border: '1px solid #e5e7eb',
+                                    borderRadius: '10px',
+                                    padding: '1.5rem',
+                                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+                                    transition: 'all 0.2s ease',
+                                    cursor: 'default',
+                                }}
+                                onMouseEnter={(e) => {
+                                    (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+                                    (e.currentTarget as HTMLElement).style.borderColor = '#d1d5db';
+                                }}
+                                onMouseLeave={(e) => {
+                                    (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.05)';
+                                    (e.currentTarget as HTMLElement).style.borderColor = '#e5e7eb';
+                                }}
+                            >
+                                {/* Top Section: Employee & Status */}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', gap: '1rem' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <h3 style={{
+                                            margin: '0 0 0.25rem',
+                                            color: '#111827',
+                                            fontSize: '1.1rem',
+                                            fontWeight: 600,
+                                        }}>
+                                            {getEmployeeName(absence)}
+                                        </h3>
+                                        <p style={{ margin: 0, color: '#6b7280', fontSize: '0.85rem' }}>
+                                            {getAbsenceTypeLabel(absence.absenceType)}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        {absence.absenceStatus && (
+                                            <Tag
+                                                value={absence.absenceStatus}
+                                                severity={STATUS_SEVERITY[absence.absenceStatus] ?? 'info'}
+                                                icon={`pi ${STATUS_ICON[absence.absenceStatus] || 'pi-info-circle'}`}
+                                                style={{ fontSize: '0.8rem' }}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Divider */}
+                                <div style={{ height: '1px', backgroundColor: '#f3f4f6', margin: '1rem 0' }} />
+
+                                {/* Period Section */}
+                                <div style={{ marginBottom: '1rem' }}>
+                                    <p style={{
+                                        margin: '0 0 0.5rem',
+                                        color: '#6b7280',
+                                        fontSize: '0.8rem',
+                                        fontWeight: 500,
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.5px',
+                                    }}>
+                                        Period
+                                    </p>
+                                    <p style={{
+                                        margin: 0,
+                                        color: '#111827',
+                                        fontSize: '0.95rem',
+                                        fontWeight: 500,
+                                    }}>
+                                        <i className="pi pi-calendar" style={{ marginRight: '0.5rem', color: '#9ca3af', fontSize: '0.85rem' }} />
+                                        {getPeriodString(absence)}
+                                    </p>
+                                </div>
+
+                                {/* Actions */}
+                                {absence.absenceStatus === AbsenceDTOAbsenceStatusEnum.PLANNED && (
+                                    <div style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: '1fr 1fr',
+                                        gap: '0.75rem',
+                                        marginTop: '1.5rem',
+                                    }}>
+                                        <Button
+                                            label="Approve"
+                                            icon="pi pi-check"
+                                            severity="success"
+                                            size="small"
+                                            onClick={() => updateStatus(absence, AbsenceUpdateDTOAbsenceStatusEnum.APPROVED)}
+                                            style={{ width: '100%' }}
+                                        />
+                                        <Button
+                                            label="Reject"
+                                            icon="pi pi-times"
+                                            severity="danger"
+                                            size="small"
+                                            onClick={() => updateStatus(absence, AbsenceUpdateDTOAbsenceStatusEnum.REJECTED)}
+                                            style={{ width: '100%' }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             <FooterComponent />
