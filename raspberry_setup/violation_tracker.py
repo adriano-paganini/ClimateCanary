@@ -1,25 +1,3 @@
-"""
-violation_tracker.py
---------------------
-UC-06: Grenzwertwarnung – Erkennung, Alerting und Deaktivierung
-
-Sliding-window rule:
-    A violation is confirmed only when the rolling average of all samples
-    within the last VIOLATION_WINDOW_SECONDS exceeds a threshold bound for
-    the entire window duration.  Transient spikes are smoothed out.
-
-Per-metric state is keyed by (ble_address, metric) so each sensor station
-tracks its metrics independently.
-
-Violation lifecycle:
-    CONFIRMED  => stored in local SQLite + POSTed to backend
-    RESOLVED   => local row updated + PATCHed to backend
-
-Alert-flooding prevention:
-    Once a violation is active, no new POST is sent for 15 minutes
-    (ALERT_COOLDOWN_SECONDS). After the cooldown a reminder can be sent.
-"""
-
 import time
 from datetime import datetime, timedelta
 from collections import deque
@@ -95,13 +73,6 @@ async def process_measurement(
     session: aiohttp.ClientSession,
     ble_tag: str,
 ) -> tuple[dict[str, int], list[str]]:
-    """
-    Evaluate one measurement packet against all metric thresholds.
-
-    Returns:
-        statuses      – {metric: int}  BLE status codes for the Arduino
-        hint_messages – [str]          ClimateHint texts for newly confirmed violations
-    """
     now               = datetime.fromisoformat(pkt["timestamp"])
     sensor_station_id = pkt["sensor_station_id"]
     room_id           = pkt["room_id"]

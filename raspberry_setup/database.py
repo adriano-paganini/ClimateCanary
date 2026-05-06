@@ -2,7 +2,6 @@ import asyncio
 import aiosqlite
 from bleak import BleakClient
 
-
 async def init_db(db: aiosqlite.Connection) -> None:
     await db.executescript(
         """

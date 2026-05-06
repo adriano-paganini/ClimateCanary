@@ -1,13 +1,3 @@
-"""
-state.py
---------
-Global runtime state for the Raspberry Pi process.
-Currently holds the privacy mode flag, which is set by:
-  - main.py on startup (from conf.yml)
-  - app.py when POST /api/spi/{piId}/occupancy arrives
-  - app.py when POST /api/spi/{piId}/config arrives
-"""
-
 PRIVACY_MODE: bool = False
 
 

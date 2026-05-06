@@ -13,11 +13,6 @@ app = FastAPI()
 db_connection: aiosqlite.Connection | None = None
 stations_event: asyncio.Event = asyncio.Event()
 
-
-# ---------------------------------------------------------------------------
-# DTOs
-# ---------------------------------------------------------------------------
-
 class SensorStationDTO(BaseModel):
     id:                  int
     bleMac:              str
@@ -44,13 +39,9 @@ class ThresholdConfigDTO(BaseModel):
 class ViolationResolvedDTO(BaseModel):
     metric:   str
     roomId:   int
-    endTime:  int   # epoch time
+    endTime:  int   #to do: change this to parsed string!
     status:   str   # "RESOLVED"
 
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 
 def _check_pi_id(piId: int) -> None:
     if piId != config.PI_ID:
@@ -61,10 +52,6 @@ def _check_db() -> aiosqlite.Connection:
         raise HTTPException(status_code=503, detail="DB not ready")
     return db_connection
 
-
-# ---------------------------------------------------------------------------
-# Endpoints
-# ---------------------------------------------------------------------------
 
 @app.get("/api/spi/setup/verify/{piId}")
 async def verify_pi(piId: int):

@@ -12,6 +12,7 @@ from config import (
     DB_PATH, load_config, load_config_from_string, get_local_ip,
     BLE_NAME_NORMAL, MANUF_DATA_NORMAL, SVC_ENV_NORMAL, SCAN_DURATION,
 )
+
 from database import init_db, db_writer, load_stations
 from ble_worker import ble_worker
 from setup_flow import run_setup
@@ -31,17 +32,11 @@ class Station:
     device_status:       str    # deviceStatus
     measurement_interval: int   # measurementInterval
 
-
-# ---------------------------------------------------------------------------
-# BLE scanning helpers
-# ---------------------------------------------------------------------------
-
 def _manuf_matches(adv: AdvertisementData, expected: bytes) -> bool:
     return any(
         payload == expected or expected in payload
         for payload in adv.manufacturer_data.values()
     )
-
 
 async def scan_for_all_devices() -> list[str]:
     found: dict[str, BLEDevice] = {}
@@ -68,10 +63,6 @@ async def scan_for_all_devices() -> list[str]:
     return addresses
 
 
-# ---------------------------------------------------------------------------
-# Backend communication helpers
-# ---------------------------------------------------------------------------
-
 async def post_booted() -> None:
     """Notify the backend that this Pi has started up (POST /api/cpi/{piId}/booted)."""
     url = f"{cfg.BACKEND_URL}/api/cpi/{cfg.PI_ID}/booted"
@@ -80,7 +71,7 @@ async def post_booted() -> None:
         "hostName":         cfg.HOST_NAME,
         "deviceStatus":     "ONLINE",
         "roomId":           cfg.ROOM_ID,
-        "sensorStationIds": [],   # backend already knows assignments; empty on boot is fine
+        "sensorStationIds": [],
     }
     try:
         async with aiohttp.ClientSession() as session:
@@ -251,7 +242,6 @@ async def main() -> None:
             http_sender(db),
             server.serve(),
         )
-
 
 if __name__ == "__main__":
     try:

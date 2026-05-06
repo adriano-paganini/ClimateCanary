@@ -5,7 +5,6 @@ import aiosqlite
 import config
 from config import SEND_INTERVAL
 
-
 async def http_sender(db: aiosqlite.Connection) -> None:
     async with aiohttp.ClientSession() as session:
         while True:
