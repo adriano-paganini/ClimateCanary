@@ -7,7 +7,6 @@ import at.qe.skeleton.dtos.ViolationActiveDTO;
 import at.qe.skeleton.dtos.ViolationResolvedDTO;
 import at.qe.skeleton.mappers.ThresholdViolationCreateMapper;
 import at.qe.skeleton.models.*;
-import at.qe.skeleton.repositories.MeasurementRepository;
 import at.qe.skeleton.repositories.ThresholdRepository;
 import at.qe.skeleton.repositories.ThresholdViolationRepository;
 import jakarta.transaction.Transactional;
@@ -82,18 +81,69 @@ public class ThresholdViolationService {
 
 
     public ThresholdViolation create(Long piId, ViolationActiveDTO dto) {
-        //TODO: parse dto time-string
+        // TODO: parse dto time-string
         LocalDateTime time = LocalDateTime.now();
+
+        log.info(
+                "Creating threshold violation for raspberryPiId={}, roomId={}, metric={}",
+                piId,
+                dto.roomId(),
+                dto.metric()
+        );
+
         RaspberryPi raspberryPi = raspberryPiService.getById(piId);
         Long roomId = raspberryPi.getRoom().getId();
-        if (!Objects.equals(roomId, dto.roomId())) throw new NotFoundException("Raspberry Pi is not in room " + dto.roomId());
 
-        Long thresholdId = determineThreshold(roomId,dto.metric(),dto.avgValue()).getId();
-        List<Long> measurementIds = measurementService.getFiltered(roomId,dto.metric(),time,LocalDateTime.now()).stream().map(Measurement::getId).toList();
+        if (!Objects.equals(roomId, dto.roomId())) {
+            log.warn(
+                    "Failed to create threshold violation: raspberryPiId={} is in roomId={}, but dto roomId={}",
+                    piId,
+                    roomId,
+                    dto.roomId()
+            );
+            throw new NotFoundException("Raspberry Pi is not in room " + dto.roomId());
+        }
 
-        ThresholdViolationCreateDTO createDTO = new ThresholdViolationCreateDTO(dto.metric(),dto.avgValue(),time,thresholdId,roomId,measurementIds);
+        Long thresholdId = determineThreshold(roomId, dto.metric(), dto.avgValue()).getId();
+
+        List<Long> measurementIds = measurementService
+                .getFiltered(roomId, dto.metric(), time, LocalDateTime.now())
+                .stream()
+                .map(Measurement::getId)
+                .toList();
+
+        log.debug(
+                "Creating threshold violation details: raspberryPiId={}, roomId={}, metric={}, avgValue={}, thresholdId={}, startTime={}, measurementIds={}",
+                piId,
+                roomId,
+                dto.metric(),
+                dto.avgValue(),
+                thresholdId,
+                time,
+                measurementIds
+        );
+
+        ThresholdViolationCreateDTO createDTO = new ThresholdViolationCreateDTO(
+                dto.metric(),
+                dto.avgValue(),
+                time,
+                thresholdId,
+                roomId,
+                measurementIds
+        );
+
         ThresholdViolation entity = thresholdViolationCreateMapper.mapFrom(createDTO);
-        return thresholdViolationRepository.save(entity);
+        ThresholdViolation savedViolation = thresholdViolationRepository.save(entity);
+
+        log.info(
+                "Created threshold violation with id={} for roomId={}, metric={}, thresholdId={}",
+                savedViolation.getId(),
+                roomId,
+                dto.metric(),
+                thresholdId
+        );
+
+        return savedViolation;
     }
 
     @Transactional
@@ -203,22 +253,77 @@ public class ThresholdViolationService {
         return thresholdViolation.getRoom().getRaspberryPi().getId();
     }
 
-    public ThresholdViolation update(Long piId, ViolationResolvedDTO dto){
+    public ThresholdViolation update(Long piId, ViolationResolvedDTO dto) {
+        log.info(
+                "Resolving threshold violation for raspberryPiId={}, roomId={}, metric={}",
+                piId,
+                dto.roomId(),
+                dto.metric()
+        );
+
         RaspberryPi raspberryPi = raspberryPiService.getById(piId);
         Long roomId = raspberryPi.getRoom().getId();
-        if (!Objects.equals(roomId, dto.roomId())) throw new NotFoundException("Raspberry Pi is not in room " + dto.roomId());
+
+        if (!Objects.equals(roomId, dto.roomId())) {
+            log.warn(
+                    "Failed to resolve threshold violation: raspberryPiId={} is in roomId={}, but dto roomId={}",
+                    piId,
+                    roomId,
+                    dto.roomId()
+            );
+            throw new NotFoundException("Raspberry Pi is not in room " + dto.roomId());
+        }
+
         LocalDateTime time = LocalDateTime.now();
 
         ThresholdViolation violation =
-                thresholdViolationRepository.findByRoomIdAndMetricAndViolationStatus(roomId,dto.metric(),ViolationStatus.ACTIVE)
-                        .orElseThrow(() -> new NotFoundException("No active threshold violation for room " + roomId + " and metric " + dto.metric()));
+                thresholdViolationRepository.findByRoomIdAndMetricAndViolationStatus(
+                                roomId,
+                                dto.metric(),
+                                ViolationStatus.ACTIVE
+                        )
+                        .orElseThrow(() -> {
+                            log.warn(
+                                    "No active threshold violation found for roomId={} and metric={}",
+                                    roomId,
+                                    dto.metric()
+                            );
+                            return new NotFoundException(
+                                    "No active threshold violation for room " + roomId + " and metric " + dto.metric()
+                            );
+                        });
 
-        List<Measurement> measurements = measurementService.getFiltered(roomId,dto.metric(),violation.getStartTime(),time);
+        List<Measurement> measurements = measurementService.getFiltered(
+                roomId,
+                dto.metric(),
+                violation.getStartTime(),
+                time
+        );
+
+        log.debug(
+                "Resolving threshold violation details: violationId={}, roomId={}, metric={}, startTime={}, endTime={}, measurementCount={}",
+                violation.getId(),
+                roomId,
+                dto.metric(),
+                violation.getStartTime(),
+                time,
+                measurements.size()
+        );
 
         violation.setEndTime(time);
         violation.setViolationStatus(ViolationStatus.RESOLVED);
         violation.setMeasurements(measurements);
-        return thresholdViolationRepository.save(violation);
+
+        ThresholdViolation savedViolation = thresholdViolationRepository.save(violation);
+
+        log.info(
+                "Resolved threshold violation with id={} for roomId={} and metric={}",
+                savedViolation.getId(),
+                roomId,
+                dto.metric()
+        );
+
+        return savedViolation;
     }
 
     private Threshold determineThreshold(Long roomId, Metric metric, Float avgValue) {
