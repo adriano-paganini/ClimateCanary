@@ -1,11 +1,11 @@
-import aiosqlite
+PRIVACY_MODE: bool = False
 
-BELOW_MIN_OCCUPANCY: bool = False
 
-async def load_occupancy_from_db(db):
-    global BELOW_MIN_OCCUPANCY
-    async with db.execute("SELECT value FROM pi_state WHERE key='below_min_occupancy'") as cursor:
-        row = await cursor.fetchone()
-        if row:
-            BELOW_MIN_OCCUPANCY = row[0] == "1"
-            print(f"[STATE] restored below_min_occupancy={BELOW_MIN_OCCUPANCY}")
+def set_privacy_mode(value: bool) -> None:
+    global PRIVACY_MODE
+    PRIVACY_MODE = value
+    print(f"[STATE] privacy_mode={'ON' if value else 'OFF'}")
+
+
+def get_privacy_mode() -> bool:
+    return PRIVACY_MODE

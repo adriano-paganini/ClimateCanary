@@ -1,0 +1,331 @@
+import React, { useEffect, useState } from 'react';
+import { Button } from 'primereact/button';
+import { InputText } from 'primereact/inputtext';
+import { Message } from 'primereact/message';
+import { ProgressSpinner } from 'primereact/progressspinner';
+import { Tag } from 'primereact/tag';
+import { Divider } from 'primereact/divider';
+import { Toast } from 'primereact/toast';
+import 'primeicons/primeicons.css';
+
+import NavbarComponent from '../components/NavbarComponent';
+import { useUser } from '../Contexts/AuthenticatedUserContext';
+import { UserService } from '../services/UserService';
+import { UserxDTO, UserxRole } from '../generated-skeleton-api';
+
+const ROLE_LABELS: Record<string, string> = {
+    [UserxRole.SYSTEM_ADMIN]:   'System Admin',
+    [UserxRole.BUILDING_ADMIN]: 'Building Admin',
+    [UserxRole.DEPARTMENT_LEAD]: 'Department Lead',
+    [UserxRole.MANAGEMENT]:     'Management',
+    [UserxRole.EMPLOYEE]:       'Employee',
+};
+
+const ROLE_SEVERITY: Record<string, string> = {
+    [UserxRole.SYSTEM_ADMIN]:   'danger',
+    [UserxRole.BUILDING_ADMIN]: 'warning',
+    [UserxRole.DEPARTMENT_LEAD]: 'info',
+    [UserxRole.MANAGEMENT]:     'secondary',
+    [UserxRole.EMPLOYEE]:       'success',
+};
+
+const UserProfileView: React.FC = () => {
+    const { fullUser, refreshCurrentUser } = useUser();
+    const toastRef = React.useRef<Toast>(null);
+    
+    const [user, setUser] = useState<UserxDTO | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    const [editing, setEditing] = useState(false);
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
+
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (fullUser) {
+            setUser(fullUser);
+            setFirstName(fullUser.firstName ?? '');
+            setLastName(fullUser.lastName ?? '');
+            setEmail(fullUser.email ?? '');
+            setPhone(fullUser.phone ?? '');
+            setLoading(false);
+        }
+    }, [fullUser]);
+
+    const handleEdit = () => {
+        setSaveError(null);
+        setEditing(true);
+    };
+
+    const handleCancel = () => {
+        setFirstName(user?.firstName ?? '');
+        setLastName(user?.lastName ?? '');
+        setEmail(user?.email ?? '');
+        setPhone(user?.phone ?? '');
+        setSaveError(null);
+        setEditing(false);
+    };
+
+    const handleSave = async () => {
+        setSaveError(null);
+        setSaving(true);
+        try {
+            const updated = await UserService.updateCurrentUser({
+                firstName,
+                lastName,
+                email,
+                phone,
+            });
+            setUser(updated);
+            await refreshCurrentUser();
+            setEditing(false);
+            toastRef.current?.show({ 
+                severity: 'success', 
+                summary: 'Success', 
+                detail: 'Profile updated successfully!',
+                life: 3000
+            });
+        } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : String(err);
+            setSaveError(errorMsg);
+            toastRef.current?.show({ 
+                severity: 'error', 
+                summary: 'Error', 
+                detail: errorMsg,
+                life: 5000
+            });
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    if (loading) {
+        return (
+            <div>
+                <NavbarComponent />
+                <div className="flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
+                    <ProgressSpinner />
+                </div>
+            </div>
+        );
+    }
+
+    if (!user) {
+        return (
+            <div>
+                <NavbarComponent />
+                <div style={{ padding: '1.5rem 2rem' }}>
+                    <Message severity="error" text="Failed to load profile." />
+                </div>
+            </div>
+        );
+    }
+
+    const roles = user.roles ? [...user.roles] : [];
+    const initials = `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase();
+    const profileComplete = firstName && lastName && email;
+
+    return (
+        <div>
+            <NavbarComponent />
+            <Toast ref={toastRef} position="top-right" />
+            
+            <div style={{ padding: '2rem' }}>
+                <h2 style={{ margin: '0 0 1.5rem', color: '#111827', fontSize: '1.875rem', fontWeight: 700 }}>My Profile</h2>
+
+                {/* Main Card */}
+                <div style={{
+                    background: '#fff',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(226, 232, 240, 0.5)',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+                    overflow: 'hidden',
+                    marginBottom: '1.5rem'
+                }}>
+                    {/* Header */}
+                    <div style={{
+                        padding: '1.5rem',
+                        borderBottom: '1px solid #f3f4f6',
+                        background: '#fafbfc'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <div style={{
+                                width: '64px', height: '64px', borderRadius: '50%',
+                                background: '#0369a1', color: '#fff',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: '1.5rem', fontWeight: 700, flexShrink: 0,
+                                boxShadow: '0 4px 12px rgba(3, 105, 161, 0.3)'
+                            }}>
+                                {initials || <i className="pi pi-user" />}
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <div style={{ fontWeight: 700, fontSize: '1.25rem', color: '#111827' }}>
+                                    {user.firstName} {user.lastName}
+                                </div>
+                                <div style={{ color: '#6b7280', fontSize: '0.875rem', marginTop: '0.25rem' }}>@{user.username}</div>
+                            </div>
+                            {!editing && (
+                                <Button
+                                    icon="pi pi-pencil"
+                                    label="Edit"
+                                    className="p-button-outlined p-button-sm"
+                                    onClick={handleEdit}
+                                />
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Content */}
+                    <div style={{ padding: '1.5rem' }}>
+                        {saveError && (
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <Message severity="error" text={saveError} />
+                            </div>
+                        )}
+
+                        {editing ? (
+                            <div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>First Name</label>
+                                        <InputText value={firstName} onChange={e => setFirstName(e.target.value)} style={{ width: '100%' }} />
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>Last Name</label>
+                                        <InputText value={lastName} onChange={e => setLastName(e.target.value)} style={{ width: '100%' }} />
+                                    </div>
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>Email</label>
+                                        <InputText value={email} onChange={e => setEmail(e.target.value)} style={{ width: '100%' }} />
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#374151', marginBottom: '0.5rem' }}>Phone</label>
+                                        <InputText value={phone} onChange={e => setPhone(e.target.value)} style={{ width: '100%' }} />
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', gap: '0.75rem', paddingTop: '1rem' }}>
+                                    <Button
+                                        label="Save"
+                                        icon="pi pi-check"
+                                        loading={saving}
+                                        onClick={() => void handleSave()}
+                                        style={{ background: '#111827', border: 'none' }}
+                                    />
+                                    <Button
+                                        label="Cancel"
+                                        icon="pi pi-times"
+                                        className="p-button-outlined"
+                                        onClick={handleCancel}
+                                    />
+                                </div>
+                            </div>
+                        ) : (
+                            <div>
+                                {/* Information Grid */}
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
+                                    <div>
+                                        <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', fontWeight: 600, color: '#6b7280' }}>First Name</p>
+                                        <p style={{ margin: 0, fontSize: '1rem', color: '#111827', fontWeight: 500 }}>
+                                            {firstName || <span style={{ color: '#d1d5db' }}>Not provided</span>}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', fontWeight: 600, color: '#6b7280' }}>Last Name</p>
+                                        <p style={{ margin: 0, fontSize: '1rem', color: '#111827', fontWeight: 500 }}>
+                                            {lastName || <span style={{ color: '#d1d5db' }}>Not provided</span>}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                                    <div>
+                                        <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', fontWeight: 600, color: '#6b7280' }}>Email</p>
+                                        <p style={{ margin: 0, fontSize: '1rem', color: '#111827', fontWeight: 500 }}>
+                                            {email || <span style={{ color: '#d1d5db' }}>Not provided</span>}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', fontWeight: 600, color: '#6b7280' }}>Phone</p>
+                                        <p style={{ margin: 0, fontSize: '1rem', color: '#111827', fontWeight: 500 }}>
+                                            {phone || <span style={{ color: '#d1d5db' }}>Not provided</span>}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Divider */}
+                                <Divider style={{ margin: '2rem 0' }} />
+
+                                {/* Roles Section */}
+                                <div>
+                                    <h3 style={{ margin: '0 0 1rem', color: '#111827', fontSize: '1rem', fontWeight: 700 }}>Account Roles</h3>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+                                        {roles.length > 0 ? (
+                                            roles.map(role => (
+                                                <Tag
+                                                    key={role}
+                                                    value={ROLE_LABELS[role] ?? role}
+                                                    severity={ROLE_SEVERITY[role] as any}
+                                                />
+                                            ))
+                                        ) : (
+                                            <span style={{ color: '#d1d5db', fontSize: '0.9rem' }}>No roles assigned</span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* Profile Completion Indicator */}
+                {!editing && (
+                    <div style={{
+                        padding: '1.5rem',
+                        background: '#fff',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(226, 232, 240, 0.5)',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)'
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div>
+                                <h4 style={{ margin: '0 0 0.5rem', color: '#111827', fontSize: '0.95rem', fontWeight: 700 }}>Profile Completeness</h4>
+                                <p style={{ margin: 0, color: '#6b7280', fontSize: '0.875rem' }}>
+                                    {profileComplete
+                                        ? 'Your profile is fully complete!'
+                                        : 'Complete your profile with all information'}
+                                </p>
+                            </div>
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: '60px',
+                                height: '60px',
+                                borderRadius: '50%',
+                                background: profileComplete
+                                    ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                                    : 'linear-gradient(135deg, #fbbf24 0%, #f97316 100%)',
+                                color: 'white',
+                                fontSize: '1.5rem',
+                                fontWeight: 700,
+                                boxShadow: profileComplete 
+                                    ? '0 4px 12px rgba(16, 185, 129, 0.3)' 
+                                    : '0 4px 12px rgba(249, 115, 22, 0.3)'
+                            }}>
+                                {profileComplete ? '100%' : '75%'}
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+export default UserProfileView;

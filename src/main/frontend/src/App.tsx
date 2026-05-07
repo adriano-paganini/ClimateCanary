@@ -15,6 +15,10 @@ import {ROUTES} from "./utilities/routes.paths";
 const EmployeeDashboard = React.lazy(() => import('./views/EmployeeDashboard'));
 const RoomHistory = React.lazy(() => import('./views/RoomHistory'));
 const AbsenceView = React.lazy(() => import('./views/AbsenceView'));
+const UserProfileView = React.lazy(() => import('./views/UserProfileView'));
+const DepartmentDashboard = React.lazy(() => import('./views/DepartmentDashboard'));
+const DepartmentAbsenceView = React.lazy(() => import('./views/DepartmentAbsenceView'));
+const ManagementDashboard = React.lazy(() => import('./views/ManagementDashboard'));
 
 const App: React.FC = () => {
     return (
@@ -31,11 +35,23 @@ const App: React.FC = () => {
                             <Route path={LogoutsRoute.url} Component={LogoutsRoute.component}/>
                             <Route path={ROUTES.DASHBOARD} Component={EmployeeDashboard}/>
                             <Route path={ROUTES.DASHBOARD_HISTORY} Component={RoomHistory}/>
+                            <Route path={ROUTES.PROFILE} Component={UserProfileView}/>
                         </Route>
 
                         {/* Employee and Department Lead */}
                         <Route element={<PrivateRoute roles={[UserxRole.EMPLOYEE, UserxRole.DEPARTMENT_LEAD]}/>}>
                             <Route path={ROUTES.ABSENCE} Component={AbsenceView}/>
+                        </Route>
+
+                        {/* Department Lead only */}
+                        <Route element={<PrivateRoute roles={[UserxRole.DEPARTMENT_LEAD]}/>}>
+                            <Route path={ROUTES.DEPARTMENT_DASHBOARD} Component={DepartmentDashboard}/>
+                            <Route path={ROUTES.DEPARTMENT_ABSENCES} Component={DepartmentAbsenceView}/>
+                        </Route>
+
+                        {/* Management only */}
+                        <Route element={<PrivateRoute roles={[UserxRole.MANAGEMENT]}/>}>
+                            <Route path={ROUTES.MANAGEMENT_DASHBOARD} Component={ManagementDashboard}/>
                         </Route>
 
                         {/* Building Admin and System Admin only */}

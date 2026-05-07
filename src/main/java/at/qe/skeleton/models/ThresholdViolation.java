@@ -106,6 +106,10 @@ public class ThresholdViolation {
         return measurements;
     }
 
+    public void setMeasurements(List<Measurement> measurements) {
+        this.measurements = measurements;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;

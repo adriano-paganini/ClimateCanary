@@ -1,14 +1,17 @@
 package at.qe.skeleton.services;
 
 import at.qe.skeleton.dtos.ThresholdCreateDTO;
+import at.qe.skeleton.dtos.ThresholdDTO;
 import at.qe.skeleton.dtos.ThresholdUpdateDTO;
 import at.qe.skeleton.common.exceptions.ConflictException;
 import at.qe.skeleton.common.exceptions.NotFoundException;
+import at.qe.skeleton.mappers.ThresholdMapper;
 import at.qe.skeleton.models.ClimateHint;
 import at.qe.skeleton.models.Metric;
 import at.qe.skeleton.models.Threshold;
 import at.qe.skeleton.repositories.ClimateHintRepository;
 import at.qe.skeleton.repositories.ThresholdRepository;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,13 +26,17 @@ public class ThresholdService {
     private final ThresholdRepository thresholdRepository;
     private final RoomService roomService;
     private final ClimateHintRepository climateHintRepository;
+    private final RaspberryPiServerService raspberryPiServerService;
+    private final ThresholdMapper thresholdMapper;
 
     public ThresholdService(ThresholdRepository thresholdRepository,
                             RoomService roomService,
-                            ClimateHintRepository climateHintRepository) {
+                            ClimateHintRepository climateHintRepository, RaspberryPiServerService raspberryPiServerService, ThresholdMapper thresholdMapper) {
         this.thresholdRepository = thresholdRepository;
         this.roomService = roomService;
         this.climateHintRepository = climateHintRepository;
+        this.raspberryPiServerService = raspberryPiServerService;
+        this.thresholdMapper = thresholdMapper;
     }
 
     public List<Threshold> getAll(Long roomId, Metric metric){
@@ -70,10 +77,15 @@ public class ThresholdService {
         return savedThreshold;
     }
 
+    @Transactional
     public Threshold update(Long id, ThresholdUpdateDTO dto) {
         Threshold entity = getThresholdById(id);
 
-        StringBuilder debugInfo = new StringBuilder("Updated threshold details:").append(" id=").append(id);
+        ThresholdDTO oldThresholdDTO = thresholdMapper.mapTo(entity);
+        Long oldPiId = getRaspberryPiIdOrNull(entity);
+
+        StringBuilder debugInfo = new StringBuilder("Updated threshold details:")
+                .append(" id=").append(id);
 
         if (dto.metric() != null) {
             entity.setMetric(dto.metric());
@@ -109,17 +121,100 @@ public class ThresholdService {
 
         Threshold updatedThreshold = thresholdRepository.save(entity);
 
+        synchronizeThresholdWithRaspberryPi(id, oldPiId, oldThresholdDTO, updatedThreshold);
+
         log.info("Updated threshold with id={}", id);
         log.debug(debugInfo.toString());
 
         return updatedThreshold;
     }
 
+    private void synchronizeThresholdWithRaspberryPi(
+            Long thresholdId,
+            Long oldPiId,
+            ThresholdDTO oldThresholdDTO,
+            Threshold updatedThreshold
+    ) {
+        Long newPiId = getRaspberryPiIdOrNull(updatedThreshold);
+
+        if (oldPiId == null && newPiId == null) {
+            log.warn("Could not synchronize threshold with id={} because neither old nor new Raspberry Pi exists", thresholdId);
+            return;
+        }
+
+        if (oldPiId != null) {
+            PiRequestResult deletionResult = raspberryPiServerService.deleteThresholds(
+                    oldPiId,
+                    List.of(oldThresholdDTO)
+            );
+
+            if (deletionResult != PiRequestResult.SUCCESS) {
+                log.warn("Failed to delete old threshold with id={} on Raspberry Pi {}: result={}",
+                        thresholdId, oldPiId, deletionResult);
+                return;
+            }
+
+            log.info("Deleted old threshold with id={} on Raspberry Pi {}", thresholdId, oldPiId);
+        }
+
+        if (!Boolean.TRUE.equals(updatedThreshold.isEnabled())) {
+            log.info("Threshold with id={} is disabled, so it will not be sent as active configuration to Raspberry Pi", thresholdId);
+            return;
+        }
+
+        if (newPiId == null) {
+            log.warn("Could not send updated threshold with id={} because the updated room has no Raspberry Pi", thresholdId);
+            return;
+        }
+
+        ThresholdDTO updatedThresholdDTO = thresholdMapper.mapTo(updatedThreshold);
+
+        PiRequestResult insertionResult = raspberryPiServerService.informAboutNewThresholds(
+                newPiId,
+                List.of(updatedThresholdDTO)
+        );
+
+        if (insertionResult == PiRequestResult.SUCCESS) {
+            log.info("Sent updated threshold with id={} to Raspberry Pi {}", thresholdId, newPiId);
+        } else {
+            log.warn("Failed to send updated threshold with id={} to Raspberry Pi {}: result={}",
+                    thresholdId, newPiId, insertionResult);
+        }
+    }
+
+    private Long getRaspberryPiIdOrNull(Threshold threshold) {
+        if (threshold == null || threshold.getRoom() == null || threshold.getRoom().getRaspberryPi() == null) {
+            return null;
+        }
+        return threshold.getRoom().getRaspberryPi().getId();
+    }
+
+    @Transactional
     public void delete(Long id) {
         Threshold entity = getThresholdById(id);
 
         if (!entity.getViolations().isEmpty()) {
-            throw new ConflictException("Threshold cannot be enabled because it has violations");
+            throw new ConflictException("Threshold cannot be deleted because it has violations");
+        }
+
+        Long piId = getRaspberryPiIdOrNull(entity);
+        ThresholdDTO thresholdDTO = thresholdMapper.mapTo(entity);
+
+        if (piId != null) {
+            PiRequestResult deletionResult = raspberryPiServerService.deleteThresholds(
+                    piId,
+                    List.of(thresholdDTO)
+            );
+
+            if (deletionResult != PiRequestResult.SUCCESS) {
+                log.warn("Failed to delete threshold with id={} on Raspberry Pi {}: result={}",
+                        id, piId, deletionResult);
+                throw new IllegalStateException("Threshold could not be deleted on Raspberry Pi");
+            }
+
+            log.info("Deleted threshold with id={} on Raspberry Pi {}", id, piId);
+        } else {
+            log.warn("Deleting threshold with id={} from database, but no Raspberry Pi is assigned to its room", id);
         }
 
         entity.getClimateHints().clear();

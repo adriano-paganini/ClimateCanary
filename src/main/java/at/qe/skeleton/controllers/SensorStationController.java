@@ -6,6 +6,8 @@ import at.qe.skeleton.dtos.SensorStationUpdateDTO;
 import at.qe.skeleton.mappers.SensorStationCreateMapper;
 import at.qe.skeleton.mappers.SensorStationMapper;
 import at.qe.skeleton.models.SensorStation;
+import at.qe.skeleton.services.PiRequestResult;
+import at.qe.skeleton.services.RaspberryPiServerService;
 import at.qe.skeleton.services.SensorStationService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -22,13 +24,15 @@ public class SensorStationController {
     private final SensorStationService sensorStationService;
     private final SensorStationMapper sensorStationMapper;
     private final SensorStationCreateMapper sensorStationCreateMapper;
+    private final RaspberryPiServerService raspberryPiServerService;
 
     public SensorStationController(SensorStationService sensorStationService,
                                    SensorStationMapper sensorStationMapper,
-                                   SensorStationCreateMapper sensorStationCreateMapper) {
+                                   SensorStationCreateMapper sensorStationCreateMapper, RaspberryPiServerService raspberryPiServerService) {
         this.sensorStationService = sensorStationService;
         this.sensorStationMapper = sensorStationMapper;
         this.sensorStationCreateMapper = sensorStationCreateMapper;
+        this.raspberryPiServerService = raspberryPiServerService;
     }
 
     @GetMapping
@@ -70,5 +74,13 @@ public class SensorStationController {
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         sensorStationService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/find/{piId}")
+    public ResponseEntity<Void> find(@PathVariable Long piId){
+        if (PiRequestResult.SUCCESS== raspberryPiServerService.startScanForAvailableSensorStations(piId)){
+            return ResponseEntity.accepted().build();
+        }
+        return ResponseEntity.badRequest().build();
     }
 }

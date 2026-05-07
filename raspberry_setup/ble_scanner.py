@@ -2,10 +2,7 @@ import asyncio
 from bleak import BleakScanner
 from bleak.backends.device import BLEDevice
 from bleak.backends.scanner import AdvertisementData
-
-EXPECTED_NAME = "G5T4CC"
-EXPECTED_MANUFACTURER_DATA = b"11LCK"
-EXPECTED_SERVICE_UUID = "0000181a-0000-1000-8000-00805f9b34fb"
+from config import BLE_NAME_NORMAL, MANUF_DATA_NORMAL, SVC_ENV_NORMAL, SCAN_DURATION
 
 async def scan_for_stations() -> list[str]:
     results = []

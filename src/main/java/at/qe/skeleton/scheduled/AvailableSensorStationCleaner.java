@@ -1,0 +1,29 @@
+package at.qe.skeleton.scheduled;
+
+import at.qe.skeleton.models.DeviceStatus;
+import at.qe.skeleton.models.RaspberryPi;
+import at.qe.skeleton.models.SensorStation;
+import at.qe.skeleton.services.RaspberryPiService;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class AvailableSensorStationCleaner {
+
+    private final RaspberryPiService raspberryPiService;
+
+    public AvailableSensorStationCleaner(RaspberryPiService raspberryPiService) {
+        this.raspberryPiService = raspberryPiService;
+    }
+
+    public void cleanAvailableSensorStations(Long piId){
+        RaspberryPi raspberryPi = raspberryPiService.getById(piId);
+        List<SensorStation> sensorStations = raspberryPi.getSensorStations();
+        for (SensorStation station : sensorStations){
+            if (station.getDeviceStatus() == DeviceStatus.AVAILABLE){
+                raspberryPiService.removeAvailableSensorStationAfterScanTimeOut(piId,station.getId());
+            }
+        }
+    }
+}
