@@ -3,13 +3,11 @@ import aiosqlite
 from dataclasses import dataclass
 from typing import Optional
 
-
 @dataclass
 class Threshold:
     metric:      str
     upper_bound: Optional[float]
     lower_bound: Optional[float]
-
 
 @dataclass
 class MetricConfig:
@@ -19,7 +17,6 @@ class MetricConfig:
 
 _lock:  asyncio.Lock | None     = None
 _store: dict[str, MetricConfig] = {}
-
 
 _DEFAULTS: dict[str, MetricConfig] = {
     "temperature": MetricConfig(
@@ -39,7 +36,6 @@ _DEFAULTS: dict[str, MetricConfig] = {
         hint_text="Schlechte Luftqualität – bitte lüften.",
     ),
 }
-
 
 def _get_lock() -> asyncio.Lock:
     global _lock
@@ -64,7 +60,7 @@ async def update_thresholds(
     updates: list[dict],
     db: aiosqlite.Connection,
 ) -> None:
-    """Called by app.py when the backend POSTs new threshold config."""
+    """Called by app.py when the backend POSTs new threshold config"""
     async with _get_lock():
         for item in updates:
             metric      = item["metric"]

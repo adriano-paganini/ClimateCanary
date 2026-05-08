@@ -9,7 +9,7 @@ from config import SETUP_CONFIG_UUID
 def _build_setup_config(measurement_interval: int, pi_id: int) -> bytes:
     """
     DeviceSetupConfig: uint8 measurementInterval | uint32 deviceId  →  5 bytes LE
-    Example: interval=10, pi_id=123456 => 0A 40 E2 01 00
+    Example: interval=10, pi_id=123456 → 0A 40 E2 01 00
     """
     assert 1 <= measurement_interval <= 255, "measurementInterval must be 1–255"
     return struct.pack("<BI", measurement_interval, pi_id)
@@ -38,6 +38,14 @@ async def run_setup(
     sensor_station_id: int,
     measurement_interval: int,
 ) -> bool:
+    """
+    Writes TrustedRpiId + measurementInterval to the Arduino's
+    deviceSetupCharacteristic. The Arduino reboots afterwards,
+    connection drop is expected and not treated as an error.
+
+    Returns True if the write succeeded, False otherwise.
+    In both cases the backend is PATCHed with the appropriate status.
+    """
     tag     = address
     payload = _build_setup_config(measurement_interval, config.PI_ID)
     print(f"[SETUP:{tag}] writing config: interval={measurement_interval}s "
@@ -46,13 +54,18 @@ async def run_setup(
     async with aiohttp.ClientSession() as session:
         try:
             async with BleakClient(address, timeout=20.0) as client:
-                await client.write_gatt_char(
-                    SETUP_CONFIG_UUID, payload, response=True,
-                )
-                print(f"[SETUP:{tag}] config written — Arduino will reboot.")
-            return True
+                try:
+                    await client.write_gatt_char(
+                        SETUP_CONFIG_UUID, payload, response=True,
+                    )
+                    print(f"[SETUP:{tag}] config written — Arduino will reboot.")
+                    return True
+                except Exception as e:
+                    print(f"[SETUP:{tag}] write failed: {e} — disconnecting.")
+                    await patch_station_status(session, sensor_station_id, "CONNECTION_FAILED", tag)
+                    return False
 
         except Exception as e:
-            print(f"[SETUP:{tag}] failed: {e}")
+            print(f"[SETUP:{tag}] connection failed: {e}")
             await patch_station_status(session, sensor_station_id, "CONNECTION_FAILED", tag)
             return False

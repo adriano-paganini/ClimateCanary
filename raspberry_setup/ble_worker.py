@@ -26,7 +26,7 @@ from violation_tracker import process_measurement
 
 
 def _build_auth(pi_id: int, room_name: str) -> bytes:
-    """Write TrustedRpiId + room_name into warningAuthCharacteristic."""
+    """Write TrustedRpiId + room_name into warningAuthCharacteristic"""
     room_bytes = room_name.encode("ascii")
     room_len   = len(room_bytes)
     assert room_len <= 32, "room_name must be ≤ 32 characters"
@@ -188,7 +188,7 @@ async def ble_worker(
             pkt = {
                 "sensor_station_id": sensor_station_id,
                 "room_id":           room_id,
-                "timestamp":         _timestamp(ts),   # ISO string → stored + sent to backend
+                "timestamp":         _timestamp(ts),  
                 "temperature":       temp,
                 "humidity":          hum,
                 "pressure":          press,
