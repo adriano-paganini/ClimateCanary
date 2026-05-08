@@ -1,3 +1,4 @@
+import globalAxios from "axios";
 import {
     RaspberryPiControllerApi,
     RaspberryPiCreateDTO,
@@ -18,6 +19,12 @@ export const RaspberryPiService = {
 
     getSensorStations: (id: number): Promise<SensorStationDTO[]> =>
         api.getSensorStations({ id }).then(r => r.data),
+
+    getAvailableSensorStations: (id: number): Promise<SensorStationDTO[]> =>
+        globalAxios.get<SensorStationDTO[]>(`/api/bpi/${id}/availablesensorstations`).then(r => r.data),
+
+    getConfig: (piId: number): Promise<string> =>
+        globalAxios.get<string>(`/api/cpi/${piId}/config`, { responseType: 'text' }).then(r => r.data),
 
     create: (raspberryPiCreateDTO: RaspberryPiCreateDTO): Promise<RaspberryPiDTO> =>
         api.create8({ raspberryPiCreateDTO }).then(r => r.data),

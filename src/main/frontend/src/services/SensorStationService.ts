@@ -1,3 +1,4 @@
+import globalAxios from "axios";
 import {
     SensorStationControllerApi,
     SensorStationCreateDTO,
@@ -23,4 +24,7 @@ export const SensorStationService = {
 
     delete: (id: number): Promise<void> =>
         api.delete2({ id }).then(() => undefined),
+
+    triggerScan: (piId: number): Promise<void> =>
+        globalAxios.post(`/api/sensorstation/find/${piId}`).then(() => undefined),
 };
