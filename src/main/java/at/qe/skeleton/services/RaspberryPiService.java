@@ -125,24 +125,68 @@ public class RaspberryPiService {
     }
 
     @Transactional
-    public void addAvailableSensorStations(Long id, List<String> stationBleMacs){
-        //this is intended, as we still need to manage RPi authentication.
+    public void addAvailableSensorStations(Long id, List<String> stationBleMacs) {
+        // this is intended, as we still need to manage RPi authentication.
         RaspberryPi pi = getById(id);
+
+        log.info("Adding available sensor stations to raspberry pi with id={}", id);
+        log.debug("Discovered sensor station BLE MACs for raspberry pi id={}: {}", id, stationBleMacs);
+
         for (String mac : stationBleMacs) {
             SensorStation temp = sensorStationRepository.findByBleMac(mac).orElse(new SensorStation());
+
+            boolean existingStation = temp.getId() != null;
+
             temp.setBleMac(mac);
             temp.setRaspberryPi(pi);
             temp.setRoom(pi.getRoom());
             temp.setName(mac);
             temp.setDeviceStatus(DeviceStatus.AVAILABLE);
-            sensorStationRepository.save(temp);
+
+            SensorStation savedStation = sensorStationRepository.save(temp);
+
+            if (existingStation) {
+                log.debug(
+                        "Updated existing available sensor station: id={}, bleMac={}, raspberryPiId={}, roomId={}",
+                        savedStation.getId(),
+                        savedStation.getBleMac(),
+                        id,
+                        savedStation.getRoom() != null ? savedStation.getRoom().getId() : null
+                );
+            } else {
+                log.debug(
+                        "Created new available sensor station: id={}, bleMac={}, raspberryPiId={}, roomId={}",
+                        savedStation.getId(),
+                        savedStation.getBleMac(),
+                        id,
+                        savedStation.getRoom() != null ? savedStation.getRoom().getId() : null
+                );
+            }
         }
+
+        log.info("Finished adding {} available sensor station(s) to raspberry pi with id={}", stationBleMacs.size(), id);
     }
+
     @Transactional
-    public void removeAvailableSensorStationAfterScanTimeOut(Long piId, Long stationId){
+    public void removeAvailableSensorStationAfterScanTimeOut(Long piId, Long stationId) {
+        log.info("Removing available sensor station after scan timeout: raspberryPiId={}, sensorStationId={}", piId, stationId);
+
         RaspberryPi pi = getById(piId);
         SensorStation station = sensorStationRepository.findById(stationId).orElseThrow();
+
+        log.debug(
+                "Removing sensor station details before deletion: id={}, bleMac={}, name={}, deviceStatus={}, raspberryPiId={}, roomId={}",
+                station.getId(),
+                station.getBleMac(),
+                station.getName(),
+                station.getDeviceStatus(),
+                station.getRaspberryPi() != null ? station.getRaspberryPi().getId() : null,
+                station.getRoom() != null ? station.getRoom().getId() : null
+        );
+
         pi.removeSensorStation(station);
         sensorStationRepository.delete(station);
+
+        log.info("Deleted available sensor station with id={} after scan timeout for raspberry pi id={}", stationId, piId);
     }
 }
