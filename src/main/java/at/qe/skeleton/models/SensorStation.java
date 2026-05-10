@@ -23,7 +23,7 @@ public class SensorStation {
     private String bleMac;
 
     @ManyToOne
-    @JoinColumn(name = "raspberry_pi_id", nullable = false)
+    @JoinColumn(name = "raspberry_pi_id")
     private RaspberryPi raspberryPi;
 
     @ManyToOne
