@@ -9,6 +9,8 @@
 #include <vector>
 #include <string>
 
+//TODO:data buffering
+
 using namespace rtos;
 using namespace std::chrono_literals;
 
@@ -19,6 +21,8 @@ Thread bleThread;
 
 bool bleClientConnected = false;
 bool bleClientAuthenticated = false;
+bool setupResetPending = false;
+unsigned long setupResetAt = 0;
 
 constexpr char NORMAL_NAME[] = "G5T4CC";
 constexpr char SETUP_NAME[]  = "G5T4SETUP";
@@ -94,43 +98,36 @@ uint16_t warningMessageLength = 0;
 uint16_t warningMessageAck = 0;
 
 String warningMessageBuffer = "";
-uint skipText = 1;
+int16_t skipText = 1;
 
 // ============================================================
 // Buffer Management
 // ============================================================
-constexpr int16_t SENSOR_DATA_RING_BUFFER_SIZE = 1000;
 
-SensorDataPacket sensorDataRingBuffer[SENSOR_DATA_RING_BUFFER_SIZE];
-
+std::vector<SensorDataPacket> sensorDataRingBuffer;
 int16_t sensorDataRingBufferIndex = 0;
+int16_t sensorDataRingBufferSize = 2000; // close to max safe value
 int16_t sensorDataRingBufferCount = 0;
-int16_t sensorDataRingBufferInsertionCounter = 0;
-int16_t sensorDataRingBufferTransmittedIndex = 0;
-int16_t sensorDataRingBufferSendCount = 0;
+int16_t sensorDataRingBufferInsertionCounter = 0; // counts how many values have been seen, to determine, when to safe the next one.
+int16_t sensorDataRingBufferTransmittedIndex = 0; // index of the next packet to transmit
 
-void sensorDataRingBufferInsert(SensorData data) {
-  Serial.println("Inserting new sensor data into ring buffer at index: " + String(sensorDataRingBufferIndex));
-
+void sensorDataRingBufferInsert(SensorData data){
+  Serial.println("Inserting new sensor data into ring buffer at index: " + String((sensorDataRingBufferIndex)? sensorDataRingBufferIndex : sensorDataRingBuffer.size()+1));
   SensorDataPacket packet;
   packet.timestamp = millis();
   packet.iaq = data.iaq;
   packet.temperature = data.temperature;
   packet.humidity = data.humidity;
   packet.pressure = data.pressure;
-
-  sensorDataRingBuffer[sensorDataRingBufferIndex] = packet;
-
-  sensorDataRingBufferIndex =
-      (sensorDataRingBufferIndex + 1) % SENSOR_DATA_RING_BUFFER_SIZE;
-
-  if (sensorDataRingBufferCount < SENSOR_DATA_RING_BUFFER_SIZE) {
+  
+  if (sensorDataRingBufferCount < sensorDataRingBufferSize){
+    sensorDataRingBuffer.push_back(packet);
     sensorDataRingBufferCount++;
-  } else {
-    // Buffer ist voll: ältester nicht gesendeter Eintrag wurde überschrieben.
-    sensorDataRingBufferTransmittedIndex =
-        (sensorDataRingBufferTransmittedIndex + 1) % SENSOR_DATA_RING_BUFFER_SIZE;
+  }else{
+    sensorDataRingBuffer[sensorDataRingBufferIndex] = packet;
+    sensorDataRingBufferIndex = (sensorDataRingBufferIndex + 1) % sensorDataRingBufferSize;
   }
+
 }
 
 void resetSensorDataRingBuffer() {
@@ -138,7 +135,13 @@ void resetSensorDataRingBuffer() {
   sensorDataRingBufferCount = 0;
   sensorDataRingBufferInsertionCounter = 0;
   sensorDataRingBufferTransmittedIndex = 0;
-  sensorDataRingBufferSendCount = 0;
+  sensorDataRingBuffer.clear();
+}
+
+void writeCachedTransferDone() {
+  SensorDataPacket donePacket = {};
+  donePacket.timestamp = 0;
+  cachedSensorDataCharacteristic.writeValue((byte*)&donePacket, sizeof(donePacket));
 }
 
 void evaluateMeasurementStatus(BLEDevice central, BLECharacteristic characteristic) {
@@ -212,7 +215,7 @@ void evaluateMeasurementStatus(BLEDevice central, BLECharacteristic characterist
     if(warningStatus == 3){
       warningStatus = 0; //reset to inactive
       //communicate acknowledgment to app
-      if(warningAcknowledgedCharacteristic.writeValue(true)){
+      if(!warningAcknowledgedCharacteristic.writeValue(true)){
         Serial.println("Failed to set warning acknowledgment characteristic.");
       }
     }
@@ -225,20 +228,34 @@ void evaluateMeasurementStatus(BLEDevice central, BLECharacteristic characterist
 void onDeviceSetupConfigWritten(BLEDevice central, BLECharacteristic characteristic){
   DeviceSetupConfig config;
   int n = characteristic.readValue((byte*)&config, sizeof(config));
-  if (!n){
+  if (n != sizeof(config)){
     Serial.println("Packet Malformed");
     return;
   }
+
   uint8_t measurementInterval = config.measurementInterval;
   uint32_t id = config.deviceId;
+
+  if (measurementInterval < 3 || measurementInterval > 60) {
+    Serial.print("Invalid measurement interval received: ");
+    Serial.println(measurementInterval);
+    Serial.println("Measurement interval must be between 3 and 60 seconds.");
+    return;
+  }
+
 
   Serial.print("Received new setup config: Measurement Interval - ");
   Serial.print(measurementInterval);
   Serial.print(", ID - ");
   Serial.println(id);
 
-  int idResult = kv_set(ID_KEY, &id, sizeof(id), id);
-  int measurementIntervalResult = kv_set(INTERVAL_KEY, &measurementInterval, sizeof(measurementInterval), measurementInterval);
+  int idResult = kv_set(ID_KEY, &id, sizeof(id), 0);
+  int measurementIntervalResult = kv_set(
+      INTERVAL_KEY,
+      &measurementInterval,
+      sizeof(measurementInterval),
+      0
+  );
 
   if (idResult != MBED_SUCCESS || measurementIntervalResult != MBED_SUCCESS){
     Serial.println("Failed to write config to KVStore. Restarting Pairing process...");
@@ -247,8 +264,9 @@ void onDeviceSetupConfigWritten(BLEDevice central, BLECharacteristic characteris
     Serial.print(id);
     Serial.print(", Measurement Interval - ");
     Serial.println(measurementInterval);
+    setupResetPending = true;
+    setupResetAt = millis() + 2000;
   }
-  NVIC_SystemReset();
 }
 
 void bleFirstSetup(){
@@ -259,6 +277,11 @@ void bleFirstSetup(){
 
   while(true){
     BLE.poll();
+
+    if (setupResetPending && millis() >= setupResetAt) {
+      NVIC_SystemReset();
+    }
+
     ThisThread::sleep_for(10ms);
   }
 }
@@ -277,48 +300,55 @@ void onBleConnected(BLEDevice central) {
   int idResult = kv_get_info(ID_KEY, &idInfo);
   int intervalResult = kv_get_info(INTERVAL_KEY, &intervalInfo);
 
+  if (idResult != MBED_SUCCESS || intervalResult != MBED_SUCCESS){
+    Serial.println("Keys do not exist. Starting Pairing process...");
+    NVIC_SystemReset();
+    return;
+  }else if (idInfo.size != sizeof(idValue) || intervalInfo.size != sizeof(intervalValue)){
+    Serial.println("Keys exists but have unexpected sizes. Restarting Pairing process...");
+    NVIC_SystemReset();
+    return;
+  }
+
   int n = kv_get(INTERVAL_KEY, &intervalValue, sizeof(intervalValue), &intervalInfo.size);
 
   if (n != MBED_SUCCESS) {
     Serial.println("Failed to read measurement interval from KVStore. Restarting Pairing process...");
     NVIC_SystemReset();
+    return;
   }
-  if (idResult != MBED_SUCCESS || intervalResult != MBED_SUCCESS){
-    Serial.println("Keys do not exist. Starting Pairing process...");
-    NVIC_SystemReset();
-  }else if (idInfo.size != sizeof(idValue) || intervalInfo.size != sizeof(intervalValue)){
-    Serial.println("Keys exists but have unexpected sizes. Restarting Pairing process...");
-    NVIC_SystemReset();
-  }else{
-    Serial.println("Keys exist and have expected sizes. Continuing with normal execution...");
-    sensorInterval = intervalValue * 1000;
-    Serial.println("Measurement interval set to: " + String(sensorInterval) + " ms");
-    BLE.stopAdvertise();
-  }
+
+  Serial.println("Keys exist and have expected sizes. Continuing with normal execution...");
+  sensorInterval = intervalValue * 1000;
+  Serial.println("Measurement interval set to: " + String(sensorInterval) + " ms");
+  BLE.stopAdvertise();
+
   bleClientConnected = true;
+
 }
 
 void onBleDisconnected(BLEDevice central) {
   bleClientConnected = false;
   bleClientAuthenticated = false;
-
-  // reset all relevant variables
+  //reset all relevant variables
   roomName = "";
   smoothString = "";
   smoothIndex = 0;
   altView = false;
   statusCode = 0;
-  warningStatus = 0;
-
-  // not resetting, to avoid having to synchronize access
-  // currentWarningMessages.clear();
-
-  // write acknowledged
-  if (warningAcknowledgedCharacteristic.writeValue(false)) {
+  warningStatus= 0;
+  //not resetting, to avoid having to synchronize access
+  //currentWarningMessages.clear();
+  //write acknowledged
+  if (!warningAcknowledgedCharacteristic.writeValue(false)) {
     Serial.println("Failed to reset warning acknowledgment.");
   }
 
-  resetSensorDataRingBuffer();
+  sensorDataRingBufferIndex = 0;
+  sensorDataRingBufferCount = 0;
+  sensorDataRingBufferInsertionCounter = 0;
+  sensorDataRingBufferTransmittedIndex = 0;
+  sensorDataRingBuffer.clear();
 
   BLE.stopAdvertise();
   BLE.setDeviceName("G5T4CC");
@@ -351,6 +381,7 @@ void onAuthenticationPacketWritten(BLEDevice central, BLECharacteristic characte
   if (idResult != MBED_SUCCESS || idInfo.size != sizeof(id)) {
     Serial.println("ID Key invalid. Restarting Pairing process...");
     NVIC_SystemReset();
+    return;
   }
 
   uint32_t storedId;
@@ -358,6 +389,7 @@ void onAuthenticationPacketWritten(BLEDevice central, BLECharacteristic characte
   if (idReadResult != MBED_SUCCESS) {
     Serial.println("Failed to read ID from KVStore. Restarting Pairing process...");
     NVIC_SystemReset();
+    return;
   }
 
   if (id != storedId) {
@@ -372,12 +404,7 @@ void onAuthenticationPacketWritten(BLEDevice central, BLECharacteristic characte
 
   roomName = String(safeRoomName);
   bleClientAuthenticated = true;
-
-  sensorDataRingBufferTransmittedIndex =
-      (sensorDataRingBufferIndex - sensorDataRingBufferCount + SENSOR_DATA_RING_BUFFER_SIZE)
-      % SENSOR_DATA_RING_BUFFER_SIZE;
-
-  sensorDataRingBufferSendCount = 0;
+  sensorDataRingBufferTransmittedIndex = 0;
 
   Serial.println("Client authenticated successfully.");
   Serial.print("Room Name: ");
@@ -410,7 +437,8 @@ void onWarningmessageLengthWritten(BLEDevice central, BLECharacteristic characte
   warningMessageAck = 0;
   warningMessageBuffer = "";
   currentState = "CONNECTED_ACTIVE_WARNING";
-  stateChanged = true;   
+  stateChanged = true;
+  
 
   Serial.print("Received new warning message length: ");
   Serial.println(warningMessageLength);
@@ -498,17 +526,16 @@ void onWarningAcknowledgedWritten(BLEDevice central, BLECharacteristic character
     stateChanged = true;
   }else{
     Serial.println("Received unexpected warning acknowledgment. Resetting acknowledgment to false...");
-    if (warningAcknowledgedCharacteristic.writeValue(false)) {
+    if (!warningAcknowledgedCharacteristic.writeValue(false)) {
       Serial.println("Failed to reset warning acknowledgment.");
     }
   }
 }
 
-void onCachedSensorDataAckWritten(BLEDevice central, BLECharacteristic characteristic) {
+void onCachedSensorDataAckWritten(BLEDevice central, BLECharacteristic characteristic){
   if (!bleClientAuthenticated) {
     Serial.println("Unauthenticated client tried to write cached sensor data acknowledgment. Disconnecting...");
     central.disconnect();
-
     currentState = "WAITING_FOR_KNOWN_CONNECTION";
     stateChanged = true;
     return;
@@ -516,30 +543,33 @@ void onCachedSensorDataAckWritten(BLEDevice central, BLECharacteristic character
 
   bool ack = false;
   int n = characteristic.readValue((byte*)&ack, sizeof(ack));
-  if (n != sizeof(ack) || !ack) {
+  if (n != sizeof(ack) || !ack){
     Serial.println("Packet malformed or ACK was false");
     return;
   }
 
   if (sensorDataRingBufferCount == 0) {
     Serial.println("No cached sensor data available.");
+    writeCachedTransferDone();
     return;
   }
 
-  if (sensorDataRingBufferSendCount >= sensorDataRingBufferCount) {
+  if (sensorDataRingBufferTransmittedIndex >= sensorDataRingBufferCount) {
     Serial.println("All cached sensor data packets have been acknowledged by the client.");
+    writeCachedTransferDone();
     resetSensorDataRingBuffer();
     return;
   }
 
-  SensorDataPacket packetToSend =
-      sensorDataRingBuffer[sensorDataRingBufferTransmittedIndex];
+  int16_t packetIndex = sensorDataRingBufferTransmittedIndex;
+  if (sensorDataRingBufferCount == sensorDataRingBufferSize) {
+    packetIndex = (sensorDataRingBufferIndex + sensorDataRingBufferTransmittedIndex)
+        % sensorDataRingBufferSize;
+  }
 
-  bool ok = cachedSensorDataCharacteristic.writeValue(
-      (byte*)&packetToSend,
-      sizeof(packetToSend)
-  );
+  SensorDataPacket packetToSend = sensorDataRingBuffer[packetIndex];
 
+  bool ok = cachedSensorDataCharacteristic.writeValue((byte*)&packetToSend, sizeof(packetToSend));
   Serial.println(String("cached write ok=") + (ok ? "true" : "false"));
 
   if (!ok) {
@@ -550,13 +580,11 @@ void onCachedSensorDataAckWritten(BLEDevice central, BLECharacteristic character
   Serial.print("Prepared cached sensor data packet with timestamp: ");
   Serial.println(packetToSend.timestamp);
 
-  sensorDataRingBufferTransmittedIndex =
-      (sensorDataRingBufferTransmittedIndex + 1) % SENSOR_DATA_RING_BUFFER_SIZE;
-
-  sensorDataRingBufferSendCount++;
+  sensorDataRingBufferTransmittedIndex++;
 }
 
-void bleTask() {
+void bleTask()
+{
   currentState = "WAITING_FOR_KNOWN_CONNECTION";
   stateChanged = true;
 
@@ -650,8 +678,8 @@ void setStateData(){
       lightOffMs=75;
       lightR = 255;
       lightG = 0;
-      lightB = 0;
-  
+      lightB = 0;  
+
   }else if( currentState == "ACTIVE_WARNING_ACKNOWLEDGED"){
       smoothString = roomName;
       screenUpdateFunction = &acknowledgedWarningsScreen;
@@ -673,7 +701,12 @@ void setStateData(){
 void setup() {
   setupScreen();
 
-  if (!setupSensors()) while (1);
+  if (!setupSensors()) while (1){
+    printScreen(0,"SUKA");
+    String mills = String(millis());
+    printScreen(1,mills);
+    ThisThread::sleep_for(500ms);
+  };
   setupButtons();
   setupLight();
   setColorRGB(lightR, lightG, lightB);
@@ -744,7 +777,7 @@ void loop() {
     }
     if(warningStatus == 2&& !altView){
       if (activatedButtons&2){
-        if (skipText == currentWarningMessages.size()){
+        if (skipText == static_cast<int16_t>(currentWarningMessages.size())){
           warningStatus = 3; //acknowledge warning after user skipped all warning messages
           skipText = 1;
           currentState = "ACTIVE_WARNING_ACKNOWLEDGED";
@@ -760,13 +793,13 @@ void loop() {
     if (warningStatus == 3 && !altView){
       if (activatedButtons&2){
         skipText+=1;
-        if (skipText > currentWarningMessages.size()){
+        if (skipText > static_cast<int16_t>(currentWarningMessages.size())){
           skipText = 1;
         }
       }if (activatedButtons&4){
         skipText-=1;
         if (skipText < 1){
-          skipText = currentWarningMessages.size();
+          skipText = static_cast<int16_t>(currentWarningMessages.size());
         }
       }
     }
@@ -788,7 +821,8 @@ void loop() {
   }
     sensorDataRingBufferInsertionCounter++;
   }
-  
+
+
   if (currentMillis - lastScreenUpdate >= screenInterval) {
     lastScreenUpdate = currentMillis;
 
