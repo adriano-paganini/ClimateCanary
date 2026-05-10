@@ -20,6 +20,8 @@ Thread bleThread;
 
 bool bleClientConnected = false;
 bool bleClientAuthenticated = false;
+bool setupResetPending = false;
+unsigned long setupResetAt = 0;
 
 constexpr char NORMAL_NAME[] = "G5T4CC";
 constexpr char SETUP_NAME[]  = "G5T4SETUP";
@@ -127,6 +129,20 @@ void sensorDataRingBufferInsert(SensorData data){
 
 }
 
+void resetSensorDataRingBuffer() {
+  sensorDataRingBufferIndex = 0;
+  sensorDataRingBufferCount = 0;
+  sensorDataRingBufferInsertionCounter = 0;
+  sensorDataRingBufferTransmittedIndex = 0;
+  sensorDataRingBuffer.clear();
+}
+
+void writeCachedTransferDone() {
+  SensorDataPacket donePacket = {};
+  donePacket.timestamp = 0;
+  cachedSensorDataCharacteristic.writeValue((byte*)&donePacket, sizeof(donePacket));
+}
+
 void evaluateMeasurementStatus(BLEDevice central, BLECharacteristic characteristic) {
   if (!bleClientAuthenticated) {
     Serial.println("Unauthenticated client tried to write measurement status. Disconnecting...");
@@ -198,7 +214,7 @@ void evaluateMeasurementStatus(BLEDevice central, BLECharacteristic characterist
     if(warningStatus == 3){
       warningStatus = 0; //reset to inactive
       //communicate acknowledgment to app
-      if(warningAcknowledgedCharacteristic.writeValue(true)){
+      if(!warningAcknowledgedCharacteristic.writeValue(true)){
         Serial.println("Failed to set warning acknowledgment characteristic.");
       }
     }
@@ -247,8 +263,9 @@ void onDeviceSetupConfigWritten(BLEDevice central, BLECharacteristic characteris
     Serial.print(id);
     Serial.print(", Measurement Interval - ");
     Serial.println(measurementInterval);
+    setupResetPending = true;
+    setupResetAt = millis() + 2000;
   }
-  NVIC_SystemReset();
 }
 
 void bleFirstSetup(){
@@ -259,6 +276,11 @@ void bleFirstSetup(){
 
   while(true){
     BLE.poll();
+
+    if (setupResetPending && millis() >= setupResetAt) {
+      NVIC_SystemReset();
+    }
+
     ThisThread::sleep_for(10);
   }
 }
@@ -280,9 +302,11 @@ void onBleConnected(BLEDevice central) {
   if (idResult != MBED_SUCCESS || intervalResult != MBED_SUCCESS){
     Serial.println("Keys do not exist. Starting Pairing process...");
     NVIC_SystemReset();
+    return;
   }else if (idInfo.size != sizeof(idValue) || intervalInfo.size != sizeof(intervalValue)){
     Serial.println("Keys exists but have unexpected sizes. Restarting Pairing process...");
     NVIC_SystemReset();
+    return;
   }
 
   int n = kv_get(INTERVAL_KEY, &intervalValue, sizeof(intervalValue), &intervalInfo.size);
@@ -290,6 +314,7 @@ void onBleConnected(BLEDevice central) {
   if (n != MBED_SUCCESS) {
     Serial.println("Failed to read measurement interval from KVStore. Restarting Pairing process...");
     NVIC_SystemReset();
+    return;
   }
 
   Serial.println("Keys exist and have expected sizes. Continuing with normal execution...");
@@ -314,7 +339,7 @@ void onBleDisconnected(BLEDevice central) {
   //not resetting, to avoid having to synchronize access
   //currentWarningMessages.clear();
   //write acknowledged
-  if (warningAcknowledgedCharacteristic.writeValue(false)) {
+  if (!warningAcknowledgedCharacteristic.writeValue(false)) {
     Serial.println("Failed to reset warning acknowledgment.");
   }
 
@@ -355,6 +380,7 @@ void onAuthenticationPacketWritten(BLEDevice central, BLECharacteristic characte
   if (idResult != MBED_SUCCESS || idInfo.size != sizeof(id)) {
     Serial.println("ID Key invalid. Restarting Pairing process...");
     NVIC_SystemReset();
+    return;
   }
 
   uint32_t storedId;
@@ -362,6 +388,7 @@ void onAuthenticationPacketWritten(BLEDevice central, BLECharacteristic characte
   if (idReadResult != MBED_SUCCESS) {
     Serial.println("Failed to read ID from KVStore. Restarting Pairing process...");
     NVIC_SystemReset();
+    return;
   }
 
   if (id != storedId) {
@@ -376,6 +403,7 @@ void onAuthenticationPacketWritten(BLEDevice central, BLECharacteristic characte
 
   roomName = String(safeRoomName);
   bleClientAuthenticated = true;
+  sensorDataRingBufferTransmittedIndex = 0;
 
   Serial.println("Client authenticated successfully.");
   Serial.print("Room Name: ");
@@ -497,7 +525,7 @@ void onWarningAcknowledgedWritten(BLEDevice central, BLECharacteristic character
     stateChanged = true;
   }else{
     Serial.println("Received unexpected warning acknowledgment. Resetting acknowledgment to false...");
-    if (warningAcknowledgedCharacteristic.writeValue(false)) {
+    if (!warningAcknowledgedCharacteristic.writeValue(false)) {
       Serial.println("Failed to reset warning acknowledgment.");
     }
   }
@@ -521,21 +549,24 @@ void onCachedSensorDataAckWritten(BLEDevice central, BLECharacteristic character
 
   if (sensorDataRingBufferCount == 0) {
     Serial.println("No cached sensor data available.");
+    writeCachedTransferDone();
     return;
   }
 
   if (sensorDataRingBufferTransmittedIndex >= sensorDataRingBufferCount) {
     Serial.println("All cached sensor data packets have been acknowledged by the client.");
-
-    sensorDataRingBufferIndex = 0;
-    sensorDataRingBufferCount = 0;
-    sensorDataRingBufferInsertionCounter = 0;
-    sensorDataRingBufferTransmittedIndex = 0;
-    sensorDataRingBuffer.clear();
+    writeCachedTransferDone();
+    resetSensorDataRingBuffer();
     return;
   }
 
-  SensorDataPacket packetToSend = sensorDataRingBuffer[sensorDataRingBufferTransmittedIndex];
+  int16_t packetIndex = sensorDataRingBufferTransmittedIndex;
+  if (sensorDataRingBufferCount == sensorDataRingBufferSize) {
+    packetIndex = (sensorDataRingBufferIndex + sensorDataRingBufferTransmittedIndex)
+        % sensorDataRingBufferSize;
+  }
+
+  SensorDataPacket packetToSend = sensorDataRingBuffer[packetIndex];
 
   bool ok = cachedSensorDataCharacteristic.writeValue((byte*)&packetToSend, sizeof(packetToSend));
   Serial.println(String("cached write ok=") + (ok ? "true" : "false"));
@@ -564,17 +595,6 @@ void bleTask()
   warningMessageChunkCharacteristic.setEventHandler(BLEWritten, onCharPacketWritten);
   warningAcknowledgedCharacteristic.setEventHandler(BLEWritten, onWarningAcknowledgedWritten);
   cachedSensorDataAckCharacteristic.setEventHandler(BLEWritten, onCachedSensorDataAckWritten);
-
-  if (sensorDataRingBufferCount > 0) {
-    SensorDataPacket packetToSend = sensorDataRingBuffer[sensorDataRingBufferTransmittedIndex];
-    if (cachedSensorDataCharacteristic.writeValue((byte*)&packetToSend, sizeof(packetToSend))){
-      Serial.println("Failed to write cached sensor data packet.");
-    }else{      
-      Serial.print("Sent cached sensor data packet with timestamp: ");
-      Serial.println(packetToSend.timestamp);
-    }
-    sensorDataRingBufferTransmittedIndex = (sensorDataRingBufferTransmittedIndex + 1) % sensorDataRingBufferSize; 
-  }
 
   uint32_t lastSend = 0;
 
