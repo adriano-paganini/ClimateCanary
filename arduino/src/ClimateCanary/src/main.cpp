@@ -211,20 +211,34 @@ void evaluateMeasurementStatus(BLEDevice central, BLECharacteristic characterist
 void onDeviceSetupConfigWritten(BLEDevice central, BLECharacteristic characteristic){
   DeviceSetupConfig config;
   int n = characteristic.readValue((byte*)&config, sizeof(config));
-  if (!n){
+  if (n != sizeof(config)){
     Serial.println("Packet Malformed");
     return;
   }
+
   uint8_t measurementInterval = config.measurementInterval;
   uint32_t id = config.deviceId;
+
+  if (measurementInterval < 3 || measurementInterval > 60) {
+    Serial.print("Invalid measurement interval received: ");
+    Serial.println(measurementInterval);
+    Serial.println("Measurement interval must be between 3 and 60 seconds.");
+    return;
+  }
+
 
   Serial.print("Received new setup config: Measurement Interval - ");
   Serial.print(measurementInterval);
   Serial.print(", ID - ");
   Serial.println(id);
 
-  int idResult = kv_set(ID_KEY, &id, sizeof(id), id);
-  int measurementIntervalResult = kv_set(INTERVAL_KEY, &measurementInterval, sizeof(measurementInterval), measurementInterval);
+  int idResult = kv_set(ID_KEY, &id, sizeof(id), 0);
+  int measurementIntervalResult = kv_set(
+      INTERVAL_KEY,
+      &measurementInterval,
+      sizeof(measurementInterval),
+      0
+  );
 
   if (idResult != MBED_SUCCESS || measurementIntervalResult != MBED_SUCCESS){
     Serial.println("Failed to write config to KVStore. Restarting Pairing process...");
@@ -263,25 +277,28 @@ void onBleConnected(BLEDevice central) {
   int idResult = kv_get_info(ID_KEY, &idInfo);
   int intervalResult = kv_get_info(INTERVAL_KEY, &intervalInfo);
 
-  int n = kv_get(INTERVAL_KEY, &intervalValue, sizeof(intervalValue), &intervalInfo.size);
-
-  if (n != MBED_SUCCESS) {
-    Serial.println("Failed to read measurement interval from KVStore. Restarting Pairing process...");
-    NVIC_SystemReset();
-  }
   if (idResult != MBED_SUCCESS || intervalResult != MBED_SUCCESS){
     Serial.println("Keys do not exist. Starting Pairing process...");
     NVIC_SystemReset();
   }else if (idInfo.size != sizeof(idValue) || intervalInfo.size != sizeof(intervalValue)){
     Serial.println("Keys exists but have unexpected sizes. Restarting Pairing process...");
     NVIC_SystemReset();
-  }else{
-    Serial.println("Keys exist and have expected sizes. Continuing with normal execution...");
-    sensorInterval = intervalValue * 1000;
-    Serial.println("Measurement interval set to: " + String(sensorInterval) + " ms");
-    BLE.stopAdvertise();
   }
+
+  int n = kv_get(INTERVAL_KEY, &intervalValue, sizeof(intervalValue), &intervalInfo.size);
+
+  if (n != MBED_SUCCESS) {
+    Serial.println("Failed to read measurement interval from KVStore. Restarting Pairing process...");
+    NVIC_SystemReset();
+  }
+
+  Serial.println("Keys exist and have expected sizes. Continuing with normal execution...");
+  sensorInterval = intervalValue * 1000;
+  Serial.println("Measurement interval set to: " + String(sensorInterval) + " ms");
+  BLE.stopAdvertise();
+
   bleClientConnected = true;
+
 }
 
 void onBleDisconnected(BLEDevice central) {
