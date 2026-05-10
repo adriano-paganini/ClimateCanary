@@ -9,8 +9,9 @@
 #include <vector>
 #include <string>
 
+//TODO:data buffering
+
 using namespace rtos;
-using namespace std::chrono_literals;
 using namespace std::chrono_literals;
 
 // ============================================================
@@ -97,43 +98,50 @@ uint16_t warningMessageLength = 0;
 uint16_t warningMessageAck = 0;
 
 String warningMessageBuffer = "";
-uint skipText = 1;
+int16_t skipText = 1;
 
 // ============================================================
 // Buffer Management
 // ============================================================
-constexpr int16_t SENSOR_DATA_RING_BUFFER_SIZE = 1000;
 
-SensorDataPacket sensorDataRingBuffer[SENSOR_DATA_RING_BUFFER_SIZE];
-
+std::vector<SensorDataPacket> sensorDataRingBuffer;
 int16_t sensorDataRingBufferIndex = 0;
+int16_t sensorDataRingBufferSize = 2000; // close to max safe value
 int16_t sensorDataRingBufferCount = 0;
-int16_t sensorDataRingBufferInsertionCounter = 0;
-int16_t sensorDataRingBufferTransmittedIndex = 0;
-int16_t sensorDataRingBufferSendCount = 0;
+int16_t sensorDataRingBufferInsertionCounter = 0; // counts how many values have been seen, to determine, when to safe the next one.
+int16_t sensorDataRingBufferTransmittedIndex = 0; // index of the next packet to transmit
 
-void sensorDataRingBufferInsert(SensorData data) {
-  Serial.println("Inserting new sensor data into ring buffer at index: " + String(sensorDataRingBufferIndex));
-
+void sensorDataRingBufferInsert(SensorData data){
+  Serial.println("Inserting new sensor data into ring buffer at index: " + String((sensorDataRingBufferIndex)? sensorDataRingBufferIndex : sensorDataRingBuffer.size()+1));
   SensorDataPacket packet;
   packet.timestamp = millis();
   packet.iaq = data.iaq;
   packet.temperature = data.temperature;
   packet.humidity = data.humidity;
   packet.pressure = data.pressure;
-
-  sensorDataRingBuffer[sensorDataRingBufferIndex] = packet;
-
-  sensorDataRingBufferIndex =
-      (sensorDataRingBufferIndex + 1) % SENSOR_DATA_RING_BUFFER_SIZE;
-
-  if (sensorDataRingBufferCount < SENSOR_DATA_RING_BUFFER_SIZE) {
+  
+  if (sensorDataRingBufferCount < sensorDataRingBufferSize){
+    sensorDataRingBuffer.push_back(packet);
     sensorDataRingBufferCount++;
   }else{
     sensorDataRingBuffer[sensorDataRingBufferIndex] = packet;
     sensorDataRingBufferIndex = (sensorDataRingBufferIndex + 1) % sensorDataRingBufferSize;
   }
 
+}
+
+void resetSensorDataRingBuffer() {
+  sensorDataRingBufferIndex = 0;
+  sensorDataRingBufferCount = 0;
+  sensorDataRingBufferInsertionCounter = 0;
+  sensorDataRingBufferTransmittedIndex = 0;
+  sensorDataRingBuffer.clear();
+}
+
+void writeCachedTransferDone() {
+  SensorDataPacket donePacket = {};
+  donePacket.timestamp = 0;
+  cachedSensorDataCharacteristic.writeValue((byte*)&donePacket, sizeof(donePacket));
 }
 
 void evaluateMeasurementStatus(BLEDevice central, BLECharacteristic characteristic) {
@@ -322,8 +330,7 @@ void onBleConnected(BLEDevice central) {
 void onBleDisconnected(BLEDevice central) {
   bleClientConnected = false;
   bleClientAuthenticated = false;
-
-  // reset all relevant variables
+  //reset all relevant variables
   roomName = "";
   smoothString = "";
   smoothIndex = 0;
@@ -337,7 +344,11 @@ void onBleDisconnected(BLEDevice central) {
     Serial.println("Failed to reset warning acknowledgment.");
   }
 
-  resetSensorDataRingBuffer();
+  sensorDataRingBufferIndex = 0;
+  sensorDataRingBufferCount = 0;
+  sensorDataRingBufferInsertionCounter = 0;
+  sensorDataRingBufferTransmittedIndex = 0;
+  sensorDataRingBuffer.clear();
 
   BLE.stopAdvertise();
   BLE.setDeviceName("G5T4CC");
@@ -426,7 +437,8 @@ void onWarningmessageLengthWritten(BLEDevice central, BLECharacteristic characte
   warningMessageAck = 0;
   warningMessageBuffer = "";
   currentState = "CONNECTED_ACTIVE_WARNING";
-  stateChanged = true;   
+  stateChanged = true;
+  
 
   Serial.print("Received new warning message length: ");
   Serial.println(warningMessageLength);
@@ -520,11 +532,10 @@ void onWarningAcknowledgedWritten(BLEDevice central, BLECharacteristic character
   }
 }
 
-void onCachedSensorDataAckWritten(BLEDevice central, BLECharacteristic characteristic) {
+void onCachedSensorDataAckWritten(BLEDevice central, BLECharacteristic characteristic){
   if (!bleClientAuthenticated) {
     Serial.println("Unauthenticated client tried to write cached sensor data acknowledgment. Disconnecting...");
     central.disconnect();
-
     currentState = "WAITING_FOR_KNOWN_CONNECTION";
     stateChanged = true;
     return;
@@ -532,7 +543,7 @@ void onCachedSensorDataAckWritten(BLEDevice central, BLECharacteristic character
 
   bool ack = false;
   int n = characteristic.readValue((byte*)&ack, sizeof(ack));
-  if (n != sizeof(ack) || !ack) {
+  if (n != sizeof(ack) || !ack){
     Serial.println("Packet malformed or ACK was false");
     return;
   }
@@ -543,7 +554,7 @@ void onCachedSensorDataAckWritten(BLEDevice central, BLECharacteristic character
     return;
   }
 
-  if (sensorDataRingBufferSendCount >= sensorDataRingBufferCount) {
+  if (sensorDataRingBufferTransmittedIndex >= sensorDataRingBufferCount) {
     Serial.println("All cached sensor data packets have been acknowledged by the client.");
     writeCachedTransferDone();
     resetSensorDataRingBuffer();
@@ -569,13 +580,11 @@ void onCachedSensorDataAckWritten(BLEDevice central, BLECharacteristic character
   Serial.print("Prepared cached sensor data packet with timestamp: ");
   Serial.println(packetToSend.timestamp);
 
-  sensorDataRingBufferTransmittedIndex =
-      (sensorDataRingBufferTransmittedIndex + 1) % SENSOR_DATA_RING_BUFFER_SIZE;
-
-  sensorDataRingBufferSendCount++;
+  sensorDataRingBufferTransmittedIndex++;
 }
 
-void bleTask() {
+void bleTask()
+{
   currentState = "WAITING_FOR_KNOWN_CONNECTION";
   stateChanged = true;
 
@@ -669,8 +678,8 @@ void setStateData(){
       lightOffMs=75;
       lightR = 255;
       lightG = 0;
-      lightB = 0;
-  
+      lightB = 0;  
+
   }else if( currentState == "ACTIVE_WARNING_ACKNOWLEDGED"){
       smoothString = roomName;
       screenUpdateFunction = &acknowledgedWarningsScreen;
@@ -812,7 +821,8 @@ void loop() {
   }
     sensorDataRingBufferInsertionCounter++;
   }
-  
+
+
   if (currentMillis - lastScreenUpdate >= screenInterval) {
     lastScreenUpdate = currentMillis;
 
