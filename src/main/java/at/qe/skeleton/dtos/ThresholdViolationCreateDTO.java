@@ -12,7 +12,7 @@ public record ThresholdViolationCreateDTO(
         Metric metric,
 
         @NotNull
-        Long value,
+        Float value,
 
         @NotNull
         LocalDateTime startTime,

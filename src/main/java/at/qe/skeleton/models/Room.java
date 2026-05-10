@@ -18,7 +18,7 @@ public class Room {
     @Enumerated(EnumType.STRING)
     private RoomType roomType;
 
-    private int minOccupancy;
+    private Boolean privacyMode;
 
     @ManyToOne
     @JoinColumn(name = "department_id")
@@ -50,10 +50,10 @@ public class Room {
 
     public Room() {}
 
-    public Room(String name, RoomType roomType, int minOccupancy) {
+    public Room(String name, RoomType roomType,  Boolean privacyMode) {
         this.name = name;
         this.roomType = roomType;
-        this.minOccupancy = minOccupancy;
+        this.privacyMode = privacyMode;
     }
 
     public Long getId() { return id; }
@@ -64,8 +64,13 @@ public class Room {
     public RoomType getRoomType() { return roomType; }
     public void setRoomType(RoomType roomType) { this.roomType = roomType; }
 
-    public int getMinOccupancy() { return minOccupancy; }
-    public void setMinOccupancy(int minOccupancy) { this.minOccupancy = minOccupancy; }
+    public void setPrivacyMode(Boolean privacyMode) {
+        this.privacyMode = privacyMode;
+    }
+
+    public Boolean getPrivacyMode() {
+        return privacyMode;
+    }
 
     public Department getDepartment() { return department; }
     public void setDepartment(Department department) { this.department = department; }
@@ -100,6 +105,10 @@ public class Room {
 
     public List<Measurement> getMeasurements() {
         return measurements;
+    }
+
+    public void setId(Long id){
+        this.id = id;
     }
 
     @Override

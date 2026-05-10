@@ -1,4 +1,5 @@
 import {
+    GetAllViolationStatusEnum,
     ThresholdViolationControllerApi,
     ThresholdViolationCreateDTO,
     ThresholdViolationDTO,
@@ -8,9 +9,15 @@ import { apiConfig } from "./apiConfig";
 
 const api = new ThresholdViolationControllerApi(apiConfig);
 
+export { GetAllViolationStatusEnum as ViolationStatusEnum };
+
 export const ViolationService = {
-    getAll: (): Promise<ThresholdViolationDTO[]> =>
-        api.getAll().then(r => r.data),
+    getAll: (params: {
+        violationStatus?: GetAllViolationStatusEnum;
+        roomId?: number;
+        departmentId?: number;
+    } = {}): Promise<ThresholdViolationDTO[]> =>
+        api.getAll(params).then(r => r.data),
 
     getById: (id: number): Promise<ThresholdViolationDTO> =>
         api.getById({ id }).then(r => r.data),

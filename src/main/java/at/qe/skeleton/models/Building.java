@@ -35,6 +35,8 @@ public class Building {
 
     public List<Room> getRooms() { return rooms; }
 
+    public void setRooms(List<Room> rooms) { this.rooms = rooms; }
+
     public Address getAddress() { return address; }
     public void setAddress(Address address) { this.address = address; }
 

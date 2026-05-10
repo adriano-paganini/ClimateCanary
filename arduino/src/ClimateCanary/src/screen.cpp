@@ -35,7 +35,7 @@ void prettySensorScreen(int smoothIndex, SensorData data){
 
     case 1:
         snprintf(line1, sizeof(line1), "   Air Quality");
-        snprintf(line2, sizeof(line2), "      %.0f,%d", iaq,data.iaq_accuracy);
+        snprintf(line2, sizeof(line2), "       %.0f", iaq);
         break;
 
     case 2:

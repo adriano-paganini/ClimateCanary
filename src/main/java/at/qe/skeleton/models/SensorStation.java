@@ -18,10 +18,12 @@ public class SensorStation {
     @Enumerated(EnumType.STRING)
     private DeviceStatus deviceStatus;
 
-    private Float measurementsPerSec;
+    private Integer measurementInterval;
+
+    private String bleMac;
 
     @ManyToOne
-    @JoinColumn(name = "raspberry_pi_id", nullable = false)
+    @JoinColumn(name = "raspberry_pi_id")
     private RaspberryPi raspberryPi;
 
     @ManyToOne
@@ -51,12 +53,12 @@ public class SensorStation {
         this.deviceStatus = deviceStatus;
     }
 
-    public Float getMeasurementsPerSec() {
-        return measurementsPerSec;
+    public Integer getMeasurementInterval() {
+        return measurementInterval;
     }
 
-    public void setMeasurementsPerSec(Float measurementsPerSec) {
-        this.measurementsPerSec = measurementsPerSec;
+    public void setMeasurementInterval(Integer measurementInterval) {
+        this.measurementInterval = measurementInterval;
     }
 
     public RaspberryPi getRaspberryPi() {
@@ -75,7 +77,18 @@ public class SensorStation {
         this.room = room;
     }
 
+    public String getBleMac() {
+        return bleMac;
+    }
+    public void setBleMac(String bleMac) {
+        this.bleMac = bleMac;
+    }
+
     public List<Measurement> getMeasurements() {
         return measurements;
+    }
+
+    public void setId(Long id){
+        this.id = id;
     }
 }
