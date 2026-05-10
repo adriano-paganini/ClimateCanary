@@ -12,6 +12,7 @@
 //TODO:data buffering
 
 using namespace rtos;
+using namespace std::chrono_literals;
 
 // ============================================================
 // BLE / RTOS
@@ -281,7 +282,7 @@ void bleFirstSetup(){
       NVIC_SystemReset();
     }
 
-    ThisThread::sleep_for(10);
+    ThisThread::sleep_for(10ms);
   }
 }
 
@@ -612,7 +613,7 @@ void bleTask()
         lastSend = now;
       }
     }
-    ThisThread::sleep_for(10);
+    ThisThread::sleep_for(10ms);
   }
 }
 
@@ -704,7 +705,7 @@ void setup() {
     printScreen(0,"SUKA");
     String mills = String(millis());
     printScreen(1,mills);
-    ThisThread::sleep_for(500);
+    ThisThread::sleep_for(500ms);
   };
   setupButtons();
   setupLight();
@@ -734,7 +735,7 @@ void setup() {
       bleThread.start(bleFirstSetup);
   }
   //sleep 2 seconds to ensure stable startup of sensors and ble
-  ThisThread::sleep_for(2000);
+  ThisThread::sleep_for(2s);
 }
 
 void loop() {
@@ -776,7 +777,7 @@ void loop() {
     }
     if(warningStatus == 2&& !altView){
       if (activatedButtons&2){
-        if (skipText == currentWarningMessages.size()){
+        if (skipText == static_cast<int16_t>(currentWarningMessages.size())){
           warningStatus = 3; //acknowledge warning after user skipped all warning messages
           skipText = 1;
           currentState = "ACTIVE_WARNING_ACKNOWLEDGED";
@@ -792,13 +793,13 @@ void loop() {
     if (warningStatus == 3 && !altView){
       if (activatedButtons&2){
         skipText+=1;
-        if (skipText > currentWarningMessages.size()){
+        if (skipText > static_cast<int16_t>(currentWarningMessages.size())){
           skipText = 1;
         }
       }if (activatedButtons&4){
         skipText-=1;
         if (skipText < 1){
-          skipText = currentWarningMessages.size();
+          skipText = static_cast<int16_t>(currentWarningMessages.size());
         }
       }
     }
