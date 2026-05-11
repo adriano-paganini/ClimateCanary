@@ -9,7 +9,6 @@
 #include <vector>
 #include <string>
 
-//TODO:data buffering
 
 using namespace rtos;
 using namespace std::chrono_literals;
