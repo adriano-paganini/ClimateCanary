@@ -99,8 +99,25 @@ async def trigger_scan(piId: int):
     """
     _check_pi_id(piId)
     from ble_scanner import scan_for_stations
-    addresses = await scan_for_stations()
-    return {"addresses": addresses}
+    await scan_for_stations()
+    return {"status": "ok"}
+
+@app.post("/api/spi/{piId}/setup")
+async def setup_station(piId: int, payload: SensorStationDTO):
+    _check_pi_id(piId)
+    print(f"inside setup endpoint")
+    from setup_flow import run_setup
+    success = await run_setup(
+        address=payload.bleMac,
+        sensor_station_id=payload.id,
+        measurement_interval=payload.measurementInterval,
+    )
+    print(f"run setup has finished")
+
+    if success:
+        return {"status": "ok"}
+    else:
+        raise HTTPException(status_code=500, detail="Setup failed — check Pi logs")
 
 
 @app.post("/api/spi/{piId}/stations")

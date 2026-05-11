@@ -188,7 +188,7 @@ async def ble_worker(
             pkt = {
                 "sensor_station_id": sensor_station_id,
                 "room_id":           room_id,
-                "timestamp":         _timestamp(ts),   # ISO string → stored + sent to backend
+                "timestamp":         _timestamp(ts), 
                 "temperature":       temp,
                 "humidity":          hum,
                 "pressure":          press,

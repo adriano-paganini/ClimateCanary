@@ -46,13 +46,16 @@ async def run_setup(
     async with aiohttp.ClientSession() as session:
         try:
             async with BleakClient(address, timeout=20.0) as client:
+                #print(f"[SETUP:{tag}] payload bytes: {' '.join(f)}")
                 await client.write_gatt_char(
-                    SETUP_CONFIG_UUID, payload, response=True,
+                    SETUP_CONFIG_UUID, payload, response=False,
                 )
                 print(f"[SETUP:{tag}] config written — Arduino will reboot.")
             return True
 
         except Exception as e:
-            print(f"[SETUP:{tag}] failed: {e}")
+            import traceback
+            print(f"[SETUP:{tag}] connection failed: {type(e).__name__}: {e}")
+            traceback.print_exc()
             await patch_station_status(session, sensor_station_id, "CONNECTION_FAILED", tag)
             return False
