@@ -1,19 +1,15 @@
 import asyncio
 import struct
 import traceback
-
 import aiohttp
 from bleak import BleakClient
 
 import config
 from config import SETUP_CONFIG_UUID
+from database import save_station
 
 
 def _build_setup_config(measurement_interval: int, pi_id: int) -> bytes:
-    """
-    DeviceSetupConfig: uint8 measurementInterval | uint32 deviceId  => 5 bytes LE
-    Example: interval=10, pi_id=123456 => 0A 40 E2 01 00
-    """
     if not (1 <= measurement_interval <= 255):
         raise ValueError("measurementInterval must be 1–255")
     return struct.pack("<BI", measurement_interval, pi_id)
@@ -25,7 +21,6 @@ async def patch_station_status(
     status: str,
     tag: str,
 ) -> None:
-    """PATCH /api/cpi/{piId}/{sensorStationId} with the given DeviceStatus."""
     url = f"{config.BACKEND_URL}/api/cpi/{config.PI_ID}/{sensor_station_id}"
     try:
         async with session.patch(
@@ -39,11 +34,15 @@ async def patch_station_status(
 
 
 async def run_setup(
-    address: str,
-    sensor_station_id: int,
+    station: dict,   # full SensorStationDTO dict: id, bleMac, name, roomId, …
     measurement_interval: int,
 ) -> bool:
+    import app as app_module
+
+    address = station["bleMac"]
+    sensor_station_id = station["id"]
     tag = address
+
     payload = _build_setup_config(measurement_interval, config.PI_ID)
     print(
         f"[SETUP:{tag}] writing config: interval={measurement_interval}s "
@@ -52,13 +51,17 @@ async def run_setup(
 
     try:
         async with BleakClient(address, timeout=20.0) as client:
-            await client.write_gatt_char(SETUP_CONFIG_UUID, payload, response=False)
-            print(f"[SETUP:{tag}] config written — Arduino will reboot.")
-            await asyncio.sleep(3.0)
+            await client.write_gatt_char(SETUP_CONFIG_UUID, payload, response=True)
+            print(f"[SETUP:{tag}] config written. Arduino will reboot.")
+            await asyncio.sleep(6.0)
+
+        connected_station = {**station, "deviceStatus": "CONNECTED"}
+        await save_station(app_module.db_connection, connected_station)
+        print(f"[SETUP:{tag}] station saved: id={sensor_station_id}, mac={address}, name={station.get('name')!r}")
+        app_module.stations_event.set()
 
         async with aiohttp.ClientSession() as session:
-            await patch_station_status(session, sensor_station_id, "AVAILABLE", tag)
-
+            await patch_station_status(session, sensor_station_id, "CONNECTED", tag)
         return True
 
     except Exception as e:

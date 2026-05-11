@@ -2,20 +2,13 @@ import asyncio
 import aiosqlite
 import uvicorn
 import aiohttp
-from bleak import BleakClient, BleakScanner
-from bleak.backends.device import BLEDevice
-from bleak.backends.scanner import AdvertisementData
+from bleak import BleakClient
 from dataclasses import dataclass
-
 import config as cfg
-from config import (
-    DB_PATH, load_config, load_config_from_string, get_local_ip,
-    BLE_NAME_NORMAL, MANUF_DATA_NORMAL, SVC_ENV_NORMAL, SCAN_DURATION,
-)
+from config import DB_PATH, load_config, load_config_from_string, get_local_ip
 
 from database import init_db, db_writer, load_stations
 from ble_worker import ble_worker
-from setup_flow import run_setup
 from http_sender import http_sender
 from state import set_privacy_mode
 import app as app_module
@@ -31,36 +24,6 @@ class Station:
     name:                str    # name
     device_status:       str    # deviceStatus
     measurement_interval: int   # measurementInterval
-
-def _manuf_matches(adv: AdvertisementData, expected: bytes) -> bool:
-    return any(
-        payload == expected or expected in payload
-        for payload in adv.manufacturer_data.values()
-    )
-
-async def scan_for_all_devices() -> list[str]:
-    found: dict[str, BLEDevice] = {}
-
-    def callback(device: BLEDevice, adv: AdvertisementData) -> None:
-        if device.address in found:
-            return
-        if device.name != BLE_NAME_NORMAL:
-            return
-        if not _manuf_matches(adv, MANUF_DATA_NORMAL):
-            return
-        adv_svcs = [str(s).lower() for s in adv.service_uuids]
-        if not any(SVC_ENV_NORMAL in s or s in SVC_ENV_NORMAL for s in adv_svcs):
-            return
-        print(f"[SCAN] discovered: {device.name}  {device.address}")
-        found[device.address] = device
-
-    async with BleakScanner(detection_callback=callback):
-        print(f"[SCAN] scanning {SCAN_DURATION}s for {BLE_NAME_NORMAL!r} devices…")
-        await asyncio.sleep(SCAN_DURATION)
-
-    addresses = list(found.keys())
-    print(f"[SCAN] found {len(addresses)} device(s): {addresses}")
-    return addresses
 
 
 async def post_booted() -> None:
@@ -84,19 +47,6 @@ async def post_booted() -> None:
         print(f"[CFG] could not post booted: {e}")
 
 
-async def post_discovered(addresses: list[str]) -> None:
-    """Tell the backend which BLE addresses were found during the scan."""
-    url = f"{cfg.BACKEND_URL}/api/cpi/{cfg.PI_ID}/discovered"
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                url, json={"addresses": addresses},
-                timeout=aiohttp.ClientTimeout(total=10),
-            ) as resp:
-                print(f"[CFG] POST discovered → {resp.status}")
-    except Exception as e:
-        print(f"[CFG] could not post discovered devices: {e}")
-
 
 async def fetch_config_from_backend() -> None:
     """
@@ -119,15 +69,6 @@ async def fetch_config_from_backend() -> None:
     except Exception as e:
         print(f"[CFG] could not fetch config: {e}")
 
-async def wait_for_stations(db: aiosqlite.Connection) -> list[Station]:
-    await app_module.stations_event.wait()
-    app_module.stations_event.clear()
-
-    rows = await load_stations(db)
-    stations = [Station(**r) for r in rows]
-    print(f"[CFG] {len(stations)} station(s) loaded from DB.")
-    return stations
-
 
 async def device_loop(
     station: Station,
@@ -139,38 +80,24 @@ async def device_loop(
 
     while True:
         try:
-            if station.device_status == "AVAILABLE":
-                print(f"[BLE:{station.address}] setup mode — writing config…")
-                success = await run_setup(
-                    address=station.address,
-                    sensor_station_id=station.sensor_station_id,
-                    measurement_interval=station.measurement_interval,
+            print(
+                f"[BLE:{station.address}] connecting "
+                f"(pi_id={cfg.PI_ID}, sensor_station_id={station.sensor_station_id}, "
+                f"name={station.name!r})…"
+            )
+            async with BleakClient(station.address, timeout=20.0) as client:
+                print(f"[BLE:{station.address}] connected.")
+                delay = 5
+                await asyncio.gather(
+                    ble_worker(
+                        queue, client,
+                        station.sensor_station_id,
+                        station.room_id,
+                        station.measurement_interval,
+                        db,
+                    ),
+                    db_writer(queue, db, client),
                 )
-                if success:
-                    print(f"[BLE:{station.address}] setup done — waiting for reboot.")
-                    return
-                else:
-                    print(f"[BLE:{station.address}] setup failed — retrying in {delay}s…")
-
-            else:
-                print(
-                    f"[BLE:{station.address}] connecting "
-                    f"(pi_id={cfg.PI_ID}, sensor_station_id={station.sensor_station_id}, "
-                    f"name={station.name!r})…"
-                )
-                async with BleakClient(station.address, timeout=20.0) as client:
-                    print(f"[BLE:{station.address}] connected.")
-                    delay = 5
-                    await asyncio.gather(
-                        ble_worker(
-                            queue, client,
-                            station.sensor_station_id,
-                            station.room_id,
-                            station.measurement_interval,
-                            db,
-                        ),
-                        db_writer(queue, db, client),
-                    )
 
         except Exception as e:
             print(f"[BLE:{station.address}] lost: {e}  – retrying in {delay}s…")
@@ -186,7 +113,9 @@ async def station_manager(
     active_tasks: dict[str, asyncio.Task] = {}
 
     while True:
-        stations = await wait_for_stations(db)
+        rows     = await load_stations(db)
+        stations = [Station(**r) for r in rows]
+        print(f"[SYS] {len(stations)} station(s) loaded from DB")
 
         new_addresses    = {s.address for s in stations}
         active_addresses = set(active_tasks.keys())
@@ -205,6 +134,9 @@ async def station_manager(
                 )
                 active_tasks[station.address] = task
 
+        await app_module.stations_event.wait()
+        app_module.stations_event.clear()
+
 
 async def main() -> None:
     load_config("conf.yml")
@@ -215,12 +147,6 @@ async def main() -> None:
     set_privacy_mode(cfg.PRIVACY_MODE)
 
     await post_booted()
-
-    addresses = await scan_for_all_devices()
-    if addresses:
-        await post_discovered(addresses)
-    else:
-        print("[SYS] no devices found during scan.")
 
     queue: asyncio.Queue = asyncio.Queue()
 

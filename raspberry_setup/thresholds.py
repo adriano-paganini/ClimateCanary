@@ -3,13 +3,11 @@ import aiosqlite
 from dataclasses import dataclass
 from typing import Optional
 
-
 @dataclass
 class Threshold:
     metric:      str
     upper_bound: Optional[float]
     lower_bound: Optional[float]
-
 
 @dataclass
 class MetricConfig:

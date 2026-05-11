@@ -157,10 +157,15 @@ async def ble_worker(
             "pressure":          press,
             "air_quality":       gas,
         }
+        print(f"[BLE:{tag}] cached [{cached_count}] {pkt['timestamp']}: "
+              f"{temp:.1f}°C  {hum:.1f}%  {press:.1f}hPa  {gas}Ω")
         if not get_privacy_mode():
             queue.put_nowait(pkt)
+            print(f"[BLE:{tag}] cached [{cached_count}] queued for upload")
+        else:
+            print(f"[BLE:{tag}] cached [{cached_count}] suppressed (privacy mode)")
         cached_count += 1
-    print(f"[BLE:{tag}] cached packets: {cached_count}")
+    print(f"[BLE:{tag}] cached replay done: {cached_count} packet(s) enqueued")
 
     async with aiohttp.ClientSession() as http_session:
 
@@ -204,6 +209,9 @@ async def ble_worker(
 
             if not get_privacy_mode():
                 queue.put_nowait(pkt)
+                print(f"[BLE:{tag}] measurement queued for upload")
+            else:
+                print(f"[BLE:{tag}] measurement suppressed (privacy mode)")
 
             nonlocal first_packet_reported
             if not first_packet_reported:
@@ -223,11 +231,16 @@ async def ble_worker(
             hum_s   = statuses.get("humidity",    0)
             gas_s   = statuses.get("air_quality", 0)
 
+            print(f"[BLE:{tag}] statuses → press={press_s} temp={temp_s} "
+                  f"hum={hum_s} gas={gas_s}")
             status_payload = _build_status(ts, press_s, temp_s, hum_s, gas_s)
             await client.write_gatt_char(
                 SENSOR_STATUS_UUID, status_payload, response=True
             )
+            print(f"[BLE:{tag}] status written to Arduino")
 
+            if hint_messages:
+                print(f"[BLE:{tag}] {len(hint_messages)} hint message(s): {hint_messages}")
             if hint_messages and not warning_active:
                 warning_active = True
                 await _send_warning(client, hint_messages, tag)

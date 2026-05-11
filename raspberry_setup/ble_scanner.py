@@ -34,8 +34,11 @@ def _manuf_matches(adv: AdvertisementData, expected: bytes) -> bool:
 
 async def scan_for_stations() -> list[str]:
     found: dict[str, BLEDevice] = {}
+    print(f"[SCAN] inside scan for stations function.")
 
     def callback(device: BLEDevice, adv: AdvertisementData) -> None:
+
+        
         if device.address in found:
             return
         if device.name != BLE_NAME_SETUP:
