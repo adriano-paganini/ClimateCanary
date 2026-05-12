@@ -19,7 +19,7 @@ import java.util.List;
 public class RaspberryPiServerService {
 
     private static final String URL_PROTOCOL = "http://";
-    private static final String API_BASE_PATH = ":8080/api/spi/";
+    private static final String API_BASE_PATH = ":8000/api/spi/";
 
     private final RaspberryPiService raspberryPiService;
     private final RestClient restClient;
@@ -113,7 +113,7 @@ public class RaspberryPiServerService {
     public PiRequestResult setOccupancy(Long piId, Long roomId, boolean privacyMode) {
         Room room = roomService.getById(roomId);
         OccupancyDTO dto = new OccupancyDTO(room.getName(), privacyMode);
-        RaspberryPi pi = raspberryPiService.getById(piId);
+        RaspberryPi pi = raspberryPiService.getByIdInternal(piId);
         String url = buildPiUrl(pi, piId + "/occupancy");
 
         try {
@@ -190,6 +190,7 @@ public class RaspberryPiServerService {
     public PiRequestResult startScanForAvailableSensorStations(Long piId) {
         RaspberryPi pi = raspberryPiService.getById(piId);
         String url = buildPiUrl(pi, piId + "/scan");
+        log.debug("SENDING TO ADDRESS: {}", url);
 
         try {
             ResponseEntity<Void> response = restClient.post()

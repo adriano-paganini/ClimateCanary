@@ -4,6 +4,7 @@ import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.RaspberryPiUpdateDTO;
 import at.qe.skeleton.models.DeviceStatus;
 import at.qe.skeleton.models.RaspberryPi;
+import at.qe.skeleton.models.Room;
 import at.qe.skeleton.repositories.RaspberryPiRepository;
 import at.qe.skeleton.models.SensorStation;
 import at.qe.skeleton.repositories.SensorStationRepository;
@@ -45,9 +46,24 @@ public class RaspberryPiService {
         return repo.findById(id).orElseThrow();
     }
 
+    @Transactional
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public RaspberryPi create(RaspberryPi pi) {
+        if (pi.getRoom() == null || pi.getRoom().getId() == null) {
+            throw new IllegalArgumentException("RaspberryPi must have a room id");
+        }
+
+        Room room = roomService.getById(pi.getRoom().getId());
+
+        if (room.getRaspberryPi() != null) {
+            throw new IllegalArgumentException("Room already has a RaspberryPi");
+        }
+
+        pi.setRoom(room);
+
         RaspberryPi savedPi = repo.save(pi);
+
+        room.setRaspberryPi(savedPi);
 
         log.info("Created raspberry pi with id={}", savedPi.getId());
         log.debug("Created raspberryPi details: id={}, hostName={}, ipAddress={}, deviceStatus={}, roomId={}",
@@ -86,7 +102,20 @@ public class RaspberryPiService {
         }
 
         if (dto.roomId() != null) {
-            existing.setRoom(roomService.getById(dto.roomId()));
+            var oldRoom = existing.getRoom();
+            var newRoom = roomService.getById(dto.roomId());
+
+            if (newRoom.getRaspberryPi() != null && !newRoom.getRaspberryPi().getId().equals(existing.getId())) {
+                throw new IllegalArgumentException("Room already has a RaspberryPi");
+            }
+
+            if (oldRoom != null) {
+                oldRoom.setRaspberryPi(null);
+            }
+
+            existing.setRoom(newRoom);
+            newRoom.setRaspberryPi(existing);
+
             debugInfo.append(", roomId=").append(dto.roomId());
         }
 
@@ -118,9 +147,24 @@ public class RaspberryPiService {
         return pi.getSensorStations();
     }
 
+    @Transactional
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public void delete(Long id) {
-        repo.deleteById(id);
+        RaspberryPi pi = getById(id);
+
+        Room room = pi.getRoom();
+        if (room != null) {
+            room.setRaspberryPi(null);
+            pi.setRoom(null);
+        }
+
+        for (SensorStation station : List.copyOf(pi.getSensorStations())) {
+            station.setRaspberryPi(null);
+            pi.getSensorStations().remove(station);
+        }
+
+        repo.delete(pi);
+
         log.info("Deleted raspberry pi with id={}", id);
     }
 

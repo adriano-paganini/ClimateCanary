@@ -94,21 +94,70 @@ class RaspberryPiServiceTest {
     @Test
     @DisplayName("Should save and return new Raspberry Pi")
     void create_savesAndReturnsRaspberryPi() {
+        Room room = new Room();
+        room.setId(5L);
+
+        pi.setRoom(room);
+
+        Mockito.when(roomService.getById(5L)).thenReturn(room);
         Mockito.when(repo.save(pi)).thenReturn(pi);
 
         RaspberryPi result = raspberryPiService.create(pi);
 
         Assertions.assertThat(result).isEqualTo(pi);
+        Assertions.assertThat(result.getRoom()).isEqualTo(room);
+        Assertions.assertThat(room.getRaspberryPi()).isEqualTo(pi);
+
+        Mockito.verify(roomService).getById(5L);
         Mockito.verify(repo).save(pi);
     }
 
     @Test
-    @DisplayName("Should create Raspberry Pi successfully even without assigned room")
-    void create_piWithNullRoom_doesNotThrow() {
+    @DisplayName("Should throw IllegalArgumentException when creating Raspberry Pi without assigned room")
+    void create_piWithNullRoom_throwsIllegalArgumentException() {
         pi.setRoom(null);
-        Mockito.when(repo.save(pi)).thenReturn(pi);
 
-        Assertions.assertThatCode(() -> raspberryPiService.create(pi)).doesNotThrowAnyException();
+        Assertions.assertThatThrownBy(() -> raspberryPiService.create(pi))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("room id");
+
+        Mockito.verifyNoInteractions(roomService);
+        Mockito.verifyNoInteractions(repo);
+    }
+
+    @Test
+    @DisplayName("Should throw IllegalArgumentException when creating Raspberry Pi with room without ID")
+    void create_piWithRoomWithoutId_throwsIllegalArgumentException() {
+        Room room = new Room();
+        pi.setRoom(room);
+
+        Assertions.assertThatThrownBy(() -> raspberryPiService.create(pi))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("room id");
+
+        Mockito.verifyNoInteractions(roomService);
+        Mockito.verifyNoInteractions(repo);
+    }
+
+    @Test
+    @DisplayName("Should throw IllegalArgumentException when creating Raspberry Pi in room that already has one")
+    void create_roomAlreadyHasRaspberryPi_throwsIllegalArgumentException() {
+        Room room = new Room();
+        room.setId(5L);
+
+        RaspberryPi existingPi = new RaspberryPi();
+        room.setRaspberryPi(existingPi);
+
+        pi.setRoom(room);
+
+        Mockito.when(roomService.getById(5L)).thenReturn(room);
+
+        Assertions.assertThatThrownBy(() -> raspberryPiService.create(pi))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Room already has a RaspberryPi");
+
+        Mockito.verify(roomService).getById(5L);
+        Mockito.verifyNoInteractions(repo);
     }
 
     @Test
@@ -207,18 +256,43 @@ class RaspberryPiServiceTest {
     }
 
     @Test
-    @DisplayName("Should delete Raspberry Pi by ID")
-    void delete_callsDeleteById() {
+    @DisplayName("Should delete Raspberry Pi and clear associations")
+    void delete_deletesRaspberryPiAndClearsAssociations() {
+        Room room = new Room();
+        room.setRaspberryPi(pi);
+        pi.setRoom(room);
+
+        SensorStation station = new SensorStation();
+        station.setRaspberryPi(pi);
+        pi.getSensorStations().add(station);
+
+        Mockito.when(repo.findById(1L)).thenReturn(Optional.of(pi));
+
         raspberryPiService.delete(1L);
 
-        Mockito.verify(repo).deleteById(1L);
+        Assertions.assertThat(pi.getRoom()).isNull();
+        Assertions.assertThat(room.getRaspberryPi()).isNull();
+
+        Assertions.assertThat(pi.getSensorStations()).isEmpty();
+        Assertions.assertThat(station.getRaspberryPi()).isNull();
+
+        Mockito.verify(repo).findById(1L);
+        Mockito.verify(repo).delete(pi);
+        Mockito.verify(repo, Mockito.never()).deleteById(Mockito.anyLong());
     }
 
     @Test
-    @DisplayName("Should not throw exception when deleting non-existing Raspberry Pi")
-    void delete_doesNotThrow_whenPiDoesNotExist() {
-        Mockito.doNothing().when(repo).deleteById(99L);
+    @DisplayName("Should throw NotFoundException when deleting non-existing Raspberry Pi")
+    void delete_throwsNotFoundException_whenPiDoesNotExist() {
+        Mockito.when(repo.findById(99L)).thenReturn(Optional.empty());
 
-        Assertions.assertThatCode(() -> raspberryPiService.delete(99L)).doesNotThrowAnyException();
+        Assertions.assertThatThrownBy(() -> raspberryPiService.delete(99L))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessageContaining("99");
+
+        Mockito.verify(repo).findById(99L);
+        Mockito.verify(repo, Mockito.never()).delete(Mockito.any());
+        Mockito.verify(repo, Mockito.never()).deleteById(Mockito.anyLong());
     }
+
 }

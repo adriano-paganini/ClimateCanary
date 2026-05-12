@@ -69,6 +69,13 @@ public class SensorStationController {
         SensorStation updated = sensorStationService.update(id, dto);
         return ResponseEntity.ok(sensorStationMapper.mapTo(updated));
     }
+    @PatchMapping("/{id}/{measurementInterval}")
+    public ResponseEntity<SensorStationDTO> initialUpdate(@PathVariable Long id,
+                                                   @PathVariable Integer measurementInterval,
+                                                   @Valid @RequestBody SensorStationUpdateDTO dto) {
+        SensorStation updated = sensorStationService.update(id, dto, measurementInterval);
+        return ResponseEntity.ok(sensorStationMapper.mapTo(updated));
+    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {

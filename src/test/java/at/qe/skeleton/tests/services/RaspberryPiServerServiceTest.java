@@ -57,7 +57,7 @@ class RaspberryPiServerServiceTest {
 
     @BeforeEach
     void setUp() {
-        wireMockServer = new WireMockServer(8080);
+        wireMockServer = new WireMockServer(8000);
         wireMockServer.start();
 
         raspberryPiService = mock(RaspberryPiService.class);
@@ -80,6 +80,7 @@ class RaspberryPiServerServiceTest {
         RaspberryPi pi = mock(RaspberryPi.class);
         when(pi.getIpAddress()).thenReturn(PI_IP_ADDRESS);
         when(raspberryPiService.getById(PI_ID)).thenReturn(pi);
+        when(raspberryPiService.getByIdInternal(PI_ID)).thenReturn(pi);
 
         Room room = mock(Room.class);
         when(room.getName()).thenReturn(ROOM_NAME);
