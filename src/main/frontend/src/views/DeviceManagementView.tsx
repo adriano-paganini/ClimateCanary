@@ -608,7 +608,26 @@ const DeviceManagementView: React.FC = () => {
                                         tooltipOptions={{ position: 'top' }}
                                     />
                                 </div>
-                                
+
+                                {!pi.ipAddress && (
+                                    <div style={{ marginTop: '0.75rem' }}>
+                                        <Message
+                                            severity="warn"
+                                            text="Setup required: Download conf.yaml, copy it to this Raspberry Pi's SD card, and power it on - the Pi will appear Online once it has booted and connected to the backend"
+                                            style={{ width: '100%' }}
+                                        />
+                                        <div style={{ marginTop: '0.5rem' }}>
+                                            <Button
+                                                icon="pi pi-download"
+                                                label="Download conf.yaml"
+                                                size="small"
+                                                severity="warning"
+                                                outlined
+                                                onClick={() => void downloadConfig(pi)}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
                                 {expandedRows === pi.id && rowExpansionTemplate(pi)}
                             </Card>
                         ))
