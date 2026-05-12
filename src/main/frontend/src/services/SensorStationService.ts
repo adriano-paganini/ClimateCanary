@@ -26,5 +26,8 @@ export const SensorStationService = {
         api.delete2({ id }).then(() => undefined),
 
     triggerScan: (piId: number): Promise<void> =>
-        globalAxios.post(`/api/sensorstation/find/${piId}`).then(() => undefined),
+        globalAxios.post(`/api/spi/${piId}/scan`).then(() => undefined),
+
+    getAvailableForPi: (piId: number): Promise<SensorStationDTO[]> =>
+        globalAxios.get<SensorStationDTO[]>(`/api/bpi/${piId}/availablesensorstations`).then(r => r.data),
 };

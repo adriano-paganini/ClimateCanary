@@ -20,9 +20,6 @@ export const RaspberryPiService = {
     getSensorStations: (id: number): Promise<SensorStationDTO[]> =>
         api.getSensorStations({ id }).then(r => r.data),
 
-    getAvailableSensorStations: (id: number): Promise<SensorStationDTO[]> =>
-        globalAxios.get<SensorStationDTO[]>(`/api/bpi/${id}/availablesensorstations`).then(r => r.data),
-
     getConfig: (piId: number): Promise<string> =>
         globalAxios.get<string>(`/api/cpi/${piId}/config`, { responseType: 'text' }).then(r => r.data),
 

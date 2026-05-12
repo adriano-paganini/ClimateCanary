@@ -98,6 +98,8 @@ const DeviceManagementView: React.FC = () => {
     const [scanDialogVisible, setScanDialogVisible] = useState(false);
     const [scanPiId, setScanPiId] = useState<number | null>(null);
     const [scanning, setScanning] = useState(false);
+    const [scanTriggered, setScanTriggered] = useState(false);
+    const [checkingDevices, setCheckingDevices] = useState(false);
     const [availableStations, setAvailableStations] = useState<SensorStationDTO[]>([]);
 
     const fetchPis = useCallback(async () => {
@@ -163,6 +165,8 @@ const DeviceManagementView: React.FC = () => {
         setScanPiId(piId);
         setAvailableStations([]);
         setScanning(false);
+        setScanTriggered(false);
+        setCheckingDevices(false);
         setScanDialogVisible(true);
     };
 
@@ -171,15 +175,28 @@ const DeviceManagementView: React.FC = () => {
         setScanning(true);
         try {
             await SensorStationService.triggerScan(scanPiId);
-            const found = await RaspberryPiService.getAvailableSensorStations(scanPiId);
-            setAvailableStations(found);
-            if (found.length === 0) {
-                toast.current?.show({ severity: 'info', summary: 'No Devices Found', detail: 'No Arduino devices in setup mode were found.', life: 4000 });
-            }
+            setScanTriggered(true);
+            setAvailableStations([]);
         } catch {
             toast.current?.show({ severity: 'error', summary: 'Scan Failed', detail: 'BLE scan failed. Make sure the Raspberry Pi is online.', life: 4000 });
         } finally {
             setScanning(false);
+        }
+    };
+
+    const checkForDevices = async () => {
+        if (scanPiId == null) return;
+        setCheckingDevices(true);
+        try {
+            const found = await SensorStationService.getAvailableForPi(scanPiId);
+            setAvailableStations(found);
+            if (found.length === 0) {
+                toast.current?.show({ severity: 'info', summary: 'No Devices Found', detail: 'No Arduino devices in setup mode found yet. Try again in a moment.', life: 4000 });
+            }
+        } catch {
+            toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Could not fetch available devices.', life: 4000 });
+        } finally {
+            setCheckingDevices(false);
         }
     };
 
@@ -790,15 +807,39 @@ const DeviceManagementView: React.FC = () => {
                     Select a found device to register it as a sensor station.
                 </p>
 
-                <Button
-                    label={scanning ? 'Scanning…' : 'Start Scan'}
-                    icon={scanning ? 'pi pi-spin pi-spinner' : 'pi pi-wifi'}
-                    disabled={scanning}
-                    style={{ marginBottom: '1rem' }}
-                    onClick={() => void startScan()}
-                />
+                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                    <Button
+                        label={scanning ? 'Scanning…' : 'Start Scan'}
+                        icon={scanning ? 'pi pi-spin pi-spinner' : 'pi pi-wifi'}
+                        disabled={scanning || checkingDevices}
+                        onClick={() => void startScan()}
+                    />
+                    {scanTriggered && (
+                        <Button
+                            label={checkingDevices ? 'Checking…' : 'Check for Devices'}
+                            icon={checkingDevices ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'}
+                            outlined
+                            disabled={scanning || checkingDevices}
+                            onClick={() => void checkForDevices()}
+                        />
+                    )}
+                </div>
 
-                {availableStations.length > 0 ? (
+                {scanTriggered && availableStations.length === 0 && !checkingDevices && (
+                    <Message
+                        severity="info"
+                        text="Scan started. The Raspberry Pi is now scanning (~10 seconds). Click 'Check for Devices' once the scan should be done."
+                        style={{ width: '100%', marginBottom: '1rem' }}
+                    />
+                )}
+
+                {!scanTriggered && !scanning && (
+                    <p style={{ color: 'var(--text-color-secondary)', textAlign: 'center', padding: '1rem 0' }}>
+                        No devices found yet. Press "Start Scan" to discover nearby Arduino devices.
+                    </p>
+                )}
+
+                {availableStations.length > 0 && (
                     <DataTable value={availableStations} size="small">
                         <Column field="bleMac" header="BLE MAC Address" />
                         <Column
@@ -815,12 +856,6 @@ const DeviceManagementView: React.FC = () => {
                             )}
                         />
                     </DataTable>
-                ) : (
-                    !scanning && (
-                        <p style={{ color: 'var(--text-color-secondary)', textAlign: 'center', padding: '1rem 0' }}>
-                            No devices found yet. Press "Start Scan" to discover nearby Arduino devices.
-                        </p>
-                    )
                 )}
             </Dialog>
 
