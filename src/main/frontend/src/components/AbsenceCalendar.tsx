@@ -54,10 +54,10 @@ const AbsenceCalendar: React.FC<Props> = ({ absences, userMap }) => {
             let title = typeLabel;
             if (userMap && a.userxId !== undefined) {
                 const u = userMap[a.userxId];
-                if (u) {
-                    const name = `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || u.username || `User ${a.userxId}`;
-                    title = `${name} — ${typeLabel}`;
-                }
+                const name = u
+                    ? (`${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || u.username || `User ${a.userxId}`)
+                    : `User ${a.userxId}`;
+                title = `${name} — ${typeLabel}`;
             }
             return { id: a.id!, title, start, end, type: a.absenceType ?? '' };
         });

@@ -11,6 +11,7 @@ import 'primeicons/primeicons.css';
 
 import NavbarComponent from '../components/NavbarComponent';
 import { FooterComponent } from '../components/FooterComponent';
+import AbsenceCalendar from '../components/AbsenceCalendar';
 import { useUser } from '../Contexts/AuthenticatedUserContext';
 import { DepartmentService } from '../services/DepartmentService';
 import {
@@ -37,9 +38,24 @@ const STATUS_ICON: Record<string, string> = {
     CANCELLED: 'pi-ban',
 };
 
+const TAB_STYLE = (active: boolean): React.CSSProperties => ({
+    padding: '0.6rem 1.25rem',
+    border: 'none',
+    borderBottom: active ? '2px solid #0369a1' : '2px solid transparent',
+    background: 'none',
+    cursor: 'pointer',
+    fontWeight: active ? 700 : 400,
+    color: active ? '#0369a1' : '#6b7280',
+    fontSize: '0.95rem',
+    transition: 'color 0.15s',
+});
+
 const DepartmentAbsenceView: React.FC = () => {
     const { fullUser } = useUser();
     const toast = useRef<Toast>(null);
+
+    const [activeTab, setActiveTab] = useState<'manage' | 'overview'>('manage');
+    const [calendarEmployeeFilter, setCalendarEmployeeFilter] = useState<number | null>(null);
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -180,7 +196,7 @@ const DepartmentAbsenceView: React.FC = () => {
 
             <div style={{ padding: '1.5rem 2rem', maxWidth: '1400px', margin: '0 auto' }}>
                 {/* Header */}
-                <div style={{ marginBottom: '2rem' }}>
+                <div style={{ marginBottom: '1rem' }}>
                     <h1 style={{ margin: '0 0 0.5rem', color: '#111827', fontSize: '2rem', fontWeight: 700 }}>
                         Team Absences
                     </h1>
@@ -191,6 +207,54 @@ const DepartmentAbsenceView: React.FC = () => {
                         </p>
                     )}
                 </div>
+
+                {/* Tabs */}
+                <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: '1.5rem' }}>
+                    <button style={TAB_STYLE(activeTab === 'manage')} onClick={() => setActiveTab('manage')}>
+                        <i className="pi pi-pen-to-square" style={{ marginRight: '0.4rem' }} />
+                        Manage Absences
+                    </button>
+                    <button style={TAB_STYLE(activeTab === 'overview')} onClick={() => setActiveTab('overview')}>
+                        <i className="pi pi-calendar" style={{ marginRight: '0.4rem' }} />
+                        Absence Overview
+                    </button>
+                </div>
+
+                {/* Overview Tab */}
+                {activeTab === 'overview' && (() => {
+                    const uniqueUserIds = [...new Set(absences.map(a => a.userxId).filter((id): id is number => id !== undefined))];
+                    const employeeOptions = uniqueUserIds.map(id => {
+                        const u = userMap[id];
+                        const label = u
+                            ? (`${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || u.username || `User ${id}`)
+                            : `User ${id}`;
+                        return { label, value: id };
+                    });
+                    const calAbsences = calendarEmployeeFilter
+                        ? absences.filter(a => a.userxId === calendarEmployeeFilter)
+                        : absences;
+                    return (
+                        <div>
+                            {employeeOptions.length > 1 && (
+                                <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    <label style={{ fontWeight: 600, color: '#374151', fontSize: '0.875rem' }}>Employee</label>
+                                    <Dropdown
+                                        value={calendarEmployeeFilter}
+                                        options={employeeOptions}
+                                        onChange={e => setCalendarEmployeeFilter(e.value as number | null)}
+                                        placeholder="All employees"
+                                        showClear
+                                        style={{ minWidth: '220px' }}
+                                    />
+                                </div>
+                            )}
+                            <AbsenceCalendar absences={calAbsences} userMap={userMap} />
+                        </div>
+                    );
+                })()}
+
+                {/* Manage Tab */}
+                {activeTab === 'manage' && <>
 
                 {/* Filters */}
                 <div style={{
@@ -417,6 +481,7 @@ const DepartmentAbsenceView: React.FC = () => {
                         ))}
                     </div>
                 )}
+                </>}
             </div>
 
             <FooterComponent />
