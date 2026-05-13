@@ -8,6 +8,7 @@ import { Tag } from 'primereact/tag';
 import 'primeicons/primeicons.css';
 
 import NavbarComponent from '../components/NavbarComponent';
+import AbsenceCalendar from '../components/AbsenceCalendar';
 import { UserService } from '../services/UserService';
 import { AbsenceService } from '../services/AbsenceService';
 import {
@@ -87,7 +88,20 @@ const labelStyle: React.CSSProperties = {
     marginBottom: '0.35rem',
 };
 
+const TAB_STYLE = (active: boolean): React.CSSProperties => ({
+    padding: '0.6rem 1.25rem',
+    border: 'none',
+    borderBottom: active ? '2px solid #0369a1' : '2px solid transparent',
+    background: 'none',
+    cursor: 'pointer',
+    fontWeight: active ? 700 : 400,
+    color: active ? '#0369a1' : '#6b7280',
+    fontSize: '0.95rem',
+    transition: 'color 0.15s',
+});
+
 const AbsenceView: React.FC = () => {
+    const [activeTab, setActiveTab] = useState<'manage' | 'overview'>('manage');
     const [absences, setAbsences] = useState<AbsenceDTO[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState<string | null>(null);
@@ -214,7 +228,25 @@ const AbsenceView: React.FC = () => {
         <div>
             <NavbarComponent />
             <div style={{ padding: '1.5rem 2rem' }}>
-                <h2 style={{ margin: '0 0 1.5rem', color: '#111827' }}>Absences</h2>
+                <h2 style={{ margin: '0 0 1rem', color: '#111827' }}>Absences</h2>
+
+                {/* Tabs */}
+                <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: '1.5rem' }}>
+                    <button style={TAB_STYLE(activeTab === 'manage')} onClick={() => setActiveTab('manage')}>
+                        <i className="pi pi-pen-to-square" style={{ marginRight: '0.4rem' }} />
+                        Manage Absences
+                    </button>
+                    <button style={TAB_STYLE(activeTab === 'overview')} onClick={() => setActiveTab('overview')}>
+                        <i className="pi pi-calendar" style={{ marginRight: '0.4rem' }} />
+                        Absence Overview
+                    </button>
+                </div>
+
+                {activeTab === 'overview' && (
+                    <AbsenceCalendar absences={absences} />
+                )}
+
+                {activeTab === 'manage' && <>
 
                 {/* Create form */}
                 <div style={cardStyle}>
@@ -405,6 +437,7 @@ const AbsenceView: React.FC = () => {
                         </div>
                     )}
                 </div>
+                </>}
             </div>
         </div>
     );
