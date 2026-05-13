@@ -341,21 +341,45 @@ const DeviceManagementView: React.FC = () => {
             }
         } else {
             if (!selectedStation?.id) return;
-            const dto: SensorStationUpdateDTO = {};
-            if (stationForm.name.trim()) dto.name = stationForm.name.trim();
-            if (stationForm.deviceStatus) dto.deviceStatus = stationForm.deviceStatus as SensorStationUpdateDTODeviceStatusEnum;
-            try {
-                const updated = await SensorStationService.update(selectedStation.id, dto);
-                if (stationPiId != null) {
-                    setStationsMap(prev => ({
-                        ...prev,
-                        [stationPiId]: (prev[stationPiId] ?? []).map(s => s.id === updated.id ? updated : s),
-                    }));
+            const isSetup = selectedStation.deviceStatus === SensorStationUpdateDTODeviceStatusEnum.AVAILABLE;
+            if (isSetup) {
+                if (!stationForm.name.trim()) { setStationError('Name is required'); return; }
+                if (stationForm.measurementInterval == null) { setStationError('Measurement Interval is required'); return; }
+                if (stationForm.measurementInterval < 3 || stationForm.measurementInterval > 60) { setStationError('Measurement Interval must be between 3 and 60 seconds'); return; }
+                try {
+                    const dto: SensorStationUpdateDTO = {
+                        name: stationForm.name.trim(),
+                        deviceStatus: SensorStationUpdateDTODeviceStatusEnum.AVAILABLE,
+                    };
+                    const updated = await SensorStationService.updateSetup(selectedStation.id, stationForm.measurementInterval, dto);
+                    if (stationPiId != null) {
+                        setStationsMap(prev => ({
+                            ...prev,
+                            [stationPiId]: (prev[stationPiId] ?? []).map(s => s.id === updated.id ? updated : s),
+                        }));
+                    }
+                    setStationDialogVisible(false);
+                    toast.current?.show({ severity: 'success', summary: 'Updated', detail: `Sensor station "${updated.name}" updated`, life: 3000 });
+                } catch {
+                    toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to update sensor station', life: 3000 });
                 }
-                setStationDialogVisible(false);
-                toast.current?.show({ severity: 'success', summary: 'Updated', detail: `Sensor station "${updated.name}" updated`, life: 3000 });
-            } catch {
-                toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to update sensor station', life: 3000 });
+            } else {
+                const dto: SensorStationUpdateDTO = {};
+                if (stationForm.name.trim()) dto.name = stationForm.name.trim();
+                if (stationForm.deviceStatus) dto.deviceStatus = stationForm.deviceStatus as SensorStationUpdateDTODeviceStatusEnum;
+                try {
+                    const updated = await SensorStationService.update(selectedStation.id, dto);
+                    if (stationPiId != null) {
+                        setStationsMap(prev => ({
+                            ...prev,
+                            [stationPiId]: (prev[stationPiId] ?? []).map(s => s.id === updated.id ? updated : s),
+                        }));
+                    }
+                    setStationDialogVisible(false);
+                    toast.current?.show({ severity: 'success', summary: 'Updated', detail: `Sensor station "${updated.name}" updated`, life: 3000 });
+                } catch {
+                    toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to update sensor station', life: 3000 });
+                }
             }
         }
     };
@@ -793,7 +817,24 @@ const DeviceManagementView: React.FC = () => {
                         </>
                     )}
 
-                    {!stationIsNew && (
+                    {!stationIsNew && selectedStation?.deviceStatus === SensorStationUpdateDTODeviceStatusEnum.AVAILABLE && (
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: 600 }}>
+                                Measurement Interval (s) <span style={{ color: 'var(--red-500)' }}>*</span>
+                            </label>
+                            <InputNumber
+                                value={stationForm.measurementInterval}
+                                onValueChange={e => setStationForm(f => ({ ...f, measurementInterval: e.value ?? null }))}
+                                style={{ width: '100%' }}
+                                inputStyle={{ width: '100%' }}
+                                min={3}
+                                max={60}
+                                placeholder="3 – 60 s"
+                            />
+                        </div>
+                    )}
+
+                    {!stationIsNew && selectedStation?.deviceStatus !== SensorStationUpdateDTODeviceStatusEnum.AVAILABLE && (
                         <div>
                             <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: 600 }}>Status</label>
                             <Dropdown

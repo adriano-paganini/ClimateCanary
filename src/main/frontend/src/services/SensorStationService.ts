@@ -25,6 +25,9 @@ export const SensorStationService = {
     delete: (id: number): Promise<void> =>
         api.delete2({ id }).then(() => undefined),
 
+    updateSetup: (id: number, measurementInterval: number, sensorStationUpdateDTO: SensorStationUpdateDTO): Promise<SensorStationDTO> =>
+        globalAxios.patch<SensorStationDTO>(`/api/sensorstation/${id}/${measurementInterval}`, sensorStationUpdateDTO).then(r => r.data),
+
     triggerScan: (piId: number): Promise<void> =>
         globalAxios.post(`/api/spi/${piId}/scan`).then(() => undefined),
 
