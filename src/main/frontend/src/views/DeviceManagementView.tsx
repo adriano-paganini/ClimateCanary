@@ -134,13 +134,6 @@ const DeviceManagementView: React.FC = () => {
         }
     };
 
-    const onRowExpand = (e: any) => {
-        const pi = e.data as RaspberryPiDTO;
-        if (pi.id != null && stationsMap[pi.id] == null) {
-            void fetchSensorStations(pi.id);
-        }
-    };
-
     // for downloading conf.yaml from a Raspberry Pi
 
     const downloadConfig = async (pi: RaspberryPiDTO) => {
@@ -517,29 +510,6 @@ const DeviceManagementView: React.FC = () => {
         );
     };
 
-    const rpiActionsTemplate = (pi: RaspberryPiDTO) => (
-        <div style={{ display: 'flex', gap: '0.25rem' }}>
-            <Button
-                icon="pi pi-pencil"
-                text
-                size="small"
-                onClick={() => openEditRpi(pi)}
-                tooltip="Edit"
-                tooltipOptions={{ position: 'top' }}
-            />
-            <Button
-                icon="pi pi-trash"
-                text
-                size="small"
-                severity="danger"
-                onClick={() => confirmDeleteRpi(pi)}
-                tooltip="Delete"
-                tooltipOptions={{ position: 'top' }}
-            />
-        </div>
-    );
-
-
     const rpiFooter = (
         <div>
             <Button label="Cancel" icon="pi pi-times" text onClick={() => setRpiDialogVisible(false)} />
@@ -547,10 +517,12 @@ const DeviceManagementView: React.FC = () => {
         </div>
     );
 
+    const isSetupEdit = !stationIsNew && selectedStation?.deviceStatus === SensorStationUpdateDTODeviceStatusEnum.AVAILABLE;
+
     const stationFooter = (
         <div>
             <Button label="Cancel" icon="pi pi-times" text onClick={() => setStationDialogVisible(false)} />
-            <Button label={stationIsNew ? 'Create' : 'Save'} icon="pi pi-check" onClick={() => void saveStation()} />
+            <Button label={stationIsNew ? 'Create' : isSetupEdit ? 'Setup' : 'Save'} icon="pi pi-check" onClick={() => void saveStation()} />
         </div>
     );
 
@@ -753,7 +725,7 @@ const DeviceManagementView: React.FC = () => {
 
             {/*SensorStation Create/Edit Dialog */}
             <Dialog
-                header={stationIsNew ? 'Add Sensor Station' : `Edit Sensor Station — ${selectedStation?.name ?? ''}`}
+                header={stationIsNew ? 'Add Sensor Station' : isSetupEdit ? `Setup Sensor Station — ${selectedStation?.bleMac ?? ''}` : `Edit Sensor Station — ${selectedStation?.name ?? ''}`}
                 visible={stationDialogVisible}
                 style={{ width: '440px' }}
                 onHide={() => setStationDialogVisible(false)}
@@ -883,7 +855,7 @@ const DeviceManagementView: React.FC = () => {
                 {scanTriggered && availableStations.length === 0 && !checkingDevices && (
                     <Message
                         severity="info"
-                        text="Scan started. The Raspberry Pi is now scanning (~10 seconds). Click 'Check for Devices' once the scan should be done."
+                        text="Scan started. The Raspberry Pi is now scanning (~10 seconds). Click 'Check for Devices' once the scan is done."
                         style={{ width: '100%', marginBottom: '1rem' }}
                     />
                 )}
