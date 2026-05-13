@@ -439,7 +439,21 @@ const DeviceManagementView: React.FC = () => {
                             size="small"
                         >
                             <Column field="id" header="ID" style={{ width: '4rem' }} />
-                            <Column field="name" header="Name" />
+                            <Column
+                                header="Name"
+                                body={(s: SensorStationDTO) => (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <span>{s.name}</span>
+                                        {s.name === s.bleMac && (
+                                            <Tag
+                                                value="Needs Setup"
+                                                severity="warning"
+                                                icon="pi pi-exclamation-triangle"
+                                            />
+                                        )}
+                                    </div>
+                                )}
+                            />
                             <Column field="bleMac" header="BLE MAC" />
                             <Column field="measurementInterval" header="Interval (s)" style={{ width: '8rem' }} />
                             <Column
