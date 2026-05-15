@@ -1,9 +1,6 @@
 package at.qe.skeleton.services;
 
-import at.qe.skeleton.dtos.OccupancyDTO;
-import at.qe.skeleton.dtos.SensorStationDTO;
-import at.qe.skeleton.dtos.ThresholdDTO;
-import at.qe.skeleton.dtos.ViolationResolvedDTO;
+import at.qe.skeleton.dtos.*;
 import at.qe.skeleton.models.RaspberryPi;
 import at.qe.skeleton.models.Room;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -310,14 +308,14 @@ public class RaspberryPiServerService {
         }
     }
 
-    public PiRequestResult informAboutNewThresholds(Long piId, List<ThresholdDTO> thresholdDTOS) {
+    public PiRequestResult informAboutNewThresholds(Long piId, Map<ThresholdDTO, List<ClimateHintDTO>> completeThresholdInfo) {
         RaspberryPi pi = raspberryPiService.getById(piId);
         String url = buildPiUrl(pi, piId + "/config/thresholds");
 
         try {
             ResponseEntity<Void> response = restClient.post()
                     .uri(url)
-                    .body(thresholdDTOS)
+                    .body(completeThresholdInfo)
                     .retrieve()
                     .toBodilessEntity();
 
