@@ -1,5 +1,6 @@
 package at.qe.skeleton.tests.services;
 
+import at.qe.skeleton.dtos.ClimateHintDTO;
 import at.qe.skeleton.dtos.SensorStationDTO;
 import at.qe.skeleton.dtos.ThresholdDTO;
 import at.qe.skeleton.dtos.ViolationResolvedDTO;
@@ -21,6 +22,7 @@ import org.springframework.web.client.RestClient;
 
 import java.net.http.HttpClient;
 import java.util.List;
+import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -47,6 +49,9 @@ class RaspberryPiServerServiceTest {
     private static final Boolean THRESHOLD_ENABLED = true;
 
     private static final Long CLIMATE_HINT_ID = 1L;
+    private static final Metric CLIMATE_HINT_METRIC = Metric.HUMIDITY;
+    private static final String CLIMATE_HINT_TEXT = "Climate Hint Description 1";
+
     private static final String VIOLATION_END_TIME = "2026-04-23T07:45:00Z";
 
     private WireMockServer wireMockServer;
@@ -91,6 +96,14 @@ class RaspberryPiServerServiceTest {
         if (wireMockServer != null && wireMockServer.isRunning()) {
             wireMockServer.stop();
         }
+    }
+
+    private ClimateHintDTO climateHintDTO() {
+        return new ClimateHintDTO(
+                CLIMATE_HINT_ID,
+                CLIMATE_HINT_METRIC,
+                CLIMATE_HINT_TEXT
+        );
     }
 
     private ThresholdDTO thresholdDto() {
@@ -468,38 +481,39 @@ class RaspberryPiServerServiceTest {
 
     @Test
     void informAboutNewThresholds_shouldSendThresholdDtosAndReturnSuccess_whenPiReturns2xx() {
-        List<ThresholdDTO> thresholds = List.of(thresholdDto());
+        Map<ThresholdDTO, List<ClimateHintDTO>> completeThresholdInformation = Map.of(thresholdDto(), List.of(climateHintDTO()));
+        String thresholdKey = "ThresholdDTO[id=1, roomId=1, metric=HUMIDITY, boundValue=60.0, thresholdType=UPPER, climateHintIds=[1], enabled=true]";
+        String expectedRequestBody = """
+                {
+                  "%s": [
+                    {
+                      "id": 1,
+                      "metric": "%s",
+                      "hintText": "%s"
+                    }
+                  ]
+                }
+                """.formatted(thresholdKey, CLIMATE_HINT_METRIC.name(), CLIMATE_HINT_TEXT);
 
         wireMockServer.stubFor(post(urlEqualTo("/api/spi/1/config/thresholds"))
-                .withRequestBody(matchingJsonPath("$[0].id", equalTo("1")))
-                .withRequestBody(matchingJsonPath("$[0].roomId", equalTo("1")))
-                .withRequestBody(matchingJsonPath("$[0].metric", equalTo(METRIC.name())))
-                .withRequestBody(matchingJsonPath("$[0].boundValue", equalTo("60.0")))
-                .withRequestBody(matchingJsonPath("$[0].thresholdType", equalTo(THRESHOLD_TYPE.name())))
-                .withRequestBody(matchingJsonPath("$[0].climateHintIds[0]", equalTo("1")))
-                .withRequestBody(matchingJsonPath("$[0].enabled", equalTo("true")))
+                .withRequestBody(equalToJson(expectedRequestBody))
                 .willReturn(ok()));
 
-        PiRequestResult result = clientService.informAboutNewThresholds(PI_ID, thresholds);
+        PiRequestResult result = clientService.informAboutNewThresholds(PI_ID, completeThresholdInformation);
 
         assertEquals(PiRequestResult.SUCCESS, result);
 
         wireMockServer.verify(postRequestedFor(urlEqualTo("/api/spi/1/config/thresholds"))
-                .withRequestBody(matchingJsonPath("$[0].id", equalTo("1")))
-                .withRequestBody(matchingJsonPath("$[0].roomId", equalTo("1")))
-                .withRequestBody(matchingJsonPath("$[0].metric", equalTo(METRIC.name())))
-                .withRequestBody(matchingJsonPath("$[0].boundValue", equalTo("60.0")))
-                .withRequestBody(matchingJsonPath("$[0].thresholdType", equalTo(THRESHOLD_TYPE.name())))
-                .withRequestBody(matchingJsonPath("$[0].climateHintIds[0]", equalTo("1")))
-                .withRequestBody(matchingJsonPath("$[0].enabled", equalTo("true"))));
+                .withRequestBody(equalToJson(expectedRequestBody)));
     }
 
     @Test
     void informAboutNewThresholds_shouldReturnClientError_whenPiReturns4xx() {
         wireMockServer.stubFor(post(urlEqualTo("/api/spi/1/config/thresholds"))
                 .willReturn(badRequest()));
+        Map<ThresholdDTO, List<ClimateHintDTO>> completeThresholdInformation = Map.of(thresholdDto(), List.of(climateHintDTO()));
 
-        PiRequestResult result = clientService.informAboutNewThresholds(PI_ID, List.of(thresholdDto()));
+        PiRequestResult result = clientService.informAboutNewThresholds(PI_ID, completeThresholdInformation);
 
         assertEquals(PiRequestResult.CLIENT_ERROR, result);
     }
@@ -509,7 +523,9 @@ class RaspberryPiServerServiceTest {
         wireMockServer.stubFor(post(urlEqualTo("/api/spi/1/config/thresholds"))
                 .willReturn(serverError()));
 
-        PiRequestResult result = clientService.informAboutNewThresholds(PI_ID, List.of(thresholdDto()));
+        Map<ThresholdDTO, List<ClimateHintDTO>> completeThresholdInformation = Map.of(thresholdDto(), List.of(climateHintDTO()));
+
+        PiRequestResult result = clientService.informAboutNewThresholds(PI_ID, completeThresholdInformation);
 
         assertEquals(PiRequestResult.SERVER_ERROR, result);
     }
@@ -518,7 +534,9 @@ class RaspberryPiServerServiceTest {
     void informAboutNewThresholds_shouldReturnUnreachable_whenPiCannotBeReached() {
         wireMockServer.stop();
 
-        PiRequestResult result = clientService.informAboutNewThresholds(PI_ID, List.of(thresholdDto()));
+        Map<ThresholdDTO, List<ClimateHintDTO>> completeThresholdInformation = Map.of(thresholdDto(), List.of(climateHintDTO()));
+
+        PiRequestResult result = clientService.informAboutNewThresholds(PI_ID, completeThresholdInformation);
 
         assertEquals(PiRequestResult.UNREACHABLE, result);
     }
