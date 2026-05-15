@@ -333,7 +333,7 @@ public class AnalyticsService {
         Department department = departmentService.getDepartmentById(departmentId);
         Userx currentUser = authenticatedUserService.getAuthenticatedUser();
 
-        if (hasRole(currentUser, UserxRole.DEPARTMENT_LEAD) && isLeaderOf(currentUser, department)) {
+        if (hasRole(currentUser, UserxRole.DEPARTMENT_LEAD) && !isLeaderOf(currentUser, department)) {
             throw new AccessDeniedException("You may only view your own department.");
         }
 
