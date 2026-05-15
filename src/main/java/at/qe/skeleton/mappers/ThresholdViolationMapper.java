@@ -2,6 +2,7 @@ package at.qe.skeleton.mappers;
 
 import at.qe.skeleton.dtos.ThresholdViolationDTO;
 import at.qe.skeleton.common.DTOMapper;
+import at.qe.skeleton.models.Measurement;
 import at.qe.skeleton.models.ThresholdViolation;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +24,10 @@ public class ThresholdViolationMapper implements DTOMapper<ThresholdViolation, T
                 entity.getStartTime(),
                 entity.getThreshold() != null ? entity.getThreshold().getId() : null,
                 entity.getRoom() != null ? entity.getRoom().getId() : null,
-                List.of()
+                entity.getMeasurements()
+                        .stream()
+                        .map(Measurement::getId)
+                        .toList()
         );
     }
 
