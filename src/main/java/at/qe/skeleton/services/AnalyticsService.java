@@ -155,12 +155,14 @@ public class AnalyticsService {
         String bucketSize = forceReduced
                 ? forcedReducedBucket(effectiveFrom, effectiveTo)
                 : resolveBucketSize(effectiveFrom, effectiveTo);
+        
+        boolean grandularityReduced = forceReduced || !"raw".equals(bucketSize);
 
         List<TrendPointDTO> points = toPoints(measurements, effectiveFrom, effectiveTo, bucketSize);
 
         log.debug("Generated room trend: roomId={}, metric={}, bucketSize={}, forceReduced={}",
                 roomId, metric, bucketSize, forceReduced);
-        return new RoomTrendDTO(roomId, metric, bucketSize, forceReduced, points);
+        return new RoomTrendDTO(roomId, metric, bucketSize, grandularityReduced, points);
     }
 
     /**
