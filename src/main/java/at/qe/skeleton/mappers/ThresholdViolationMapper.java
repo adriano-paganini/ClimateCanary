@@ -6,8 +6,6 @@ import at.qe.skeleton.models.Measurement;
 import at.qe.skeleton.models.ThresholdViolation;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
 public class ThresholdViolationMapper implements DTOMapper<ThresholdViolation, ThresholdViolationDTO> {
 
