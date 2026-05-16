@@ -1,11 +1,10 @@
 services:
-
   postgres:
     image: postgres:17-alpine
     container_name: "${TEAM_NAME:-local}-postgres"
     environment:
       POSTGRES_DB: "${POSTGRES_DB}"
-      POSTGRES_USER: "${POSdTGRES_USER}"
+      POSTGRES_USER: "${POSTGRES_USER}"
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
     volumes:
       - postgres_data:/var/lib/postgresql/data
