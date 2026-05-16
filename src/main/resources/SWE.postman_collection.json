@@ -1903,116 +1903,22 @@
           "name": "Get Room Summary",
           "request": {
             "method": "GET",
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/analytics/rooms/{{roomId}}/summary?from={{from}}&to={{to}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "analytics", "rooms", "{{roomId}}", "summary"],
-              "query": [
-                { "key": "from", "value": "", "type": "text" },
-                { "key": "to", "value": "", "type": "text" }
+              "raw": "{{baseUrl}}/api/analytics/rooms/1/summary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analytics",
+                "rooms",
+                "1",
+                "summary"
               ]
             }
-          }
-        },
-        {
-          "name": "Get Room Trend",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{baseUrl}}/api/analytics/rooms/{{roomId}}/trends?metric={{metric}}&from={{from}}&to={{to}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "analytics", "rooms", "{{roomId}}", "trends"],
-              "query": [
-                { "key": "metric", "value": "TEMPERATURE", "type": "text" },
-                { "key": "from", "value": "", "type": "text" },
-                { "key": "to", "value": "", "type": "text" }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Get Department Summary",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{baseUrl}}/api/analytics/departments/{{departmentId}}/summary?from={{from}}&to={{to}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "analytics", "departments", "{{departmentId}}", "summary"],
-              "query": [
-                { "key": "from", "value": "", "type": "text" },
-                { "key": "to", "value": "", "type": "text" }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Get Department Violations",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{baseUrl}}/api/analytics/departments/{{departmentId}}/violations",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "analytics", "departments", "{{departmentId}}", "violations"]
-            }
-          }
-        },
-        {
-          "name": "Get Department Trend",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{baseUrl}}/api/analytics/departments/{{departmentId}}/trends?metric={{metric}}&from={{from}}&to={{to}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "analytics", "departments", "{{departmentId}}", "trends"],
-              "query": [
-                { "key": "metric", "value": "TEMPERATURE", "type": "text" },
-                { "key": "from", "value": "", "type": "text" },
-                { "key": "to", "value": "", "type": "text" }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Get Company Dashboard",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{baseUrl}}/api/analytics/company/dashboard?from={{from}}&to={{to}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "analytics", "company", "dashboard"],
-              "query": [
-                { "key": "from", "value": "", "type": "text" },
-                { "key": "to", "value": "", "type": "text" }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Get Company Violations",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{baseUrl}}/api/analytics/company/violations",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "analytics", "company", "violations"]
-            }
-          }
-        },
-        {
-          "name": "Get Company Trend",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{baseUrl}}/api/analytics/company/trends?metric={{metric}}&from={{from}}&to={{to}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "analytics", "company", "trends"],
-              "query": [
-                { "key": "metric", "value": "TEMPERATURE", "type": "text" },
-                { "key": "from", "value": "", "type": "text" },
-                { "key": "to", "value": "", "type": "text" }
-              ]
-            }
-          }
+          },
+          "response": []
         }
       ]
     }
