@@ -16,7 +16,7 @@
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"username\": \"elvis\",\n    \"password\": \"passwd\"\n}",
+              "raw": "{\n    \"username\": \"admin\",\n    \"password\": \"passwd\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -260,6 +260,134 @@
               "path": [
                 "api",
                 "admin",
+                "{{id}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Absence",
+      "item": [
+        {
+          "name": "Get All Absences",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/absence",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "absence"
+              ],
+              "query": [
+                {
+                  "key": "userxId",
+                  "value": "1",
+                  "disabled": true
+                },
+                {
+                  "key": "departmentId",
+                  "value": "3",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Absence by Id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/absence/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "absence",
+                "{{id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Absence",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"startDate\": \"2025-03-09T14:45:00\",\n    \"endDate\": \"2025-03-10T14:45:00\",\n    \"absenceType\": \"HOLIDAY\",\n    \"userxId\": 4\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/absence",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "absence"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Absence",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"startDate\": \"2025-03-11T09:00:00\",\n    \"endDate\": \"2025-03-12T09:00:00\",\n    \"absenceType\": \"SICK_LEAVE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/absence/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "absence",
+                "{{id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Absence",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/absence/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "absence",
                 "{{id}}"
               ]
             }
@@ -950,134 +1078,6 @@
       ]
     },
     {
-      "name": "Absence",
-      "item": [
-        {
-          "name": "Get All Absences",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/absence",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "absence"
-              ],
-              "query": [
-                {
-                  "key": "userxId",
-                  "value": "1",
-                  "disabled": true
-                },
-                {
-                  "key": "departmentId",
-                  "value": "3",
-                  "disabled": true
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Absence by Id",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/absence/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "absence",
-                "{{id}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Create Absence",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"startDate\": \"2025-03-10T14:45:00\",\n    \"endDate\": \"2025-03-10T14:45:00\",\n    \"absenceType\": \"HOLIDAY\",\n    \"userxId\": 4\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/absence",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "absence"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Update Absence",
-          "request": {
-            "method": "PATCH",
-            "header": [],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"startDate\": \"2025-03-11T09:00:00\",\n    \"endDate\": \"2025-03-12T09:00:00\",\n    \"absenceType\": \"SICK_LEAVE\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/absence/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "absence",
-                "{{id}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Delete Absence",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/absence/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "absence",
-                "{{id}}"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
       "name": "RaspberryPi",
       "item": [
         {
@@ -1338,13 +1338,13 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/climate-hint",
+              "raw": "{{baseUrl}}/api/climatehint",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "climate-hint"
+                "climatehint"
               ]
             }
           },
@@ -1356,13 +1356,13 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/climate-hint/{{id}}",
+              "raw": "{{baseUrl}}/api/climatehint/{{id}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "climate-hint",
+                "climatehint",
                 "{{id}}"
               ]
             }
@@ -1384,13 +1384,13 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/climate-hint",
+              "raw": "{{baseUrl}}/api/climatehint",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "climate-hint"
+                "climatehint"
               ]
             }
           },
@@ -1411,13 +1411,13 @@
               }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/climate-hint/{{id}}",
+              "raw": "{{baseUrl}}/api/climatehint/{{id}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "climate-hint",
+                "climatehint",
                 "{{id}}"
               ]
             }
@@ -1430,13 +1430,13 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/climate-hint/{{id}}",
+              "raw": "{{baseUrl}}/api/climatehint/{{id}}",
               "host": [
                 "{{baseUrl}}"
               ],
               "path": [
                 "api",
-                "climate-hint",
+                "climatehint",
                 "{{id}}"
               ]
             }
