@@ -45,7 +45,7 @@ const AbsenceCalendar: React.FC<Props> = ({ absences, userMap }) => {
     const [currentDate, setCurrentDate] = useState(new Date());
 
     const events: CalEvent[] = absences
-        .filter(a => a.startDate && a.endDate)
+        .filter(a => a.startDate && a.endDate && a.absenceStatus !== 'CANCELLED')
         .map(a => {
             const start = new Date(a.startDate!);
             const end   = new Date(a.endDate!);
