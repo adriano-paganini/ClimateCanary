@@ -9,7 +9,7 @@ public record SensorStationCreateDTO (
         @NotBlank
         String name,
 
-        @NotBlank
+        @NotNull
         DeviceStatus deviceStatus,
 
         @NotBlank
