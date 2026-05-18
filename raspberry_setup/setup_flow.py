@@ -50,6 +50,10 @@ async def run_setup(
     )
 
     try:
+        from ble_scanner import _scan_lock
+        async with _scan_lock:
+            pass  # wait for any active scan to finish before connecting
+
         async with BleakClient(address, timeout=20.0) as client:
             await client.write_gatt_char(SETUP_CONFIG_UUID, payload, response=True)
             print(f"[SETUP:{tag}] config written. Arduino will reboot.")

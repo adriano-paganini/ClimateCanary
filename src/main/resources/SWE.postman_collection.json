@@ -1326,6 +1326,147 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Find SensorStations (BLE Scan)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sensorstation/find/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sensorstation",
+                "find",
+                "{{id}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Arduino Setup Flow",
+      "item": [
+        {
+          "name": "Step 1 - Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set(\"accessToken\", json.token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"username\": \"elvis\",\n    \"password\": \"passwd\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/authentication/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "authentication",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Step 2 - Create RaspberryPi",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"hostName\": \"rpi-01\",\n    \"roomId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bpi",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "bpi"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Step 3 - Trigger BLE Scan (find Arduino)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/sensorstation/find/{{id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sensorstation",
+                "find",
+                "{{id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Step 4 - Create SensorStation (Arduino)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Arduino-01\",\n    \"deviceStatus\": \"AVAILABLE\",\n    \"bleMac\": \"AA:BB:CC:DD:EE:FF\",\n    \"measurementInterval\": 60,\n    \"raspberryPiId\": 1,\n    \"roomId\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sensorstation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "sensorstation"
+              ]
+            }
+          },
+          "response": []
         }
       ]
     },

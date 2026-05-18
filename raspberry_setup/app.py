@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, BackgroundTasks
 import asyncio
 import aiosqlite
 from pydantic import BaseModel
@@ -92,15 +92,15 @@ async def heartbeat(piId: int):
 
 
 @app.post("/api/spi/{piId}/scan")
-async def trigger_scan(piId: int):
+async def trigger_scan(piId: int, background_tasks: BackgroundTasks):
     """
     Backend manually triggers a BLE scan for available sensor stations.
     Not needed in daily operations.
     """
     _check_pi_id(piId)
     from ble_scanner import scan_for_stations
-    addresses = await scan_for_stations()
-    return {"status": "ok", "found": len(addresses), "addresses": addresses}
+    background_tasks.add_task(scan_for_stations)
+    return {"status": "ok"}
 
 @app.post("/api/spi/{piId}/setup")
 async def setup_station(piId: int, payload: SensorStationDTO):

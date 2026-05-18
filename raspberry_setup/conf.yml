@@ -2,6 +2,6 @@ pi:
   id: 15
   room_id: 1
   room_name: "Room 1"
-  host_name: "testPI"
-  backend_url: "http://10.79.40.220:8080"
+  host_name: "rpi-01"
+  backend_url: "http://192.168.0.110:8080"
   privacy_mode: true
