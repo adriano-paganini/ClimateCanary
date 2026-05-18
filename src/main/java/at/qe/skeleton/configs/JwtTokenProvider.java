@@ -14,6 +14,7 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -26,6 +27,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@Slf4j
 @Component
 public class JwtTokenProvider {
 
@@ -91,15 +93,15 @@ public class JwtTokenProvider {
             return Optional.of(jws);
 
         } catch (ExpiredJwtException exception) {
-            System.err.println("Request to parse expired JWT : " + token + " failed : " + exception.getMessage());
+            log.error("Request to parse expired JWT : {} failed : {}", token, exception.getMessage());
         } catch (UnsupportedJwtException exception) {
-            System.err.println("Request to parse unsupported JWT : " + token + " failed : " + exception.getMessage());
+            log.error("Request to parse unsupported JWT : {} failed : {}", token, exception.getMessage());
         } catch (MalformedJwtException exception) {
-            System.err.println("Request to parse invalid JWT : " + token + " failed : " + exception.getMessage());
+            log.error("Request to parse invalid JWT : {} failed : {}", token, exception.getMessage());
         } catch (SignatureException exception) {
-            System.err.println("Request to parse JWT with invalid signature : " + token + " failed : " + exception.getMessage());
+            log.error("Request to parse JWT with invalid signature : {} failed : {}", token, exception.getMessage());
         } catch (IllegalArgumentException exception) {
-            System.err.println("Request to parse empty or null JWT : " + token + " failed : " + exception.getMessage());
+            log.error("Request to parse empty or null JWT : {} failed : {}", token, exception.getMessage());
         }
         return Optional.empty();
     }
