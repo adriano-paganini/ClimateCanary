@@ -35,6 +35,15 @@ public interface AbstractRepository<T, ID extends Serializable> extends Reposito
     List<T> findAll();
 
     /**
+     * Returns all entities with the given ids.
+     *
+     * @param ids The ids to retrieve entities for.
+     * @return A list of entities with the given ids.
+     * @throws IllegalArgumentException If {@code ids} is {@literal null}.
+     */
+    List<T> findAllById(Iterable<ID> ids);
+
+    /**
      * Retrieves an entity by its id.
      *
      * @param id must not be {@literal null}.
