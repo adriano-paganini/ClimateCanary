@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
-import { Calendar, dateFnsLocalizer, View } from 'react-big-calendar';
+import { Calendar, dateFnsLocalizer, View, EventProps } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { enGB } from 'date-fns/locale/en-GB';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -49,7 +49,7 @@ interface Props {
     userMap?: Record<number, UserxDTO>;
 }
 
-const EventComponent = ({ event }: { event: CalEvent }) => {
+const EventComponent = ({ event }: EventProps<CalEvent>) => {
     const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
 
     return (
@@ -139,7 +139,7 @@ const AbsenceCalendar: React.FC<Props> = ({ absences, userMap }) => {
                     onNavigate={setCurrentDate}
                     views={['month', 'week', 'agenda']}
                     eventPropGetter={eventPropGetter}
-                    components={{ event: EventComponent as React.ComponentType<object> }}
+                    components={{ event: EventComponent as React.ComponentType<EventProps<CalEvent>> }}
                     popup
                     style={{ height: '100%' }}
                 />
