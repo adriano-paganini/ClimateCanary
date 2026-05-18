@@ -56,7 +56,7 @@ public class RaspberryPiClientController {
     @PostMapping("/{piId}/booted")
     public ResponseEntity<Void> piBooted(@PathVariable Long piId,
                                          @Valid @RequestBody RaspberryPiUpdateDTO dto) {
-        raspberryPiService.update(piId,dto);
+        raspberryPiService.updateInternal(piId,dto);
         return ResponseEntity.ok().build();
     }
 

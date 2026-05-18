@@ -1350,10 +1350,156 @@
       ]
     },
     {
-      "name": "Arduino Setup Flow",
+      "name": "CPI (Pi → Backend)",
+      "description": "Endpoints that the Raspberry Pi calls on the backend. Use these to simulate Pi behaviour from Postman.",
       "item": [
         {
-          "name": "Step 1 - Login",
+          "name": "Pi - Get Config",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cpi/{{id}}/config",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cpi", "{{id}}", "config"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Pi - Report Boot",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"ipAddress\": \"192.168.1.50\",\n    \"hostName\": \"rpi-01\",\n    \"deviceStatus\": \"ONLINE\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cpi/{{id}}/booted",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cpi", "{{id}}", "booted"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Pi - Report Discovered Stations",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "[\"AA:BB:CC:DD:EE:FF\", \"11:22:33:44:55:66\"]",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cpi/{{id}}/discovered",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cpi", "{{id}}", "discovered"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Pi - Update Station Status (CONNECTED)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "\"CONNECTED\"",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cpi/{{id}}/{{sensorStationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cpi", "{{id}}", "{{sensorStationId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Pi - Update Station Status (CONNECTION_FAILED)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "\"CONNECTION_FAILED\"",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cpi/{{id}}/{{sensorStationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cpi", "{{id}}", "{{sensorStationId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Pi - Send Measurements",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"timestamp\": 1700000000000,\n    \"temperature\": 22.5,\n    \"humidity\": 45.0,\n    \"pressure\": 1013.25,\n    \"airQuality\": 50.0,\n    \"roomId\": 1,\n    \"sensorStationId\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cpi/{{id}}/measurements",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cpi", "{{id}}", "measurements"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Pi - Report Active Violation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"metric\": \"TEMPERATURE\",\n    \"roomId\": 1,\n    \"startTime\": \"2026-05-18T10:00:00\",\n    \"avgValue\": 29.5\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cpi/{{id}}/violation",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cpi", "{{id}}", "violation"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Pi - Resolve Violation",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"metric\": \"TEMPERATURE\",\n    \"roomId\": 1,\n    \"endTime\": \"2026-05-18T10:15:00\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cpi/{{id}}/violation/resolve",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cpi", "{{id}}", "violation", "resolve"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Arduino Setup Flow (Full)",
+      "description": "Complete ordered flow for setting up an Arduino (SensorStation). Follow steps top-to-bottom. {{id}} = piId unless noted. Add sensorStationId variable when station id is known.",
+      "item": [
+        {
+          "name": "Phase 1 - Step 1: Login",
           "event": [
             {
               "listen": "test",
@@ -1367,103 +1513,201 @@
             }
           ],
           "request": {
-            "auth": {
-              "type": "noauth"
-            },
+            "auth": { "type": "noauth" },
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"username\": \"elvis\",\n    \"password\": \"passwd\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
             },
             "url": {
               "raw": "{{baseUrl}}/authentication/login",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "authentication",
-                "login"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["authentication", "login"]
             }
           },
           "response": []
         },
         {
-          "name": "Step 2 - Create RaspberryPi",
+          "name": "Phase 1 - Step 2: Pi fetches config from backend",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cpi/{{id}}/config",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cpi", "{{id}}", "config"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Phase 1 - Step 3: Pi reports boot (ONLINE)",
           "request": {
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"hostName\": \"rpi-01\",\n    \"roomId\": 1\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n    \"ipAddress\": \"192.168.1.50\",\n    \"hostName\": \"rpi-01\",\n    \"deviceStatus\": \"ONLINE\"\n}",
+              "options": { "raw": { "language": "json" } }
             },
             "url": {
-              "raw": "{{baseUrl}}/api/bpi",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "bpi"
-              ]
+              "raw": "{{baseUrl}}/api/cpi/{{id}}/booted",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cpi", "{{id}}", "booted"]
             }
           },
           "response": []
         },
         {
-          "name": "Step 3 - Trigger BLE Scan (find Arduino)",
+          "name": "Phase 2 - Step 4: Admin triggers BLE scan",
           "request": {
             "method": "POST",
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/sensorstation/find/{{id}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sensorstation",
-                "find",
-                "{{id}}"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sensorstation", "find", "{{id}}"]
             }
           },
           "response": []
         },
         {
-          "name": "Step 4 - Create SensorStation (Arduino)",
+          "name": "Phase 2 - Step 5: Pi reports discovered MACs to backend",
           "request": {
             "method": "POST",
             "header": [],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"name\": \"Arduino-01\",\n    \"deviceStatus\": \"AVAILABLE\",\n    \"bleMac\": \"AA:BB:CC:DD:EE:FF\",\n    \"measurementInterval\": 60,\n    \"raspberryPiId\": 1,\n    \"roomId\": 1\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "[\"AA:BB:CC:DD:EE:FF\"]",
+              "options": { "raw": { "language": "json" } }
             },
             "url": {
+              "raw": "{{baseUrl}}/api/cpi/{{id}}/discovered",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cpi", "{{id}}", "discovered"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Phase 2 - Step 6: Admin lists AVAILABLE stations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
               "raw": "{{baseUrl}}/api/sensorstation",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "sensorstation"
-              ]
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sensorstation"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Phase 2 - Step 7: Admin connects to station (triggers Pi setup via backend)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Arduino-01\",\n    \"roomId\": 1,\n    \"raspberryPiId\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/sensorstation/{{sensorStationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "sensorstation", "{{sensorStationId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Phase 3 - Step 8a: Pi reports setup failed (error path)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "\"CONNECTION_FAILED\"",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cpi/{{id}}/{{sensorStationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cpi", "{{id}}", "{{sensorStationId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Phase 5 - Step 8b: Pi reports CONNECTED (happy path)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "\"CONNECTED\"",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cpi/{{id}}/{{sensorStationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cpi", "{{id}}", "{{sensorStationId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Phase 6 - Step 9: Pi sends measurements",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"timestamp\": 1700000000000,\n    \"temperature\": 22.5,\n    \"humidity\": 45.0,\n    \"pressure\": 1013.25,\n    \"airQuality\": 50.0,\n    \"roomId\": 1,\n    \"sensorStationId\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cpi/{{id}}/measurements",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cpi", "{{id}}", "measurements"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Phase 7 - Step 10: Pi reports active violation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"metric\": \"TEMPERATURE\",\n    \"roomId\": 1,\n    \"startTime\": \"2026-05-18T10:00:00\",\n    \"avgValue\": 29.5\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cpi/{{id}}/violation",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cpi", "{{id}}", "violation"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Phase 7 - Step 11: Pi resolves violation",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"metric\": \"TEMPERATURE\",\n    \"roomId\": 1,\n    \"endTime\": \"2026-05-18T10:15:00\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/cpi/{{id}}/violation/resolve",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cpi", "{{id}}", "violation", "resolve"]
             }
           },
           "response": []
@@ -2179,6 +2423,10 @@
     },
     {
       "key": "id",
+      "value": "1"
+    },
+    {
+      "key": "sensorStationId",
       "value": "1"
     }
   ]
