@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 import { Calendar, dateFnsLocalizer, View } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay } from 'date-fns';
 import { enGB } from 'date-fns/locale/en-GB';
@@ -27,18 +28,61 @@ const TYPE_LABEL: Record<string, string> = {
     OTHER:         'Other',
 };
 
+const STATUS_LABEL: Record<string, string> = {
+    APPROVED: 'Approved',
+    PLANNED:  'Planned',
+    REJECTED: 'Rejected',
+    CANCELLED:'Cancelled',
+};
+
 interface CalEvent {
     id: number;
     title: string;
     start: Date;
     end: Date;
     type: string;
+    status: string;
 }
 
 interface Props {
     absences: AbsenceDTO[];
     userMap?: Record<number, UserxDTO>;
 }
+
+const EventComponent = ({ event }: { event: CalEvent }) => {
+    const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+
+    return (
+        <span
+            style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+            onMouseEnter={(e) => setPos({ x: e.clientX, y: e.clientY })}
+            onMouseMove={(e) => setPos({ x: e.clientX, y: e.clientY })}
+            onMouseLeave={() => setPos(null)}
+        >
+            {event.title}
+            {pos && ReactDOM.createPortal(
+                <div style={{
+                    position: 'fixed',
+                    left: pos.x + 12,
+                    top: pos.y - 36,
+                    backgroundColor: '#1e293b',
+                    color: '#fff',
+                    padding: '4px 10px',
+                    borderRadius: '4px',
+                    fontSize: '0.75rem',
+                    fontWeight: 500,
+                    pointerEvents: 'none',
+                    zIndex: 9999,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                    whiteSpace: 'nowrap',
+                }}>
+                    {STATUS_LABEL[event.status] ?? event.status}
+                </div>,
+                document.body
+            )}
+        </span>
+    );
+};
 
 const AbsenceCalendar: React.FC<Props> = ({ absences, userMap }) => {
     const [currentView, setCurrentView] = useState<View>('month');
@@ -59,7 +103,7 @@ const AbsenceCalendar: React.FC<Props> = ({ absences, userMap }) => {
                     : `User ${a.userxId}`;
                 title = `${name} — ${typeLabel}`;
             }
-            return { id: a.id!, title, start, end, type: a.absenceType ?? '' };
+            return { id: a.id!, title, start, end, type: a.absenceType ?? '', status: a.absenceStatus ?? '' };
         });
 
     const eventPropGetter = (event: CalEvent) => ({
@@ -95,6 +139,7 @@ const AbsenceCalendar: React.FC<Props> = ({ absences, userMap }) => {
                     onNavigate={setCurrentDate}
                     views={['month', 'week', 'agenda']}
                     eventPropGetter={eventPropGetter}
+                    components={{ event: EventComponent as React.ComponentType<object> }}
                     popup
                     style={{ height: '100%' }}
                 />
