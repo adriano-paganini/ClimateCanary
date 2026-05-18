@@ -19,6 +19,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -48,15 +49,15 @@ class AbsenceServiceTest {
     @BeforeEach
     void setUp(){
         adminUser = new Userx();
-        adminUser.setId(1L);
+        ReflectionTestUtils.setField(adminUser, "id", 1L);
         adminUser.setRoles(Set.of(UserxRole.SYSTEM_ADMIN));
 
         regularUser = new Userx();
-        regularUser.setId(2L);
+        ReflectionTestUtils.setField(regularUser, "id", 2L);
         regularUser.setRoles(Set.of(UserxRole.EMPLOYEE));
 
         otherUser = new Userx();
-        otherUser.setId(3L);
+        ReflectionTestUtils.setField(otherUser, "id", 3L);
         otherUser.setRoles(Set.of(UserxRole.EMPLOYEE));
 
         absence = new Absence();
@@ -239,7 +240,7 @@ class AbsenceServiceTest {
     @DisplayName("Update absence with all fields updates and returns")
     void update_allFieldsProvided_updatesAndReturnsAbsence() {
         Userx newUser = new Userx();
-        newUser.setId(5L);
+        ReflectionTestUtils.setField(newUser, "id", 5L);
 
         AbsenceUpdateDTO dto = new AbsenceUpdateDTO(
                 LocalDateTime.of(2025, 7, 1, 12, 0),

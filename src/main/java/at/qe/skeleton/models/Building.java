@@ -1,16 +1,22 @@
 package at.qe.skeleton.models;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "buildings")
 public class Building {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Setter(AccessLevel.NONE)
     private Long id;
 
     private String name;
@@ -28,23 +34,10 @@ public class Building {
         this.name = name;
     }
 
-    public Long getId() { return id; }
-
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-
-    public List<Room> getRooms() { return rooms; }
-
-    public void setRooms(List<Room> rooms) { this.rooms = rooms; }
-
-    public Address getAddress() { return address; }
-    public void setAddress(Address address) { this.address = address; }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Building)) return false;
-        Building other = (Building) o;
+        if (!(o instanceof Building other)) return false;
 
         return id != null && id.equals(other.id);
     }

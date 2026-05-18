@@ -1,18 +1,24 @@
 package at.qe.skeleton.models;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@Getter
+@Setter
 @Table(name = "thresholdviolations")
 @Entity
 public class ThresholdViolation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Setter(AccessLevel.NONE)
     private Long id;
 
     @Enumerated(EnumType.STRING)
@@ -42,79 +48,11 @@ public class ThresholdViolation {
     )
     private List<Measurement> measurements = new ArrayList<>();
 
-    public Long getId() {
-        return id;
-    }
-
-    public Metric getMetric() {
-        return metric;
-    }
-
-    public void setMetric(Metric metric) {
-        this.metric = metric;
-    }
-
-    public Float getValue() {
-        return value;
-    }
-
-    public void setValue(Float value) {
-        this.value = value;
-    }
-
-    public ViolationStatus getViolationStatus() {
-        return violationStatus;
-    }
-
-    public void setViolationStatus(ViolationStatus violationStatus) {
-        this.violationStatus = violationStatus;
-    }
-
-    public LocalDateTime getStartTime() {
-        return startTime;
-    }
-
-    public void setStartTime(LocalDateTime startTime) {
-        this.startTime = startTime;
-    }
-
-    public LocalDateTime getEndTime() {
-        return endTime;
-    }
-
-    public void setEndTime(LocalDateTime endTime) {
-        this.endTime = endTime;
-    }
-
-    public Threshold getThreshold() {
-        return threshold;
-    }
-
-    public void setThreshold(Threshold threshold) {
-        this.threshold = threshold;
-    }
-
-    public Room getRoom() {
-        return room;
-    }
-
-    public void setRoom(Room room) {
-        this.room = room;
-    }
-
-    public List<Measurement> getMeasurements() {
-        return measurements;
-    }
-
-    public void setMeasurements(List<Measurement> measurements) {
-        this.measurements = measurements;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         ThresholdViolation that = (ThresholdViolation) o;
-        return getId() == that.getId();
+        return Objects.equals(getId(), that.getId());
     }
 
     @Override

@@ -18,6 +18,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -43,7 +44,7 @@ class EmployeeProfileServiceTest {
     @BeforeEach
     void setUp() {
         user = new Userx();
-        user.setId(1L);
+        ReflectionTestUtils.setField(user, "id", 1L);
 
         department = new Department();
 
@@ -180,7 +181,7 @@ class EmployeeProfileServiceTest {
     @DisplayName("updates user")
     void update_user_updatesUser() {
         Userx newUser = new Userx();
-        newUser.setId(2L);
+        ReflectionTestUtils.setField(newUser, "id", 2L);
 
         EmployeeProfileUpdateDTO dto = new EmployeeProfileUpdateDTO(2L, null, null);
 

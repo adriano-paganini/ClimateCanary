@@ -1,16 +1,22 @@
 package at.qe.skeleton.models;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "departments")
 public class Department {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Setter(AccessLevel.NONE)
     private Long id;
 
     private String name;
@@ -31,24 +37,10 @@ public class Department {
         this.name = name;
     }
 
-    public Long getId() { return id; }
-
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-
-    public List<Room> getRooms() { return rooms; }
-    public void setRooms(List<Room> rooms) { this.rooms = rooms; }
-
-    public Userx getDepartmentLeader() { return departmentLeader; }
-    public void setDepartmentLeader(Userx departmentLeader) { this.departmentLeader = departmentLeader; }
-
-    public List<EmployeeProfile> getEmployeeProfiles() { return employeeProfiles; }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Department)) return false;
-        Department other = (Department) o;
+        if (!(o instanceof Department other)) return false;
 
         return id != null && id.equals(other.id);
     }

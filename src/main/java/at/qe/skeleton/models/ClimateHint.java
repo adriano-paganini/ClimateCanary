@@ -1,16 +1,22 @@
 package at.qe.skeleton.models;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.HashSet;
 import java.util.Set;
 
+@Getter
+@Setter
 @Table(name = "climatehints")
 @Entity
 public class ClimateHint {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Setter(AccessLevel.NONE)
     private Long id;
 
     private Metric metric;
@@ -24,35 +30,10 @@ public class ClimateHint {
     )
     private Set<Threshold> thresholds = new HashSet<>();
 
-    public Long getId() {
-        return id;
-    }
-
-    public Metric getMetric() {
-        return metric;
-    }
-
-    public void setMetric(Metric metric) {
-        this.metric = metric;
-    }
-
-    public String getHintText() {
-        return hintText;
-    }
-
-    public void setHintText(String hintText) {
-        this.hintText = hintText;
-    }
-
-    public Set<Threshold> getThresholds() {
-        return thresholds;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof ClimateHint)) return false;
-        ClimateHint other = (ClimateHint) o;
+        if (!(o instanceof ClimateHint other)) return false;
         return id != null && id.equals(other.id);
     }
 

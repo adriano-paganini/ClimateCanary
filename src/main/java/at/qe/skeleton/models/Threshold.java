@@ -1,18 +1,24 @@
 package at.qe.skeleton.models;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@Getter
+@Setter
 @Table(name = "thresholds")
 @Entity
 public class Threshold {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Setter(AccessLevel.NONE)
     private Long id;
 
     @Enumerated(EnumType.STRING)
@@ -33,67 +39,10 @@ public class Threshold {
     @JoinColumn(name = "room_id")
     private Room room;
 
-    public Long getId() {
-        return id;
-    }
-
-    public Metric getMetric() {
-        return metric;
-    }
-
-    public void setMetric(Metric metric) {
-        this.metric = metric;
-    }
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public Float getBoundValue() {
-        return boundValue;
-    }
-
-    public void setBoundValue(Float boundValue) {
-        this.boundValue = boundValue;
-    }
-
-    public ThresholdType getThresholdType() {
-        return thresholdType;
-    }
-
-    public void setThresholdType(ThresholdType thresholdType) {
-        this.thresholdType = thresholdType;
-    }
-
-    public Set<ClimateHint> getClimateHints() {
-        return climateHints;
-    }
-
-    public void setClimateHints(Set<ClimateHint> climateHints) {
-        this.climateHints = climateHints;
-    }
-
-    public List<ThresholdViolation> getViolations() {
-        return violations;
-    }
-
-    public Room getRoom() {
-        return room;
-    }
-
-    public void setRoom(Room room) {
-        this.room = room;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Threshold)) return false;
-        Threshold other = (Threshold) o;
+        if (!(o instanceof Threshold other)) return false;
         return id != null && id.equals(other.id);
     }
 

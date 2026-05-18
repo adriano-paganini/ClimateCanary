@@ -1,16 +1,22 @@
 package at.qe.skeleton.models;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "rooms")
 public class Room {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Setter(AccessLevel.NONE)
     private Long id;
 
     private String name;
@@ -56,66 +62,10 @@ public class Room {
         this.privacyMode = privacyMode;
     }
 
-    public Long getId() { return id; }
-
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-
-    public RoomType getRoomType() { return roomType; }
-    public void setRoomType(RoomType roomType) { this.roomType = roomType; }
-
-    public void setPrivacyMode(Boolean privacyMode) {
-        this.privacyMode = privacyMode;
-    }
-
-    public Boolean getPrivacyMode() {
-        return privacyMode;
-    }
-
-    public Department getDepartment() { return department; }
-    public void setDepartment(Department department) { this.department = department; }
-
-    public Building getBuilding() { return building; }
-    public void setBuilding(Building building) { this.building = building; }
-
-    public List<EmployeeProfile> getEmployeeProfiles() { return employeeProfiles; }
-
-    public boolean isActive() { return active; }
-    public void setActive(boolean active) { this.active = active; }
-
-    public List<Threshold> getThresholds() {
-        return thresholds;
-    }
-
-    public List<ThresholdViolation> getViolations() {
-        return violations;
-    }
-
-    public List<SensorStation> getSensorStations() {
-        return sensorStations;
-    }
-
-    public RaspberryPi getRaspberryPi() {
-        return raspberryPi;
-    }
-
-    public void setRaspberryPi(RaspberryPi raspberryPi) {
-        this.raspberryPi = raspberryPi;
-    }
-
-    public List<Measurement> getMeasurements() {
-        return measurements;
-    }
-
-    public void setId(Long id){
-        this.id = id;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Room)) return false;
-        Room other = (Room) o;
+        if (!(o instanceof Room other)) return false;
 
         return id != null && id.equals(other.id);
     }

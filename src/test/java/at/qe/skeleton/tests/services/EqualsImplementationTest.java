@@ -5,6 +5,7 @@ import at.qe.skeleton.models.UserxRole;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import nl.jqno.equalsverifier.Warning;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * Tests to ensure that each entity's implementation of equals conforms to the
@@ -19,9 +20,9 @@ public class EqualsImplementationTest {
     @Test
     public void testUserEqualsContract() {
         Userx user1 = new Userx();
-        user1.setId(1L);
+        ReflectionTestUtils.setField(user1, "id", 1L);
         Userx user2 = new Userx();
-        user2.setId(2L);
+        ReflectionTestUtils.setField(user2, "id", 2L);
         EqualsVerifier.forClass(Userx.class).withPrefabValues(Userx.class, user1, user2).suppress(Warning.STRICT_INHERITANCE, Warning.ALL_FIELDS_SHOULD_BE_USED).verify();
     }
 
