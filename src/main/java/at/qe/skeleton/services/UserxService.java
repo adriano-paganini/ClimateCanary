@@ -24,7 +24,6 @@ import java.util.Optional;
 
 /**
  * Service for accessing and manipulating user data.
- *
  * This class is part of the skeleton project provided for students of the
  * course "Software Engineering" offered by Innsbruck University.
  */
@@ -142,7 +141,7 @@ public class UserxService implements UserDetailsService {
      *
      * @param username the username identifying the user whose data is required.
      * @return the user with the given username and their details.
-     * @throws UsernameNotFoundException
+     * @throws UsernameNotFoundException if the user is not found.
      */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

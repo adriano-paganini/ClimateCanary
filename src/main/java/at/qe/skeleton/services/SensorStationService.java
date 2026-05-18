@@ -45,6 +45,10 @@ public class SensorStationService {
         return repo.findById(id).orElseThrow(() -> new NotFoundException("SensorStation with id " + id + " not found"));
     }
 
+    private SensorStation getByIdInternal(Long id) {
+        return repo.findById(id).orElseThrow(() -> new NotFoundException("SensorStation with id " + id + " not found"));
+    }
+
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public SensorStation create(SensorStation s) {
         SensorStation savedStation = repo.save(s);
@@ -63,7 +67,7 @@ public class SensorStationService {
     }
 
     public SensorStation update(Long piId,Long id, DeviceStatus status){
-        SensorStation station = getById(id);
+        SensorStation station = getByIdInternal(id);
         if (!Objects.equals(station.getRaspberryPi().getId(), piId)) throw new NotFoundException("SensorStation with id " + id + " not found");
         station.setDeviceStatus(status);
         return repo.save(station);
