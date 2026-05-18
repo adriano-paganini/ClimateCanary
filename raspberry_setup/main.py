@@ -30,11 +30,9 @@ async def post_booted() -> None:
     """Notify the backend that this Pi has started up (POST /api/cpi/{piId}/booted)."""
     url = f"{cfg.BACKEND_URL}/api/cpi/{cfg.PI_ID}/booted"
     payload = {
-        "ipAddress":        get_local_ip(),
-        "hostName":         cfg.HOST_NAME,
-        "deviceStatus":     "ONLINE",
-        "roomId":           cfg.ROOM_ID,
-        "sensorStationIds": [],
+        "ipAddress":    get_local_ip(),
+        "hostName":     cfg.HOST_NAME,
+        "deviceStatus": "ONLINE",
     }
     try:
         async with aiohttp.ClientSession() as session:
@@ -44,7 +42,7 @@ async def post_booted() -> None:
             ) as resp:
                 print(f"[CFG] POST booted → {resp.status}")
     except Exception as e:
-        print(f"[CFG] could not post booted: {e}")
+        print(f"[CFG] could not post booted: {type(e).__name__}: {e!r}")
 
 
 
@@ -62,7 +60,11 @@ async def fetch_config_from_backend() -> None:
             ) as resp:
                 if resp.status == 200:
                     yaml_text = await resp.text()
+                    saved_url = cfg.BACKEND_URL
                     load_config_from_string(yaml_text)
+                    cfg.BACKEND_URL = saved_url
+                    from pathlib import Path
+                    Path("conf.yml").write_text(yaml_text)
                     print("[CFG] config loaded from backend.")
                 else:
                     print(f"[CFG] backend returned {resp.status}, using local conf.yml.")

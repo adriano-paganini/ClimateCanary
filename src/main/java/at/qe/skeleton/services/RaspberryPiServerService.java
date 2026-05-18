@@ -19,7 +19,7 @@ import java.util.List;
 public class RaspberryPiServerService {
 
     private static final String URL_PROTOCOL = "http://";
-    private static final String API_BASE_PATH = ":8080/api/spi/";
+    private static final String API_BASE_PATH = ":8000/api/spi/";
 
     private final RaspberryPiService raspberryPiService;
     private final RestClient restClient;
