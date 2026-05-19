@@ -18,9 +18,9 @@ class SensorStationDTO(BaseModel):
     bleMac:              str
     name:                str
     deviceStatus:        str
-    measurementInterval: int
-    raspberryPiId:       int
-    roomId:              int
+    measurementInterval: Optional[int] = None
+    raspberryPiId:       Optional[int] = None
+    roomId:              Optional[int] = None
 
 class OccupancyDTO(BaseModel):
     id:          int
@@ -109,7 +109,7 @@ async def setup_station(piId: int, payload: SensorStationDTO):
     from setup_flow import run_setup
     success = await run_setup(
         station=payload.model_dump(),
-        measurement_interval=payload.measurementInterval,
+        measurement_interval=payload.measurementInterval or 60,
     )
     print(f"run setup has finished")
 
@@ -128,7 +128,9 @@ async def receive_stations(piId: int, payload: SensorStationDTO):
     _check_pi_id(piId)
     db = _check_db()
 
-    await save_station(db, payload.model_dump())
+    data = payload.model_dump()
+    data["measurementInterval"] = data.get("measurementInterval") or 60
+    await save_station(db, data)
     print(f"[APP] station received: id={payload.id}, mac={payload.bleMac}, name={payload.name!r}")
     stations_event.set()
 

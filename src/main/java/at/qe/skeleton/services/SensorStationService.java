@@ -107,8 +107,12 @@ public class SensorStationService {
 
             SensorStationDTO stationDTO = sensorStationMapper.mapTo(updatedStation);
             PiRequestResult result = raspberryPiServerService.setupStation(pi.getId(), stationDTO);
-
             debugInfo.append(", setupStationResult=").append(result);
+
+            if (result == PiRequestResult.SUCCESS) {
+                PiRequestResult connectResult = raspberryPiServerService.connectToStation(pi.getId(), stationDTO);
+                debugInfo.append(", connectToStationResult=").append(connectResult);
+            }
         }
 
         log.info("Updated sensor station with id={}", id);

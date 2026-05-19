@@ -18,7 +18,7 @@ public class AvailableSensorStationCleaner {
     }
 
     public void cleanAvailableSensorStations(Long piId){
-        RaspberryPi raspberryPi = raspberryPiService.getById(piId);
+        RaspberryPi raspberryPi = raspberryPiService.getByIdInternal(piId);
         List<SensorStation> sensorStations = raspberryPi.getSensorStations();
         for (SensorStation station : sensorStations){
             if (station.getDeviceStatus() == DeviceStatus.AVAILABLE){

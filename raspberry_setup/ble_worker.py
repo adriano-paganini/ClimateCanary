@@ -140,32 +140,21 @@ async def ble_worker(
 
 
     print(f"[BLE:{tag}] reading cached sensor data…")
-    cached_count = 0
+    cached_packets: list[tuple[int, float, float, float, float]] = []
+    last_ts: int | None = None
     while True:
         await client.write_gatt_char(CACHED_DATA_ACK_UUID, b"\x01", response=True)
         raw = await client.read_gatt_char(CACHED_DATA_UUID)
         if not raw or len(raw) < 20:
+            # characteristic was never written → cache was empty from the start
             break
         ts, press, temp, hum, gas = struct.unpack(SENSOR_STRUCT, bytes(raw))
-        _set_anchor(ts)
-        pkt = {
-            "sensor_station_id": sensor_station_id,
-            "room_id":           room_id,
-            "timestamp":         _timestamp(ts),   # ISO string → stored + sent to backend
-            "temperature":       temp,
-            "humidity":          hum,
-            "pressure":          press,
-            "air_quality":       gas,
-        }
-        print(f"[BLE:{tag}] cached [{cached_count}] {pkt['timestamp']}: "
-              f"{temp:.1f}°C  {hum:.1f}%  {press:.1f}hPa  {gas}Ω")
-        if not get_privacy_mode():
-            queue.put_nowait(pkt)
-            print(f"[BLE:{tag}] cached [{cached_count}] queued for upload")
-        else:
-            print(f"[BLE:{tag}] cached [{cached_count}] suppressed (privacy mode)")
-        cached_count += 1
-    print(f"[BLE:{tag}] cached replay done: {cached_count} packet(s) enqueued")
+        if ts == last_ts:
+            # Arduino didn't update the characteristic → cache exhausted
+            break
+        last_ts = ts
+        cached_packets.append((ts, press, temp, hum, gas))
+    print(f"[BLE:{tag}] cached read done: {len(cached_packets)} packet(s) collected, timestamps deferred")
 
     async with aiohttp.ClientSession() as http_session:
 
@@ -181,7 +170,7 @@ async def ble_worker(
         await client.start_notify(WARNING_ACK_UUID, on_warning_ack)
 
         async def handle_notification(sender, data: bytearray) -> None:
-            nonlocal warning_active
+            nonlocal warning_active, cached_packets
 
             try:
                 ts, press, temp, hum, gas = struct.unpack(SENSOR_STRUCT, bytes(data))
@@ -190,10 +179,32 @@ async def ble_worker(
                 return
 
             _set_anchor(ts)
+
+            if cached_packets:
+                for i, (c_ts, c_press, c_temp, c_hum, c_gas) in enumerate(cached_packets):
+                    c_pkt = {
+                        "sensor_station_id": sensor_station_id,
+                        "room_id":           room_id,
+                        "timestamp":         _timestamp(c_ts),
+                        "temperature":       c_temp,
+                        "humidity":          c_hum,
+                        "pressure":          c_press,
+                        "air_quality":       c_gas,
+                    }
+                    print(f"[BLE:{tag}] cached [{i}] {c_pkt['timestamp']}: "
+                          f"{c_temp:.1f}°C  {c_hum:.1f}%  {c_press:.1f}hPa  {c_gas}Ω")
+                    if not get_privacy_mode():
+                        queue.put_nowait(c_pkt)
+                        print(f"[BLE:{tag}] cached [{i}] queued for upload")
+                    else:
+                        print(f"[BLE:{tag}] cached [{i}] suppressed (privacy mode)")
+                print(f"[BLE:{tag}] cached replay done: {len(cached_packets)} packet(s) enqueued")
+                cached_packets = []
+
             pkt = {
                 "sensor_station_id": sensor_station_id,
                 "room_id":           room_id,
-                "timestamp":         _timestamp(ts), 
+                "timestamp":         _timestamp(ts),
                 "temperature":       temp,
                 "humidity":          hum,
                 "pressure":          press,
@@ -219,7 +230,7 @@ async def ble_worker(
                 try:
                     url = f"{config.BACKEND_URL}/api/cpi/{config.PI_ID}/{sensor_station_id}"
                     async with http_session.patch(
-                        url, json={"deviceStatus": "CONNECTED"},
+                        url, json="CONNECTED",
                         timeout=_aiohttp.ClientTimeout(total=5),
                     ) as resp:
                         print(f"[BLE:{tag}] PATCH CONNECTED → {resp.status}")

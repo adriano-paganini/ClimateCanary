@@ -3,6 +3,7 @@ import struct
 import traceback
 import aiohttp
 from bleak import BleakClient
+from bleak.exc import BleakCharacteristicNotFoundError
 
 import config
 from config import SETUP_CONFIG_UUID
@@ -25,7 +26,7 @@ async def patch_station_status(
     try:
         async with session.patch(
             url,
-            json={"deviceStatus": status},
+            json=status,
             timeout=aiohttp.ClientTimeout(total=5),
         ) as resp:
             print(f"[SETUP:{tag}] PATCH status={status} → {resp.status}")
@@ -59,13 +60,6 @@ async def run_setup(
             print(f"[SETUP:{tag}] config written. Arduino will reboot.")
             await asyncio.sleep(6.0)
 
-        connected_station = {**station, "deviceStatus": "CONNECTED"}
-        await save_station(app_module.db_connection, connected_station)
-        print(f"[SETUP:{tag}] station saved: id={sensor_station_id}, mac={address}, name={station.get('name')!r}")
-        app_module.stations_event.set()
-
-        async with aiohttp.ClientSession() as session:
-            await patch_station_status(session, sensor_station_id, "CONNECTED", tag)
         return True
 
     except Exception as e:

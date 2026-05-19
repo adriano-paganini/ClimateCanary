@@ -1,6 +1,7 @@
 import asyncio
 import aiohttp
 import aiosqlite
+from datetime import datetime
 
 import config
 from config import SEND_INTERVAL
@@ -19,8 +20,9 @@ async def http_sender(db: aiosqlite.Connection) -> None:
 
                 for row in rows:
                     row_id, timestamp, temp, hum, press, gas, station_id, room_id = row
+                    ts_ms = int(datetime.fromisoformat(timestamp).timestamp() * 1000)
                     payload = {
-                        "timestamp":       timestamp,
+                        "timestamp":       ts_ms,
                         "temperature":     temp,
                         "humidity":        hum,
                         "pressure":        press,
