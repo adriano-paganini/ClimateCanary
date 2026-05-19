@@ -39,7 +39,7 @@ class ThresholdConfigDTO(BaseModel):
 class ViolationResolvedDTO(BaseModel):
     metric:   str
     roomId:   int
-    endTime:  int   #to do: change this to parsed string!
+    endTime:  str   # ISO string p.ex "2026-05-04T14:30:00.123"
     status:   str   # "RESOLVED"
 
 
@@ -51,7 +51,6 @@ def _check_db() -> aiosqlite.Connection:
     if db_connection is None:
         raise HTTPException(status_code=503, detail="DB not ready")
     return db_connection
-
 
 @app.get("/api/spi/setup/verify/{piId}")
 async def verify_pi(piId: int):
@@ -134,6 +133,25 @@ async def receive_stations(piId: int, payload: SensorStationDTO):
 
     return {"status": "ok"}
 
+
+@app.post("/api/spi/{piId}/setup")
+async def setup_station(piId: int, payload: SensorStationDTO):
+    """
+    Backend triggers first-time Arduino setup after admin selects a station.
+    Pi connects to the Arduino, writes TrustedRpiId + measurementInterval,
+    then waits for the Arduino to reboot into normal mode.
+    """
+    _check_pi_id(piId)
+    from setup_flow import run_setup
+    success = await run_setup(
+        address=payload.bleMac,
+        sensor_station_id=payload.id,
+        measurement_interval=payload.measurementInterval,
+    )
+    if success:
+        return {"status": "ok"}
+    else:
+        raise HTTPException(status_code=500, detail="Setup failed — check Pi logs")
 
 
 @app.post("/api/spi/{piId}/config/thresholds")

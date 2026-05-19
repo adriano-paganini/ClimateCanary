@@ -18,7 +18,6 @@ class MetricConfig:
 _lock:  asyncio.Lock | None     = None
 _store: dict[str, MetricConfig] = {}
 
-
 _DEFAULTS: dict[str, MetricConfig] = {
     "temperature": MetricConfig(
         threshold=Threshold("temperature", upper_bound=30.0,    lower_bound=16.0),
@@ -37,7 +36,6 @@ _DEFAULTS: dict[str, MetricConfig] = {
         hint_text="Schlechte Luftqualität – bitte lüften.",
     ),
 }
-
 
 def _get_lock() -> asyncio.Lock:
     global _lock
@@ -62,7 +60,7 @@ async def update_thresholds(
     updates: list[dict],
     db: aiosqlite.Connection,
 ) -> None:
-    """Called by app.py when the backend POSTs new threshold config."""
+    """Called by app.py when the backend POSTs new threshold config"""
     async with _get_lock():
         for item in updates:
             metric      = item["metric"]

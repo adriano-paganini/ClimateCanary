@@ -56,14 +56,12 @@ def load_config(path: str = "conf.yml") -> None:
     """Load config from a local YAML file (used on first boot from SD card)."""
     _apply(yaml.safe_load(Path(path).read_text()))
 
-
 def load_config_from_string(yaml_string: str) -> None:
     """Load config from a raw YAML string returned by the backend."""
     _apply(yaml.safe_load(yaml_string))
 
-
 def get_local_ip() -> str:
-    """Best-effort local IP address (used for the /booted call)."""
+    """local IP address (used for the /booted call)."""
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
             s.connect(("8.8.8.8", 80))

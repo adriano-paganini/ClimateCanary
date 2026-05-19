@@ -61,8 +61,13 @@ ENV JAVA_OPTS="-Xmx256m"
 
 EXPOSE 8080
 
-RUN useradd -ms /bin/bash appuser
-RUN echo '#!/bin/sh\nexec java $JAVA_OPTS -Dspring.profiles.active=prod -jar /app/app.jar' > /app/entrypoint.sh && chmod +x /app/entrypoint.sh && chown appuser:appuser /app/app.jar /app/entrypoint.sh
+# Create non-root user and log directory before switching users
+RUN useradd -ms /bin/bash appuser \
+ && mkdir -p /app/logs \
+ && echo '#!/bin/sh\nexec java $JAVA_OPTS -Dspring.profiles.active=prod -jar /app/app.jar' > /app/entrypoint.sh \
+ && chmod +x /app/entrypoint.sh \
+ && chown -R appuser:appuser /app
+
 USER appuser
 
 ENTRYPOINT ["/app/entrypoint.sh"]

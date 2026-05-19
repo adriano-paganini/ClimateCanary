@@ -6,6 +6,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -90,6 +92,20 @@ public class GlobalExceptionHandler {
             HttpServletRequest request)
     {
         return build(HttpStatus.FORBIDDEN, "FORBIDDEN", ex, request);
+    }
+
+    /**
+     * Handles UNAUTHORIZED (401) issues
+     * @param ex
+     * @param request
+     * @return
+     */
+    @ExceptionHandler({BadCredentialsException.class, DisabledException.class})
+    public ResponseEntity<ApiErrorResponse> handleUnauthorized(
+            Exception ex,
+            HttpServletRequest request)
+    {
+        return build(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", ex, request);
     }
 
     /**

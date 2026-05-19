@@ -19,6 +19,7 @@ const UserProfileView = React.lazy(() => import('./views/UserProfileView'));
 const DepartmentDashboard = React.lazy(() => import('./views/DepartmentDashboard'));
 const DepartmentAbsenceView = React.lazy(() => import('./views/DepartmentAbsenceView'));
 const ManagementDashboard = React.lazy(() => import('./views/ManagementDashboard'));
+const DeviceManagementView = React.lazy(() => import('./views/DeviceManagementView'));
 
 const App: React.FC = () => {
     return (
@@ -57,6 +58,7 @@ const App: React.FC = () => {
                         {/* Building Admin and System Admin only */}
                         <Route element={<PrivateRoute roles={[UserxRole.BUILDING_ADMIN, UserxRole.SYSTEM_ADMIN]}/>}>
                             <Route path={ManageUsersRoute.url} Component={ManageUsersRoute.component}/>
+                            <Route path={ROUTES.DEVICES} Component={DeviceManagementView}/>
                         </Route>
                     </Routes>
                 </BrowserRouter>

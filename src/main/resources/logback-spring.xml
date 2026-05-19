@@ -41,13 +41,15 @@
     </appender>
 
     <root level="INFO">
-        <appender-ref ref = "CONSOLE"/>
+        <appender-ref ref="CONSOLE"/>
         <appender-ref ref="APP_FILE"/>
         <appender-ref ref="WARN_ERROR_FILE"/>
     </root>
 
-    <logger name="at.qe.skeleton" level ="DEBUG" additivity="false">
+    <logger name="at.qe.skeleton" level="DEBUG" additivity="false">
         <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="APP_FILE"/>
+        <appender-ref ref="WARN_ERROR_FILE"/>
     </logger>
 
 </configuration>

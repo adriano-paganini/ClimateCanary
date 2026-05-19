@@ -8,7 +8,11 @@ import aiohttp
 import aiosqlite
 
 import config
+from state import get_privacy_mode
 from thresholds import get_threshold, get_hint_text
+
+def _to_iso(dt: datetime) -> str:
+    return dt.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
 
 
 VIOLATION_WINDOW_SECONDS: int = 300
@@ -16,22 +20,26 @@ ALERT_COOLDOWN_SECONDS:   int = 900
 
 ALL_METRICS = ("temperature", "humidity", "pressure", "air_quality")
 
+
 @dataclass
-class _MetricState:
+class _MetricState: # per-metric runtime state
     samples:              deque         = field(default_factory=deque)
     violation_open:       bool          = False
     local_violation_id:   Optional[int] = None
     remote_violation_id:  Optional[int] = None
-    last_alert_time:      float         = 0.0   # wall-clock time of last POST
+    last_alert_time:      float         = 0.0
+    room_id:              int           = 0
+    resolve_pending:      bool          = False  # set by manual resolve via /violation/resolve
 
-
+# Keyed by (ble_address, metric)
 _states: dict[tuple[str, str], _MetricState] = {}
 
-
-def _get_state(address: str, metric: str) -> _MetricState:
+def _get_state(address: str, metric: str, room_id: int = 0) -> _MetricState:
     key = (address, metric)
     if key not in _states:
-        _states[key] = _MetricState()
+        _states[key] = _MetricState(room_id=room_id)
+    elif room_id:
+        _states[key].room_id = room_id
     return _states[key]
 
 def _classify(value: float, metric: str) -> int:
@@ -73,6 +81,13 @@ async def process_measurement(
     session: aiohttp.ClientSession,
     ble_tag: str,
 ) -> tuple[dict[str, int], list[str]]:
+    """
+    Evaluates one measurement packet against all metric thresholds.
+
+    Returns:
+        statuses – {metric: int}  BLE status codes for the Arduino
+        hint_messages – [str]          ClimateHint texts for newly confirmed violations
+    """
     now               = datetime.fromisoformat(pkt["timestamp"])
     sensor_station_id = pkt["sensor_station_id"]
     room_id           = pkt["room_id"]
@@ -88,7 +103,15 @@ async def process_measurement(
     hint_messages: list[str]      = []
 
     for metric, value in metric_values.items():
-        state = _get_state(ble_tag, metric)
+        state = _get_state(ble_tag, metric, room_id)
+
+        if state.resolve_pending:
+            state.resolve_pending  = False
+            state.violation_open   = False
+            state.local_violation_id  = None
+            state.remote_violation_id = None
+            statuses[metric] = 5
+            continue
 
         state.samples.append((now, value))
         cutoff = now - timedelta(seconds=VIOLATION_WINDOW_SECONDS)
@@ -106,23 +129,23 @@ async def process_measurement(
             state.violation_open  = True
             state.last_alert_time = now_wall
 
-            vid = await _open_violation(db, sensor_station_id, metric, room_id, now, avg)
-            state.local_violation_id = vid
-
-            remote_id = await _post_violation(
-                session, metric, room_id, now, avg, ble_tag,
-            )
-            state.remote_violation_id = remote_id
+            if not get_privacy_mode():
+                vid = await _open_violation(db, sensor_station_id, metric, room_id, now, avg)
+                state.local_violation_id = vid
+                remote_id = await _post_violation(
+                    session, metric, room_id, now, avg, ble_tag,
+                )
+                state.remote_violation_id = remote_id
+                print(f"[VIOL:{ble_tag}] CONFIRMED {metric} (avg={avg:.2f}, localId={vid})")
+            else:
+                print(f"[VIOL:{ble_tag}] CONFIRMED {metric} (avg={avg:.2f}) [privacy — not reported]")
 
             hint = get_hint_text(metric)
             if hint:
                 hint_messages.append(hint)
 
-            print(f"[VIOL:{ble_tag}] CONFIRMED {metric} "
-                  f"(avg={avg:.2f}, localId={vid})")
-
         elif is_breaching and state.violation_open:
-            if now_wall - state.last_alert_time >= ALERT_COOLDOWN_SECONDS:
+            if not get_privacy_mode() and now_wall - state.last_alert_time >= ALERT_COOLDOWN_SECONDS:
                 state.last_alert_time = now_wall
                 await _post_violation(session, metric, room_id, now, avg, ble_tag)
                 print(f"[VIOL:{ble_tag}] REMINDER {metric} (avg={avg:.2f})")
@@ -131,14 +154,14 @@ async def process_measurement(
             state.violation_open = False
             raw_status = 5
 
-            if state.local_violation_id is not None:
-                await _resolve_violation(db, state.local_violation_id, now)
-
-            await _patch_violation(
-                session, metric, room_id,
-                state.remote_violation_id,
-                now, ble_tag,
-            )
+            if not get_privacy_mode():
+                if state.local_violation_id is not None:
+                    await _resolve_violation(db, state.local_violation_id, now)
+                await _patch_violation(
+                    session, metric, room_id,
+                    state.remote_violation_id,
+                    now, ble_tag,
+                )
 
             state.local_violation_id  = None
             state.remote_violation_id = None
@@ -162,7 +185,7 @@ async def _open_violation(
             (sensor_station_id, metric, room_id, status, start_time, value_at_trigger)
         VALUES (?, ?, ?, 'ACTIVE', ?, ?)
         """,
-        (sensor_station_id, metric, room_id, start_time.timestamp(), avg_value),
+        (sensor_station_id, metric, room_id, _to_iso(start_time), avg_value),
     )
     await db.commit()
     return cursor.lastrowid
@@ -179,7 +202,7 @@ async def _resolve_violation(
         SET status = 'RESOLVED', end_time = ?
         WHERE id = ?
         """,
-        (end_time.timestamp(), violation_id),
+        (_to_iso(end_time), violation_id),
     )
     await db.commit()
 
@@ -196,7 +219,7 @@ async def _post_violation(
     payload = {
         "metric":    metric,
         "roomId":    room_id,
-        "startTime": int(start_time.timestamp() * 1000),  # epoch ms for Java Long
+        "startTime": _to_iso(start_time),
         "avgValue":  avg_value,
         "status":    "ACTIVE",
     }
@@ -226,7 +249,7 @@ async def _patch_violation(
     payload = {
         "metric":  metric,
         "roomId":  room_id,
-        "endTime": int(end_time.timestamp() * 1000),  # epoch ms for Java Long
+        "endTime": _to_iso(end_time),
         "status":  "RESOLVED",
     }
     try:
@@ -238,10 +261,32 @@ async def _patch_violation(
         print(f"[VIOL:{tag}] PATCH resolve failed: {e}")
 
 
+async def resolve_violation(
+    metric: str,
+    room_id: int,
+    db: aiosqlite.Connection,
+) -> None:
+    """
+    Called by app.py when POST /api/spi/{piId}/violation/resolve arrives.
+    Marks the violation as pending resolve, Arduino is informed on next measurement.
+    Backend already knows about the resolve (it sent the DTO), so no PATCH needed.
+    """
+    matched = False
+    for (addr, m), state in _states.items():
+        if m == metric and state.room_id == room_id and state.violation_open:
+            state.resolve_pending = True
+            if state.local_violation_id is not None:
+                await _resolve_violation(db, state.local_violation_id, datetime.now())
+                state.local_violation_id  = None
+                state.remote_violation_id = None
+            matched = True
+            print(f"[VIOL:{addr}] manual RESOLVE {metric} room={room_id}")
+    if not matched:
+        print(f"[VIOL] manual resolve: no active violation for {metric} room={room_id}")
+
+
 async def load_window_seconds(db: aiosqlite.Connection) -> None:
     """
-    Called from main.py on startup.
-    Currently a no-op — VIOLATION_WINDOW_SECONDS is a compile-time constant.
-    Reserved for future dynamic configuration from the backend.
+   maybe useful in future, right now the time frames are hardcoded
     """
     print(f"[VIOL] window={VIOLATION_WINDOW_SECONDS}s, cooldown={ALERT_COOLDOWN_SECONDS}s")

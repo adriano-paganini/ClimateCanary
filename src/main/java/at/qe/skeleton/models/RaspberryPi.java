@@ -23,7 +23,7 @@ public class RaspberryPi {
     private List<SensorStation> sensorStations = new ArrayList<>();
 
     @OneToOne
-    @JoinColumn(name = "room_id", nullable = false)
+    @JoinColumn(name = "room_id", unique = true)
     private Room room;
 
     public Long getId() {

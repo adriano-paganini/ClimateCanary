@@ -127,7 +127,10 @@ const UserProfileView: React.FC = () => {
 
     const roles = user.roles ? [...user.roles] : [];
     const initials = `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase();
-    const profileComplete = firstName && lastName && email;
+    const profileFields = [firstName, lastName, email, phone];
+    const filledCount = profileFields.filter(Boolean).length;
+    const completenessPercent = Math.round((filledCount / profileFields.length) * 100);
+    const profileComplete = filledCount === profileFields.length;
 
     return (
         <div>
@@ -318,7 +321,7 @@ const UserProfileView: React.FC = () => {
                                     ? '0 4px 12px rgba(16, 185, 129, 0.3)' 
                                     : '0 4px 12px rgba(249, 115, 22, 0.3)'
                             }}>
-                                {profileComplete ? '100%' : '75%'}
+                                {completenessPercent}%
                             </div>
                         </div>
                     </div>
