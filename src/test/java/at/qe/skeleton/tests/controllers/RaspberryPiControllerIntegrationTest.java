@@ -127,18 +127,29 @@ class RaspberryPiControllerIntegrationTest {
     void create_validPayload_returns201() throws Exception {
         RaspberryPiCreateDTO createDTO = new RaspberryPiCreateDTO(10L, "pi-1");
 
+        String yaml = """
+            ROOM_ID: 1
+            BACKEND_URL: "http://100.125.56.3:8080"
+            PI_ID: 15
+            ROOM_NAME: "Room 1"
+            HOST_NAME: "rpi-01"
+            PRIVACY_MODE: true
+            """;
+
         when(raspberryPiCreateMapper.mapFrom(any())).thenReturn(pi1);
         when(raspberryPiService.create(pi1)).thenReturn(pi1);
-        when(raspberryPiMapper.mapTo(pi1)).thenReturn(dto1);
+        when(piConfigYamlBuilder.buildYaml(pi1.getId())).thenReturn(yaml);
 
         mockMvc.perform(post("/api/bpi")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createDTO)))
                 .andExpect(status().isCreated())
-                .andExpect(header().string("Location", containsString("/api/bpi/1")))
-                .andExpect(jsonPath("$.id", is(1)));
+                .andExpect(header().string("Location", containsString("/api/bpi/" + pi1.getId())))
+                .andExpect(content().string(yaml));
 
-        verify(raspberryPiService).create(any());
+        verify(raspberryPiCreateMapper).mapFrom(any());
+        verify(raspberryPiService).create(pi1);
+        verify(piConfigYamlBuilder).buildYaml(pi1.getId());
     }
 
     @Test

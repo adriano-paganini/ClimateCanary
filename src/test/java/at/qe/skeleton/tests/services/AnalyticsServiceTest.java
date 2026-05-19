@@ -666,12 +666,22 @@ public class AnalyticsServiceTest {
     }
 
     @Test
-    @DisplayName("getDepartmentViolationSummary – DEPARTMENT_LEAD blocked from own department (logic inversion guard)")
-    void getDepartmentViolationSummary_departmentLeadOwnDept_throwsAccessDenied() {
+    @DisplayName("getDepartmentViolationSummary – DEPARTMENT_LEAD not blocked from own department")
+    void getDepartmentViolationSummary_departmentLeadOwnDept_DoesNotthrowAccessDenied() {
         Mockito.when(departmentService.getDepartmentById(1L)).thenReturn(department);
         Mockito.when(authenticatedUserService.getAuthenticatedUser()).thenReturn(departmentLead);
 
-        assertThatThrownBy(() -> analyticsService.getDepartmentViolationSummary(1L))
+        assertThatCode(() -> analyticsService.getDepartmentViolationSummary(1L))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("getDepartmentViolationSummary – DEPARTMENT_LEAD blocked from viewing other department")
+    void getDepartmentViolationSummary_departmentLeadOtherDept_throwsAccessDenied() {
+        Mockito.when(departmentService.getDepartmentById(2L)).thenReturn(new Department());
+        Mockito.when(authenticatedUserService.getAuthenticatedUser()).thenReturn(departmentLead);
+
+        assertThatThrownBy(() -> analyticsService.getDepartmentViolationSummary(2L))
                 .isInstanceOf(AccessDeniedException.class);
     }
 

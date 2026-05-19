@@ -70,6 +70,7 @@ public class RaspberryPiClientController {
     @PostMapping("/{piId}/discovered")
     public ResponseEntity<Void> receiveAvailableSensorStations(@PathVariable Long piId,
                                                                @RequestBody List<String> sensorStationBleMacs){
+        log.info("Received available sensor stations: {}",sensorStationBleMacs);
         raspberryPiService.addAvailableSensorStations(piId,sensorStationBleMacs);
 
         taskScheduler.schedule(

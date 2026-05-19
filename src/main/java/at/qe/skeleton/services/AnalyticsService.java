@@ -155,12 +155,14 @@ public class AnalyticsService {
         String bucketSize = forceReduced
                 ? forcedReducedBucket(effectiveFrom, effectiveTo)
                 : resolveBucketSize(effectiveFrom, effectiveTo);
+        
+        boolean grandularityReduced = forceReduced || !"raw".equals(bucketSize);
 
         List<TrendPointDTO> points = toPoints(measurements, effectiveFrom, effectiveTo, bucketSize);
 
         log.debug("Generated room trend: roomId={}, metric={}, bucketSize={}, forceReduced={}",
                 roomId, metric, bucketSize, forceReduced);
-        return new RoomTrendDTO(roomId, metric, bucketSize, forceReduced, points);
+        return new RoomTrendDTO(roomId, metric, bucketSize, grandularityReduced, points);
     }
 
     /**
@@ -331,7 +333,7 @@ public class AnalyticsService {
         Department department = departmentService.getDepartmentById(departmentId);
         Userx currentUser = authenticatedUserService.getAuthenticatedUser();
 
-        if (hasRole(currentUser, UserxRole.DEPARTMENT_LEAD) && isLeaderOf(currentUser, department)) {
+        if (hasRole(currentUser, UserxRole.DEPARTMENT_LEAD) && !isLeaderOf(currentUser, department)) {
             throw new AccessDeniedException("You may only view your own department.");
         }
 

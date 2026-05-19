@@ -1,10 +1,12 @@
 package at.qe.skeleton.services;
 
+import at.qe.skeleton.dtos.ClimateHintDTO;
 import at.qe.skeleton.dtos.ThresholdCreateDTO;
 import at.qe.skeleton.dtos.ThresholdDTO;
 import at.qe.skeleton.dtos.ThresholdUpdateDTO;
 import at.qe.skeleton.common.exceptions.ConflictException;
 import at.qe.skeleton.common.exceptions.NotFoundException;
+import at.qe.skeleton.mappers.ClimateHintMapper;
 import at.qe.skeleton.mappers.ThresholdMapper;
 import at.qe.skeleton.models.ClimateHint;
 import at.qe.skeleton.models.Metric;
@@ -14,10 +16,10 @@ import at.qe.skeleton.repositories.ThresholdRepository;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -28,15 +30,17 @@ public class ThresholdService {
     private final ClimateHintRepository climateHintRepository;
     private final RaspberryPiServerService raspberryPiServerService;
     private final ThresholdMapper thresholdMapper;
+    private final ClimateHintMapper climateHintMapper;
 
     public ThresholdService(ThresholdRepository thresholdRepository,
                             RoomService roomService,
-                            ClimateHintRepository climateHintRepository, RaspberryPiServerService raspberryPiServerService, ThresholdMapper thresholdMapper) {
+                            ClimateHintRepository climateHintRepository, RaspberryPiServerService raspberryPiServerService, ThresholdMapper thresholdMapper, ClimateHintMapper climateHintMapper) {
         this.thresholdRepository = thresholdRepository;
         this.roomService = roomService;
         this.climateHintRepository = climateHintRepository;
         this.raspberryPiServerService = raspberryPiServerService;
         this.thresholdMapper = thresholdMapper;
+        this.climateHintMapper = climateHintMapper;
     }
 
     public List<Threshold> getAll(Long roomId, Metric metric){
@@ -73,6 +77,9 @@ public class ThresholdService {
 
         log.info("Created threshold with id={}", savedThreshold.getId());
         log.debug("Created threshold details: id={}, metric={}, boundValue={}, thresholdType={}, enabled={}, roomId={}, climateHintIds={}", savedThreshold.getId(), savedThreshold.getMetric(), savedThreshold.getBoundValue(), savedThreshold.getThresholdType(), savedThreshold.isEnabled(), savedThreshold.getRoom() != null ? savedThreshold.getRoom().getId() : null, dto.climateHintIds());
+
+        synchronizeThresholdWithRaspberryPi(savedThreshold.getId(), null, null, savedThreshold);
+        log.info("Sent threshold with id={} to Raspberry Pi {}", savedThreshold.getId(), getRaspberryPiIdOrNull(savedThreshold));
 
         return savedThreshold;
     }
@@ -157,7 +164,7 @@ public class ThresholdService {
             log.info("Deleted old threshold with id={} on Raspberry Pi {}", thresholdId, oldPiId);
         }
 
-        if (!Boolean.TRUE.equals(updatedThreshold.isEnabled())) {
+        if (!updatedThreshold.isEnabled()) {
             log.info("Threshold with id={} is disabled, so it will not be sent as active configuration to Raspberry Pi", thresholdId);
             return;
         }
@@ -169,9 +176,12 @@ public class ThresholdService {
 
         ThresholdDTO updatedThresholdDTO = thresholdMapper.mapTo(updatedThreshold);
 
+        Map<ThresholdDTO, List<ClimateHintDTO>> completeThresholdInfo = Map.of(updatedThresholdDTO,
+                updatedThreshold.getClimateHints().stream().map(climateHintMapper::mapTo).toList());
+
         PiRequestResult insertionResult = raspberryPiServerService.informAboutNewThresholds(
                 newPiId,
-                List.of(updatedThresholdDTO)
+                completeThresholdInfo
         );
 
         if (insertionResult == PiRequestResult.SUCCESS) {
@@ -201,9 +211,12 @@ public class ThresholdService {
         ThresholdDTO thresholdDTO = thresholdMapper.mapTo(entity);
 
         if (piId != null) {
-            PiRequestResult deletionResult = raspberryPiServerService.deleteThresholds(
+            Map<ThresholdDTO, List<ClimateHintDTO>> completeThresholdInfo = Map.of(thresholdDTO,
+                    entity.getClimateHints().stream().map(climateHintMapper::mapTo).toList());
+
+            PiRequestResult deletionResult = raspberryPiServerService.informAboutNewThresholds(
                     piId,
-                    List.of(thresholdDTO)
+                    completeThresholdInfo
             );
 
             if (deletionResult != PiRequestResult.SUCCESS) {

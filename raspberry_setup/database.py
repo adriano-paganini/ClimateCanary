@@ -9,6 +9,8 @@ async def init_db(db: aiosqlite.Connection) -> None:
             id                INTEGER PRIMARY KEY AUTOINCREMENT,
             sensor_station_id INTEGER NOT NULL,
             room_id           INTEGER NOT NULL,
+            -- ISO 8601 local datetime string (e.g. '2026-05-04T14:30:00.123').
+            -- Derived in ble_worker: datetime.fromtimestamp(anchor_pi_time + (pkt_millis - anchor_millis) / 1000.0)
             timestamp         TEXT    NOT NULL,
             temperature       REAL    NOT NULL,
             humidity          REAL    NOT NULL,
@@ -30,8 +32,8 @@ async def init_db(db: aiosqlite.Connection) -> None:
             metric            TEXT    NOT NULL,
             room_id           INTEGER NOT NULL,
             status            TEXT    NOT NULL DEFAULT 'ACTIVE',
-            start_time        REAL    NOT NULL,
-            end_time          REAL,
+            start_time        TEXT    NOT NULL,
+            end_time          TEXT,
             value_at_trigger  REAL    NOT NULL
         );
 
@@ -91,12 +93,11 @@ async def db_writer(
         finally:
             queue.task_done()
 
-
 async def save_station(db: aiosqlite.Connection, station: dict) -> None:
     """
     Upserts a single station by BLE address.
     Called whenever POST /api/spi/{piId}/stations delivers an assignment.
-    Existing stations are preserved — only the upserted address is updated.
+    Existing stations are preserved, only the upserted address is updated.
     """
     await db.execute(
         """
