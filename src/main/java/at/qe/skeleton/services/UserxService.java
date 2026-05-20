@@ -74,10 +74,10 @@ public class UserxService implements UserDetailsService {
     }
 
     /**
-     * Saves the user. This method will also set {@link Userx#createDate} for new
-     * entities or {@link Userx#updateDate} for updated entities. The user
-     * requesting this operation will also be stored as {@link Userx#createDate}
-     * or {@link Userx#updateUser} respectively.
+     * Saves the user. This method will also set {@code createDate} for new
+     * entities or {@code updateDate} for updated entities. The user
+     * requesting this operation will also be stored as {@code createUser}
+     * or {@code updateUser} respectively.
      *
      * @param user the user to save
      * @return the updated user

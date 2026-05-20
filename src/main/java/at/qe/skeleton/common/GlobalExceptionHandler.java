@@ -22,9 +22,9 @@ public class GlobalExceptionHandler {
 
     /**
      * Handles NOT FOUND (404) issues
-     * @param ex
-     * @param request
-     * @return
+     * @param ex the exception causing the 404
+     * @param request the HTTP request that triggered the exception
+     * @return a ResponseEntity with the error details
      */
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleNotFound(
@@ -36,9 +36,9 @@ public class GlobalExceptionHandler {
 
     /**
      * Handles CONFLICT (409) issues
-     * @param ex
-     * @param request
-     * @return
+     * @param ex the exception causing the conflict
+     * @param request the HTTP request that triggered the exception
+     * @return a ResponseEntity with the error details
      */
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ApiErrorResponse> handleConflict(
@@ -50,9 +50,9 @@ public class GlobalExceptionHandler {
 
     /**
      * Handles BAD REQUEST (400) issues
-     * @param ex
-     * @param request
-     * @return
+     * @param ex the runtime exception causing the bad request
+     * @param request the HTTP request that triggered the exception
+     * @return a ResponseEntity with the error details
      */
     @ExceptionHandler({
             IllegalArgumentException.class,
@@ -67,8 +67,8 @@ public class GlobalExceptionHandler {
 
     /**
      * Handles Jakarta VALIDATION ERRORS
-     * @param ex
-     * @return
+     * @param ex the validation exception
+     * @return a ResponseEntity with the error details
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidation(
@@ -82,9 +82,9 @@ public class GlobalExceptionHandler {
 
     /**
      * Handles FORBIDDEN (403) issues
-     * @param ex
-     * @param request
-     * @return
+     * @param ex the exception causing the forbidden access
+     * @param request the HTTP request that triggered the exception
+     * @return a ResponseEntity with the error details
      */
     @ExceptionHandler({AuthorizationDeniedException.class, AccessDeniedException.class})
     public ResponseEntity<ApiErrorResponse> handleForbidden(
@@ -96,9 +96,9 @@ public class GlobalExceptionHandler {
 
     /**
      * Handles UNAUTHORIZED (401) issues
-     * @param ex
-     * @param request
-     * @return
+     * @param ex the exception causing the unauthorized access
+     * @param request the HTTP request that triggered the exception
+     * @return a ResponseEntity with the error details
      */
     @ExceptionHandler({BadCredentialsException.class, DisabledException.class})
     public ResponseEntity<ApiErrorResponse> handleUnauthorized(
@@ -110,9 +110,9 @@ public class GlobalExceptionHandler {
 
     /**
      * Handles FALLBACK issues
-     * @param ex
-     * @param request
-     * @return
+     * @param ex the exception causing the generic error
+     * @param request the HTTP request that triggered the exception
+     * @return a ResponseEntity with the error details
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleGeneric(
