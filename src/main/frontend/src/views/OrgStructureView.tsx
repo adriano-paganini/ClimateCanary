@@ -27,6 +27,19 @@ import {
 
 type Tab = 'buildings' | 'addresses' | 'departments';
 
+function apiError(err: unknown, fallback: string, conflictMsg?: string): string {
+    const response = (err as { response?: { status?: number; data?: { message?: string } } })?.response;
+    if (response) {
+        const { status, data } = response;
+        if (status === 409) return conflictMsg ?? 'This item is still referenced by other data and cannot be changed.';
+        if (status === 404) return 'Item not found. Please refresh the page.';
+        if (status === 403) return 'You do not have permission for this action.';
+        if (status === 400) return data?.message ?? 'Invalid input. Please check your data.';
+        if (data?.message) return data.message;
+    }
+    return err instanceof Error ? err.message : fallback;
+}
+
 const TAB_STYLE = (active: boolean): React.CSSProperties => ({
     padding: '0.8rem 1.5rem',
     border: 'none',
@@ -40,8 +53,6 @@ const TAB_STYLE = (active: boolean): React.CSSProperties => ({
     borderRadius: '8px 8px 0 0',
 });
 
-// ── Address form ──────────────────────────────────────────────────────────────
-
 interface AddressForm {
     country: string;
     zipCode: string;
@@ -52,17 +63,11 @@ interface AddressForm {
 }
 const EMPTY_ADDRESS: AddressForm = { country: '', zipCode: '', city: '', street: '', houseNumber: '', extra: '' };
 
-// ── Building form ─────────────────────────────────────────────────────────────
-
 interface BuildingForm { name: string; addressId: number | null }
 const EMPTY_BUILDING: BuildingForm = { name: '', addressId: null };
 
-// ── Department form ───────────────────────────────────────────────────────────
-
 interface DeptForm { name: string; departmentLeadId: number | null }
 const EMPTY_DEPT: DeptForm = { name: '', departmentLeadId: null };
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 const OrgStructureView: React.FC = () => {
     const toast = useRef<Toast>(null);
@@ -76,7 +81,6 @@ const OrgStructureView: React.FC = () => {
     const [departments, setDepartments] = useState<DepartmentDTO[]>([]);
     const [users, setUsers] = useState<UserxDTO[]>([]);
 
-    // ── Dialog state ──────────────────────────────────────────────────────────
     const [addrDialog, setAddrDialog] = useState(false);
     const [addrForm, setAddrForm] = useState<AddressForm>(EMPTY_ADDRESS);
     const [editingAddr, setEditingAddr] = useState<AddressDTO | null>(null);
@@ -91,7 +95,6 @@ const OrgStructureView: React.FC = () => {
 
     const [saving, setSaving] = useState(false);
 
-    // ── Initial load ──────────────────────────────────────────────────────────
 
     useEffect(() => {
         const load = async () => {
@@ -121,8 +124,6 @@ const OrgStructureView: React.FC = () => {
         void load();
     }, []);
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
     const showSuccess = (msg: string) =>
         toast.current?.show({ severity: 'success', summary: 'Success', detail: msg, life: 3000 });
     const showError = (msg: string) =>
@@ -142,7 +143,6 @@ const OrgStructureView: React.FC = () => {
         return (`${u.firstName ?? ''} ${u.lastName ?? ''}`).trim() || u.username || `User ${id}`;
     };
 
-    // ── Address CRUD ──────────────────────────────────────────────────────────
 
     const openCreateAddr = () => { setEditingAddr(null); setAddrForm(EMPTY_ADDRESS); setAddrDialog(true); };
     const openEditAddr = (a: AddressDTO) => {
@@ -168,7 +168,7 @@ const OrgStructureView: React.FC = () => {
             }
             setAddrDialog(false);
         } catch (err) {
-            showError(err instanceof Error ? err.message : 'Failed to save address.');
+            showError(apiError(err, 'Failed to save address.', 'An address with these details already exists.'));
         } finally {
             setSaving(false);
         }
@@ -185,13 +185,12 @@ const OrgStructureView: React.FC = () => {
                     setAddresses(prev => prev.filter(x => x.id !== a.id));
                     showSuccess('Address deleted.');
                 } catch (err) {
-                    showError(err instanceof Error ? err.message : 'Failed to delete address.');
+                    showError(apiError(err, 'Failed to delete address.', 'This address is still used by one or more buildings and cannot be deleted.'));
                 }
             },
         });
     };
 
-    // ── Building CRUD ─────────────────────────────────────────────────────────
 
     const openCreateBldg = () => { setEditingBldg(null); setBldgForm(EMPTY_BUILDING); setBldgDialog(true); };
     const openEditBldg = (b: BuildingDTO) => {
@@ -217,7 +216,7 @@ const OrgStructureView: React.FC = () => {
             }
             setBldgDialog(false);
         } catch (err) {
-            showError(err instanceof Error ? err.message : 'Failed to save building.');
+            showError(apiError(err, 'Failed to save building.', 'A building with this name already exists.'));
         } finally {
             setSaving(false);
         }
@@ -234,13 +233,12 @@ const OrgStructureView: React.FC = () => {
                     setBuildings(prev => prev.filter(x => x.id !== b.id));
                     showSuccess('Building deleted.');
                 } catch (err) {
-                    showError(err instanceof Error ? err.message : 'Failed to delete building.');
+                    showError(apiError(err, 'Failed to delete building.', 'This building still has rooms assigned and cannot be deleted.'));
                 }
             },
         });
     };
 
-    // ── Department CRUD ───────────────────────────────────────────────────────
 
     const openCreateDept = () => { setEditingDept(null); setDeptForm(EMPTY_DEPT); setDeptDialog(true); };
     const openEditDept = (d: DepartmentDTO) => {
@@ -266,7 +264,7 @@ const OrgStructureView: React.FC = () => {
             }
             setDeptDialog(false);
         } catch (err) {
-            showError(err instanceof Error ? err.message : 'Failed to save department.');
+            showError(apiError(err, 'Failed to save department.', 'A department with this name already exists.'));
         } finally {
             setSaving(false);
         }
@@ -283,13 +281,12 @@ const OrgStructureView: React.FC = () => {
                     setDepartments(prev => prev.filter(x => x.id !== d.id));
                     showSuccess('Department deleted.');
                 } catch (err) {
-                    showError(err instanceof Error ? err.message : 'Failed to delete department.');
+                    showError(apiError(err, 'Failed to delete department.', 'This department still has members assigned and cannot be deleted.'));
                 }
             },
         });
     };
 
-    // ── Render ────────────────────────────────────────────────────────────────
 
     if (loading) {
         return (
@@ -338,7 +335,6 @@ const OrgStructureView: React.FC = () => {
                 {/* Header */}
                 <div style={{ marginBottom: '2rem', padding: '1.5rem 2rem', backgroundColor: '#f8f9fa', borderRadius: '12px', border: '1px solid #e9ecef', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                     <h1 style={{ margin: 0, color: '#111827', fontSize: '2rem', fontWeight: 700 }}>Organization</h1>
-                    <p style={{ margin: '0.5rem 0 0', color: '#6b7280', fontSize: '0.95rem' }}>Manage buildings, addresses, and departments</p>
                 </div>
 
                 {/* Tabs */}
@@ -359,7 +355,7 @@ const OrgStructureView: React.FC = () => {
 
                 <div style={{ padding: '2rem', backgroundColor: '#ffffff', borderRadius: '0 12px 12px 12px', border: '1px solid #e5e7eb', borderTop: 'none' }}>
 
-                    {/* ── Buildings Tab ── */}
+                    {/* Buildings Tab */}
                     {activeTab === 'buildings' && (
                         <>
                             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
@@ -374,7 +370,7 @@ const OrgStructureView: React.FC = () => {
                         </>
                     )}
 
-                    {/* ── Addresses Tab ── */}
+                    {/* Addresses Tab */}
                     {activeTab === 'addresses' && (
                         <>
                             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
@@ -393,7 +389,7 @@ const OrgStructureView: React.FC = () => {
                         </>
                     )}
 
-                    {/* ── Departments Tab ── */}
+                    {/* Departments Tab */}
                     {activeTab === 'departments' && (
                         <>
                             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
@@ -410,7 +406,7 @@ const OrgStructureView: React.FC = () => {
                 </div>
             </div>
 
-            {/* ── Address Dialog ── */}
+            {/* Address Dialog */}
             <Dialog
                 header={editingAddr ? 'Edit Address' : 'New Address'}
                 visible={addrDialog}
@@ -449,7 +445,7 @@ const OrgStructureView: React.FC = () => {
                 </div>
             </Dialog>
 
-            {/* ── Building Dialog ── */}
+            {/* Building Dialog */}
             <Dialog
                 header={editingBldg ? 'Edit Building' : 'New Building'}
                 visible={bldgDialog}
@@ -481,7 +477,7 @@ const OrgStructureView: React.FC = () => {
                 </div>
             </Dialog>
 
-            {/* ── Department Dialog ── */}
+            {/* Department Dialog */}
             <Dialog
                 header={editingDept ? 'Edit Department' : 'New Department'}
                 visible={deptDialog}
