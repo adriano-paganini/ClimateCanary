@@ -28,6 +28,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
@@ -38,13 +39,12 @@ import java.util.Set;
 
 /**
  * Some very basic tests for {@link AdminController}.
- *
- * This class is part of the skeleton project provided for students of the
+  * This class is part of the skeleton project provided for students of the
  * course "Software Engineering" offered by the University of Innsbruck.
  */
 @WebMvcTest(AdminController.class)
 @AutoConfigureMockMvc
-public class AdminControllerTest {
+class AdminControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -97,7 +97,7 @@ public class AdminControllerTest {
         Long id = 1L;
         String username = "testUser";
         Userx user1 = new Userx();
-        user1.setId(id);
+        ReflectionTestUtils.setField(user1, "id", id);
         user1.setUsername(username);
         user1.setFirstName("First");
         user1.setLastName("Last");
@@ -120,7 +120,7 @@ public class AdminControllerTest {
         Long id = 1L;
         String username = "testUser";
         Userx user1 = new Userx();
-        user1.setId(id);
+        ReflectionTestUtils.setField(user1, "id", id);
         user1.setUsername(username);
         user1.setFirstName("First");
         user1.setLastName("Last");
@@ -156,7 +156,7 @@ public class AdminControllerTest {
 
         UserxCreateDTO newUser = new UserxCreateDTO(username, password, firstName, lastName, email, "", true, roles);
         Userx user = new Userx();
-        user.setId(id);
+        ReflectionTestUtils.setField(user, "id", id);
         user.setUsername(username);
         user.setPassword(password);
         user.setEmail(email);
@@ -181,7 +181,7 @@ public class AdminControllerTest {
         Long id = 1L;
         String username = "newUser";
         Userx user = new Userx();
-        user.setId(id);
+        ReflectionTestUtils.setField(user, "id", id);
         user.setUsername(username);
 
         Mockito.when(userService.loadUser(1L)).thenReturn(Optional.of(user));

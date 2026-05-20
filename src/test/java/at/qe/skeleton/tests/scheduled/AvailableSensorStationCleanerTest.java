@@ -11,6 +11,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 
@@ -42,7 +43,7 @@ class AvailableSensorStationCleanerTest {
 
     private SensorStation station(Long id, DeviceStatus status) {
         SensorStation station = new SensorStation();
-        station.setId(id);
+        ReflectionTestUtils.setField(station, "id", id);
         station.setDeviceStatus(status);
         return station;
     }

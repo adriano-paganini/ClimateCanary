@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 
 /**
  * Mapping between Userx and UserxDTOs.
- *
  * This class is part of the skeleton project provided for students of the course "Software
  * Engineering" offered by Innsbruck University.
  */

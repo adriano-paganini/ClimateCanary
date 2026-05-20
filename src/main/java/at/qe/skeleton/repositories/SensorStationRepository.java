@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface SensorStationRepository extends AbstractRepository<SensorStation, Long> {
-    List<SensorStation> findAllById(Iterable<Long> longs);
-
     void deleteById(Long id);
 
     @Query("SELECT r FROM SensorStation r WHERE r.room.active = true")

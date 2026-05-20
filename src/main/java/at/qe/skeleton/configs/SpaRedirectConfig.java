@@ -16,7 +16,7 @@ public class SpaRedirectConfig implements WebMvcConfigurer {
 
     /*
      * filter out endpoints that should return index.html for SPA
-     * i.e. not: API calls, static file, other known server calls (e.g. h2-console)
+     * i.e., not: API calls, static file, other known server calls (e.g., h2-console)
     */
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {

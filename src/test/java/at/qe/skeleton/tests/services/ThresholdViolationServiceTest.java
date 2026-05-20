@@ -218,10 +218,10 @@ class ThresholdViolationServiceTest {
         );
 
         Room room = new Room();
-        room.setId(10L);
+        ReflectionTestUtils.setField(room, "id", 10L);
 
         RaspberryPi raspberryPi = new RaspberryPi();
-        raspberryPi.setId(5L);
+        ReflectionTestUtils.setField(raspberryPi, "id", 5L);
         raspberryPi.setRoom(room);
 
         Threshold threshold = new Threshold();
@@ -343,10 +343,10 @@ class ThresholdViolationServiceTest {
         LocalDateTime endTime = LocalDateTime.parse(endTimeString);
 
         Room room = new Room();
-        room.setId(10L);
+        ReflectionTestUtils.setField(room, "id", 10L);
 
         RaspberryPi raspberryPi = new RaspberryPi();
-        raspberryPi.setId(5L);
+        ReflectionTestUtils.setField(raspberryPi, "id", 5L);
         room.setRaspberryPi(raspberryPi);
 
         violation.setRoom(room);

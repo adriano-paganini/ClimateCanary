@@ -1,16 +1,22 @@
 package at.qe.skeleton.models;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
+@Setter
 @Table(name = "sensorstations")
 @Entity
 public class SensorStation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Setter(AccessLevel.NONE)
     private Long id;
 
     private String name;
@@ -33,62 +39,4 @@ public class SensorStation {
     @OneToMany(mappedBy = "sensorStation")
     private List<Measurement> measurements = new ArrayList<>();
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public DeviceStatus getDeviceStatus() {
-        return deviceStatus;
-    }
-
-    public void setDeviceStatus(DeviceStatus deviceStatus) {
-        this.deviceStatus = deviceStatus;
-    }
-
-    public Integer getMeasurementInterval() {
-        return measurementInterval;
-    }
-
-    public void setMeasurementInterval(Integer measurementInterval) {
-        this.measurementInterval = measurementInterval;
-    }
-
-    public RaspberryPi getRaspberryPi() {
-        return raspberryPi;
-    }
-
-    public void setRaspberryPi(RaspberryPi raspberryPi) {
-        this.raspberryPi = raspberryPi;
-    }
-
-    public Room getRoom() {
-        return room;
-    }
-
-    public void setRoom(Room room) {
-        this.room = room;
-    }
-
-    public String getBleMac() {
-        return bleMac;
-    }
-    public void setBleMac(String bleMac) {
-        this.bleMac = bleMac;
-    }
-
-    public List<Measurement> getMeasurements() {
-        return measurements;
-    }
-
-    public void setId(Long id){
-        this.id = id;
-    }
 }
