@@ -9,8 +9,7 @@ import java.util.Optional;
 
 /**
  * Common base repository for all other repositories. Provides basic methods for
- * loading, saving and removing entities.
- *
+ * loading, saving, and removing entities.
  * This class is part of the skeleton project provided for students of the
 * course "Software Engineering" offered by Innsbruck University.
  *
@@ -24,7 +23,7 @@ public interface AbstractRepository<T, ID extends Serializable> extends Reposito
      * Deletes an entity.
      *
      * @param entity The entity to be enabled.
-     * @throws IllegalArgumentException If the given entity is (@literal null}.
+     * @throws IllegalArgumentException If the given entity is (@literal null).
      */
     void delete(T entity);
 
@@ -34,6 +33,15 @@ public interface AbstractRepository<T, ID extends Serializable> extends Reposito
      * @return All entities.
      */
     List<T> findAll();
+
+    /**
+     * Returns all entities with the given ids.
+     *
+     * @param ids The ids to retrieve entities for.
+     * @return A list of entities with the given ids.
+     * @throws IllegalArgumentException If {@code ids} is {@literal null}.
+     */
+    List<T> findAllById(Iterable<ID> ids);
 
     /**
      * Retrieves an entity by its id.

@@ -43,7 +43,7 @@ public class RaspberryPiService {
     }
 
     public RaspberryPi getByIdInternal(Long id){
-        return repo.findById(id).orElseThrow();
+        return repo.findById(id).orElseThrow(() -> new NotFoundException("RaspberryPi with id " + id + " not found"));
     }
 
     @Transactional
@@ -76,13 +76,17 @@ public class RaspberryPiService {
         return savedPi;
     }
 
-    public RaspberryPi updateInternal(Long id, RaspberryPiUpdateDTO dto){
-        return update(id, dto);
+    public void updateInternal(Long id, RaspberryPiUpdateDTO dto){
+        sharedUpdate(id, dto);
     }
 
     @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public RaspberryPi update(Long id, RaspberryPiUpdateDTO dto) {
-        RaspberryPi existing = getById(id);
+        return sharedUpdate(id, dto);
+    }
+
+    private RaspberryPi sharedUpdate(Long id, RaspberryPiUpdateDTO dto){
+        RaspberryPi existing = getByIdInternal(id);
 
         StringBuilder debugInfo = new StringBuilder("Updated raspberry pi details:")
                 .append(" id=").append(id);
@@ -170,8 +174,7 @@ public class RaspberryPiService {
 
     @Transactional
     public void addAvailableSensorStations(Long id, List<String> stationBleMacs) {
-        // this is intended, as we still need to manage RPi authentication.
-        RaspberryPi pi = getById(id);
+        RaspberryPi pi = getByIdInternal(id);
 
         log.info("Adding available sensor stations to raspberry pi with id={}", id);
         log.debug("Discovered sensor station BLE MACs for raspberry pi id={}: {}", id, stationBleMacs);
@@ -215,7 +218,7 @@ public class RaspberryPiService {
     public void removeAvailableSensorStationAfterScanTimeOut(Long piId, Long stationId) {
         log.info("Removing available sensor station after scan timeout: raspberryPiId={}, sensorStationId={}", piId, stationId);
 
-        RaspberryPi pi = getById(piId);
+        RaspberryPi pi = getByIdInternal(piId);
         SensorStation station = sensorStationRepository.findById(stationId).orElseThrow();
 
         log.debug(

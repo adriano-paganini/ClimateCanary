@@ -11,7 +11,6 @@ import java.util.Optional;
 
 /**
  * Repository for managing {@link Userx} entities.
- *
  * This class is part of the skeleton project provided for students of the
 * course "Software Engineering" offered by Innsbruck University.
  */

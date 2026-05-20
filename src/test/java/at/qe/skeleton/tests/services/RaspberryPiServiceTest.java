@@ -20,6 +20,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -95,7 +96,7 @@ class RaspberryPiServiceTest {
     @DisplayName("Should save and return new Raspberry Pi")
     void create_savesAndReturnsRaspberryPi() {
         Room room = new Room();
-        room.setId(5L);
+        ReflectionTestUtils.setField(room, "id", 5L);
 
         pi.setRoom(room);
 
@@ -143,7 +144,7 @@ class RaspberryPiServiceTest {
     @DisplayName("Should throw IllegalArgumentException when creating Raspberry Pi in room that already has one")
     void create_roomAlreadyHasRaspberryPi_throwsIllegalArgumentException() {
         Room room = new Room();
-        room.setId(5L);
+        ReflectionTestUtils.setField(room, "id", 5L);
 
         RaspberryPi existingPi = new RaspberryPi();
         room.setRaspberryPi(existingPi);

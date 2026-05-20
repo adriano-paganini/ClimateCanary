@@ -1,13 +1,19 @@
 package at.qe.skeleton.models;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Table(name = "addresses")
 @Entity
 public class Address {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Setter(AccessLevel.NONE)
     private Long id;
 
     private String country;
@@ -29,31 +35,10 @@ public class Address {
         this.extra = extra;
     }
 
-    public Long getId() { return id; }
-
-    public String getCountry() { return country; }
-    public void setCountry(String country) { this.country = country; }
-
-    public String getZipCode() { return zipCode; }
-    public void setZipCode(String zipCode) { this.zipCode = zipCode; }
-
-    public String getCity() { return city; }
-    public void setCity(String city) { this.city = city; }
-
-    public String getStreet() { return street; }
-    public void setStreet(String street) { this.street = street; }
-
-    public String getHouseNumber() { return houseNumber; }
-    public void setHouseNumber(String houseNumber) { this.houseNumber = houseNumber; }
-
-    public String getExtra() { return extra; }
-    public void setExtra(String extra) { this.extra = extra; }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof Address)) return false;
-        Address other = (Address) o;
+        if (!(o instanceof Address other)) return false;
 
         return id != null && id.equals(other.id);
     }

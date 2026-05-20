@@ -24,7 +24,6 @@ import java.util.Optional;
 
 /**
  * REST controllers for admin users.
- *
  * This class is part of the skeleton project provided for students of the
 * course "Software Engineering" offered by Innsbruck University.
  */
@@ -99,12 +98,11 @@ public class AdminController {
   }
 
   /**
-   * Partially updates user of given id.
-   *
+   * Partially updates the user with a given id.
    * The update is partial because only a select subset of user fields can be modified after
-   * create.
+   * creation.
    *
-   * @param id       the id of the user tb updated
+   * @param id       the id of the user to be updated
    * @param userxDto the updated user information
    * @return {@link ResponseEntity} with status {@code 201 (Created)} with the updated user in the
    * body, or with status {@code 404 (Not Found)} if no user with this id exists
@@ -126,10 +124,9 @@ public class AdminController {
   }
 
   /**
-   * Partially updates user of given id.
-   *
+   * Partially updates the user with a given id.
    * The update is partial because only a select subset of user fields can be modified after
-   * create.
+   * creation.
    *
    * @param id the id of the user tb updated
    * @return {@link ResponseEntity} with status {@code 204 (No Content)} on successful delete, or

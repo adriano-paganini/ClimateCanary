@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -48,13 +49,13 @@ class SensorStationServiceTest {
     @BeforeEach
     void setUp() {
         RaspberryPi pi = new RaspberryPi();
-        pi.setId(1L);
+        ReflectionTestUtils.setField(pi, "id", 1L);
 
         Room room = new Room();
-        room.setId(1L);
+        ReflectionTestUtils.setField(room, "id", 1L);
 
         station = new SensorStation();
-        station.setId(1L);
+        ReflectionTestUtils.setField(station, "id", 1L);
         station.setName("Station A");
         station.setBleMac("AA:BB:CC:DD:EE:FF");
         station.setDeviceStatus(DeviceStatus.AVAILABLE);

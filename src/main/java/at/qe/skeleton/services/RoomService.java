@@ -97,7 +97,7 @@ public class RoomService {
 
     /**
      * Soft delete policy
-     * @param id
+     * @param id the id of the room to delete
      */
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     @Transactional

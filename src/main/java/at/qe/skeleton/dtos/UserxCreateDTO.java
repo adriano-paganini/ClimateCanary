@@ -8,8 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Set;
 
 /**
- * Reduced data transfer object for the UserxTypes Entity in the create endpoint.
- *
+ * Reduced data transfer object for the UserxTypes Entity in the creation endpoint.
  * This class is part of the skeleton project provided for students of the course "Software
  * Engineering" offered by Innsbruck University.
  */
