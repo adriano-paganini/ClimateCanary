@@ -110,6 +110,20 @@ const DepartmentAbsenceView: React.FC = () => {
         void load();
     }, [fullUser?.id]);
 
+    useEffect(() => {
+        if (!department?.id) return;
+        const interval = setInterval(async () => {
+            try {
+                const absenceApi = new AbsenceControllerApi();
+                const absenceData = await absenceApi.getAll8({ departmentId: department.id! }).then(r => r.data);
+                setAbsences(absenceData);
+            } catch {
+                // silently ignore polling errors
+            }
+        }, 30_000);
+        return () => clearInterval(interval);
+    }, [department?.id]);
+
     const updateStatus = async (absence: AbsenceDTO, newStatus: AbsenceUpdateDTOAbsenceStatusEnum) => {
         if (!absence.id) return;
         try {
