@@ -53,8 +53,8 @@ class PiConfigYamlBuilderTest {
                     pi:
                       id: 5
                       room_id: 10
-                      room_name: "Room \\\"A\\\" \\\\ West"
-                      host_name: "pi-\\\"main\\\"\\\\01"
+                      room_name: "Room \\"A\\" \\\\ West"
+                      host_name: "pi-\\"main\\"\\\\01"
                       backend_url: "http://192.168.1.50:8080"
                       privacy_mode: true
                     """);
