@@ -41,6 +41,39 @@ class AvailableSensorStationCleanerTest {
         Mockito.verify(raspberryPiService, Mockito.never()).removeAvailableSensorStationAfterScanTimeOut(1L, 12L);
     }
 
+    @Test
+    void cleanAvailableSensorStations_removesAllAvailableStations() {
+        RaspberryPi raspberryPi = new RaspberryPi();
+        SensorStation firstAvailableStation = station(11L, DeviceStatus.AVAILABLE);
+        SensorStation secondAvailableStation = station(12L, DeviceStatus.AVAILABLE);
+        raspberryPi.setSensorStations(List.of(firstAvailableStation, secondAvailableStation));
+
+        Mockito.when(raspberryPiService.getByIdInternal(1L)).thenReturn(raspberryPi);
+
+        cleaner.cleanAvailableSensorStations(1L);
+
+        Mockito.verify(raspberryPiService).removeAvailableSensorStationAfterScanTimeOut(1L, 11L);
+        Mockito.verify(raspberryPiService).removeAvailableSensorStationAfterScanTimeOut(1L, 12L);
+    }
+
+    @Test
+    void cleanAvailableSensorStations_doesNotRemoveUnavailableStations() {
+        RaspberryPi raspberryPi = new RaspberryPi();
+        raspberryPi.setSensorStations(List.of(
+                station(11L, DeviceStatus.ONLINE),
+                station(12L, DeviceStatus.OFFLINE),
+                station(13L, DeviceStatus.DECOMMISSIONED)
+        ));
+
+        Mockito.when(raspberryPiService.getByIdInternal(1L)).thenReturn(raspberryPi);
+
+        cleaner.cleanAvailableSensorStations(1L);
+
+        Mockito.verify(raspberryPiService).getByIdInternal(1L);
+        Mockito.verify(raspberryPiService, Mockito.never())
+                .removeAvailableSensorStationAfterScanTimeOut(Mockito.anyLong(), Mockito.anyLong());
+    }
+
     private SensorStation station(Long id, DeviceStatus status) {
         SensorStation station = new SensorStation();
         ReflectionTestUtils.setField(station, "id", id);

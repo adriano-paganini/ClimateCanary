@@ -327,31 +327,26 @@ public class ThresholdViolationService {
 
     private Threshold determineThreshold(Long roomId, Metric metric, Float avgValue) {
         List<Threshold> thresholds = thresholdRepository.findByRoom_IdAndMetric(roomId, metric);
-        Threshold relevantThreshold = null;
-        if (thresholds.isEmpty() || thresholds.size()>2) throw new NotFoundException("Cannot specify threshold choice for room " + roomId + " and metric " + metric);
-        else if(thresholds.size()==1){
-            relevantThreshold = thresholds.getFirst();
-        }else{
-            for (Threshold threshold : thresholds) {
-                switch (threshold.getThresholdType()) {
-                    case ThresholdType.UPPER:
-                    {
-                        if (avgValue >= threshold.getBoundValue()){
-                            relevantThreshold = threshold;
-                        }
-                        break;
-                    }
-                    case ThresholdType.LOWER:
-                    {
-                        if (avgValue <= threshold.getBoundValue()){
-                            relevantThreshold = threshold;
-                        }
-                        break;
-                    }
-                }
-            }
+
+        if (thresholds.isEmpty() || thresholds.size() > 2) {
+            throw new NotFoundException("Cannot specify threshold choice for room " + roomId + " and metric " + metric);
         }
-        return relevantThreshold;
+
+        if (thresholds.size() == 1) {
+            return thresholds.getFirst();
+        }
+
+        return thresholds.stream()
+                .filter(threshold -> matchesThreshold(threshold, avgValue))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private boolean matchesThreshold(Threshold threshold, Float avgValue) {
+        return switch (threshold.getThresholdType()) {
+            case UPPER -> avgValue >= threshold.getBoundValue();
+            case LOWER -> avgValue <= threshold.getBoundValue();
+        };
     }
 
     public void delete(Long id) {

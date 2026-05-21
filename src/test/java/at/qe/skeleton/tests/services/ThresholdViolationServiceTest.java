@@ -254,6 +254,170 @@ class ThresholdViolationServiceTest {
     }
 
     @Test
+    @DisplayName("create from Raspberry Pi chooses upper threshold when average value is above upper bound")
+    void createFromRaspberryPi_choosesUpperThreshold() {
+        ViolationActiveDTO dto = new ViolationActiveDTO(
+                Metric.TEMPERATURE,
+                10L,
+                "2026-05-18T14:30:15.123",
+                31.5F
+        );
+
+        RaspberryPi raspberryPi = raspberryPiInRoom(5L, 10L);
+        Threshold lowerThreshold = threshold(6L, ThresholdType.LOWER, 18.0F);
+        Threshold upperThreshold = threshold(7L, ThresholdType.UPPER, 30.0F);
+
+        when(raspberryPiService.getById(5L)).thenReturn(raspberryPi);
+        when(thresholdRepository.findByRoom_IdAndMetric(10L, Metric.TEMPERATURE))
+                .thenReturn(List.of(lowerThreshold, upperThreshold));
+        when(measurementService.getFiltered(eq(10L), eq(Metric.TEMPERATURE), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(List.of());
+        when(thresholdViolationCreateMapper.mapFrom(any(ThresholdViolationCreateDTO.class)))
+                .thenReturn(violation);
+        when(thresholdViolationRepository.save(violation)).thenReturn(violation);
+
+        thresholdViolationService.create(5L, dto);
+
+        ArgumentCaptor<ThresholdViolationCreateDTO> captor =
+                ArgumentCaptor.forClass(ThresholdViolationCreateDTO.class);
+        verify(thresholdViolationCreateMapper).mapFrom(captor.capture());
+
+        assertThat(captor.getValue().thresholdId()).isEqualTo(7L);
+    }
+
+    @Test
+    @DisplayName("create from Raspberry Pi chooses lower threshold when average value is below lower bound")
+    void createFromRaspberryPi_choosesLowerThreshold() {
+        ViolationActiveDTO dto = new ViolationActiveDTO(
+                Metric.TEMPERATURE,
+                10L,
+                "2026-05-18T14:30:15.123",
+                17.5F
+        );
+
+        RaspberryPi raspberryPi = raspberryPiInRoom(5L, 10L);
+        Threshold lowerThreshold = threshold(6L, ThresholdType.LOWER, 18.0F);
+        Threshold upperThreshold = threshold(7L, ThresholdType.UPPER, 30.0F);
+
+        when(raspberryPiService.getById(5L)).thenReturn(raspberryPi);
+        when(thresholdRepository.findByRoom_IdAndMetric(10L, Metric.TEMPERATURE))
+                .thenReturn(List.of(lowerThreshold, upperThreshold));
+        when(measurementService.getFiltered(eq(10L), eq(Metric.TEMPERATURE), any(LocalDateTime.class), any(LocalDateTime.class)))
+                .thenReturn(List.of());
+        when(thresholdViolationCreateMapper.mapFrom(any(ThresholdViolationCreateDTO.class)))
+                .thenReturn(violation);
+        when(thresholdViolationRepository.save(violation)).thenReturn(violation);
+
+        thresholdViolationService.create(5L, dto);
+
+        ArgumentCaptor<ThresholdViolationCreateDTO> captor =
+                ArgumentCaptor.forClass(ThresholdViolationCreateDTO.class);
+        verify(thresholdViolationCreateMapper).mapFrom(captor.capture());
+
+        assertThat(captor.getValue().thresholdId()).isEqualTo(6L);
+    }
+
+    @Test
+    @DisplayName("create from Raspberry Pi throws when threshold choice cannot be specified")
+    void createFromRaspberryPi_throwsWhenThresholdChoiceCannotBeSpecified() {
+        ViolationActiveDTO dto = new ViolationActiveDTO(
+                Metric.TEMPERATURE,
+                10L,
+                "2026-05-18T14:30:15.123",
+                31.5F
+        );
+
+        when(raspberryPiService.getById(5L)).thenReturn(raspberryPiInRoom(5L, 10L));
+        when(thresholdRepository.findByRoom_IdAndMetric(10L, Metric.TEMPERATURE))
+                .thenReturn(List.of());
+
+        assertThatThrownBy(() -> thresholdViolationService.create(5L, dto))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessageContaining("Cannot specify threshold choice");
+
+        verifyNoInteractions(measurementService, thresholdViolationCreateMapper);
+        verify(thresholdViolationRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("update from Raspberry Pi resolves active threshold violation")
+    void updateFromRaspberryPi_resolvesActiveViolation() {
+        ViolationResolvedDTO dto = new ViolationResolvedDTO(
+                Metric.TEMPERATURE,
+                10L,
+                "2026-05-18T15:00:00.000"
+        );
+
+        RaspberryPi raspberryPi = raspberryPiInRoom(5L, 10L);
+        LocalDateTime startTime = LocalDateTime.parse("2026-05-18T14:30:15.123");
+        Measurement measurement = new Measurement();
+
+        violation.setStartTime(startTime);
+        violation.setViolationStatus(ViolationStatus.ACTIVE);
+
+        when(raspberryPiService.getById(5L)).thenReturn(raspberryPi);
+        when(thresholdViolationRepository.findByRoomIdAndMetricAndViolationStatus(
+                10L,
+                Metric.TEMPERATURE,
+                ViolationStatus.ACTIVE
+        )).thenReturn(Optional.of(violation));
+        when(measurementService.getFiltered(eq(10L), eq(Metric.TEMPERATURE), eq(startTime), any(LocalDateTime.class)))
+                .thenReturn(List.of(measurement));
+        when(thresholdViolationRepository.save(violation)).thenReturn(violation);
+
+        ThresholdViolation result = thresholdViolationService.update(5L, dto);
+
+        assertThat(result).isEqualTo(violation);
+        assertThat(violation.getViolationStatus()).isEqualTo(ViolationStatus.RESOLVED);
+        assertThat(violation.getEndTime()).isNotNull();
+        assertThat(violation.getMeasurements()).containsExactly(measurement);
+        verify(thresholdViolationRepository).save(violation);
+    }
+
+    @Test
+    @DisplayName("update from Raspberry Pi throws when Raspberry Pi room does not match DTO room")
+    void updateFromRaspberryPi_throwsWhenRoomDoesNotMatch() {
+        ViolationResolvedDTO dto = new ViolationResolvedDTO(
+                Metric.TEMPERATURE,
+                99L,
+                "2026-05-18T15:00:00.000"
+        );
+
+        when(raspberryPiService.getById(5L)).thenReturn(raspberryPiInRoom(5L, 10L));
+
+        assertThatThrownBy(() -> thresholdViolationService.update(5L, dto))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessageContaining("Raspberry Pi is not in room 99");
+
+        verifyNoInteractions(measurementService);
+        verify(thresholdViolationRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("update from Raspberry Pi throws when no active violation exists")
+    void updateFromRaspberryPi_throwsWhenNoActiveViolationExists() {
+        ViolationResolvedDTO dto = new ViolationResolvedDTO(
+                Metric.TEMPERATURE,
+                10L,
+                "2026-05-18T15:00:00.000"
+        );
+
+        when(raspberryPiService.getById(5L)).thenReturn(raspberryPiInRoom(5L, 10L));
+        when(thresholdViolationRepository.findByRoomIdAndMetricAndViolationStatus(
+                10L,
+                Metric.TEMPERATURE,
+                ViolationStatus.ACTIVE
+        )).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> thresholdViolationService.update(5L, dto))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessageContaining("No active threshold violation");
+
+        verifyNoInteractions(measurementService);
+        verify(thresholdViolationRepository, never()).save(any());
+    }
+
+    @Test
     @DisplayName("update modifies metric only")
     void update_metricOnly_updatesMetric() {
         ThresholdViolationUpdateDTO dto =
@@ -379,5 +543,25 @@ class ThresholdViolationServiceTest {
         thresholdViolationService.delete(1L);
 
         verify(thresholdViolationRepository).deleteById(1L);
+    }
+
+    private RaspberryPi raspberryPiInRoom(Long raspberryPiId, Long roomId) {
+        Room room = new Room();
+        ReflectionTestUtils.setField(room, "id", roomId);
+
+        RaspberryPi raspberryPi = new RaspberryPi();
+        ReflectionTestUtils.setField(raspberryPi, "id", raspberryPiId);
+        raspberryPi.setRoom(room);
+
+        return raspberryPi;
+    }
+
+    private Threshold threshold(Long thresholdId, ThresholdType thresholdType, Float boundValue) {
+        Threshold threshold = new Threshold();
+        ReflectionTestUtils.setField(threshold, "id", thresholdId);
+        threshold.setThresholdType(thresholdType);
+        threshold.setBoundValue(boundValue);
+
+        return threshold;
     }
 }
