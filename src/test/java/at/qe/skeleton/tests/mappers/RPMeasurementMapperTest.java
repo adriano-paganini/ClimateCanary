@@ -40,7 +40,7 @@ class RPMeasurementMapperTest {
         SensorStation sensorStation = new SensorStation();
 
         when(roomService.getById(10L)).thenReturn(room);
-        when(sensorStationService.getById(20L)).thenReturn(sensorStation);
+        when(sensorStationService.getByIdInternal(20L)).thenReturn(sensorStation);
 
         RPMeasurementDTO dto = new RPMeasurementDTO(
                 timestampString,
