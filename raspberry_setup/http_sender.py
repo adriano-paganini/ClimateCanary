@@ -1,7 +1,6 @@
 import asyncio
 import aiohttp
 import aiosqlite
-from datetime import datetime
 
 import config
 from config import SEND_INTERVAL
@@ -20,9 +19,8 @@ async def http_sender(db: aiosqlite.Connection) -> None:
 
                 for row in rows:
                     row_id, timestamp, temp, hum, press, gas, station_id, room_id = row
-                    ts_ms = int(datetime.fromisoformat(timestamp).timestamp() * 1000)
                     payload = {
-                        "timestamp":       ts_ms,
+                        "timestamp":       timestamp,
                         "temperature":     temp,
                         "humidity":        hum,
                         "pressure":        press,
@@ -43,7 +41,8 @@ async def http_sender(db: aiosqlite.Connection) -> None:
                                 )
                                 print(f"[HTTP] sent row {row_id} → {resp.status}")
                             else:
-                                print(f"[HTTP] server returned {resp.status} for row {row_id}")
+                                body = await resp.text()
+                                print(f"[HTTP] server returned {resp.status} for row {row_id}: {body}")
                     except Exception as e:
                         print(f"[HTTP] failed for row {row_id}: {e}")
 
