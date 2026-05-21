@@ -104,56 +104,37 @@ async def trigger_scan(piId: int, background_tasks: BackgroundTasks):
 @app.post("/api/spi/{piId}/setup")
 async def setup_station(piId: int, payload: SensorStationDTO):
     _check_pi_id(piId)
-    print(f"inside setup endpoint")
+    db = _check_db()
     from setup_flow import run_setup
     success = await run_setup(
         station=payload.model_dump(),
         measurement_interval=payload.measurementInterval or 60,
     )
-    print(f"run setup has finished")
 
-    if success:
-        return {"status": "ok"}
-    else:
+    if not success:
         raise HTTPException(status_code=500, detail="Setup failed — check Pi logs")
+
+    data = payload.model_dump()
+    data["measurementInterval"] = data.get("measurementInterval") or 60
+    await save_station(db, data)
+    print(f"[APP] station saved after setup: id={payload.id}, mac={payload.bleMac}, name={payload.name!r}")
+    stations_event.set()
+
+    return {"status": "ok"}
 
 
 @app.post("/api/spi/{piId}/stations")
 async def receive_stations(piId: int, payload: SensorStationDTO):
-    """
-    Backend tells Pi which single station to connect to.
-    Saved to DB immediately, wakes station_manager.
-    """
     _check_pi_id(piId)
     db = _check_db()
 
     data = payload.model_dump()
     data["measurementInterval"] = data.get("measurementInterval") or 60
     await save_station(db, data)
-    print(f"[APP] station received: id={payload.id}, mac={payload.bleMac}, name={payload.name!r}")
+    print(f"[APP] station received via /stations: id={payload.id}, mac={payload.bleMac}")
     stations_event.set()
 
     return {"status": "ok"}
-
-
-@app.post("/api/spi/{piId}/setup")
-async def setup_station(piId: int, payload: SensorStationDTO):
-    """
-    Backend triggers first-time Arduino setup after admin selects a station.
-    Pi connects to the Arduino, writes TrustedRpiId + measurementInterval,
-    then waits for the Arduino to reboot into normal mode.
-    """
-    _check_pi_id(piId)
-    from setup_flow import run_setup
-    success = await run_setup(
-        address=payload.bleMac,
-        sensor_station_id=payload.id,
-        measurement_interval=payload.measurementInterval,
-    )
-    if success:
-        return {"status": "ok"}
-    else:
-        raise HTTPException(status_code=500, detail="Setup failed — check Pi logs")
 
 
 @app.post("/api/spi/{piId}/config/thresholds")
