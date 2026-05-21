@@ -156,6 +156,10 @@ public class SensorStationService {
 
         return updatedStation;
     }
+
+    public SensorStation getByIdInternal(Long id) {
+        return repo.findById(id).orElseThrow(()-> new NotFoundException("SensorStation with id " + id + "not found"));
+    }
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public void delete(Long id) {
         repo.deleteById(id);
