@@ -1,9 +1,6 @@
 package at.qe.skeleton.services;
 
-import at.qe.skeleton.dtos.OccupancyDTO;
-import at.qe.skeleton.dtos.SensorStationDTO;
-import at.qe.skeleton.dtos.ThresholdDTO;
-import at.qe.skeleton.dtos.ViolationResolvedDTO;
+import at.qe.skeleton.dtos.*;
 import at.qe.skeleton.models.RaspberryPi;
 import at.qe.skeleton.models.Room;
 import lombok.extern.slf4j.Slf4j;
@@ -13,13 +10,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
 public class RaspberryPiServerService {
 
     private static final String URL_PROTOCOL = "http://";
-    private static final String API_BASE_PATH = ":8080/api/spi/";
+    private static final String API_BASE_PATH = ":8000/api/spi/";
 
     private final RaspberryPiService raspberryPiService;
     private final RestClient restClient;
@@ -113,7 +111,7 @@ public class RaspberryPiServerService {
     public PiRequestResult setOccupancy(Long piId, Long roomId, boolean privacyMode) {
         Room room = roomService.getById(roomId);
         OccupancyDTO dto = new OccupancyDTO(room.getName(), privacyMode);
-        RaspberryPi pi = raspberryPiService.getById(piId);
+        RaspberryPi pi = raspberryPiService.getByIdInternal(piId);
         String url = buildPiUrl(pi, piId + "/occupancy");
 
         try {
@@ -190,6 +188,7 @@ public class RaspberryPiServerService {
     public PiRequestResult startScanForAvailableSensorStations(Long piId) {
         RaspberryPi pi = raspberryPiService.getById(piId);
         String url = buildPiUrl(pi, piId + "/scan");
+        log.debug("SENDING TO ADDRESS: {}", url);
 
         try {
             ResponseEntity<Void> response = restClient.post()
@@ -309,14 +308,14 @@ public class RaspberryPiServerService {
         }
     }
 
-    public PiRequestResult informAboutNewThresholds(Long piId, List<ThresholdDTO> thresholdDTOS) {
+    public PiRequestResult informAboutNewThresholds(Long piId, Map<ThresholdDTO, List<ClimateHintDTO>> completeThresholdInfo) {
         RaspberryPi pi = raspberryPiService.getById(piId);
         String url = buildPiUrl(pi, piId + "/config/thresholds");
 
         try {
             ResponseEntity<Void> response = restClient.post()
                     .uri(url)
-                    .body(thresholdDTOS)
+                    .body(completeThresholdInfo)
                     .retrieve()
                     .toBodilessEntity();
 

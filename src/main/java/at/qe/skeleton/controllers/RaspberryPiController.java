@@ -7,7 +7,6 @@ import at.qe.skeleton.helper.PiConfigYamlBuilder;
 import at.qe.skeleton.mappers.RaspberryPiCreateMapper;
 import at.qe.skeleton.mappers.RaspberryPiMapper;
 import at.qe.skeleton.models.RaspberryPi;
-import at.qe.skeleton.models.SensorStation;
 import at.qe.skeleton.services.RaspberryPiServerService;
 import at.qe.skeleton.services.RaspberryPiService;
 import at.qe.skeleton.dtos.SensorStationDTO;
@@ -57,10 +56,8 @@ public class RaspberryPiController {
         return ResponseEntity.ok(raspberryPiMapper.mapTo(raspberryPiService.getById(id)));
     }
 
-    //TODO: update to match the expected yaml info and structure
     @PostMapping
-    public ResponseEntity<RaspberryPiDTO> create(@Valid @RequestBody RaspberryPiCreateDTO dto) {
-
+    public ResponseEntity<String> create(@Valid @RequestBody RaspberryPiCreateDTO dto) {
         RaspberryPi pi = raspberryPiService.create(raspberryPiCreateMapper.mapFrom(dto));
 
         URI location = ServletUriComponentsBuilder
@@ -69,7 +66,7 @@ public class RaspberryPiController {
                 .buildAndExpand(pi.getId())
                 .toUri();
 
-        return ResponseEntity.created(location).body(raspberryPiMapper.mapTo(pi));
+        return ResponseEntity.created(location).body(piConfigYamlBuilder.buildYaml(pi.getId()));
     }
 
     @PatchMapping("/{id}")

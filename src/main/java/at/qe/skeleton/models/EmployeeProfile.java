@@ -1,13 +1,19 @@
 package at.qe.skeleton.models;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Table(name = "employeeprofile")
 @Entity
 public class EmployeeProfile {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Setter(AccessLevel.NONE)
     private Long id;
 
     @OneToOne
@@ -22,24 +28,12 @@ public class EmployeeProfile {
     @JoinColumn(name = "department_id")
     private Department department;
 
-    public EmployeeProfile() {}
-
-    public Long getId() { return id; }
-
-    public Userx getUser() { return user; }
-    public void setUser(Userx user) { this.user = user; }
-
-    public Room getRoom() { return room; }
-    public void setRoom(Room room) { this.room = room; }
-
-    public Department getDepartment() { return department; }
-    public void setDepartment(Department department) { this.department = department; }
+    public EmployeeProfile() { /* This constructor is needed by JPA */ }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof EmployeeProfile)) return false;
-        EmployeeProfile other = (EmployeeProfile) o;
+        if (!(o instanceof EmployeeProfile other)) return false;
         return id != null && id.equals(other.id);
     }
 

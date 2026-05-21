@@ -63,7 +63,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
             log.error("Cannot parse token {}", String.valueOf(e));
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token is invalid");
         } catch (Exception e) {
-            log.error("Cannot set user authentication {}", String.valueOf(e));
+            log.error("Unexpected error while processing JWT authentication", e);
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
         }
         chain.doFilter(request, response);

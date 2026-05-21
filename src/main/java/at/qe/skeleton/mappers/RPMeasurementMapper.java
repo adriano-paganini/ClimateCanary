@@ -11,6 +11,7 @@ import at.qe.skeleton.services.SensorStationService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,9 +35,8 @@ public class RPMeasurementMapper implements DTOMapper<List<Measurement>, RPMeasu
     public List<Measurement> mapFrom(RPMeasurementDTO dto) {
 
         Room room = roomService.getById(dto.roomId());
-        SensorStation sensorStation = sensorStationService.getById(dto.sensorStationId());
-        //TODO: parse time-string to LocalDateTime
-        LocalDateTime timestamp = LocalDateTime.now();
+        SensorStation sensorStation = sensorStationService.getByIdInternal(dto.sensorStationId());
+        LocalDateTime timestamp = LocalDateTime.parse(dto.timestamp(), DateTimeFormatter.ISO_DATE_TIME);
         List<Measurement> measurementList = new ArrayList<>();
         Measurement tempMeasurement = new Measurement();
         tempMeasurement.setRoom(room);

@@ -32,7 +32,7 @@ public class ScheduledMethods {
         this.raspberryPiService = raspberryPiService;
     }
 
-    @Scheduled(cron = "0 */5 * * * *")
+    //@Scheduled(cron = "0 */5 * * * *")
     @Transactional
     public void updatePrivacyModeForAllRaspberryPis() {
         LocalDateTime now = LocalDateTime.now();
@@ -47,52 +47,47 @@ public class ScheduledMethods {
         List<Room> rooms = roomService.getAll();
 
         for (Room room : rooms) {
-            if (room.getRoomType() != RoomType.OFFICE) {
-                continue;
-            }
+            if (room.getRoomType() == RoomType.COMMON_AREAS && room.getRaspberryPi() != null) {
 
-            if (room.getRaspberryPi() == null) {
-                continue;
-            }
+                List<EmployeeProfile> assignedEmployees = employeeProfileService.getAll(room.getId(), null);
 
-            List<EmployeeProfile> assignedEmployees = employeeProfileService.getAll(room.getId(), null);
+                long occupancyCount = assignedEmployees.stream()
+                        .map(EmployeeProfile::getUser)
+                        .map(Userx::getId)
+                        .filter(userId -> !absentUserIds.contains(userId))
+                        .distinct()
+                        .count();
 
-            long occupancyCount = assignedEmployees.stream()
-                    .map(EmployeeProfile::getUser)
-                    .map(Userx::getId)
-                    .filter(userId -> !absentUserIds.contains(userId))
-                    .distinct()
-                    .count();
+                boolean newPrivacyMode = occupancyCount < 5;
+                boolean currentPrivacyMode = Boolean.TRUE.equals(room.getPrivacyMode());
 
-            boolean newPrivacyMode = occupancyCount < 5;
-            boolean currentPrivacyMode = Boolean.TRUE.equals(room.getPrivacyMode());
-
-            if (currentPrivacyMode != newPrivacyMode) {
-                PiRequestResult result = raspberryPiServerService.setOccupancy(
-                        room.getRaspberryPi().getId(),
-                        room.getId(),
-                        newPrivacyMode
-                );
-
-                if (result == PiRequestResult.SUCCESS) {
-                    roomService.update(
+                if (currentPrivacyMode != newPrivacyMode) {
+                    PiRequestResult result = raspberryPiServerService.setOccupancy(
+                            room.getRaspberryPi().getId(),
                             room.getId(),
-                            new RoomUpdateDTO(null, null, newPrivacyMode, null, null)
+                            newPrivacyMode
                     );
-                    log.info("Scheduled update of privacy mode for room " + room.getId() + ": " + newPrivacyMode);
+
+                    if (result == PiRequestResult.SUCCESS) {
+                        roomService.update(
+                                room.getId(),
+                                new RoomUpdateDTO(null, null, newPrivacyMode, null, null)
+                        );
+                        log.info("Scheduled update of privacy mode for room {}: {}", room.getId(), newPrivacyMode);
+                    }
                 }
             }
         }
     }
 
-    @Scheduled(cron = "*/30 * * * * *")
+    //@Scheduled(cron = "*/30 * * * * *")
     @Transactional
     public void checkHeartbeat() {
         List<RaspberryPi> pis = raspberryPiService.getAllInternal();
 
         for (RaspberryPi pi : pis) {
             boolean isAlive = Boolean.TRUE.equals(raspberryPiServerService.getHeartbeat(pi.getId()));
-            log.info("Scheduled update of heartbeat for pi " + pi.getId() + ": " + isAlive);
+            log.info("Scheduled update of heartbeat for pi {}: {}", pi.getId(), isAlive);
 
             DeviceStatus newStatus = isAlive ? DeviceStatus.ONLINE : DeviceStatus.OFFLINE;
 

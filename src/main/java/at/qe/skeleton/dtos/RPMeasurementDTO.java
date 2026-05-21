@@ -1,13 +1,13 @@
 package at.qe.skeleton.dtos;
 
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.NotBlank;
+
 
 public record RPMeasurementDTO(
 
-    @NotNull(message = "Timestamp is required")
-    @PositiveOrZero(message = "Timestamp must be a Unix timestamp in milliseconds since 1970")
-    Long timestamp,
+    @NotBlank(message = "Timestamp is required")
+    String timestamp,
 
     @NotNull(message = "Temperature is required")
     Float temperature,

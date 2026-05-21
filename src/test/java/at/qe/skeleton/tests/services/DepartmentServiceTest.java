@@ -20,6 +20,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -164,7 +165,7 @@ class DepartmentServiceTest {
     @DisplayName("Update department with leader id updates leader")
     void update_departmentLeadId_updatesLeader() {
         Userx newLeader = new Userx();
-        newLeader.setId(5L);
+        ReflectionTestUtils.setField(newLeader, "id", 5L);
 
         DepartmentUpdateDTO dto = new DepartmentUpdateDTO(null, null, 5L);
 
@@ -196,7 +197,7 @@ class DepartmentServiceTest {
     @DisplayName("Update department with all fields updates all")
     void update_allFieldsProvided_updatesAll() {
         Userx newLeader = new Userx();
-        newLeader.setId(7L);
+        ReflectionTestUtils.setField(newLeader, "id", 7L);
 
         DepartmentUpdateDTO dto = new DepartmentUpdateDTO(
                 "Finance",

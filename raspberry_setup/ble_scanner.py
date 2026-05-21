@@ -24,6 +24,8 @@ from config import (
     SCAN_DURATION,
 )
 
+_scan_lock = asyncio.Lock()
+
 
 def _manuf_matches(adv: AdvertisementData, expected: bytes) -> bool:
     return any(
@@ -33,9 +35,20 @@ def _manuf_matches(adv: AdvertisementData, expected: bytes) -> bool:
 
 
 async def scan_for_stations() -> list[str]:
+    if _scan_lock.locked():
+        print("[SCAN] scan already in progress, skipping.")
+        return []
+    async with _scan_lock:
+        return await _do_scan()
+
+
+async def _do_scan() -> list[str]:
     found: dict[str, BLEDevice] = {}
+    print(f"[SCAN] inside scan for stations function.")
 
     def callback(device: BLEDevice, adv: AdvertisementData) -> None:
+
+        
         if device.address in found:
             return
         if device.name != BLE_NAME_SETUP:

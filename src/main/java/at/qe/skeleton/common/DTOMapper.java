@@ -2,7 +2,6 @@ package at.qe.skeleton.common;
 
 /**
  * DTOMapper Interface. Provides common base methods for all mappers.
- *
  * This class is part of the skeleton project provided for students of the
 * course "Software Engineering" offered by Innsbruck University.
  * 
