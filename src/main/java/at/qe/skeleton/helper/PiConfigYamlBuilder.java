@@ -21,23 +21,24 @@ public class PiConfigYamlBuilder {
     }
 
     public String buildYaml(Long piId) {
-        RaspberryPi raspberryPi = raspberryPiService.getById(piId);
+        RaspberryPi raspberryPi = raspberryPiService.getByIdInternal(piId);
         Room room = raspberryPi.getRoom();
         String backendUrl = findBackendUrl();
 
         return """
-                ROOM_ID: %d
-                BACKEND_URL: "%s"
-                PI_ID: %d
-                ROOM_NAME: "%s"
-                HOST_NAME: "%s"
-                PRIVACY_MODE: %s
+                pi:
+                  id: %d
+                  room_id: %d
+                  room_name: "%s"
+                  host_name: "%s"
+                  backend_url: "%s"
+                  privacy_mode: %s
                 """.formatted(
-                room.getId(),
-                escapeYaml(backendUrl),
                 raspberryPi.getId(),
+                room.getId(),
                 escapeYaml(room.getName()),
                 escapeYaml(raspberryPi.getHostName()),
+                escapeYaml(backendUrl),
                 room.getPrivacyMode()
         );
     }

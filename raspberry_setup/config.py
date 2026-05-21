@@ -61,10 +61,12 @@ def load_config_from_string(yaml_string: str) -> None:
     _apply(yaml.safe_load(yaml_string))
 
 def get_local_ip() -> str:
-    """local IP address (used for the /booted call)."""
+    """Best-effort local IP address (used for the /booted call)."""
+    import urllib.parse
     try:
+        host = urllib.parse.urlparse(BACKEND_URL).hostname or "8.8.8.8"
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-            s.connect(("8.8.8.8", 80))
+            s.connect((host, 80))
             return s.getsockname()[0]
     except Exception:
         return "0.0.0.0"

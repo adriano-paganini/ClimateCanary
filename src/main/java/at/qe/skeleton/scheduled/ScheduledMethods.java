@@ -32,7 +32,7 @@ public class ScheduledMethods {
         this.raspberryPiService = raspberryPiService;
     }
 
-    @Scheduled(cron = "0 */5 * * * *")
+    //@Scheduled(cron = "0 */5 * * * *")
     @Transactional
     public void updatePrivacyModeForAllRaspberryPis() {
         LocalDateTime now = LocalDateTime.now();
@@ -80,7 +80,7 @@ public class ScheduledMethods {
         }
     }
 
-    @Scheduled(cron = "*/30 * * * * *")
+    //@Scheduled(cron = "*/30 * * * * *")
     @Transactional
     public void checkHeartbeat() {
         List<RaspberryPi> pis = raspberryPiService.getAllInternal();

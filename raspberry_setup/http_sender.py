@@ -41,7 +41,8 @@ async def http_sender(db: aiosqlite.Connection) -> None:
                                 )
                                 print(f"[HTTP] sent row {row_id} → {resp.status}")
                             else:
-                                print(f"[HTTP] server returned {resp.status} for row {row_id}")
+                                body = await resp.text()
+                                print(f"[HTTP] server returned {resp.status} for row {row_id}: {body}")
                     except Exception as e:
                         print(f"[HTTP] failed for row {row_id}: {e}")
 

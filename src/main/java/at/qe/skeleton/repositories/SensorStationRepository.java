@@ -10,7 +10,7 @@ import java.util.Optional;
 public interface SensorStationRepository extends AbstractRepository<SensorStation, Long> {
     void deleteById(Long id);
 
-    @Query("SELECT r FROM SensorStation r WHERE r.room.active = true")
+    @Query("SELECT s FROM SensorStation s JOIN s.room r WHERE r.active = true")
     List<SensorStation> findAllActive();
 
     Optional<SensorStation> findByBleMac(String bleMac);

@@ -45,9 +45,6 @@ public class SensorStationService {
         return repo.findById(id).orElseThrow(() -> new NotFoundException("SensorStation with id " + id + " not found"));
     }
 
-    private SensorStation getByIdInternal(Long id) {
-        return repo.findById(id).orElseThrow(() -> new NotFoundException("SensorStation with id " + id + " not found"));
-    }
 
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public SensorStation create(SensorStation s) {
@@ -117,10 +114,33 @@ public class SensorStationService {
 
     @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public SensorStation update(Long id, SensorStationUpdateDTO dto, Integer measurementInterval) {
-        SensorStation updated = internalUpdate(id, dto);
-        updated.setMeasurementInterval(measurementInterval);
+        SensorStation existing = getById(id);
+        existing.setMeasurementInterval(measurementInterval);
 
-        SensorStation updatedStation = repo.save(updated);
+        StringBuilder debugInfo = new StringBuilder("Updated sensor station details:")
+                .append(" id=").append(id);
+
+        if (dto.name() != null) {
+            existing.setName(dto.name());
+            debugInfo.append(", name=").append(dto.name());
+        }
+
+        if (dto.deviceStatus() != null) {
+            existing.setDeviceStatus(dto.deviceStatus());
+            debugInfo.append(", deviceStatus=").append(dto.deviceStatus());
+        }
+
+        if (dto.raspberryPiId() != null) {
+            existing.setRaspberryPi(raspberryPiService.getById(dto.raspberryPiId()));
+            debugInfo.append(", raspberryPiId=").append(dto.raspberryPiId());
+        }
+
+        if (dto.roomId() != null) {
+            existing.setRoom(roomService.getById(dto.roomId()));
+            debugInfo.append(", roomId=").append(dto.roomId());
+        }
+
+        SensorStation updatedStation = repo.save(existing);
 
         if (updatedStation.getDeviceStatus() == DeviceStatus.AVAILABLE) {
             RaspberryPi pi = updatedStation.getRaspberryPi();
@@ -131,13 +151,22 @@ public class SensorStationService {
 
             SensorStationDTO stationDTO = sensorStationMapper.mapTo(updatedStation);
             PiRequestResult result = raspberryPiServerService.setupStation(pi.getId(), stationDTO);
+            debugInfo.append(", setupStationResult=").append(result);
 
-            log.debug("Setup sensor station id: {} result: {}", pi.getId(), result);
+            if (result == PiRequestResult.SUCCESS) {
+                PiRequestResult connectResult = raspberryPiServerService.connectToStation(pi.getId(), stationDTO);
+                debugInfo.append(", connectToStationResult=").append(connectResult);
+            }
         }
 
-        log.info("Created sensor station with id={} and measurement interval={}", id, measurementInterval);
+        log.info("Updated sensor station with id={}", id);
+        log.debug(debugInfo.toString());
 
         return updatedStation;
+    }
+
+    public SensorStation getByIdInternal(Long id) {
+        return repo.findById(id).orElseThrow(()-> new NotFoundException("SensorStation with id " + id + "not found"));
     }
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public void delete(Long id) {

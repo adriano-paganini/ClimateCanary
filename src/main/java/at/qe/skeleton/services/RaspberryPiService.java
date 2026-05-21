@@ -189,6 +189,9 @@ public class RaspberryPiService {
             temp.setRoom(pi.getRoom());
             temp.setName(mac);
             temp.setDeviceStatus(DeviceStatus.AVAILABLE);
+            if (temp.getMeasurementInterval() == null) {
+                temp.setMeasurementInterval(60);
+            }
 
             SensorStation savedStation = sensorStationRepository.save(temp);
 
