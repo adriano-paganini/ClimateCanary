@@ -85,15 +85,13 @@ public class MeasurementService {
     public void saveMeasurementsFromRaspberryPi(Long piId, RPMeasurementDTO dto){
          List<Measurement> measurements = rPmeasurementMapper.mapFrom(dto);
 
-         RaspberryPi pi = raspberryPiService.getById(piId);
-         SensorStation station = sensorStationService.getById(dto.sensorStationId());
+         RaspberryPi pi = raspberryPiService.getByIdInternal(piId);
+         SensorStation station = sensorStationService.getByIdInternal(dto.sensorStationId());
 
         if (!(pi.getSensorStations().contains(station))){
             throw new NotFoundException("Sensor station not found for Raspberry Pi");
         }
-        if (null != (roomService.getById(dto.roomId()))){
-            throw new NotFoundException("Room not found");
-        }
+        roomService.getById(dto.roomId());
 
         for (Measurement measurement : measurements) {
             measurementRepository.save(measurement);
