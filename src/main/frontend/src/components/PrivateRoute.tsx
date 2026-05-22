@@ -43,7 +43,7 @@ const PrivateRoute = ({roles}: { roles?: UserxRole[] }) => {
             }
         };
         void checkAuthentication(); // to mark the returned Promise as explicitly and intentionally unawaited (ESLint)
-    }, []); // an empty dependency array signals that the effect is executed only once on mount
+    }, [userIsAuthenticated]);
 
     // loading spinner
     if (authStatus === AuthStatus.UNKNOWN) {
@@ -52,6 +52,10 @@ const PrivateRoute = ({roles}: { roles?: UserxRole[] }) => {
 
     if (authStatus === AuthStatus.UNAUTHENTICATED) {
         return <Navigate to={ROUTES.LOGIN} replace state={{from: location}}/>;
+    }
+
+    if (authStatus === AuthStatus.AUTHENTICATED && !currentUser) {
+        return <Navigate to={ROUTES.LOGIN} replace/>;
     }
 
     if (roles && roles.length > 0) {
