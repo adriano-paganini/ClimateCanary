@@ -7,8 +7,6 @@ import {Dialog} from 'primereact/dialog';
 import {Button} from "primereact/button";
 
 import UserForm from './UserForm';
-import {InputMaskChangeEvent} from "primereact/inputmask";
-import {CheckboxChangeEvent} from "primereact/checkbox";
 import {UserxValidationResult} from "../utilities/userxUtilities";
 import {Message} from "primereact/message";
 import {UserxCreateDTO, UserxDTO} from "../generated-skeleton-api";
@@ -20,9 +18,10 @@ interface UserDialogProps {
     validation: UserxValidationResult;
     onHide: () => void;
     onSubmit: () => void;
-    onInputChange: (event: React.ChangeEvent<HTMLInputElement> | InputMaskChangeEvent) => void;
+    onInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
     onRolesChange: (event: { value: string[] }) => void;
-    onUserEnabledChange: (event: CheckboxChangeEvent) => void;
+    onPhoneChange: (phone: string) => void;
+    disableUsername?: boolean;
 }
 
 /**
@@ -35,7 +34,7 @@ interface UserDialogProps {
  * @param onSubmit callback when the user is submitted
  * @param onInputChange callback when the input changes
  * @param onRolesChange callback when the roles change
- * @param onUserEnabledChange callback when the user is enabled or disabled
+ * @param onPhoneChange callback when the phone number changes
  */
 const UserDialog: React.FC<UserDialogProps> = ({
                                                    visible,
@@ -46,7 +45,8 @@ const UserDialog: React.FC<UserDialogProps> = ({
                                                    onSubmit,
                                                    onInputChange,
                                                    onRolesChange,
-                                                   onUserEnabledChange
+                                                   onPhoneChange,
+                                                   disableUsername = false
                                                }) => {
 
     /**
@@ -68,17 +68,20 @@ const UserDialog: React.FC<UserDialogProps> = ({
             onHide={onHide}
             footer={renderFooter}
         >
-            {validation.message && (<Message severity="error" text={validation.message} className="mb-3"/>)}
-            {user && (
-                <UserForm
-                    user={user}
-                    isNewUser={isNewUser}
-                    fieldErrors={validation.fieldErrors}
-                    onInputChange={onInputChange}
-                    onRolesChange={onRolesChange}
-                    onUserEnabledChange={onUserEnabledChange}
-                />
-            )}
+            <div className="user-dialog-scroll-body" onWheelCapture={(event) => event.stopPropagation()}>
+                {validation.message && (<Message severity="error" text={validation.message} className="mb-3"/>)}
+                {user && (
+                    <UserForm
+                        user={user}
+                        isNewUser={isNewUser}
+                        fieldErrors={validation.fieldErrors}
+                        onInputChange={onInputChange}
+                        onRolesChange={onRolesChange}
+                        onPhoneChange={onPhoneChange}
+                        disableUsername={disableUsername}
+                    />
+                )}
+            </div>
         </Dialog>
     );
 };

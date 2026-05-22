@@ -8,7 +8,6 @@ import {Button} from "primereact/button";
 import {Card} from 'primereact/card';
 import {Dialog} from "primereact/dialog";
 import {InputText} from "primereact/inputtext";
-import {InputMaskChangeEvent} from "primereact/inputmask";
 import {Toast} from 'primereact/toast';
 import {ConfirmDialog, confirmDialog} from 'primereact/confirmdialog';
 import 'primeicons/primeicons.css';
@@ -18,7 +17,6 @@ import UserDialog from "./UserDialog";
 
 
 import {createUserxRoleArrayFromStrings, UserxValidationResult} from '../utilities/userxUtilities';
-import {CheckboxChangeEvent} from "primereact/checkbox";
 import {AdminControllerApi, UserxCreateDTO, UserxDTO, UserxUpdateDTO} from "../generated-skeleton-api";
 import {useUser} from "../Contexts/AuthenticatedUserContext";
 import {AuthApi} from "../utilities/authApi";
@@ -72,7 +70,7 @@ const UserTable = () => {
 
         if (!user) return {valid: false, message: 'No user selected'};
 
-        const required: (keyof UserxCreateDTO)[] = ['firstName', 'lastName', 'username'];
+        const required: (keyof UserxCreateDTO)[] = ['firstName', 'lastName', 'username', 'email', 'phone'];
         const {requirePassword = true} = opts; // password input on edit user not needed
         const fieldErrors: Partial<Record<keyof UserxCreateDTO, string>> = {};
 
@@ -80,6 +78,32 @@ const UserTable = () => {
             const v = (user[k] as unknown as string) ?? '';
             if (!v.trim()) fieldErrors[k] = 'Required';
         });
+
+        const username = ((user.username as unknown as string) ?? '').trim();
+        if (username && /\s/.test(username)) {
+            fieldErrors.username = 'Username must not contain whitespace';
+        }
+
+        const firstName = ((user.firstName as unknown as string) ?? '').trim();
+        if (firstName.length < 1) {
+            fieldErrors.firstName = 'First name is required';
+        }
+
+        const lastName = ((user.lastName as unknown as string) ?? '').trim();
+        if (lastName.length < 1) {
+            fieldErrors.lastName = 'Last name is required';
+        }
+
+        const email = ((user.email as unknown as string) ?? '').trim();
+        const atIndex = email.indexOf('@');
+        if (email && (atIndex <= 0 || !email.slice(atIndex + 1).includes('.'))) {
+            fieldErrors.email = 'Enter a valid email address';
+        }
+
+        const phone = ((user.phone as unknown as string) ?? '').trim();
+        if (phone && !/^\+\d{1,3}\s\d+$/.test(phone)) {
+            fieldErrors.phone = 'Phone must include a country code and digits only';
+        }
 
         // check for password required
         const pwd = (user.password as unknown as string) ?? '';
@@ -125,7 +149,7 @@ const UserTable = () => {
         if (!selectedUser) return;
 
         // assert type of selectedUser to UserxCreateDTO
-        const userToCreate = selectedUser as UserxCreateDTO;
+        const userToCreate = {...selectedUser, enabled: true} as UserxCreateDTO;
 
         if (userToCreate.password === undefined) {
             return;
@@ -154,8 +178,16 @@ const UserTable = () => {
 
         try {
             const adminControllerAPI = new AdminControllerApi();
+            const userxUpdateDTO: UserxUpdateDTO = {
+                email: userToUpdate.email,
+                roles: userToUpdate.roles,
+                firstName: userToUpdate.firstName,
+                lastName: userToUpdate.lastName,
+                phone: userToUpdate.phone,
+            };
+
             const updatedUser = await adminControllerAPI.updateUser({
-                userxUpdateDTO: userToUpdate as UserxUpdateDTO,
+                userxUpdateDTO,
                 id: userToUpdate.id
             }).then(response => response.data);
             setUsers(users.map((user: UserxDTO) => user.id === updatedUser.id ? updatedUser : user));
@@ -294,7 +326,7 @@ const UserTable = () => {
         setDialogVisible(false);
     };
 
-    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement> | InputMaskChangeEvent) => {
+    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (!selectedUser) return;
 
         const {name, value} = event.target;
@@ -302,12 +334,10 @@ const UserTable = () => {
         setSelectedUser({...selectedUser, [name]: value});
     }
 
-    const handleUserEnabledChange = (event: CheckboxChangeEvent) => {
+    const handlePhoneChange = (phone: string) => {
         if (!selectedUser) return;
 
-        const {name, checked} = event.target;
-
-        setSelectedUser({...selectedUser, [name]: checked});
+        setSelectedUser({...selectedUser, phone});
     }
 
     const handleRolesChange = (event: { value: string[] }) => {
@@ -378,7 +408,8 @@ const UserTable = () => {
             <UserDialog visible={dialogVisible} user={selectedUser} isNewUser={isNewUser} validation={validation}
                         onHide={hideDialog} onSubmit={handleSubmit}
                         onInputChange={handleInputChange} onRolesChange={handleRolesChange}
-                        onUserEnabledChange={handleUserEnabledChange}/>
+                        onPhoneChange={handlePhoneChange}
+                        disableUsername={!isNewUser}/>
             <Dialog
                 header="Delete your account"
                 visible={selfDeleteDialogVisible}

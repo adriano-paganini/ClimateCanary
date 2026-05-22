@@ -57,10 +57,10 @@ const UserListComponent: React.FC<UserListProps> = ({
 
     const editButtonTemplate = (rowData: UserxDTO) => (
         <Button
-            label="Change"
+            label="Edit"
             icon="pi pi-external-link"
             onClick={() => onEditUser(rowData)}
-            aria-label={`Change ${rowData.username}`}
+            aria-label={`Edit ${rowData.username}`}
         />
     );
 
