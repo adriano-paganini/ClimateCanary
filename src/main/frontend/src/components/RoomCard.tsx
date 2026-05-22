@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from 'primereact/card';
 import { Badge } from 'primereact/badge';
 import 'primeicons/primeicons.css';
+import NoDataOverlay from './NoDataOverlay';
 
 import {
     MeasurementDTO,
@@ -72,11 +73,11 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, measurements, violations }) =
             {noData && (
                 <div style={{
                     position: 'absolute', inset: 0,
-                    backgroundColor: 'rgba(156,163,175,0.65)',
+                    backgroundColor: 'rgba(243,244,246,0.85)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     borderRadius: '10px', zIndex: 10,
                 }}>
-                    <span style={{ fontWeight: 600, color: '#374151', fontSize: '0.95rem' }}>No Data</span>
+                    <NoDataOverlay height="auto" />
                 </div>
             )}
 

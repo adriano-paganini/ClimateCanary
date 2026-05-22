@@ -7,12 +7,15 @@ import { Chart } from 'primereact/chart';
 import { Message } from 'primereact/message';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { format, subDays, subHours } from 'date-fns';
+import type { Plugin } from 'chart.js';
 
 import globalAxios from 'axios';
 
 import NavbarComponent from '../components/NavbarComponent';
+import NoDataOverlay from '../components/NoDataOverlay';
 import { ThresholdService } from '../services/ThresholdService';
 import { RoomService } from '../services/RoomService';
+import { findGapRanges } from '../utilities/dataGapUtils';
 import {
     MeasurementDTOMetricEnum,
     RoomDTO,
@@ -159,6 +162,28 @@ const RoomHistory: React.FC = () => {
         return { labels, datasets };
     }
 
+    function buildGapPlugin(metric: MeasurementDTOMetricEnum): Plugin {
+        const points = trendsMap[metric] ?? [];
+        const gaps = findGapRanges(points);
+        return {
+            id: `gapHighlight-${metric}`,
+            beforeDraw(chart) {
+                if (gaps.length === 0) return;
+                const ctx = chart.ctx;
+                const xScale = chart.scales['x'];
+                const yScale = chart.scales['y'];
+                ctx.save();
+                ctx.fillStyle = 'rgba(156, 163, 175, 0.25)';
+                for (const { startIdx, endIdx } of gaps) {
+                    const x1 = xScale.getPixelForValue(startIdx);
+                    const x2 = xScale.getPixelForValue(endIdx);
+                    ctx.fillRect(x1, yScale.top, x2 - x1, yScale.bottom - yScale.top);
+                }
+                ctx.restore();
+            },
+        };
+    }
+
     if (isNaN(numId)) {
         return (
             <div>
@@ -185,6 +210,25 @@ const RoomHistory: React.FC = () => {
                         {room?.name ? `${room.name} — History` : `Room ${roomId} — History`}
                     </h2>
                 </div>
+
+                {/* Privacy mode banner */}
+                {room?.privacyMode && (
+                    <div style={{
+                        display:         'flex',
+                        alignItems:      'center',
+                        gap:             '0.6rem',
+                        padding:         '0.65rem 1rem',
+                        marginBottom:    '1.25rem',
+                        backgroundColor: '#f3f4f6',
+                        border:          '1px solid #d1d5db',
+                        borderRadius:    '6px',
+                        color:           '#374151',
+                        fontSize:        '0.9rem',
+                    }}>
+                        <i className="pi pi-lock" style={{ color: '#6b7280' }} />
+                        <span>Datenschutz aktiv — Messdaten werden nur bei ausreichender Raumbelegung erfasst. Graue Bereiche zeigen Perioden ohne Daten.</span>
+                    </div>
+                )}
 
                 {/* Time range buttons */}
                 <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem' }}>
@@ -224,21 +268,16 @@ const RoomHistory: React.FC = () => {
                                         {label}{unit && ` (${unit})`}
                                     </h3>
                                     {isEmpty ? (
-                                        <div style={{
-                                            height:          '220px',
-                                            display:         'flex',
-                                            alignItems:      'center',
-                                            justifyContent:  'center',
-                                            color:           '#9ca3af',
-                                            backgroundColor: '#f9fafb',
-                                            borderRadius:    '6px',
-                                            fontSize:        '0.9rem',
-                                        }}>
-                                            No data for this period
-                                        </div>
+                                        <NoDataOverlay />
                                     ) : (
                                         <div style={{ height: '220px' }}>
-                                            <Chart type="line" data={data} options={CHART_OPTIONS} style={{ height: '100%' }} />
+                                            <Chart
+                                                type="line"
+                                                data={data}
+                                                options={CHART_OPTIONS}
+                                                plugins={[buildGapPlugin(key)]}
+                                                style={{ height: '100%' }}
+                                            />
                                         </div>
                                     )}
                                 </div>
