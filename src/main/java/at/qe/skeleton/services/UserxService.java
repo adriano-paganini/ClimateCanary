@@ -8,6 +8,7 @@ import at.qe.skeleton.dtos.UserxSelfUpdateDTO;
 import at.qe.skeleton.dtos.UserxUpdateDTO;
 import at.qe.skeleton.models.EmployeeProfile;
 import at.qe.skeleton.models.Userx;
+import at.qe.skeleton.models.UserxRole;
 import at.qe.skeleton.repositories.EmployeeProfileRepository;
 import at.qe.skeleton.repositories.UserxRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -139,6 +140,7 @@ public class UserxService implements UserDetailsService {
     private void internalDeleteUser(Userx user) {
         Optional<Userx> userOpt = userRepository.findById(user.getId());
         userOpt.ifPresent(existingUser -> {
+                validateSystemAdminDeletion(existingUser);
                 existingUser.getAbsences().clear();
                 departmentRepository.clearDepartmentLeaderByUserId(existingUser.getId());
 
@@ -152,6 +154,16 @@ public class UserxService implements UserDetailsService {
                 userRepository.save(existingUser);
                 log.info("Deleted user with id={} and username={}", existingUser.getId(), existingUser.getUsername());
         });
+    }
+
+    private void validateSystemAdminDeletion(Userx user) {
+        boolean isEnabledSystemAdmin = user.isEnabled()
+                && user.getRoles() != null
+                && user.getRoles().contains(UserxRole.SYSTEM_ADMIN);
+
+        if (isEnabledSystemAdmin && userRepository.countEnabledByRole(UserxRole.SYSTEM_ADMIN) <= 1) {
+            throw new ConflictException("Cannot delete the last active system administrator");
+        }
     }
 
     // The following are self-service operations (no system_admin)
@@ -244,6 +256,7 @@ public class UserxService implements UserDetailsService {
         }
 
         if (dto.enabled() != null && !dto.enabled()) {
+            validateSystemAdminDeletion(user);
             user.setEnabled(false);
             debugInfo.append(", enabled=false");
             List<Department> ledDepartments = departmentRepository.findByDepartmentLeader(user);
