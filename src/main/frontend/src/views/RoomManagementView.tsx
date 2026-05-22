@@ -14,7 +14,6 @@ import { InputText } from "primereact/inputtext";
 import { Tag } from "primereact/tag";
 import { Toast } from "primereact/toast";
 
-import { FooterComponent } from "../components/FooterComponent";
 import NavbarComponent from "../components/NavbarComponent";
 import {
   BuildingDTO,
@@ -399,7 +398,6 @@ const RoomManagementView: React.FC = () => {
         </div>
       </Dialog>
 
-      <FooterComponent />
     </div>
   );
 };

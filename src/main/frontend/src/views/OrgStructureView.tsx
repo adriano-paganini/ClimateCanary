@@ -12,7 +12,6 @@ import { Toast } from 'primereact/toast';
 import 'primeicons/primeicons.css';
 
 import NavbarComponent from '../components/NavbarComponent';
-import { FooterComponent } from '../components/FooterComponent';
 import { AddressService } from '../services/AddressService';
 import { BuildingService } from '../services/BuildingService';
 import { DepartmentService } from '../services/DepartmentService';
@@ -509,7 +508,6 @@ const OrgStructureView: React.FC = () => {
                 </div>
             </Dialog>
 
-            <FooterComponent />
         </div>
     );
 };

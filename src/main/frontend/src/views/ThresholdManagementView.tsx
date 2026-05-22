@@ -17,7 +17,6 @@ import { TabPanel, TabView } from "primereact/tabview";
 import { Tag } from "primereact/tag";
 import { Toast } from "primereact/toast";
 
-import { FooterComponent } from "../components/FooterComponent";
 import NavbarComponent from "../components/NavbarComponent";
 import {
   ClimateHintCreateDTO,
@@ -728,7 +727,6 @@ const ThresholdManagementView: React.FC = () => {
         </div>
       </Dialog>
 
-      <FooterComponent />
     </div>
   );
 };
