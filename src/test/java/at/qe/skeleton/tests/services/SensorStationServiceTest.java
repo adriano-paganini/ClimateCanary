@@ -284,6 +284,52 @@ class SensorStationServiceTest {
     }
 
     @Test
+    @DisplayName("Should update status for station assigned to requesting Raspberry Pi")
+    void updateFromPi_matchingPi_updatesStatus() {
+        Mockito.when(repo.findById(1L)).thenReturn(Optional.of(station));
+        Mockito.when(repo.save(Mockito.any())).thenAnswer(inv -> inv.getArgument(0));
+
+        SensorStation result = service.update(1L, 1L, DeviceStatus.CONNECTED);
+
+        Assertions.assertThat(result.getDeviceStatus()).isEqualTo(DeviceStatus.CONNECTED);
+        Mockito.verify(repo).save(station);
+    }
+
+    @Test
+    @DisplayName("Should throw not found when Raspberry Pi does not own station")
+    void updateFromPi_differentPi_throwsNotFound() {
+        Mockito.when(repo.findById(1L)).thenReturn(Optional.of(station));
+
+        Assertions.assertThatThrownBy(() -> service.update(99L, 1L, DeviceStatus.CONNECTED))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessageContaining("1");
+
+        Mockito.verify(repo, Mockito.never()).save(Mockito.any());
+    }
+
+    @Test
+    @WithMockUser(authorities = "SYSTEM_ADMIN")
+    @DisplayName("Should apply DTO fields and measurement interval in initial update")
+    void initialUpdate_appliesDtoAndMeasurementInterval() {
+        SensorStationUpdateDTO dto = new SensorStationUpdateDTO(
+                null,
+                null,
+                "Updated Station",
+                DeviceStatus.DECOMMISSIONED
+        );
+
+        Mockito.when(repo.findById(1L)).thenReturn(Optional.of(station));
+        Mockito.when(repo.save(Mockito.any())).thenAnswer(inv -> inv.getArgument(0));
+
+        SensorStation result = service.update(1L, dto, 45);
+
+        Assertions.assertThat(result.getName()).isEqualTo("Updated Station");
+        Assertions.assertThat(result.getDeviceStatus()).isEqualTo(DeviceStatus.DECOMMISSIONED);
+        Assertions.assertThat(result.getMeasurementInterval()).isEqualTo(45);
+        Mockito.verify(repo).save(station);
+    }
+
+    @Test
     @WithMockUser(authorities = "SYSTEM_ADMIN")
     @DisplayName("Should delete sensor station by ID")
     void delete_success() {

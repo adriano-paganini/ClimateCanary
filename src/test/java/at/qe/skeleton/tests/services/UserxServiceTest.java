@@ -14,6 +14,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.internal.util.collections.Sets;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
@@ -370,6 +372,23 @@ class UserxServiceTest {
         Userx user = userService.getUserByUsername("doesnotexist");
         Assertions.assertNull(user,
                 "getUserByUsername should return null for an unknown username");
+    }
+
+    @Test
+    void testLoadUserByUsernameFound() {
+        UserDetails userDetails = userService.loadUserByUsername("user1");
+
+        Assertions.assertEquals("user1", userDetails.getUsername(),
+                "loadUserByUsername returned a user with the wrong username");
+        Assertions.assertTrue(userDetails.getAuthorities().contains(UserxRole.MANAGEMENT),
+                "loadUserByUsername should return the user's authorities");
+    }
+
+    @Test
+    void testLoadUserByUsernameNotFound() {
+        Assertions.assertThrows(UsernameNotFoundException.class,
+                () -> userService.loadUserByUsername("doesnotexist"),
+                "loadUserByUsername should throw UsernameNotFoundException for an unknown username");
     }
 
     @DirtiesContext

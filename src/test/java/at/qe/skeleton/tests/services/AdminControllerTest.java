@@ -6,6 +6,7 @@ import at.qe.skeleton.configs.TokenAuthenticationFilter;
 import at.qe.skeleton.controllers.AdminController;
 import at.qe.skeleton.dtos.UserxCreateDTO;
 import at.qe.skeleton.dtos.UserxDTO;
+import at.qe.skeleton.dtos.UserxUpdateDTO;
 import at.qe.skeleton.mappers.UserxCreateMapper;
 import at.qe.skeleton.mappers.UserxMapper;
 import at.qe.skeleton.models.Userx;
@@ -173,6 +174,82 @@ class AdminControllerTest {
                 .andExpect(MockMvcResultMatchers.status().isCreated())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(1L))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.username").value(username));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
+    void updateUserUserExists() throws Exception {
+        Long id = 1L;
+        String username = "existingUser";
+        String email = "updated@example.com";
+        Set<UserxRole> roles = Set.of(UserxRole.EMPLOYEE);
+
+        UserxUpdateDTO updateDTO = new UserxUpdateDTO(
+                email,
+                roles,
+                "Updated",
+                "User",
+                "+43 123",
+                true
+        );
+
+        Userx existingUser = new Userx();
+        ReflectionTestUtils.setField(existingUser, "id", id);
+        existingUser.setUsername(username);
+
+        Userx updatedUser = new Userx();
+        ReflectionTestUtils.setField(updatedUser, "id", id);
+        updatedUser.setUsername(username);
+        updatedUser.setEmail(email);
+        updatedUser.setFirstName("Updated");
+        updatedUser.setLastName("User");
+        updatedUser.setPhone("+43 123");
+        updatedUser.setEnabled(true);
+        updatedUser.setRoles(roles);
+
+        Mockito.when(userService.loadUser(id)).thenReturn(Optional.of(existingUser));
+        Mockito.when(userService.updateUser(Mockito.eq(id), Mockito.any(UserxUpdateDTO.class))).thenReturn(updatedUser);
+        Mockito.when(userMapper.mapTo(updatedUser)).thenReturn(new UserxDTO(
+                id, null, null, null, null, username, "Updated", "User", email, "+43 123", true, roles));
+
+        mockMvc.perform(MockMvcRequestBuilders.patch("/api/admin/{id}", id)
+                        .with(SecurityMockMvcRequestPostProcessors.csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(updateDTO)))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.id").value(id))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.email").value(email))
+                .andExpect(MockMvcResultMatchers.jsonPath("$.firstName").value("Updated"));
+
+        Mockito.verify(userService).loadUser(id);
+        Mockito.verify(userService).updateUser(Mockito.eq(id), Mockito.any(UserxUpdateDTO.class));
+        Mockito.verify(userMapper).mapTo(updatedUser);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
+    void updateUserUserDoesNotExist() throws Exception {
+        Long id = 1L;
+        UserxUpdateDTO updateDTO = new UserxUpdateDTO(
+                "updated@example.com",
+                Set.of(UserxRole.EMPLOYEE),
+                "Updated",
+                "User",
+                "+43 123",
+                true
+        );
+
+        Mockito.when(userService.loadUser(id)).thenReturn(Optional.empty());
+
+        mockMvc.perform(MockMvcRequestBuilders.patch("/api/admin/{id}", id)
+                        .with(SecurityMockMvcRequestPostProcessors.csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(updateDTO)))
+                .andExpect(MockMvcResultMatchers.status().isNotFound());
+
+        Mockito.verify(userService).loadUser(id);
+        Mockito.verify(userService, Mockito.never()).updateUser(Mockito.anyLong(), Mockito.any(UserxUpdateDTO.class));
+        Mockito.verify(userMapper, Mockito.never()).mapTo(Mockito.any(Userx.class));
     }
 
     @Test
