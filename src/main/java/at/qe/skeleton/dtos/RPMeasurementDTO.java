@@ -1,7 +1,10 @@
 package at.qe.skeleton.dtos;
 
 import jakarta.validation.constraints.NotNull;
+<<<<<<< HEAD
 
+=======
+>>>>>>> 04eb83e9efdd846315ebbc9ef7fac1abd2f88045
 
 public record RPMeasurementDTO(
 
