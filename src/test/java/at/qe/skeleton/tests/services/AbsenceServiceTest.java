@@ -112,6 +112,19 @@ class AbsenceServiceTest {
     }
 
     @Test
+    @DisplayName("Get absences by timeframe delegates to repository")
+    void getByTimeframe_delegatesToRepository() {
+        LocalDateTime from = LocalDateTime.of(2025, 6, 1, 0, 0);
+        LocalDateTime to = LocalDateTime.of(2025, 6, 30, 23, 59);
+        Mockito.when(absenceRepository.findByTimeframe(from, to)).thenReturn(List.of(absence));
+
+        List<Absence> result = absenceService.getByTimeframe(from, to);
+
+        Assertions.assertThat(result).containsExactly(absence);
+        Mockito.verify(absenceRepository).findByTimeframe(from, to);
+    }
+
+    @Test
     @DisplayName("Get absence by id returns absence")
     void getById_existingId_returnsAbsence() {
         Mockito.when(absenceRepository.findById(10L)).thenReturn(Optional.of(absence));
