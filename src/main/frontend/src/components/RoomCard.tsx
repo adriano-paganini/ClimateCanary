@@ -81,7 +81,7 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, measurements, violations }) =
                 </div>
             )}
 
-            {/* Header: room name + violation badge */}
+            {/* Header: room name + icons */}
             <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -93,12 +93,21 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, measurements, violations }) =
                 <span style={{ fontWeight: 700, fontSize: '1.05rem', color: '#111827' }}>
                     {room.name ?? '—'}
                 </span>
-                {activeViolations.length > 0 && (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#ef4444' }}>
-                        <i className="pi pi-exclamation-triangle" style={{ fontSize: '1.3rem' }} />
-                        <Badge value={activeViolations.length} severity="danger" size="large" />
-                    </span>
-                )}
+                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {room.privacyMode && (
+                        <i
+                            className="pi pi-lock"
+                            title="Datenschutz aktiv — Belegung unter Mindestanzahl"
+                            style={{ fontSize: '1rem', color: '#6b7280' }}
+                        />
+                    )}
+                    {activeViolations.length > 0 && (
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#ef4444' }}>
+                            <i className="pi pi-exclamation-triangle" style={{ fontSize: '1.3rem' }} />
+                            <Badge value={activeViolations.length} severity="danger" size="large" />
+                        </span>
+                    )}
+                </span>
             </div>
 
             {/* Metrics */}
