@@ -10,7 +10,6 @@ import { Badge } from 'primereact/badge';
 import 'primeicons/primeicons.css';
 
 import NavbarComponent from '../components/NavbarComponent';
-import { FooterComponent } from '../components/FooterComponent';
 import AbsenceCalendar from '../components/AbsenceCalendar';
 import { useUser } from '../Contexts/AuthenticatedUserContext';
 import { DepartmentService } from '../services/DepartmentService';
@@ -594,8 +593,6 @@ const DepartmentAbsenceView: React.FC = () => {
                     </div>
                 )}
             </div>
-
-            <FooterComponent />
         </div>
     );
 };

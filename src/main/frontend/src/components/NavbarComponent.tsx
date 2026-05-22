@@ -11,6 +11,7 @@ import {UserxRole} from "../generated-skeleton-api";
 import {MenuItem} from "primereact/menuitem";
 import {Link} from "react-router-dom";
 import {ROUTES} from "../utilities/routes.paths";
+import "../styles/Navbar.css";
 
 /**
  * Navbar component.
@@ -59,11 +60,18 @@ const NavbarComponent: React.FC = () => {
                 return (
                     <Link
                         to={configItem.route ?? "#"}
-                        className={`${options.className ?? ""} p-menuitem-link`}
+                        className={`${options.className ?? ""} p-menuitem-link ${configItem.route === ROUTES.HOME ? "navbar-home-link" : ""}`}
                         onClick={handleClick}
+                        title={configItem.route === ROUTES.HOME ? "ClimateCanary" : undefined}
                     >
-                        {menuItem.icon && <span className={options.iconClassName}/>}
-                        <span className={options.labelClassName}>{menuItem.label}</span>
+                        {configItem.route === ROUTES.HOME ? (
+                            <img src="/32x32.png" alt="ClimateCanary" className="navbar-home-logo"/>
+                        ) : (
+                            <>
+                                {menuItem.icon && <span className={options.iconClassName}/>}
+                                <span className={options.labelClassName}>{menuItem.label}</span>
+                            </>
+                        )}
                     </Link>
                 );
             }
@@ -81,20 +89,30 @@ const NavbarComponent: React.FC = () => {
     }
 
     const displayUser = fullUser ?? user;
-    const initials = `${displayUser.firstName?.[0] ?? ''}${displayUser.lastName?.[0] ?? ''}`.toUpperCase();
+    const displayName = [displayUser.firstName, displayUser.lastName].filter(Boolean).join(' ') || displayUser.username;
+    const roles = displayUser.roles ? [...displayUser.roles] : [];
 
     const profileEnd = (
-        <Link to={ROUTES.PROFILE} title="My Profile" style={{ textDecoration: 'none' }}>
-            <div style={{
-                width: '34px', height: '34px', borderRadius: '50%',
-                background: '#0369a1', color: '#fff',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer',
-                marginRight: '0.5rem',
-            }}>
-                {initials || <i className="pi pi-user" style={{ fontSize: '0.9rem' }} />}
-            </div>
-        </Link>
+        <div className="navbar-user-actions">
+            <Link to={ROUTES.LOGOUT} title="Logout" className="navbar-logout">
+                <i className="pi pi-sign-out" aria-hidden="true"/>
+                <span>Logout</span>
+            </Link>
+            <Link to={ROUTES.PROFILE} title="My Profile" className="navbar-profile">
+                <div className="navbar-profile__details">
+                    <span className="navbar-profile__username">@{displayUser.username}</span>
+                    <span className="navbar-profile__name">{displayName}</span>
+                </div>
+                <div className="navbar-profile__roles" aria-label="User roles">
+                    <span className="navbar-profile__roles-title">Roles</span>
+                    {roles.length > 0 ? roles.map(role => (
+                        <span key={role} className="navbar-profile__role">{role}</span>
+                    )) : (
+                        <span className="navbar-profile__role navbar-profile__role--empty">No roles</span>
+                    )}
+                </div>
+            </Link>
+        </div>
     );
 
     return (
