@@ -29,7 +29,7 @@ export const SensorStationService = {
         globalAxios.patch<SensorStationDTO>(`/api/sensorstation/${id}/${measurementInterval}`, sensorStationUpdateDTO).then(r => r.data),
 
     triggerScan: (piId: number): Promise<void> =>
-        globalAxios.post(`/api/spi/${piId}/scan`).then(() => undefined),
+        globalAxios.post(`/api/sensorstation/find/${piId}`).then(() => undefined),
 
     getAvailableForPi: (piId: number): Promise<SensorStationDTO[]> =>
         globalAxios.get<SensorStationDTO[]>(`/api/bpi/${piId}/availablesensorstations`).then(r => r.data),
