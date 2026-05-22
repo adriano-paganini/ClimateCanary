@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import config as cfg
 from config import DB_PATH, load_config, load_config_from_string, get_local_ip
 
-from database import init_db, db_writer, load_stations
+from database import init_db, db_writer, load_stations, remove_station
 from ble_worker import ble_worker
 from http_sender import http_sender
 from state import set_privacy_mode
@@ -72,13 +72,19 @@ async def fetch_config_from_backend() -> None:
         print(f"[CFG] could not fetch config: {e}")
 
 
+MAX_CONNECT_FAILURES = 5
+MIN_HEALTHY_UPTIME   = 30  # seconds — reset counter only if connection lasted this long
+
 async def device_loop(
     station: Station,
     queue: asyncio.Queue,
     db: aiosqlite.Connection,
 ) -> None:
-    delay     = 5
-    max_delay = 300
+    import time as _time
+    delay        = 5
+    max_delay    = 300
+    fail_count   = 0
+    connected_at: float | None = None
 
     while True:
         try:
@@ -89,7 +95,8 @@ async def device_loop(
             )
             async with BleakClient(station.address, timeout=20.0) as client:
                 print(f"[BLE:{station.address}] connected.")
-                delay = 5
+                connected_at = _time.monotonic()
+                delay        = 5
                 await asyncio.gather(
                     ble_worker(
                         queue, client,
@@ -102,7 +109,23 @@ async def device_loop(
                 )
 
         except Exception as e:
-            print(f"[BLE:{station.address}] lost: {e}  – retrying in {delay}s…")
+            uptime = _time.monotonic() - connected_at if connected_at is not None else 0
+            connected_at = None
+            if uptime >= MIN_HEALTHY_UPTIME:
+                fail_count = 0
+            fail_count += 1
+            print(
+                f"[BLE:{station.address}] lost: {e}  – retrying in {delay}s… "
+                f"(failure {fail_count}/{MAX_CONNECT_FAILURES}, uptime={uptime:.0f}s)"
+            )
+            if fail_count >= MAX_CONNECT_FAILURES:
+                print(
+                    f"[BLE:{station.address}] too many consecutive failures – "
+                    f"removing from DB, waiting for backend to re-scan"
+                )
+                await remove_station(db, station.address)
+                app_module.stations_event.set()
+                return
 
         await asyncio.sleep(delay)
         delay = min(delay * 2, max_delay)
