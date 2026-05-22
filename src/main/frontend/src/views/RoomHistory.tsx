@@ -8,17 +8,30 @@ import { Message } from 'primereact/message';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { format, subDays, subHours } from 'date-fns';
 
+import globalAxios from 'axios';
+
 import NavbarComponent from '../components/NavbarComponent';
-import { MeasurementService } from '../services/MeasurementService';
 import { ThresholdService } from '../services/ThresholdService';
 import { RoomService } from '../services/RoomService';
 import {
-    MeasurementDTO,
     MeasurementDTOMetricEnum,
     RoomDTO,
     ThresholdDTO,
     ThresholdDTOThresholdTypeEnum,
 } from '../generated-skeleton-api';
+
+interface TrendPoint {
+    timestamp: string;
+    value: number;
+}
+
+interface RoomTrendDTO {
+    roomId: number;
+    metric: string;
+    bucketSize: string;
+    granularityReduced: boolean;
+    points: TrendPoint[];
+}
 import { ROUTES } from '../utilities/routes.paths';
 
 type TimeRange = '24h' | '7d' | '30d';
@@ -68,12 +81,12 @@ const RoomHistory: React.FC = () => {
     const navigate  = useNavigate();
     const numId     = roomId ? parseInt(roomId, 10) : NaN;
 
-    const [timeRange,    setTimeRange]    = useState<TimeRange>('24h');
-    const [room,         setRoom]         = useState<RoomDTO | null>(null);
-    const [measurements, setMeasurements] = useState<MeasurementDTO[]>([]);
-    const [thresholds,   setThresholds]   = useState<ThresholdDTO[]>([]);
-    const [loading,      setLoading]      = useState(true);
-    const [error,        setError]        = useState<string | null>(null);
+    const [timeRange,  setTimeRange]  = useState<TimeRange>('24h');
+    const [room,       setRoom]       = useState<RoomDTO | null>(null);
+    const [trendsMap,  setTrendsMap]  = useState<Record<string, TrendPoint[]>>({});
+    const [thresholds, setThresholds] = useState<ThresholdDTO[]>([]);
+    const [loading,    setLoading]    = useState(true);
+    const [error,      setError]      = useState<string | null>(null);
 
     useEffect(() => {
         if (isNaN(numId)) return;
@@ -85,12 +98,21 @@ const RoomHistory: React.FC = () => {
         if (isNaN(numId)) return;
         setLoading(true);
         setError(null);
-        const from = rangeStart(timeRange).toISOString();
-        const to   = new Date().toISOString();
+        const from = format(rangeStart(timeRange), "yyyy-MM-dd'T'HH:mm:ss");
+        const to   = format(new Date(), "yyyy-MM-dd'T'HH:mm:ss");
         try {
-            // Try with server-side filter (#32); fall back to client-side filter if backend ignores params.
-            const data = await MeasurementService.getAll({ roomId: numId, from, to });
-            setMeasurements(data);
+            const results = await Promise.all(
+                METRICS.map(({ key }) =>
+                    globalAxios.get<RoomTrendDTO>(`/api/analytics/rooms/${numId}/trends`, {
+                        params: { metric: key, from, to },
+                    }).then(r => ({ metric: key, points: r.data.points }))
+                )
+            );
+            const map: Record<string, TrendPoint[]> = {};
+            for (const { metric, points } of results) {
+                map[metric] = points;
+            }
+            setTrendsMap(map);
         } catch {
             setError('Failed to load measurements.');
         } finally {
@@ -101,13 +123,10 @@ const RoomHistory: React.FC = () => {
     useEffect(() => { void loadMeasurements(); }, [loadMeasurements]);
 
     function buildChartData(metric: MeasurementDTOMetricEnum, color: string) {
-        const start   = rangeStart(timeRange);
-        const points  = measurements
-            .filter(m => m.metric === metric && m.timestamp && new Date(m.timestamp) >= start)
-            .sort((a, b) => new Date(a.timestamp!).getTime() - new Date(b.timestamp!).getTime());
+        const points = trendsMap[metric] ?? [];
 
-        const labels = points.map(m => tickLabel(m.timestamp!, timeRange));
-        const values = points.map(m => m.measurement ?? null);
+        const labels = points.map(p => tickLabel(p.timestamp, timeRange));
+        const values = points.map(p => p.value ?? null);
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const datasets: any[] = [{
