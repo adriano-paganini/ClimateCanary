@@ -132,7 +132,7 @@ public class UserxService implements UserDetailsService {
     public void deleteUser(Userx user) {
         Userx authenticatedUser = authenticatedUserService.getAuthenticatedUser();
 
-        if (authenticatedUser.getId() != null && authenticatedUser.getId().equals(user.getId())) {
+        if (authenticatedUser.getId() != null && user.getId() != null && authenticatedUser.getId().equals(user.getId())) {
             throw new IllegalArgumentException("Cannot delete own user");
         }
         internalDeleteUser(user);
