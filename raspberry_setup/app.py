@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Request, BackgroundTasks
 import asyncio
 import aiosqlite
+from pathlib import Path
 from pydantic import BaseModel
 from typing import Optional
 
@@ -69,6 +70,7 @@ async def receive_config(piId: int, request: Request):
     yaml_text = (await request.body()).decode("utf-8")
     config.load_config_from_string(yaml_text)
     set_privacy_mode(config.PRIVACY_MODE)
+    Path("conf.yml").write_text(yaml_text)
     print(f"[CFG] config reloaded from backend: pi_id={config.PI_ID}, room_id={config.ROOM_ID}")
     return {"status": "ok"}
 

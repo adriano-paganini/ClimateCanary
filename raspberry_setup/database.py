@@ -124,6 +124,12 @@ async def save_station(db: aiosqlite.Connection, station: dict) -> None:
     print(f"[DB] upserted station address={station['bleMac']} id={station['id']}")
 
 
+async def remove_station(db: aiosqlite.Connection, address: str) -> None:
+    await db.execute("DELETE FROM stations WHERE address = ?", (address,))
+    await db.commit()
+    print(f"[DB] removed station address={address}")
+
+
 async def load_stations(db: aiosqlite.Connection) -> list[dict]:
     """
     Reads all known station assignments from SQLite.
