@@ -6,6 +6,7 @@ import { Badge } from "primereact/badge";
 import "primeicons/primeicons.css";
 
 import NavbarComponent from "../components/NavbarComponent";
+import NoDataOverlay from "../components/NoDataOverlay";
 import { useUser } from "../Contexts/AuthenticatedUserContext";
 import { DepartmentService } from "../services/DepartmentService";
 import { MeasurementService } from "../services/MeasurementService";
@@ -638,8 +639,15 @@ const ManagementDashboard: React.FC = () => {
                             }}
                           >
                             <span
-                              style={{ fontSize: "0.85rem", color: "#374151" }}
+                              style={{ fontSize: "0.85rem", color: "#374151", display: "flex", alignItems: "center", gap: "5px" }}
                             >
+                              {r.privacyMode && (
+                                <i
+                                  className="pi pi-lock"
+                                  title="Datenschutz aktiv — Belegung unter Mindestanzahl"
+                                  style={{ fontSize: "0.75rem", color: "#6b7280" }}
+                                />
+                              )}
                               {r.name ?? "—"}
                             </span>
                             <div
@@ -709,19 +717,12 @@ const ManagementDashboard: React.FC = () => {
                             fontSize: "0.7rem",
                             color: "#9ca3af",
                             width: "80px",
+                            flexShrink: 0,
                           }}
                         >
                           {label}
                         </span>
-                        <span
-                          style={{
-                            fontSize: "0.8rem",
-                            color: "#d1d5db",
-                            fontStyle: "italic",
-                          }}
-                        >
-                          No data
-                        </span>
+                        <NoDataOverlay message="Keine Daten" height="auto" />
                       </div>
                     ),
                   )}
