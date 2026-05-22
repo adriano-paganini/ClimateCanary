@@ -21,6 +21,7 @@ const DepartmentAbsenceView = React.lazy(() => import('./views/DepartmentAbsence
 const ManagementDashboard = React.lazy(() => import('./views/ManagementDashboard'));
 const DeviceManagementView = React.lazy(() => import('./views/DeviceManagementView'));
 const OrgStructureView = React.lazy(() => import('./views/OrgStructureView'));
+const ThresholdManagementView = React.lazy(() => import('./views/ThresholdManagementView'));
 
 const App: React.FC = () => {
     return (
@@ -54,6 +55,11 @@ const App: React.FC = () => {
                         {/* Management only */}
                         <Route element={<PrivateRoute roles={[UserxRole.MANAGEMENT]}/>}>
                             <Route path={ROUTES.MANAGEMENT_DASHBOARD} Component={ManagementDashboard}/>
+                        </Route>
+
+                        {/* Building Admin only */}
+                        <Route element={<PrivateRoute roles={[UserxRole.BUILDING_ADMIN]}/>}>
+                            <Route path={ROUTES.THRESHOLDS} Component={ThresholdManagementView}/>
                         </Route>
 
                         {/* Building Admin and System Admin only */}
