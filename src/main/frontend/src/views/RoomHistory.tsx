@@ -84,12 +84,13 @@ const RoomHistory: React.FC = () => {
     const navigate  = useNavigate();
     const numId     = roomId ? parseInt(roomId, 10) : NaN;
 
-    const [timeRange,  setTimeRange]  = useState<TimeRange>('24h');
-    const [room,       setRoom]       = useState<RoomDTO | null>(null);
-    const [trendsMap,  setTrendsMap]  = useState<Record<string, TrendPoint[]>>({});
-    const [thresholds, setThresholds] = useState<ThresholdDTO[]>([]);
-    const [loading,    setLoading]    = useState(true);
-    const [error,      setError]      = useState<string | null>(null);
+    const [timeRange,         setTimeRange]         = useState<TimeRange>('24h');
+    const [room,              setRoom]              = useState<RoomDTO | null>(null);
+    const [trendsMap,         setTrendsMap]         = useState<Record<string, TrendPoint[]>>({});
+    const [thresholds,        setThresholds]        = useState<ThresholdDTO[]>([]);
+    const [loading,           setLoading]           = useState(true);
+    const [error,             setError]             = useState<string | null>(null);
+    const [privacyRestricted, setPrivacyRestricted] = useState(false);
 
     useEffect(() => {
         if (isNaN(numId)) return;
@@ -101,6 +102,7 @@ const RoomHistory: React.FC = () => {
         if (isNaN(numId)) return;
         setLoading(true);
         setError(null);
+        setPrivacyRestricted(false);
         const from = format(rangeStart(timeRange), "yyyy-MM-dd'T'HH:mm:ss");
         const to   = format(new Date(), "yyyy-MM-dd'T'HH:mm:ss");
         try {
@@ -116,8 +118,17 @@ const RoomHistory: React.FC = () => {
                 map[metric] = points;
             }
             setTrendsMap(map);
-        } catch {
-            setError('Failed to load measurements.');
+        } catch (err: unknown) {
+            if (
+                err !== null &&
+                typeof err === 'object' &&
+                'response' in err &&
+                (err as { response?: { status?: number } }).response?.status === 403
+            ) {
+                setPrivacyRestricted(true);
+            } else {
+                setError('Failed to load measurements.');
+            }
         } finally {
             setLoading(false);
         }
@@ -211,7 +222,7 @@ const RoomHistory: React.FC = () => {
                     </h2>
                 </div>
 
-                {/* Privacy mode banner */}
+                {/* Privacy mode banner — shown when room is currently below minimum occupancy (Option B: privacyMode = belowMinOccupancy) */}
                 {room?.privacyMode && (
                     <div style={{
                         display:         'flex',
@@ -226,7 +237,7 @@ const RoomHistory: React.FC = () => {
                         fontSize:        '0.9rem',
                     }}>
                         <i className="pi pi-lock" style={{ color: '#6b7280' }} />
-                        <span>Datenschutz aktiv — Messdaten werden nur bei ausreichender Raumbelegung erfasst. Graue Bereiche zeigen Perioden ohne Daten.</span>
+                        <span>Datenschutz aktiv — Aktuelle Belegung unter Mindestanzahl. Klimadaten sind für diesen Zeitraum eingeschränkt. Graue Bereiche zeigen Perioden ohne Daten.</span>
                     </div>
                 )}
 
@@ -244,6 +255,13 @@ const RoomHistory: React.FC = () => {
                 </div>
 
                 {error && <Message severity="error" text={error} style={{ marginBottom: '1rem', display: 'block' }} />}
+                {privacyRestricted && (
+                    <Message
+                        severity="warn"
+                        text="Klimadaten nicht verfügbar — Datenschutz aktiv (Belegung unter Mindestanzahl)."
+                        style={{ marginBottom: '1rem', display: 'block' }}
+                    />
+                )}
 
                 {loading ? (
                     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '40vh' }}>
@@ -267,8 +285,10 @@ const RoomHistory: React.FC = () => {
                                     <h3 style={{ margin: '0 0 1rem', color: '#374151', fontSize: '1rem', fontWeight: 600 }}>
                                         {label}{unit && ` (${unit})`}
                                     </h3>
-                                    {isEmpty ? (
-                                        <NoDataOverlay />
+                                    {privacyRestricted || isEmpty ? (
+                                        <NoDataOverlay
+                                            message={privacyRestricted ? 'Datenschutz aktiv — keine Daten verfügbar' : 'Keine Daten verfügbar'}
+                                        />
                                     ) : (
                                         <div style={{ height: '220px' }}>
                                             <Chart
