@@ -129,19 +129,28 @@ public class UserxService implements UserDetailsService {
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     @Transactional
     public void deleteUser(Userx user) {
+        Userx authenticatedUser = authenticatedUserService.getAuthenticatedUser();
+
+        if (authenticatedUser.getId() != null && authenticatedUser.getId().equals(user.getId())) {
+            throw new IllegalArgumentException("Cannot delete own user");
+        }
+        internalDeleteUser(user);
+    }
+    private void internalDeleteUser(Userx user) {
         Optional<Userx> userOpt = userRepository.findById(user.getId());
         userOpt.ifPresent(existingUser -> {
-            existingUser.getAbsences().clear();
-            departmentRepository.clearDepartmentLeaderByUserId(existingUser.getId());
+                existingUser.getAbsences().clear();
+                departmentRepository.clearDepartmentLeaderByUserId(existingUser.getId());
 
-            EmployeeProfile employeeProfile = existingUser.getEmployeeProfile();
-            if (employeeProfile != null) {
-                existingUser.setEmployeeProfile(null);
-                employeeProfile.setUser(null);
-                employeeProfileRepository.delete(employeeProfile);
-            }
-            userRepository.delete(existingUser);
-            log.info("Deleted user with id={} and username={}", existingUser.getId(), existingUser.getUsername());
+                EmployeeProfile employeeProfile = existingUser.getEmployeeProfile();
+                if (employeeProfile != null) {
+                    existingUser.setEmployeeProfile(null);
+                    employeeProfile.setUser(null);
+                    employeeProfileRepository.delete(employeeProfile);
+                }
+                existingUser.setEnabled(false);
+                userRepository.save(existingUser);
+                log.info("Deleted user with id={} and username={}", existingUser.getId(), existingUser.getUsername());
         });
     }
 
@@ -263,12 +272,9 @@ public class UserxService implements UserDetailsService {
         return updatedUser;
     }
 
+    @Transactional
     public void deleteCurrentUser() {
         Userx authenticatedUser = authenticatedUserService.getAuthenticatedUser();
-        userRepository.delete(authenticatedUser);
-
-        log.info("Deleted current user with id={} and username={}",
-                authenticatedUser.getId(),
-                authenticatedUser.getUsername());
+        internalDeleteUser(authenticatedUser);
     }
 }

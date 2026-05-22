@@ -116,16 +116,17 @@ class UserxServiceTest {
 
         userService.deleteUser(toBeDeletedUser);
 
-        Assertions.assertEquals(3, userService.getAllUsers().size(),
-                "No user has been enabled after calling UserService.deleteUser");
+        Assertions.assertEquals(4, userService.getAllUsers().size(),
+                "Soft-deleting a user should not remove the user from the database");
         Optional<Userx> deletedUserOpt = userService.loadUser(deleteUserId);
-        Assertions.assertTrue(deletedUserOpt.isEmpty(),
-                "Deleted User with id \"" + deleteUserId + "\" could still be loaded from test data source via UserService.loadUser");
+        Assertions.assertTrue(deletedUserOpt.isPresent(),
+                "Soft-deleted User with id \"" + deleteUserId + "\" should still be loadable");
+        Assertions.assertFalse(deletedUserOpt.get().isEnabled(),
+                "Soft-deleted User with id \"" + deleteUserId + "\" should be disabled");
 
-        for (Userx remainingUser : userService.getAllUsers()) {
-            Assertions.assertNotEquals(toBeDeletedUser.getUsername(), remainingUser.getUsername(),
-                    "Deleted User with id \"" + deleteUserId + "\" could still be loaded from test data source via UserService.getAllUsers");
-        }
+        Assertions.assertTrue(userService.getAllUsers().stream()
+                        .anyMatch(user -> toBeDeletedUser.getUsername().equals(user.getUsername()) && !user.isEnabled()),
+                "Soft-deleted User with id \"" + deleteUserId + "\" should still be returned by UserService.getAllUsers but disabled");
     }
 
     @DirtiesContext
@@ -144,8 +145,11 @@ class UserxServiceTest {
         Assertions.assertDoesNotThrow(() -> userService.deleteUser(toBeDeletedUser),
                 "Deleting a user who leads a department should clear the department leader association first");
 
-        Assertions.assertTrue(userService.loadUser(deleteUserId).isEmpty(),
-                "Deleted department leader with id \"" + deleteUserId + "\" could still be loaded");
+        Optional<Userx> deletedLeaderOpt = userService.loadUser(deleteUserId);
+        Assertions.assertTrue(deletedLeaderOpt.isPresent(),
+                "Soft-deleted department leader with id \"" + deleteUserId + "\" should still be loadable");
+        Assertions.assertFalse(deletedLeaderOpt.get().isEnabled(),
+                "Soft-deleted department leader with id \"" + deleteUserId + "\" should be disabled");
         Department reloadedDepartment = departmentRepository.findById(savedDepartment.getId())
                 .orElseThrow(() -> new AssertionError("Department should not be deleted with its leader"));
         Assertions.assertNull(reloadedDepartment.getDepartmentLeader(),
@@ -528,7 +532,9 @@ class UserxServiceTest {
         userService.deleteCurrentUser();
 
         Userx after = userService.getUserByUsername("user2");
-        Assertions.assertNull(after,
-                "user2 should no longer exist after deleteCurrentUser");
+        Assertions.assertNotNull(after,
+                "user2 should still exist after soft deletion");
+        Assertions.assertFalse(after.isEnabled(),
+                "user2 should be disabled after deleteCurrentUser");
     }
 }
