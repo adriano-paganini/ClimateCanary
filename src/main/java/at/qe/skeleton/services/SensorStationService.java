@@ -42,6 +42,10 @@ public class SensorStationService {
 
     @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public SensorStation getById(Long id) {
+        return getByIdInternal(id);
+    }
+
+    public SensorStation getByIdInternal(Long id) {
         return repo.findById(id).orElseThrow(() -> new NotFoundException("SensorStation with id " + id + " not found"));
     }
 
