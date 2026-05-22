@@ -1,6 +1,7 @@
 package at.qe.skeleton.tests.services;
 
 import at.qe.skeleton.common.exceptions.NotFoundException;
+import at.qe.skeleton.common.exceptions.ConflictException;
 import at.qe.skeleton.dtos.UserxSelfUpdateDTO;
 import at.qe.skeleton.dtos.UserxUpdateDTO;
 import at.qe.skeleton.models.Department;
@@ -156,6 +157,43 @@ class UserxServiceTest {
                 .orElseThrow(() -> new AssertionError("Department should not be deleted with its leader"));
         Assertions.assertNull(reloadedDepartment.getDepartmentLeader(),
                 "Department should remain but no longer reference the deleted leader");
+    }
+
+    @DirtiesContext
+    @Test
+    @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
+    void testDeleteLastSystemAdminThrows() {
+        Userx admin = userService.loadUser(1000L)
+                .orElseThrow(() -> new AssertionError("Admin user could not be loaded from test data source"));
+        Userx elvis = userService.loadUser(4000L)
+                .orElseThrow(() -> new AssertionError("Elvis user could not be loaded from test data source"));
+
+        userService.updateUser(admin.getId(), new UserxUpdateDTO(null, null, null, null, null, false));
+
+        Assertions.assertThrows(ConflictException.class,
+                () -> userService.deleteUser(elvis),
+                "Deleting the last active system admin should be rejected");
+
+        Userx reloadedElvis = userService.loadUser(elvis.getId())
+                .orElseThrow(() -> new AssertionError("Elvis user should still exist"));
+        Assertions.assertTrue(reloadedElvis.isEnabled(),
+                "Last active system admin should remain enabled after rejected delete");
+    }
+
+    @DirtiesContext
+    @Test
+    @WithMockUser(username = "elvis", authorities = {"SYSTEM_ADMIN"})
+    void testDeleteCurrentUserLastSystemAdminThrows() {
+        userService.updateUser(1000L, new UserxUpdateDTO(null, null, null, null, null, false));
+
+        Assertions.assertThrows(ConflictException.class,
+                () -> userService.deleteCurrentUser(),
+                "Self-deleting the last active system admin should be rejected");
+
+        Userx reloadedElvis = userService.getUserByUsername("elvis");
+        Assertions.assertNotNull(reloadedElvis, "Elvis user should still exist");
+        Assertions.assertTrue(reloadedElvis.isEnabled(),
+                "Last active system admin should remain enabled after rejected self-delete");
     }
 
     @DirtiesContext

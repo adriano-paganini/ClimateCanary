@@ -24,6 +24,7 @@ public class SensorStationService {
     private final RoomService roomService;
     private final SensorStationMapper sensorStationMapper;
     private final RaspberryPiServerService raspberryPiServerService;
+    private static final String SENSOR_STATION_WITH_ID = "SensorStation with id: ";
 
     public SensorStationService(SensorStationRepository repo,
                                 RaspberryPiService raspberryPiService,
@@ -42,7 +43,7 @@ public class SensorStationService {
 
     @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public SensorStation getById(Long id) {
-        return repo.findById(id).orElseThrow(() -> new NotFoundException("SensorStation with id " + id + " not found"));
+        return repo.findById(id).orElseThrow(() -> new NotFoundException(SENSOR_STATION_WITH_ID + id + " not found"));
     }
 
 
@@ -65,7 +66,7 @@ public class SensorStationService {
 
     public SensorStation update(Long piId,Long id, DeviceStatus status){
         SensorStation station = getByIdInternal(id);
-        if (!Objects.equals(station.getRaspberryPi().getId(), piId)) throw new NotFoundException("SensorStation with id " + id + " not found");
+        if (!Objects.equals(station.getRaspberryPi().getId(), piId)) throw new NotFoundException(SENSOR_STATION_WITH_ID + id + " not found");
         station.setDeviceStatus(status);
         return repo.save(station);
     }
@@ -145,7 +146,7 @@ public class SensorStationService {
     }
 
     public SensorStation getByIdInternal(Long id) {
-        return repo.findById(id).orElseThrow(()-> new NotFoundException("SensorStation with id " + id + "not found"));
+        return repo.findById(id).orElseThrow(()-> new NotFoundException(SENSOR_STATION_WITH_ID + id + "not found"));
     }
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public void delete(Long id) {

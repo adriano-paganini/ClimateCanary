@@ -26,6 +26,9 @@ public interface UserxRepository extends AbstractRepository<Userx, Long> {
     @Query("SELECT u FROM Userx u WHERE :role MEMBER OF u.roles")
     List<Userx> findByRole(@Param("role") UserxRole role);
 
+    @Query("SELECT COUNT(u) FROM Userx u WHERE u.enabled = true AND :role MEMBER OF u.roles")
+    long countEnabledByRole(@Param("role") UserxRole role);
+
     boolean existsByUsername(String username);
 
 }

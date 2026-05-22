@@ -6,7 +6,8 @@ import React, {useEffect, useRef, useState} from 'react';
 
 import {Button} from "primereact/button";
 import {Card} from 'primereact/card';
-import {InputMaskChangeEvent} from "primereact/inputmask";
+import {Dialog} from "primereact/dialog";
+import {InputText} from "primereact/inputtext";
 import {Toast} from 'primereact/toast';
 import {ConfirmDialog, confirmDialog} from 'primereact/confirmdialog';
 import 'primeicons/primeicons.css';
@@ -16,18 +17,28 @@ import UserDialog from "./UserDialog";
 
 
 import {createUserxRoleArrayFromStrings, UserxValidationResult} from '../utilities/userxUtilities';
-import {CheckboxChangeEvent} from "primereact/checkbox";
 import {AdminControllerApi, UserxCreateDTO, UserxDTO, UserxUpdateDTO} from "../generated-skeleton-api";
+import {useUser} from "../Contexts/AuthenticatedUserContext";
+import {AuthApi} from "../utilities/authApi";
+import {UserService} from "../services/UserService";
+import {useNavigate} from "react-router-dom";
+import {ROUTES} from "../utilities/routes.paths";
 
 /**
  * Component for managing users.
  */
 const UserTable = () => {
+    const {currentUser, fullUser, logout} = useUser();
+    const navigate = useNavigate();
     const [users, setUsers] = useState<UserxDTO[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [selectedUser, setSelectedUser] = useState<UserxDTO | UserxCreateDTO | null>(null);
     const [isNewUser, setIsNewUser] = useState<boolean>(false);
     const [dialogVisible, setDialogVisible] = useState<boolean>(false);
+    const [selfDeleteDialogVisible, setSelfDeleteDialogVisible] = useState<boolean>(false);
+    const [selfDeletePassword, setSelfDeletePassword] = useState<string>('');
+    const [selfDeleteConfirmation, setSelfDeleteConfirmation] = useState<string>('');
+    const [selfDeleteSubmitting, setSelfDeleteSubmitting] = useState<boolean>(false);
     const [validation, setValidation] = useState<UserxValidationResult>({valid: true});
 
     const toast = useRef<Toast | null>(null);
@@ -59,7 +70,7 @@ const UserTable = () => {
 
         if (!user) return {valid: false, message: 'No user selected'};
 
-        const required: (keyof UserxCreateDTO)[] = ['firstName', 'lastName', 'username'];
+        const required: (keyof UserxCreateDTO)[] = ['firstName', 'lastName', 'username', 'email', 'phone'];
         const {requirePassword = true} = opts; // password input on edit user not needed
         const fieldErrors: Partial<Record<keyof UserxCreateDTO, string>> = {};
 
@@ -67,6 +78,32 @@ const UserTable = () => {
             const v = (user[k] as unknown as string) ?? '';
             if (!v.trim()) fieldErrors[k] = 'Required';
         });
+
+        const username = ((user.username as unknown as string) ?? '').trim();
+        if (username && /\s/.test(username)) {
+            fieldErrors.username = 'Username must not contain whitespace';
+        }
+
+        const firstName = ((user.firstName as unknown as string) ?? '').trim();
+        if (firstName.length < 1) {
+            fieldErrors.firstName = 'First name is required';
+        }
+
+        const lastName = ((user.lastName as unknown as string) ?? '').trim();
+        if (lastName.length < 1) {
+            fieldErrors.lastName = 'Last name is required';
+        }
+
+        const email = ((user.email as unknown as string) ?? '').trim();
+        const atIndex = email.indexOf('@');
+        if (email && (atIndex <= 0 || !email.slice(atIndex + 1).includes('.'))) {
+            fieldErrors.email = 'Enter a valid email address';
+        }
+
+        const phone = ((user.phone as unknown as string) ?? '').trim();
+        if (phone && !/^\+\d{1,3}\s\d+$/.test(phone)) {
+            fieldErrors.phone = 'Phone must include a country code and digits only';
+        }
 
         // check for password required
         const pwd = (user.password as unknown as string) ?? '';
@@ -112,7 +149,7 @@ const UserTable = () => {
         if (!selectedUser) return;
 
         // assert type of selectedUser to UserxCreateDTO
-        const userToCreate = selectedUser as UserxCreateDTO;
+        const userToCreate = {...selectedUser, enabled: true} as UserxCreateDTO;
 
         if (userToCreate.password === undefined) {
             return;
@@ -141,8 +178,16 @@ const UserTable = () => {
 
         try {
             const adminControllerAPI = new AdminControllerApi();
+            const userxUpdateDTO: UserxUpdateDTO = {
+                email: userToUpdate.email,
+                roles: userToUpdate.roles,
+                firstName: userToUpdate.firstName,
+                lastName: userToUpdate.lastName,
+                phone: userToUpdate.phone,
+            };
+
             const updatedUser = await adminControllerAPI.updateUser({
-                userxUpdateDTO: userToUpdate as UserxUpdateDTO,
+                userxUpdateDTO,
                 id: userToUpdate.id
             }).then(response => response.data);
             setUsers(users.map((user: UserxDTO) => user.id === updatedUser.id ? updatedUser : user));
@@ -161,7 +206,7 @@ const UserTable = () => {
         try {
             const adminControllerAPI = new AdminControllerApi();
             await adminControllerAPI.deleteUser({id: user.id});
-            setUsers(users.filter(u => u.id !== user.id));
+            setUsers(users.map(u => u.id === user.id ? {...u, enabled: false} : u));
             toast.current?.show({severity: 'success', summary: 'Deleted', detail: `User "${user.username}" deleted`, life: 3000});
         } catch (err: any) {
             console.error('Error deleting user:', err);
@@ -169,10 +214,70 @@ const UserTable = () => {
         }
     }
 
+    const resetSelfDeleteDialog = () => {
+        setSelfDeletePassword('');
+        setSelfDeleteConfirmation('');
+        setSelfDeleteSubmitting(false);
+    }
+
+    const showSelfDeleteDialog = () => {
+        resetSelfDeleteDialog();
+        setSelfDeleteDialogVisible(true);
+    }
+
+    const hideSelfDeleteDialog = () => {
+        setSelfDeleteDialogVisible(false);
+        resetSelfDeleteDialog();
+    }
+
+    const deleteCurrentUser = async () => {
+        const username = fullUser?.username ?? currentUser?.username;
+        if (!username) return;
+
+        if (selfDeleteConfirmation !== 'DELETE ME') {
+            toast.current?.show({severity: 'warn', summary: 'Confirmation required', detail: 'Type DELETE ME to confirm deletion.', life: 3000});
+            return;
+        }
+
+        setSelfDeleteSubmitting(true);
+        try {
+            await AuthApi.login({username, password: selfDeletePassword});
+            await UserService.deleteCurrentUser();
+            logout();
+            navigate(ROUTES.LOGIN, {replace: true});
+        } catch (err: any) {
+            console.error('Error deleting current user:', err);
+            toast.current?.show({severity: 'error', summary: 'Error', detail: 'Password confirmation failed or user could not be deleted.', life: 3000});
+            setSelfDeleteSubmitting(false);
+        }
+    }
+
+    const restoreUser = async (user: UserxDTO) => {
+        if (!user.id) return;
+
+        try {
+            const adminControllerAPI = new AdminControllerApi();
+            const restoredUser = await adminControllerAPI.updateUser({
+                userxUpdateDTO: {...user, enabled: true} as UserxUpdateDTO,
+                id: user.id
+            }).then(response => response.data);
+            setUsers(users.map(u => u.id === restoredUser.id ? restoredUser : u));
+            toast.current?.show({severity: 'success', summary: 'Restored', detail: `User "${user.username}" restored`, life: 3000});
+        } catch (err: any) {
+            console.error('Error restoring user:', err);
+            toast.current?.show({severity: 'error', summary: 'Error', detail: 'Error restoring user', life: 3000});
+        }
+    }
+
     /**
      * Show a confirmation dialog before deleting a user.
      */
     const confirmDeleteUser = (user: UserxDTO) => {
+        if (isCurrentUser(user)) {
+            showSelfDeleteDialog();
+            return;
+        }
+
         confirmDialog({
             message: `Are you sure you want to delete user "${user.username}"?`,
             header: 'Confirm Delete',
@@ -221,7 +326,7 @@ const UserTable = () => {
         setDialogVisible(false);
     };
 
-    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement> | InputMaskChangeEvent) => {
+    const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (!selectedUser) return;
 
         const {name, value} = event.target;
@@ -229,12 +334,10 @@ const UserTable = () => {
         setSelectedUser({...selectedUser, [name]: value});
     }
 
-    const handleUserEnabledChange = (event: CheckboxChangeEvent) => {
+    const handlePhoneChange = (phone: string) => {
         if (!selectedUser) return;
 
-        const {name, checked} = event.target;
-
-        setSelectedUser({...selectedUser, [name]: checked});
+        setSelectedUser({...selectedUser, phone});
     }
 
     const handleRolesChange = (event: { value: string[] }) => {
@@ -245,21 +348,108 @@ const UserTable = () => {
         setSelectedUser({...selectedUser, roles: new Set(roles)});
     }
 
+    const activeUsers = users.filter(user => user.enabled !== false);
+    const deletedUsers = users.filter(user => user.enabled === false);
+    const currentUserId = fullUser?.id;
+    const currentUsername = fullUser?.username ?? currentUser?.username;
+    const isCurrentUser = (user: UserxDTO) =>
+        (currentUserId !== undefined && user.id === currentUserId) ||
+        (currentUsername !== undefined && user.username === currentUsername);
+    const canSubmitSelfDelete = selfDeletePassword.length > 0 && selfDeleteConfirmation === 'DELETE ME' && !selfDeleteSubmitting;
 
-    return (<Card title="User List" className="m-4">
+    const selfDeleteFooter = (
+        <div>
+            <Button label="Cancel" icon="pi pi-times" text onClick={hideSelfDeleteDialog} disabled={selfDeleteSubmitting}/>
+            <Button
+                label="Delete my account"
+                icon="pi pi-trash"
+                severity="danger"
+                onClick={() => void deleteCurrentUser()}
+                disabled={!canSubmitSelfDelete}
+                loading={selfDeleteSubmitting}
+            />
+        </div>
+    );
+
+    return (<Card title="User Management" className="m-4">
             <Toast ref={toast}/>
             <ConfirmDialog/>
             <Button label="Add User" icon="pi pi-plus" className="p-button-raised p-button-rounded"
                     style={{marginBottom: "10px"}} onClick={openNewUserDialog}/>
-            <UserListComponent users={users} loading={loading} onEditUser={openEditDialog} onDeleteUser={confirmDeleteUser}/>
+
+            <section style={{marginTop: "1rem"}}>
+                <h2 style={{fontSize: "1.15rem", margin: "0 0 0.75rem"}}>Active Users</h2>
+                <UserListComponent
+                    users={activeUsers}
+                    loading={loading}
+                    onEditUser={openEditDialog}
+                    onDeleteUser={confirmDeleteUser}
+                    currentUserId={currentUserId}
+                    currentUsername={currentUsername}
+                    emptyMessage="No active users found"
+                />
+            </section>
+
+            <section style={{marginTop: "2rem"}}>
+                <h2 style={{fontSize: "1.15rem", margin: "0 0 0.75rem"}}>Deleted Users</h2>
+                <UserListComponent
+                    users={deletedUsers}
+                    loading={loading}
+                    onEditUser={openEditDialog}
+                    onDeleteUser={confirmDeleteUser}
+                    showDeleteAction={false}
+                    onRestoreUser={restoreUser}
+                    currentUserId={currentUserId}
+                    currentUsername={currentUsername}
+                    emptyMessage="No deleted users found"
+                />
+            </section>
 
             <UserDialog visible={dialogVisible} user={selectedUser} isNewUser={isNewUser} validation={validation}
                         onHide={hideDialog} onSubmit={handleSubmit}
                         onInputChange={handleInputChange} onRolesChange={handleRolesChange}
-                        onUserEnabledChange={handleUserEnabledChange}/>
+                        onPhoneChange={handlePhoneChange}
+                        disableUsername={!isNewUser}/>
+            <Dialog
+                header="Delete your account"
+                visible={selfDeleteDialogVisible}
+                style={{width: '32rem', maxWidth: '95vw'}}
+                modal
+                footer={selfDeleteFooter}
+                onHide={hideSelfDeleteDialog}
+                closable={!selfDeleteSubmitting}
+            >
+                <div style={{display: 'flex', flexDirection: 'column', gap: '1rem'}}>
+                    <p style={{margin: 0}}>
+                        You are deleting your own account. Confirm your password and type <strong>DELETE ME</strong> to continue.
+                    </p>
+                    <div>
+                        <label htmlFor="self-delete-password" className="font-bold block" style={{marginBottom: '0.35rem'}}>Password</label>
+                        <InputText
+                            id="self-delete-password"
+                            type="password"
+                            value={selfDeletePassword}
+                            onChange={(event) => setSelfDeletePassword(event.target.value)}
+                            disabled={selfDeleteSubmitting}
+                            style={{width: '100%'}}
+                            autoComplete="current-password"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="self-delete-confirmation" className="font-bold block" style={{marginBottom: '0.35rem'}}>Confirmation</label>
+                        <InputText
+                            id="self-delete-confirmation"
+                            value={selfDeleteConfirmation}
+                            onChange={(event) => setSelfDeleteConfirmation(event.target.value)}
+                            disabled={selfDeleteSubmitting}
+                            placeholder="DELETE ME"
+                            style={{width: '100%'}}
+                        />
+                    </div>
+                </div>
+            </Dialog>
         </Card>
     );
 };
 
 export default UserTable;
-

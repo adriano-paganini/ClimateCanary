@@ -11,7 +11,7 @@ export type MenuItemConfig = {
 
 export const menuConfig: MenuItemConfig[] = [
     {
-        label: 'Home', icon: 'pi pi-home', route: ROUTES.HOME,
+        label: 'ClimateCanary', route: ROUTES.HOME,
     },
     {
         label: 'Dashboard', icon: 'pi pi-chart-bar', route: ROUTES.DASHBOARD,
@@ -52,8 +52,5 @@ export const menuConfig: MenuItemConfig[] = [
     {
         label: 'Organization', icon: 'pi pi-map', route: ROUTES.BUILDINGS,
         roles: [UserxRole.SYSTEM_ADMIN],
-    },
-    {
-        label: 'Logout', icon: 'pi pi-sign-out', route: ROUTES.LOGOUT,
     },
 ];

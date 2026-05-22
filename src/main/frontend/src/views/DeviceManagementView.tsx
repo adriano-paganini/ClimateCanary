@@ -15,7 +15,6 @@ import { ProgressSpinner } from 'primereact/progressspinner';
 import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import NavbarComponent from '../components/NavbarComponent';
-import { FooterComponent } from '../components/FooterComponent';
 import { RaspberryPiService } from '../services/RaspberryPiService';
 import { SensorStationService } from '../services/SensorStationService';
 import { RoomService } from '../services/RoomService';
@@ -535,10 +534,9 @@ const DeviceManagementView: React.FC = () => {
     if (loading) return (
         <div>
             <NavbarComponent />
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
+            <div className="loading-screen">
                 <ProgressSpinner />
             </div>
-            <FooterComponent />
         </div>
     );
 
@@ -548,7 +546,6 @@ const DeviceManagementView: React.FC = () => {
             <div style={{ padding: '2rem' }}>
                 <Message severity="error" text={error} />
             </div>
-            <FooterComponent />
         </div>
     );
 
@@ -885,8 +882,6 @@ const DeviceManagementView: React.FC = () => {
                     </DataTable>
                 )}
             </Dialog>
-
-            <FooterComponent />
         </div>
     );
 };

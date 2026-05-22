@@ -45,6 +45,7 @@ public class AnalyticsService {
     private final DepartmentService departmentService;
     private final EmployeeProfileService employeeProfileService;
     private final AuthenticatedUserService authenticatedUserService;
+    private static final String YOU_MAY_ONLY_VIEW_YOUR_OWN_DEPARTMENT = "You may only view your own department.";
 
     public AnalyticsService(
             MeasurementService measurementService,
@@ -245,7 +246,7 @@ public class AnalyticsService {
         Userx currentUser = authenticatedUserService.getAuthenticatedUser();
 
         if (hasRole(currentUser, UserxRole.DEPARTMENT_LEAD) && isNotLeaderOf(currentUser, department)) {
-            throw new AccessDeniedException("You may only view your own department.");
+            throw new AccessDeniedException(YOU_MAY_ONLY_VIEW_YOUR_OWN_DEPARTMENT);
         }
 
         List<Room> rooms = department.getRooms().stream()
@@ -298,7 +299,7 @@ public class AnalyticsService {
         Userx currentUser = authenticatedUserService.getAuthenticatedUser();
 
         if (hasRole(currentUser, UserxRole.DEPARTMENT_LEAD) && isNotLeaderOf(currentUser, department)) {
-            throw new AccessDeniedException("You may only view your own department.");
+            throw new AccessDeniedException(YOU_MAY_ONLY_VIEW_YOUR_OWN_DEPARTMENT);
         }
 
         LocalDateTime effectiveTo = to != null ? to : LocalDateTime.now();
@@ -343,7 +344,7 @@ public class AnalyticsService {
         Userx currentUser = authenticatedUserService.getAuthenticatedUser();
 
         if (hasRole(currentUser, UserxRole.DEPARTMENT_LEAD) && isNotLeaderOf(currentUser, department)) {
-            throw new AccessDeniedException("You may only view your own department.");
+            throw new AccessDeniedException(YOU_MAY_ONLY_VIEW_YOUR_OWN_DEPARTMENT);
         }
 
         boolean anonymize = hasRole(currentUser, UserxRole.MANAGEMENT);
@@ -666,7 +667,7 @@ public class AnalyticsService {
 
                 long idx = ChronoUnit.MINUTES.between(from, ts) / bucketMinutes;
                 LocalDateTime key = from.plusMinutes(idx * bucketMinutes);
-                buckets.computeIfAbsent(key, _ -> new ArrayList<>()).add(m.getMeasurement());
+                buckets.computeIfAbsent(key, k -> new ArrayList<>()).add(m.getMeasurement());
             }
             // Collapse each bucket to its average for this room
             Map<LocalDateTime, Double> roomAvg = new TreeMap<>();
@@ -732,7 +733,7 @@ public class AnalyticsService {
             long bucketIndex = minutesSinceFrom / bucketMinutes;
             LocalDateTime key = from.plusMinutes(bucketIndex * bucketMinutes);
 
-            buckets.computeIfAbsent(key, _ -> new ArrayList<>()).add(m.getMeasurement());
+            buckets.computeIfAbsent(key, k -> new ArrayList<>()).add(m.getMeasurement());
         }
 
         return buckets.entrySet().stream()
