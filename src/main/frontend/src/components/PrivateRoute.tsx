@@ -4,11 +4,11 @@
  */
 import {Navigate, Outlet, useLocation} from 'react-router-dom';
 import {useEffect, useState} from 'react';
-import {ProgressSpinner} from 'primereact/progressspinner';
 
 import {useUser} from "../Contexts/AuthenticatedUserContext";
 import {UserxRole} from "../generated-skeleton-api";
 import {ROUTES} from "../utilities/routes.paths";
+import LoadingScreen from "./LoadingScreen";
 
 /**
  * Private route component that checks if the user is authenticated. Used to protect routes.
@@ -47,7 +47,7 @@ const PrivateRoute = ({roles}: { roles?: UserxRole[] }) => {
 
     // loading spinner
     if (authStatus === AuthStatus.UNKNOWN) {
-        return <ProgressSpinner/>
+        return <LoadingScreen/>
     }
 
     if (authStatus === AuthStatus.UNAUTHENTICATED) {

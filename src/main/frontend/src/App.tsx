@@ -11,6 +11,7 @@ import PrivateRoute from './components/PrivateRoute';
 import {UserProvider} from "./Contexts/AuthenticatedUserContext";
 import {UserxRole} from "./generated-skeleton-api";
 import {ROUTES} from "./utilities/routes.paths";
+import LoadingScreen from "./components/LoadingScreen";
 
 const EmployeeDashboard = React.lazy(() => import('./views/EmployeeDashboard'));
 const RoomHistory = React.lazy(() => import('./views/RoomHistory'));
@@ -24,7 +25,7 @@ const DeviceManagementView = React.lazy(() => import('./views/DeviceManagementVi
 const App: React.FC = () => {
     return (
         <UserProvider>
-            <Suspense fallback={<div>Loading...</div>}>
+            <Suspense fallback={<LoadingScreen/>}>
                 <BrowserRouter>
                     <Routes>
                         {/* Public route */}

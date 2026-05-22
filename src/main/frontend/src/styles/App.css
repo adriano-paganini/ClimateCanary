@@ -8,6 +8,14 @@
     margin-bottom: 1.5rem;
 }
 
+.loading-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    width: 100%;
+}
+
 .App-logo {
     height: 40vmin;
     pointer-events: none;

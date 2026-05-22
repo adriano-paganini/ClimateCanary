@@ -534,7 +534,7 @@ const DeviceManagementView: React.FC = () => {
     if (loading) return (
         <div>
             <NavbarComponent />
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
+            <div className="loading-screen">
                 <ProgressSpinner />
             </div>
         </div>
