@@ -11,8 +11,8 @@ public class PiConfigYamlBuilder {
 
     private final RaspberryPiService raspberryPiService;
 
-    @Value("${app.backend-url}")
-    private String backendUrl;
+    @Value("${APP_BACKEND_URL:http://localhost:8080}")
+    private String appBackendUrl;
 
     public PiConfigYamlBuilder(RaspberryPiService raspberryPiService) {
         this.raspberryPiService = raspberryPiService;
@@ -35,7 +35,7 @@ public class PiConfigYamlBuilder {
                 room.getId(),
                 escapeYaml(room.getName()),
                 escapeYaml(raspberryPi.getHostName()),
-                escapeYaml(backendUrl),
+                escapeYaml(appBackendUrl),
                 room.getPrivacyMode()
         );
     }

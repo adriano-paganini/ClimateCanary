@@ -290,6 +290,36 @@ class RaspberryPiServiceTest {
     }
 
     @Test
+    @DisplayName("Should return only available sensor stations for a Raspberry Pi")
+    void getAvailableSensorStations_returnsOnlyAvailableStations_forExistingPi() {
+        SensorStation available = new SensorStation();
+        available.setDeviceStatus(DeviceStatus.AVAILABLE);
+
+        SensorStation online = new SensorStation();
+        online.setDeviceStatus(DeviceStatus.ONLINE);
+
+        SensorStation noStatus = new SensorStation();
+
+        pi.getSensorStations().add(available);
+        pi.getSensorStations().add(online);
+        pi.getSensorStations().add(noStatus);
+        Mockito.when(repo.findById(1L)).thenReturn(Optional.of(pi));
+
+        List<SensorStation> result = raspberryPiService.getAvailableSensorStations(1L);
+
+        Assertions.assertThat(result).containsExactly(available);
+    }
+
+    @Test
+    @DisplayName("Should throw NotFoundException when Raspberry Pi does not exist for available sensor stations")
+    void getAvailableSensorStations_throwsNotFoundException_whenPiNotFound() {
+        Mockito.when(repo.findById(99L)).thenReturn(Optional.empty());
+
+        Assertions.assertThatThrownBy(() -> raspberryPiService.getAvailableSensorStations(99L))
+                .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
     @DisplayName("Should delete Raspberry Pi and clear associations")
     void delete_deletesRaspberryPiAndClearsAssociations() {
         Room room = new Room();

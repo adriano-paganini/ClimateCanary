@@ -92,4 +92,13 @@ public class RaspberryPiController {
                 .toList();
         return ResponseEntity.ok(stations);
     }
+
+    @GetMapping("/{id}/availablesensorstations")
+    public ResponseEntity<List<SensorStationDTO>> getAvailableSensorStations(@PathVariable Long id) {
+        List<SensorStationDTO> stations = raspberryPiService.getAvailableSensorStations(id)
+                .stream()
+                .map(sensorStationMapper::mapTo)
+                .toList();
+        return ResponseEntity.ok(stations);
+    }
 }

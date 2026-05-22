@@ -151,6 +151,15 @@ public class RaspberryPiService {
         return pi.getSensorStations();
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
+    public List<SensorStation> getAvailableSensorStations(Long raspberryPiId) {
+        RaspberryPi pi = getById(raspberryPiId);
+        return pi.getSensorStations()
+                .stream()
+                .filter(station -> station.getDeviceStatus() == DeviceStatus.AVAILABLE)
+                .toList();
+    }
+
     @Transactional
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public void delete(Long id) {

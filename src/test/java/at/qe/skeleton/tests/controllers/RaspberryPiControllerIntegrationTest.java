@@ -244,4 +244,25 @@ class RaspberryPiControllerIntegrationTest {
         mockMvc.perform(get("/api/bpi/99/sensorstations"))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void getAvailableSensorStations_returns200() throws Exception {
+        when(raspberryPiService.getAvailableSensorStations(1L))
+                .thenReturn(List.of(station));
+
+        when(sensorStationMapper.mapTo(station)).thenReturn(stationDTO);
+
+        mockMvc.perform(get("/api/bpi/1/availablesensorstations"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id", is(100)));
+    }
+
+    @Test
+    void getAvailableSensorStations_notFound_returns404() throws Exception {
+        when(raspberryPiService.getAvailableSensorStations(99L))
+                .thenThrow(new NotFoundException("Pi not found"));
+
+        mockMvc.perform(get("/api/bpi/99/availablesensorstations"))
+                .andExpect(status().isNotFound());
+    }
 }
