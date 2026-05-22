@@ -667,7 +667,7 @@ public class AnalyticsService {
 
                 long idx = ChronoUnit.MINUTES.between(from, ts) / bucketMinutes;
                 LocalDateTime key = from.plusMinutes(idx * bucketMinutes);
-                buckets.computeIfAbsent(key, _ -> new ArrayList<>()).add(m.getMeasurement());
+                buckets.computeIfAbsent(key, k -> new ArrayList<>()).add(m.getMeasurement());
             }
             // Collapse each bucket to its average for this room
             Map<LocalDateTime, Double> roomAvg = new TreeMap<>();
@@ -733,7 +733,7 @@ public class AnalyticsService {
             long bucketIndex = minutesSinceFrom / bucketMinutes;
             LocalDateTime key = from.plusMinutes(bucketIndex * bucketMinutes);
 
-            buckets.computeIfAbsent(key, _ -> new ArrayList<>()).add(m.getMeasurement());
+            buckets.computeIfAbsent(key, k -> new ArrayList<>()).add(m.getMeasurement());
         }
 
         return buckets.entrySet().stream()
