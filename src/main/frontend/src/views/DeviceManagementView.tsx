@@ -35,9 +35,9 @@ import {
 type TagSeverity = 'success' | 'warning' | 'danger' | 'secondary' | 'info' | 'contrast' | undefined;
 
 function statusSeverity(status?: string): TagSeverity {
-    if (status === 'ONLINE') return 'success';
-    if (status === 'DEGRADED') return 'warning';
-    if (status === 'OFFLINE' || status === 'MAINTENANCE') return 'danger';
+    if (status === 'ONLINE' || status === 'CONNECTED') return 'success';
+    if (status === 'DEGRADED' || status === 'AVAILABLE') return 'warning';
+    if (status === 'OFFLINE' || status === 'MAINTENANCE' || status === 'CONNECTION_FAILED') return 'danger';
     return 'secondary';
 }
 
@@ -476,7 +476,7 @@ const DeviceManagementView: React.FC = () => {
                             <Column
                                 header="Status"
                                 style={{ width: '9rem' }}
-                                body={(s: SensorStationDTO) => statusTag(s.deviceStatus)}
+                                body={(s: SensorStationDTO) => statusTag(s.deviceStatus === 'ONLINE' ? undefined : s.deviceStatus)}
                             />
                             <Column
                                 header="Actions"
