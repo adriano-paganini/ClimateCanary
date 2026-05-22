@@ -12,6 +12,7 @@ import at.qe.skeleton.services.MeasurementService;
 import at.qe.skeleton.services.RaspberryPiService;
 import at.qe.skeleton.services.SensorStationService;
 import at.qe.skeleton.services.ThresholdViolationService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -55,7 +56,16 @@ public class RaspberryPiClientController {
 
     @PostMapping("/{piId}/booted")
     public ResponseEntity<Void> piBooted(@PathVariable Long piId,
-                                         @Valid @RequestBody RaspberryPiUpdateDTO dto) {
+                                         @Valid @RequestBody RaspberryPiUpdateDTO dto,
+                                         HttpServletRequest request) {
+        log.info(
+                "Received booted request: method={}, uri={}, remoteAddr={}, piId={}, body={}",
+                request.getMethod(),
+                request.getRequestURI(),
+                request.getRemoteAddr(),
+                piId,
+                dto
+        );
         raspberryPiService.updateInternal(piId,dto);
         return ResponseEntity.ok().build();
     }
