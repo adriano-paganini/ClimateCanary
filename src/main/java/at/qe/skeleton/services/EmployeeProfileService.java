@@ -5,6 +5,7 @@ import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.EmployeeProfileUpdateDTO;
 import at.qe.skeleton.models.EmployeeProfile;
 import at.qe.skeleton.repositories.EmployeeProfileRepository;
+import at.qe.skeleton.repositories.UserxRepository;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.stereotype.Service;
@@ -18,18 +19,18 @@ import java.util.Optional;
 public class EmployeeProfileService {
 
     private final EmployeeProfileRepository employeeProfileRepository;
-    private final UserxService userxService;
+    private final UserxRepository userxRepository;
     private final DepartmentService departmentService;
     private final RoomService roomService;
     private final AuthenticatedUserService authentication;
 
     public EmployeeProfileService(EmployeeProfileRepository employeeProfileRepository,
-                                  UserxService userxService,
+                                  UserxRepository userxRepository,
                                   DepartmentService departmentService,
                                   RoomService roomService,
                                   AuthenticatedUserService authentication) {
         this.employeeProfileRepository = employeeProfileRepository;
-        this.userxService = userxService;
+        this.userxRepository = userxRepository;
         this.departmentService = departmentService;
         this.roomService = roomService;
         this.authentication = authentication;
@@ -86,7 +87,8 @@ public class EmployeeProfileService {
                 .append(" id=").append(id);
 
         if (dto.userxId() != null) {
-            existing.setUser(userxService.getUserById(dto.userxId()));
+            existing.setUser(userxRepository.findById(dto.userxId())
+                    .orElseThrow(() -> new NotFoundException("User with id " + dto.userxId() + " not found")));
             debugInfo.append(", userxId=").append(dto.userxId());
         }
 

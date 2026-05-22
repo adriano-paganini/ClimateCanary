@@ -8,6 +8,7 @@ import at.qe.skeleton.models.EmployeeProfile;
 import at.qe.skeleton.models.Room;
 import at.qe.skeleton.models.Userx;
 import at.qe.skeleton.repositories.EmployeeProfileRepository;
+import at.qe.skeleton.repositories.UserxRepository;
 import at.qe.skeleton.services.*;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,7 +29,7 @@ import java.util.Optional;
 class EmployeeProfileServiceTest {
 
     @Mock private EmployeeProfileRepository employeeProfileRepository;
-    @Mock private UserxService userxService;
+    @Mock private UserxRepository userxRepository;
     @Mock private DepartmentService departmentService;
     @Mock private RoomService roomService;
     @Mock private AuthenticatedUserService authentication;
@@ -186,7 +187,7 @@ class EmployeeProfileServiceTest {
         EmployeeProfileUpdateDTO dto = new EmployeeProfileUpdateDTO(2L, null, null);
 
         Mockito.when(employeeProfileRepository.findById(42L)).thenReturn(Optional.of(profile));
-        Mockito.when(userxService.getUserById(2L)).thenReturn(newUser);
+        Mockito.when(userxRepository.findById(2L)).thenReturn(Optional.of(newUser));
         Mockito.when(employeeProfileRepository.save(profile)).thenReturn(profile);
 
         EmployeeProfile result = service.update(42L, dto);
@@ -233,7 +234,7 @@ class EmployeeProfileServiceTest {
         EmployeeProfileUpdateDTO dto = new EmployeeProfileUpdateDTO(2L, 20L, 200L);
 
         Mockito.when(employeeProfileRepository.findById(42L)).thenReturn(Optional.of(profile));
-        Mockito.when(userxService.getUserById(2L)).thenReturn(newUser);
+        Mockito.when(userxRepository.findById(2L)).thenReturn(Optional.of(newUser));
         Mockito.when(departmentService.getDepartmentById(20L)).thenReturn(newDept);
         Mockito.when(roomService.getById(200L)).thenReturn(newRoom);
         Mockito.when(employeeProfileRepository.save(profile)).thenReturn(profile);
@@ -256,7 +257,7 @@ class EmployeeProfileServiceTest {
 
         service.update(42L, dto);
 
-        Mockito.verifyNoInteractions(userxService, departmentService, roomService);
+        Mockito.verifyNoInteractions(userxRepository, departmentService, roomService);
     }
 
     @Test

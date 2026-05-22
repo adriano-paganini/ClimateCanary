@@ -6,7 +6,9 @@ import at.qe.skeleton.common.exceptions.ConflictException;
 import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.UserxSelfUpdateDTO;
 import at.qe.skeleton.dtos.UserxUpdateDTO;
+import at.qe.skeleton.models.EmployeeProfile;
 import at.qe.skeleton.models.Userx;
+import at.qe.skeleton.repositories.EmployeeProfileRepository;
 import at.qe.skeleton.repositories.UserxRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,17 +37,20 @@ public class UserxService implements UserDetailsService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticatedUserService authenticatedUserService;
     private final DepartmentRepository departmentRepository;
+    private final EmployeeProfileRepository employeeProfileRepository;
 
     @Autowired
     public UserxService(UserxRepository userRepository,
                         PasswordEncoder passwordEncoder,
                         AuthenticatedUserService authenticatedUserService,
-                        DepartmentRepository departmentRepository)
+                        DepartmentRepository departmentRepository,
+                        EmployeeProfileRepository employeeProfileRepository)
     {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticatedUserService = authenticatedUserService;
         this.departmentRepository = departmentRepository;
+        this.employeeProfileRepository = employeeProfileRepository;
     }
 
     /**
@@ -122,9 +127,19 @@ public class UserxService implements UserDetailsService {
      * @param user the user to delete
      */
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
+    @Transactional
     public void deleteUser(Userx user) {
         Optional<Userx> userOpt = userRepository.findById(user.getId());
         userOpt.ifPresent(existingUser -> {
+            existingUser.getAbsences().clear();
+            departmentRepository.clearDepartmentLeaderByUserId(existingUser.getId());
+
+            EmployeeProfile employeeProfile = existingUser.getEmployeeProfile();
+            if (employeeProfile != null) {
+                existingUser.setEmployeeProfile(null);
+                employeeProfile.setUser(null);
+                employeeProfileRepository.delete(employeeProfile);
+            }
             userRepository.delete(existingUser);
             log.info("Deleted user with id={} and username={}", existingUser.getId(), existingUser.getUsername());
         });

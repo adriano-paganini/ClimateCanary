@@ -25,7 +25,6 @@ import java.util.Set;
 
 /**
  * Some very basic tests for {@link UserxService}.
- *
  * This class is part of the skeleton project provided for students of the courses "Software
  * Engineering" offered by the University of Innsbruck.
  */
@@ -33,7 +32,7 @@ import java.util.Set;
 
 @SpringBootTest()
 @WebAppConfiguration
-public class UserxServiceTest {
+class UserxServiceTest {
 
     @Autowired
     UserxService userService;
@@ -43,7 +42,7 @@ public class UserxServiceTest {
 
     @Test
     @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
-    public void testDatainitialization() {
+    void testDatainitialization() {
         Assertions.assertEquals(4, userService.getAllUsers().size(),
                 "Insufficient amount of users initialized for test data source");
         for (Userx user : userService.getAllUsers()) {
@@ -105,7 +104,7 @@ public class UserxServiceTest {
     @DirtiesContext
     @Test
     @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
-    public void testDeleteUser() {
+    void testDeleteUser() {
         Long deleteUserId = 2000L;
         Optional<Userx> adminUser = userService.loadUser(1000L);
         Assertions.assertFalse(adminUser.isEmpty(),
@@ -132,7 +131,31 @@ public class UserxServiceTest {
     @DirtiesContext
     @Test
     @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
-    public void testUpdateUser() {
+    void testDeleteUserWhoLeadsDepartment() {
+        Long deleteUserId = 3000L;
+        Userx toBeDeletedUser = userService.loadUser(deleteUserId)
+                .orElseThrow(() -> new AssertionError(
+                        "User with id \"" + deleteUserId + "\" could not be loaded from test data source"));
+
+        Department department = new Department("Delete Leader Regression");
+        department.setDepartmentLeader(toBeDeletedUser);
+        Department savedDepartment = departmentRepository.save(department);
+
+        Assertions.assertDoesNotThrow(() -> userService.deleteUser(toBeDeletedUser),
+                "Deleting a user who leads a department should clear the department leader association first");
+
+        Assertions.assertTrue(userService.loadUser(deleteUserId).isEmpty(),
+                "Deleted department leader with id \"" + deleteUserId + "\" could still be loaded");
+        Department reloadedDepartment = departmentRepository.findById(savedDepartment.getId())
+                .orElseThrow(() -> new AssertionError("Department should not be deleted with its leader"));
+        Assertions.assertNull(reloadedDepartment.getDepartmentLeader(),
+                "Department should remain but no longer reference the deleted leader");
+    }
+
+    @DirtiesContext
+    @Test
+    @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
+    void testUpdateUser() {
         Long userId = 2000L;
         Optional<Userx> adminUserOpt = userService.loadUser(1000L);
         Assertions.assertNotNull(adminUserOpt, "Admin user could not be loaded from test data source");
@@ -168,7 +191,7 @@ public class UserxServiceTest {
     @DirtiesContext
     @Test
     @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
-    public void testCreateUser() {
+    void testCreateUser() {
         Optional<Userx> adminUserOpt = userService.loadUser(1000L);
         Assertions.assertFalse(adminUserOpt.isEmpty(),
                 "Admin user could not be loaded from test data source");
@@ -223,7 +246,7 @@ public class UserxServiceTest {
 
     @Test
     @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
-    public void testExceptionForEmptyUsername() {
+    void testExceptionForEmptyUsername() {
         Assertions.assertThrows(org.springframework.dao.DataIntegrityViolationException.class, () -> {
             Optional<Userx> adminUser = userService.loadUser(1000L);
             Assertions.assertFalse(adminUser.isEmpty(),
@@ -237,7 +260,7 @@ public class UserxServiceTest {
 
     @Test
     @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
-    public void testExceptionForEmptyUser() {
+    void testExceptionForEmptyUser() {
         Assertions.assertThrows(IllegalArgumentException.class, () -> {
             Optional<Userx> adminUser = userService.loadUser(1000L);
             Assertions.assertFalse(adminUser.isEmpty(),
@@ -249,7 +272,7 @@ public class UserxServiceTest {
     }
 
     @Test
-    public void testUnauthenticatedLoadUsers() {
+    void testUnauthenticatedLoadUsers() {
         Assertions.assertThrows(
                 org.springframework.security.authentication.AuthenticationCredentialsNotFoundException.class,
                 () -> {
@@ -262,7 +285,7 @@ public class UserxServiceTest {
 
     @Test
     @WithMockUser(username = "user", authorities = {"EMPLOYEE"})
-    public void testUnauthorizedLoadUsers() {
+    void testUnauthorizedLoadUsers() {
         Assertions.assertThrows(org.springframework.security.access.AccessDeniedException.class, () -> {
             for (Userx user : userService.getAllUsers()) {
                 Assertions.fail(
@@ -273,7 +296,7 @@ public class UserxServiceTest {
 
     @Test
     @WithMockUser(username = "user1", authorities = {"EMPLOYEE"})
-    public void testUnauthorizedLoadUser() {
+    void testUnauthorizedLoadUser() {
         Assertions.assertThrows(org.springframework.security.access.AccessDeniedException.class, () -> {
             Optional<Userx> user = userService.loadUser(1000L);
             Assertions.fail(
@@ -283,7 +306,7 @@ public class UserxServiceTest {
 
     @Test
     @WithMockUser(username = "user1", authorities = {"EMPLOYEE"})
-    public void testUnauthorizedSaveUser() {
+    void testUnauthorizedSaveUser() {
         Assertions.assertThrows(org.springframework.security.access.AccessDeniedException.class, () -> {
             Long userId = 2000L;
             Optional<Userx> userOpt = userService.loadUser(userId);
@@ -298,7 +321,7 @@ public class UserxServiceTest {
 
     @Test
     @WithMockUser(username = "user1", authorities = {"EMPLOYEE"})
-    public void testUnauthorizedDeleteUser() {
+    void testUnauthorizedDeleteUser() {
         Assertions.assertThrows(org.springframework.security.access.AccessDeniedException.class, () -> {
             Long userId = 2000L;
             Optional<Userx> userOpt = userService.loadUser(userId);
@@ -313,7 +336,7 @@ public class UserxServiceTest {
 
     @Test
     @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
-    public void testGetUserByIdFound() {
+    void testGetUserByIdFound() {
         Userx user = userService.getUserById(2000L);
         Assertions.assertNotNull(user,
                 "getUserById should return a user for a valid id");
@@ -323,14 +346,14 @@ public class UserxServiceTest {
 
     @Test
     @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
-    public void testGetUserByIdNotFound() {
+    void testGetUserByIdNotFound() {
         Assertions.assertThrows(NotFoundException.class,
                 () -> userService.getUserById(9999L),
                 "getUserById should throw NotFoundException for an unknown id");
     }
 
     @Test
-    public void testGetUserByUsernameFound() {
+    void testGetUserByUsernameFound() {
         Userx user = userService.getUserByUsername("user1");
         Assertions.assertNotNull(user,
                 "getUserByUsername should return a user for a known username");
@@ -339,7 +362,7 @@ public class UserxServiceTest {
     }
 
     @Test
-    public void testGetUserByUsernameNotFound() {
+    void testGetUserByUsernameNotFound() {
         Userx user = userService.getUserByUsername("doesnotexist");
         Assertions.assertNull(user,
                 "getUserByUsername should return null for an unknown username");
@@ -348,7 +371,7 @@ public class UserxServiceTest {
     @DirtiesContext
     @Test
     @WithMockUser(username = "user1", authorities = {"EMPLOYEE"})
-    public void testSaveCurrentUserUpdatesFields() {
+    void testSaveCurrentUserUpdatesFields() {
         UserxSelfUpdateDTO dto = new UserxSelfUpdateDTO(
                 "UpdatedFirst", "UpdatedLast", "updated@example.com", "+43 512 000000"
         );
@@ -372,7 +395,7 @@ public class UserxServiceTest {
     @DirtiesContext
     @Test
     @WithMockUser(username = "user1", authorities = {"EMPLOYEE"})
-    public void testSaveCurrentUserSkipsNullFields() {
+    void testSaveCurrentUserSkipsNullFields() {
         // Load the original values so we can assert they were not overwritten
         Userx original = userService.getUserByUsername("user1");
         String originalFirstName = original.getFirstName();
@@ -394,7 +417,7 @@ public class UserxServiceTest {
     @DirtiesContext
     @Test
     @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
-    public void testAdminUpdateUserFields() {
+    void testAdminUpdateUserFields() {
         Long userId = 3000L;
         UserxUpdateDTO dto = new UserxUpdateDTO(
                 "admin-updated@example.com",
@@ -426,7 +449,7 @@ public class UserxServiceTest {
     @DirtiesContext
     @Test
     @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
-    public void testAdminUpdateUserEnablesUser() {
+    void testAdminUpdateUserEnablesUser() {
         Long userId = 3000L;
 
         // Disable first so there is a meaningful state transition to test
@@ -442,7 +465,7 @@ public class UserxServiceTest {
     @DirtiesContext
     @Test
     @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
-    public void testAdminUpdateUserDisablesClearsDepartmentLeader() {
+    void testAdminUpdateUserDisablesClearsDepartmentLeader() {
         Long userId = 3000L;
         Userx user = userService.getUserById(userId);
 
@@ -466,7 +489,7 @@ public class UserxServiceTest {
     @DirtiesContext
     @Test
     @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
-    public void testAdminUpdateUserDisablesClearsEmployeeProfileAndAbsences() {
+    void testAdminUpdateUserDisablesClearsEmployeeProfileAndAbsences() {
         Long userId = 3000L;
         Userx user = userService.getUserById(userId);
 
@@ -487,7 +510,7 @@ public class UserxServiceTest {
 
     @Test
     @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
-    public void testAdminUpdateUserNotFoundThrows() {
+    void testAdminUpdateUserNotFoundThrows() {
         UserxUpdateDTO dto = new UserxUpdateDTO(null, null, null, null, null, null);
 
         Assertions.assertThrows(NotFoundException.class,
@@ -498,7 +521,7 @@ public class UserxServiceTest {
     @DirtiesContext
     @Test
     @WithMockUser(username = "user2", authorities = {"EMPLOYEE"})
-    public void testDeleteCurrentUser() {
+    void testDeleteCurrentUser() {
         Userx before = userService.getUserByUsername("user2");
         Assertions.assertNotNull(before, "user2 should exist before deletion");
 
