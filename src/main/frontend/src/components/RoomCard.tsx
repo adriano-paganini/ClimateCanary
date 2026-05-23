@@ -108,7 +108,7 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, measurements, violations }) =
                         Temperature
                     </span>
                     <span style={{ fontWeight: 600, color: '#111827' }}>
-                        {latestTemp?.measurement !== undefined ? `${latestTemp.measurement} °C` : '—'}
+                        {latestTemp?.measurement !== undefined ? `${parseFloat(latestTemp.measurement.toFixed(2))} °C` : '—'}
                     </span>
                 </div>
 
@@ -126,7 +126,7 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, measurements, violations }) =
                         }} />
                         {latestIaq?.measurement !== undefined && (
                             <span style={{ fontWeight: 600, color: '#111827', fontSize: '0.9rem' }}>
-                                {latestIaq.measurement.toFixed(1)}
+                                {parseFloat(latestIaq.measurement.toFixed(2))}
                             </span>
                         )}
                     </span>
