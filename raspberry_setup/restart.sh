@@ -14,7 +14,8 @@ docker build -t pi-gateway .
 docker rm -f pi-gateway 2>/dev/null || true
 
 mkdir -p /home/pi/.pi-gateway
-cp -n conf.yml /home/pi/.pi-gateway/conf.yml 2>/dev/null || true
+cp conf.yml /home/pi/.pi-gateway/conf.yml
+touch /home/pi/.pi-gateway/app.log
 
 if [ "$KEEP_DB" = true ]; then
     touch /home/pi/.pi-gateway/sensor.db
@@ -22,10 +23,12 @@ if [ "$KEEP_DB" = true ]; then
         -v /run/dbus:/run/dbus:ro \
         -v /home/pi/.pi-gateway/conf.yml:/app/conf.yml \
         -v /home/pi/.pi-gateway/sensor.db:/app/sensor.db \
+        -v /home/pi/.pi-gateway/app.log:/app/app.log \
         pi-gateway
 else
     docker run --name pi-gateway --net=host --privileged \
         -v /run/dbus:/run/dbus:ro \
         -v /home/pi/.pi-gateway/conf.yml:/app/conf.yml \
+        -v /home/pi/.pi-gateway/app.log:/app/app.log \
         pi-gateway
 fi
