@@ -3,6 +3,7 @@ import "primereact/resources/themes/lara-light-cyan/theme.css";
 import "primeicons/primeicons.css";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { format, subDays, subHours, subYears } from "date-fns";
+import type { Plugin } from "chart.js";
 import { Card } from "primereact/card";
 import { Chart } from "primereact/chart";
 import { Column } from "primereact/column";
@@ -33,6 +34,8 @@ import { DepartmentService } from "../services/DepartmentService";
 import { RoomService } from "../services/RoomService";
 import { ThresholdService } from "../services/ThresholdService";
 import { ViolationService } from "../services/ViolationService";
+import NoDataOverlay from "../components/NoDataOverlay";
+import { findGapRanges } from "../utilities/dataGapUtils";
 
 type TimeRange = "24h" | "7d" | "30d" | "90d" | "1y";
 
@@ -112,6 +115,7 @@ const RoomManagementView: React.FC = () => {
     const [loadingRooms, setLoadingRooms] = useState(true);
     const [loadingAnalytics, setLoadingAnalytics] = useState(false);
     const [analyticsError, setAnalyticsError] = useState<string | null>(null);
+    const [privacyRestricted, setPrivacyRestricted] = useState(false);
 
     const toast = useRef<Toast | null>(null);
 
@@ -161,6 +165,7 @@ const RoomManagementView: React.FC = () => {
         const loadAnalytics = async () => {
             setLoadingAnalytics(true);
             setAnalyticsError(null);
+            setPrivacyRestricted(false);
             const from = toLocalDateTimeParam(rangeStart(timeRange));
             const to = toLocalDateTimeParam(new Date());
 
@@ -186,8 +191,13 @@ const RoomManagementView: React.FC = () => {
                 setViolationSummary(violationSummaryData);
                 setViolations([...activeViolations, ...resolvedViolations]);
                 setThresholds(thresholdData);
-            } catch {
-                setAnalyticsError("Failed to load room climate data.");
+            } catch (err: unknown) {
+                const status = (err as { response?: { status?: number } })?.response?.status;
+                if (status === 403) {
+                    setPrivacyRestricted(true);
+                } else {
+                    setAnalyticsError("Failed to load room climate data.");
+                }
                 setSummary(null);
                 setTrend(null);
                 setViolationSummary(null);
@@ -253,6 +263,30 @@ const RoomManagementView: React.FC = () => {
             });
 
         return { labels, datasets };
+    };
+
+    const buildGapPlugin = (): Plugin => {
+        const points = (trend?.points ?? [])
+            .filter(p => p.timestamp)
+            .map(p => ({ timestamp: p.timestamp! }));
+        const gaps = findGapRanges(points);
+        return {
+            id: "gapHighlight",
+            beforeDraw(chart) {
+                if (gaps.length === 0) return;
+                const ctx = chart.ctx;
+                const xScale = chart.scales["x"];
+                const yScale = chart.scales["y"];
+                ctx.save();
+                ctx.fillStyle = "rgba(156, 163, 175, 0.25)";
+                for (const { startIdx, endIdx } of gaps) {
+                    const x1 = xScale.getPixelForValue(startIdx);
+                    const x2 = xScale.getPixelForValue(endIdx);
+                    ctx.fillRect(x1, yScale.top, x2 - x1, yScale.bottom - yScale.top);
+                }
+                ctx.restore();
+            },
+        };
     };
 
     const summaryForMetric = (metric: MeasurementDTOMetricEnum) => summary?.metrics?.[metric];
@@ -355,16 +389,33 @@ const RoomManagementView: React.FC = () => {
                                         </div>
                                     </div>
 
+                                    {selectedRoom?.privacyMode && (
+                                        <div style={{
+                                            display: "flex", alignItems: "center", gap: "0.6rem",
+                                            padding: "0.65rem 1rem", marginBottom: "1rem",
+                                            backgroundColor: "#f3f4f6", border: "1px solid #d1d5db",
+                                            borderRadius: "6px", color: "#374151", fontSize: "0.9rem",
+                                        }}>
+                                            <i className="pi pi-lock" style={{ color: "#6b7280" }} />
+                                            <span>Datenschutz aktiv — Messdaten werden nur bei ausreichender Raumbelegung (mind. 5 Personen) erfasst. Graue Bereiche zeigen Perioden ohne Daten.</span>
+                                        </div>
+                                    )}
+
                                     {analyticsError && <Message severity="error" text={analyticsError} style={{ marginBottom: "1rem" }} />}
+                                    {privacyRestricted && (
+                                        <Message severity="warn" text="Klimadaten nicht verfügbar — Datenschutz aktiv (Belegung unter Mindestanzahl)." style={{ marginBottom: "1rem" }} />
+                                    )}
 
                                     {loadingAnalytics ? (
                                         <div style={{ minHeight: "360px", display: "flex", alignItems: "center", justifyContent: "center" }}>
                                             <ProgressSpinner />
                                         </div>
-                                    ) : chartEmpty ? (
-                                        <div style={{ height: "360px", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8fafc", borderRadius: "8px", color: "#64748b" }}>
-                                            No trend data for the selected room and period.
-                                        </div>
+                                    ) : privacyRestricted || chartEmpty ? (
+                                        <NoDataOverlay
+                                            height="360px"
+                                            message={privacyRestricted ? "Datenschutz aktiv — keine Daten verfügbar" : "No trend data for the selected room and period."}
+                                            icon={privacyRestricted ? "pi pi-lock" : "pi pi-ban"}
+                                        />
                                     ) : (
                                         <>
                                             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
@@ -372,7 +423,7 @@ const RoomManagementView: React.FC = () => {
                                                 {trend?.granularityReduced && <Tag value="Reduced granularity" severity="warning" />}
                                             </div>
                                             <div style={{ height: "360px" }}>
-                                                <Chart type="line" data={chartData} options={CHART_OPTIONS} style={{ height: "100%" }} />
+                                                <Chart type="line" data={chartData} options={CHART_OPTIONS} plugins={[buildGapPlugin()]} style={{ height: "100%" }} />
                                             </div>
                                         </>
                                     )}
