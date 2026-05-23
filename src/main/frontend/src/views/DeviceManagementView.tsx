@@ -435,6 +435,14 @@ const DeviceManagementView: React.FC = () => {
                             outlined
                             onClick={() => openScanDialog(piId)}
                         />
+                        <Button
+                            label="Download conf.yaml"
+                            icon="pi pi-download"
+                            size="small"
+                            outlined
+                            severity="secondary"
+                            onClick={() => void downloadConfig(pi)}
+                        />
 
                     </div>
 
