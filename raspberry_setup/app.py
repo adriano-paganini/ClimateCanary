@@ -224,7 +224,8 @@ async def resolve_violation(piId: int, payload: ViolationResolvedDTO):
     """Backend tells Pi to manually turn off the violation warning on the Arduino."""
     _check_pi_id(piId)
 
+    db = _check_db()
     from violation_tracker import resolve_violation as do_resolve
-    await do_resolve(payload.metric, payload.roomId)
+    await do_resolve(payload.metric, payload.roomId, db)
     log.info(f"[VIO] manual resolve: metric={payload.metric}, room={payload.roomId}, end={payload.endTime}")
     return {"status": "ok"}

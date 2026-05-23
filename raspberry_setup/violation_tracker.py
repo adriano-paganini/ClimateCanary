@@ -262,5 +262,5 @@ async def resolve_violation(
         log.warning(f"[VIOL] manual resolve: no active violation for {metric} room={room_id}")
 
 
-async def load_window_seconds(db: aiosqlite.Connection) -> None:
+async def load_window_seconds() -> None:
     log.info(f"[VIOL] window={VIOLATION_WINDOW_SECONDS}s, cooldown={ALERT_COOLDOWN_SECONDS}s")

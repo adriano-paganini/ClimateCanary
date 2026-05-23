@@ -197,7 +197,7 @@ async def main() -> None:
         log.info(f"[DB] opened {DB_PATH}")
 
         await load_thresholds_from_db(db)
-        await load_window_seconds(db)
+        await load_window_seconds()
 
         app_module.db_connection = db
 
