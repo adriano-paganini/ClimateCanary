@@ -7,8 +7,20 @@ import {UserxDTO, UserxRole} from "../generated-skeleton-api";
 export type UserxValidationResult = {
     valid: boolean;
     message?: string;
-    fieldErrors?: Partial<Record<keyof UserxDTO, string>>
+    fieldErrors?: Partial<Record<keyof UserxDTO | 'password' | 'departmentId' | 'roomId', string>>
 };
+
+export const rolesToArray = (roles?: Set<UserxRole> | UserxRole[] | string[]): UserxRole[] => {
+    if (!roles) return [];
+    return Array.isArray(roles)
+        ? createUserxRoleArrayFromStrings(roles)
+        : [...roles];
+}
+
+export const hasUserRole = (
+    user: Pick<UserxDTO, 'roles'> | { roles?: Set<UserxRole> | UserxRole[] | string[] } | null,
+    role: UserxRole,
+): boolean => rolesToArray(user?.roles).includes(role);
 
 
 /**

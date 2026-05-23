@@ -8,23 +8,38 @@ import { Dropdown } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
 import { Message } from 'primereact/message';
 import { ProgressSpinner } from 'primereact/progressspinner';
+import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import 'primeicons/primeicons.css';
 
 import NavbarComponent from '../components/NavbarComponent';
+import UserDialog from '../components/UserDialog';
 import { AddressService } from '../services/AddressService';
 import { BuildingService } from '../services/BuildingService';
 import { DepartmentService } from '../services/DepartmentService';
+import { EmployeeProfileService } from '../services/EmployeeProfileService';
+import { RoomService } from '../services/RoomService';
+import { UserService } from '../services/UserService';
 import { apiConfig } from '../services/apiConfig';
 import {
     AddressDTO,
     AdminControllerApi,
     BuildingDTO,
     DepartmentDTO,
+    EmployeeProfileDTO,
+    RoomCreateDTO,
+    RoomDTO,
+    RoomType,
+    RoomUpdateDTO,
+    UserxCreateDTO,
     UserxDTO,
+    UserxRole,
+    UserxUpdateDTO,
 } from '../generated-skeleton-api';
+import { createUserxRoleArrayFromStrings, rolesToArray, UserxValidationResult } from '../utilities/userxUtilities';
 
-type Tab = 'buildings' | 'addresses' | 'departments';
+type Tab = 'buildings' | 'addresses' | 'departments' | 'rooms';
+type EmployeeGroupBy = 'none' | 'department' | 'room';
 
 function apiError(err: unknown, fallback: string, conflictMsg?: string): string {
     const response = (err as { response?: { status?: number; data?: { message?: string } } })?.response;
@@ -68,6 +83,26 @@ const EMPTY_BUILDING: BuildingForm = { name: '', addressId: null };
 interface DeptForm { name: string; departmentLeadId: number | null }
 const EMPTY_DEPT: DeptForm = { name: '', departmentLeadId: null };
 
+interface RoomForm {
+    name: string;
+    roomType?: RoomType;
+    privacyMode: boolean;
+    departmentId?: number;
+    buildingId?: number;
+}
+const EMPTY_ROOM: RoomForm = { name: '', roomType: undefined, privacyMode: false, departmentId: undefined, buildingId: undefined };
+
+const EMPTY_EMPLOYEE_USER: UserxCreateDTO = {
+    username: '',
+    password: '',
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    enabled: true,
+    roles: new Set([UserxRole.EMPLOYEE]),
+};
+
 const OrgStructureView: React.FC = () => {
     const toast = useRef<Toast>(null);
 
@@ -78,7 +113,16 @@ const OrgStructureView: React.FC = () => {
     const [addresses, setAddresses] = useState<AddressDTO[]>([]);
     const [buildings, setBuildings] = useState<BuildingDTO[]>([]);
     const [departments, setDepartments] = useState<DepartmentDTO[]>([]);
+    const [rooms, setRooms] = useState<RoomDTO[]>([]);
     const [users, setUsers] = useState<UserxDTO[]>([]);
+    const [employeeProfiles, setEmployeeProfiles] = useState<EmployeeProfileDTO[]>([]);
+
+    const [addressFilter, setAddressFilter] = useState('');
+    const [buildingFilter, setBuildingFilter] = useState('');
+    const [departmentFilter, setDepartmentFilter] = useState('');
+    const [roomFilter, setRoomFilter] = useState('');
+    const [employeeGroupBy, setEmployeeGroupBy] = useState<EmployeeGroupBy>('none');
+    const [expandedDepartments, setExpandedDepartments] = useState<Record<string, boolean>>({});
 
     const [addrDialog, setAddrDialog] = useState(false);
     const [addrForm, setAddrForm] = useState<AddressForm>(EMPTY_ADDRESS);
@@ -92,20 +136,39 @@ const OrgStructureView: React.FC = () => {
     const [deptForm, setDeptForm] = useState<DeptForm>(EMPTY_DEPT);
     const [editingDept, setEditingDept] = useState<DepartmentDTO | null>(null);
 
+    const [roomDialog, setRoomDialog] = useState(false);
+    const [roomForm, setRoomForm] = useState<RoomForm>(EMPTY_ROOM);
+    const [editingRoom, setEditingRoom] = useState<RoomDTO | null>(null);
+
+    const [assignDialog, setAssignDialog] = useState(false);
+    const [createEmployeeDialog, setCreateEmployeeDialog] = useState(false);
+    const [targetDepartment, setTargetDepartment] = useState<DepartmentDTO | null>(null);
+    const [targetRooms, setTargetRooms] = useState<RoomDTO[]>([]);
+    const [assignUserId, setAssignUserId] = useState<number | null>(null);
+    const [assignRoomId, setAssignRoomId] = useState<number | null>(null);
+    const [createEmployeeForm, setCreateEmployeeForm] = useState<UserxCreateDTO>(EMPTY_EMPLOYEE_USER);
+    const [createEmployeeDepartmentId, setCreateEmployeeDepartmentId] = useState<number | undefined>(undefined);
+    const [createEmployeeRoomId, setCreateEmployeeRoomId] = useState<number | undefined>(undefined);
+    const [createEmployeeValidation, setCreateEmployeeValidation] = useState<UserxValidationResult>({ valid: true });
+
     const [saving, setSaving] = useState(false);
 
 
     useEffect(() => {
         const load = async () => {
             try {
-                const [addrData, bldgData, deptData] = await Promise.all([
+                const [addrData, bldgData, deptData, roomData, profileData] = await Promise.all([
                     AddressService.getAll(),
                     BuildingService.getAll(),
                     DepartmentService.getAll(),
+                    RoomService.getAll(),
+                    EmployeeProfileService.getAll(),
                 ]);
                 setAddresses(addrData);
                 setBuildings(bldgData);
                 setDepartments(deptData);
+                setRooms(roomData);
+                setEmployeeProfiles(profileData);
 
                 try {
                     const adminApi = new AdminControllerApi(apiConfig);
@@ -140,6 +203,21 @@ const OrgStructureView: React.FC = () => {
         const u = users.find(x => x.id === id);
         if (!u) return `User ${id}`;
         return (`${u.firstName ?? ''} ${u.lastName ?? ''}`).trim() || u.username || `User ${id}`;
+    };
+
+    const roomName = (id?: number) => {
+        if (!id) return '—';
+        return rooms.find(r => r.id === id)?.name ?? `Room ${id}`;
+    };
+
+    const departmentName = (id?: number) => {
+        if (!id) return '—';
+        return departments.find(d => d.id === id)?.name ?? `Department ${id}`;
+    };
+
+    const buildingName = (id?: number) => {
+        if (!id) return '—';
+        return buildings.find(b => b.id === id)?.name ?? `Building ${id}`;
     };
 
 
@@ -286,6 +364,222 @@ const OrgStructureView: React.FC = () => {
         });
     };
 
+    const roomTypeOptions = Object.values(RoomType).map(value => ({ label: value.replace('_', ' '), value }));
+    const openCreateRoom = () => { setEditingRoom(null); setRoomForm(EMPTY_ROOM); setRoomDialog(true); };
+    const openEditRoom = (room: RoomDTO) => {
+        setEditingRoom(room);
+        setRoomForm({
+            name: room.name ?? '',
+            roomType: room.roomType,
+            privacyMode: room.privacyMode ?? false,
+            departmentId: room.departmentId,
+            buildingId: room.buildingId,
+        });
+        setRoomDialog(true);
+    };
+    const saveRoom = async () => {
+        if (!roomForm.name.trim() || !roomForm.roomType || roomForm.departmentId === undefined || roomForm.buildingId === undefined) {
+            showError('Please fill in all required room fields.');
+            return;
+        }
+        setSaving(true);
+        try {
+            if (editingRoom?.id) {
+                const dto: RoomUpdateDTO = {
+                    name: roomForm.name,
+                    roomType: roomForm.roomType,
+                    privacyMode: roomForm.privacyMode,
+                    departmentId: roomForm.departmentId,
+                    buildingId: roomForm.buildingId,
+                };
+                const updated = await RoomService.update(editingRoom.id, dto);
+                setRooms(prev => prev.map(r => r.id === updated.id ? updated : r));
+                showSuccess('Room updated.');
+            } else {
+                const dto: RoomCreateDTO = {
+                    name: roomForm.name,
+                    roomType: roomForm.roomType,
+                    privacyMode: roomForm.privacyMode,
+                    departmentId: roomForm.departmentId,
+                    buildingId: roomForm.buildingId,
+                };
+                const created = await RoomService.create(dto);
+                setRooms(prev => [...prev, created]);
+                showSuccess('Room created.');
+            }
+            setRoomDialog(false);
+        } catch (err) {
+            showError(apiError(err, 'Failed to save room.', 'A room with this name already exists.'));
+        } finally {
+            setSaving(false);
+        }
+    };
+    const deleteRoom = (room: RoomDTO) => {
+        confirmDialog({
+            message: `Delete room "${room.name}"?`,
+            header: 'Confirm Delete',
+            icon: 'pi pi-trash',
+            acceptClassName: 'p-button-danger',
+            accept: async () => {
+                try {
+                    await RoomService.delete(room.id!);
+                    setRooms(prev => prev.filter(r => r.id !== room.id));
+                    showSuccess('Room deleted.');
+                } catch (err) {
+                    showError(apiError(err, 'Failed to delete room.', 'This room is still referenced and cannot be deleted.'));
+                }
+            },
+        });
+    };
+
+    const getDepartmentMembers = (departmentId?: number) => {
+        if (!departmentId) return [];
+        return employeeProfiles
+            .filter(profile => profile.departmentId === departmentId)
+            .map(profile => ({
+                profile,
+                user: users.find(user => user.id === profile.userxId),
+                departmentName: departmentName(profile.departmentId),
+                roomName: roomName(profile.roomId),
+            }));
+    };
+
+    const openAssignEmployee = async (department: DepartmentDTO) => {
+        if (!department.id) return;
+        setTargetDepartment(department);
+        setAssignUserId(null);
+        setAssignRoomId(null);
+        setTargetRooms(await DepartmentService.getRooms(department.id));
+        setAssignDialog(true);
+    };
+
+    const openCreateDepartmentEmployee = async (department: DepartmentDTO) => {
+        if (!department.id) return;
+        setTargetDepartment(department);
+        setCreateEmployeeForm({ ...EMPTY_EMPLOYEE_USER, roles: new Set([UserxRole.EMPLOYEE]) });
+        setCreateEmployeeValidation({ valid: true });
+        setCreateEmployeeDepartmentId(department.id);
+        setCreateEmployeeRoomId(undefined);
+        setTargetRooms(await DepartmentService.getRooms(department.id));
+        setCreateEmployeeDialog(true);
+    };
+
+    const assignExistingEmployee = async () => {
+        if (!targetDepartment?.id || !assignUserId || !assignRoomId) {
+            showError('Please select a user and a room.');
+            return;
+        }
+        setSaving(true);
+        try {
+            const user = users.find(u => u.id === assignUserId);
+            if (user) {
+                const roles = new Set([...rolesToArray(user.roles), UserxRole.EMPLOYEE]);
+                const update: UserxUpdateDTO = {
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    email: user.email,
+                    phone: user.phone,
+                    roles,
+                };
+                const updatedUser = await UserService.updateUser(assignUserId, update);
+                setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+            }
+
+            const createdProfile = await EmployeeProfileService.create({
+                userxId: assignUserId,
+                departmentId: targetDepartment.id,
+                roomId: assignRoomId,
+            });
+            setEmployeeProfiles(prev => [...prev, createdProfile]);
+            setAssignDialog(false);
+            showSuccess('Employee assigned.');
+        } catch (err) {
+            showError(apiError(err, 'Failed to assign employee.', 'This user already has an employee profile.'));
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const createDepartmentEmployee = async () => {
+        const fieldErrors: UserxValidationResult['fieldErrors'] = {};
+        if (!createEmployeeForm.username.trim()) fieldErrors.username = 'Required';
+        if (!createEmployeeForm.password.trim()) fieldErrors.password = 'Required';
+        if (!createEmployeeForm.firstName?.trim()) fieldErrors.firstName = 'Required';
+        if (!createEmployeeForm.lastName?.trim()) fieldErrors.lastName = 'Required';
+        if (!createEmployeeForm.email?.trim()) fieldErrors.email = 'Required';
+        if (!createEmployeeForm.phone?.trim()) fieldErrors.phone = 'Required';
+        if (rolesToArray(createEmployeeForm.roles).length === 0) fieldErrors.roles = 'Required';
+        if (createEmployeeDepartmentId === undefined) fieldErrors.departmentId = 'Required';
+        if (createEmployeeRoomId === undefined) fieldErrors.roomId = 'Required';
+
+        if (Object.keys(fieldErrors).length > 0) {
+            setCreateEmployeeValidation({ valid: false, message: 'Please fill in all required fields', fieldErrors });
+            return;
+        }
+
+        setSaving(true);
+        try {
+            const roles = new Set([...rolesToArray(createEmployeeForm.roles), UserxRole.EMPLOYEE]);
+            const createdUser = await UserService.createUser({ ...createEmployeeForm, roles });
+            const createdProfile = await EmployeeProfileService.create({
+                userxId: createdUser.id!,
+                departmentId: createEmployeeDepartmentId!,
+                roomId: createEmployeeRoomId,
+            });
+            setUsers(prev => [...prev, createdUser]);
+            setEmployeeProfiles(prev => [...prev, createdProfile]);
+            setCreateEmployeeDialog(false);
+            showSuccess('Employee created and assigned.');
+        } catch (err) {
+            showError(apiError(err, 'Failed to create employee.', 'A user with this username already exists.'));
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleCreateEmployeeInput = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = event.target;
+        setCreateEmployeeForm(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleCreateEmployeeRoles = (event: { value: string[] }) => {
+        setCreateEmployeeForm(prev => ({
+            ...prev,
+            roles: new Set(createUserxRoleArrayFromStrings(event.value)),
+        }));
+    };
+
+    const handleCreateEmployeePhone = (phone: string) => {
+        setCreateEmployeeForm(prev => ({ ...prev, phone }));
+    };
+
+    const handleCreateEmployeeDepartment = async (departmentId?: number) => {
+        setCreateEmployeeDepartmentId(departmentId);
+        setCreateEmployeeRoomId(undefined);
+        setTargetRooms([]);
+        if (departmentId !== undefined) {
+            setTargetRooms(await DepartmentService.getRooms(departmentId));
+        }
+    };
+
+    const removeEmployeeProfile = (profile: EmployeeProfileDTO) => {
+        confirmDialog({
+            message: 'Remove this employee from the department?',
+            header: 'Confirm Remove',
+            icon: 'pi pi-trash',
+            acceptClassName: 'p-button-danger',
+            accept: async () => {
+                try {
+                    await EmployeeProfileService.delete(profile.id!);
+                    setEmployeeProfiles(prev => prev.filter(p => p.id !== profile.id));
+                    showSuccess('Employee profile removed.');
+                } catch (err) {
+                    showError(apiError(err, 'Failed to remove employee profile.'));
+                }
+            },
+        });
+    };
+
 
     if (loading) {
         return (
@@ -314,6 +608,15 @@ const OrgStructureView: React.FC = () => {
         </div>
     );
 
+    const filterHeader = (value: string, onChange: (value: string) => void, placeholder: string, action?: React.ReactNode) => (
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem', alignItems: 'center' }}>
+            <span style={{ flex: '1 1 18rem', maxWidth: '28rem' }}>
+                <InputText value={value} onChange={event => onChange(event.target.value)} placeholder={placeholder} style={{ width: '100%' }} />
+            </span>
+            {action}
+        </div>
+    );
+
     const addressOptions = addresses.map(a => ({
         label: addressLabel(a.id),
         value: a.id,
@@ -323,6 +626,97 @@ const OrgStructureView: React.FC = () => {
         label: (`${u.firstName ?? ''} ${u.lastName ?? ''}`).trim() || u.username || `User ${u.id}`,
         value: u.id,
     }));
+    const unassignedUserOptions = users
+        .filter(user => user.enabled !== false && !employeeProfiles.some(profile => profile.userxId === user.id))
+        .map(u => ({
+            label: (`${u.firstName ?? ''} ${u.lastName ?? ''}`).trim() || u.username || `User ${u.id}`,
+            value: u.id,
+        }));
+    const departmentOptions = departments.map(d => ({ label: d.name ?? `Department ${d.id}`, value: d.id }));
+    const buildingOptions = buildings.map(b => ({ label: b.name ?? `Building ${b.id}`, value: b.id }));
+    const roomOptions = targetRooms.map(room => ({ label: room.name ?? `Room ${room.id}`, value: room.id }));
+    const employeeGroupOptions: Array<{ label: string; value: EmployeeGroupBy }> = [
+        { label: 'No grouping', value: 'none' },
+        { label: 'Department', value: 'department' },
+        { label: 'Room', value: 'room' },
+    ];
+    const roomTypeTemplate = (row: RoomDTO) => (
+        <Tag value={row.roomType?.replace('_', ' ') ?? '—'} severity={row.roomType === RoomType.OFFICE ? 'info' : 'warning'} />
+    );
+    const privacyTemplate = (row: RoomDTO) => (
+        <Tag value={row.privacyMode ? 'On' : 'Off'} severity={row.privacyMode ? 'warning' : 'success'} />
+    );
+    const statusTemplate = (row: RoomDTO) => (
+        <Tag value={row.active ? 'Active' : 'Inactive'} severity={row.active ? 'success' : 'danger'} />
+    );
+    const rolesTemplate = (user?: UserxDTO) => (
+        <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+            {rolesToArray(user?.roles).map(role => <Tag key={role} value={role} />)}
+        </div>
+    );
+    const departmentExpansionTemplate = (department: DepartmentDTO) => {
+        const members = getDepartmentMembers(department.id);
+        const canRemoveProfile = (user?: UserxDTO) => {
+            const roles = rolesToArray(user?.roles);
+            return roles.length > 1 || !roles.includes(UserxRole.EMPLOYEE);
+        };
+        return (
+            <div style={{ padding: '1rem 2rem', background: '#f9fafb' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'center', marginBottom: '1rem' }}>
+                    <h3 style={{ margin: 0, fontSize: '1rem' }}>Employees</h3>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <Dropdown
+                            value={employeeGroupBy}
+                            options={employeeGroupOptions}
+                            onChange={event => setEmployeeGroupBy(event.value as EmployeeGroupBy)}
+                            style={{ width: '12rem' }}
+                        />
+                        <Button label="Assign User" icon="pi pi-user-plus" size="small" outlined onClick={() => void openAssignEmployee(department)} />
+                        <Button label="Create Employee" icon="pi pi-plus" size="small" onClick={() => void openCreateDepartmentEmployee(department)} />
+                    </div>
+                </div>
+                <DataTable
+                    value={members}
+                    emptyMessage="No employees assigned."
+                    size="small"
+                    rowGroupMode={employeeGroupBy === 'none' ? undefined : 'subheader'}
+                    groupRowsBy={employeeGroupBy === 'department' ? 'departmentName' : employeeGroupBy === 'room' ? 'roomName' : undefined}
+                    sortField={employeeGroupBy === 'department' ? 'departmentName' : employeeGroupBy === 'room' ? 'roomName' : undefined}
+                    sortOrder={employeeGroupBy === 'none' ? undefined : 1}
+                >
+                    <Column field="user.username" header="Username" sortable body={(row: { user?: UserxDTO }) => row.user?.username ?? '—'} />
+                    <Column field="user.firstName" header="First Name" sortable body={(row: { user?: UserxDTO }) => row.user?.firstName ?? '—'} />
+                    <Column field="user.lastName" header="Last Name" sortable body={(row: { user?: UserxDTO }) => row.user?.lastName ?? '—'} />
+                    <Column field="roomName" header="Room" sortable />
+                    <Column header="Roles" body={(row: { user?: UserxDTO }) => rolesTemplate(row.user)} />
+                    <Column
+                        header="Actions"
+                        style={{ width: '16rem' }}
+                        body={(row: { profile: EmployeeProfileDTO; user?: UserxDTO }) => {
+                            if (!canRemoveProfile(row.user)) {
+                                return (
+                                    <span style={{ color: '#6b7280', fontSize: '0.85rem' }}>
+                                        Reassign or delete this employee instead.
+                                    </span>
+                                );
+                            }
+
+                            return (
+                                <Button
+                                    icon="pi pi-trash"
+                                    label="Remove Profile"
+                                    size="small"
+                                    severity="danger"
+                                    outlined
+                                    onClick={() => removeEmployeeProfile(row.profile)}
+                                />
+                            );
+                        }}
+                    />
+                </DataTable>
+            </div>
+        );
+    };
 
     return (
         <div>
@@ -350,6 +744,10 @@ const OrgStructureView: React.FC = () => {
                         <i className="pi pi-sitemap" style={{ marginRight: '0.5rem' }} />
                         Departments
                     </button>
+                    <button style={TAB_STYLE(activeTab === 'rooms')} onClick={() => setActiveTab('rooms')}>
+                        <i className="pi pi-th-large" style={{ marginRight: '0.5rem' }} />
+                        Rooms
+                    </button>
                 </div>
 
                 <div style={{ padding: '2rem', backgroundColor: '#ffffff', borderRadius: '0 12px 12px 12px', border: '1px solid #e5e7eb', borderTop: 'none' }}>
@@ -357,12 +755,10 @@ const OrgStructureView: React.FC = () => {
                     {/* Buildings Tab */}
                     {activeTab === 'buildings' && (
                         <>
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
-                                <Button label="Add Building" icon="pi pi-plus" onClick={openCreateBldg} />
-                            </div>
-                            <DataTable value={buildings} stripedRows paginator rows={10} emptyMessage="No buildings found.">
+                            {filterHeader(buildingFilter, setBuildingFilter, 'Filter buildings...', <Button label="Add Building" icon="pi pi-plus" onClick={openCreateBldg} />)}
+                            <DataTable value={buildings} globalFilter={buildingFilter} globalFilterFields={['id', 'name', 'addressId']} stripedRows paginator rows={10} emptyMessage="No buildings found.">
                                 <Column field="id" header="ID" style={{ width: '5rem' }} />
-                                <Column field="name" header="Name" />
+                                <Column field="name" header="Name" sortable />
                                 <Column header="Address" body={(b: BuildingDTO) => addressLabel(b.addressId)} />
                                 <Column header="Actions" style={{ width: '8rem' }} body={(b: BuildingDTO) => actionTemplate(() => openEditBldg(b), () => deleteBldg(b))} />
                             </DataTable>
@@ -372,15 +768,13 @@ const OrgStructureView: React.FC = () => {
                     {/* Addresses Tab */}
                     {activeTab === 'addresses' && (
                         <>
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
-                                <Button label="Add Address" icon="pi pi-plus" onClick={openCreateAddr} />
-                            </div>
-                            <DataTable value={addresses} stripedRows paginator rows={10} emptyMessage="No addresses found.">
+                            {filterHeader(addressFilter, setAddressFilter, 'Filter addresses...', <Button label="Add Address" icon="pi pi-plus" onClick={openCreateAddr} />)}
+                            <DataTable value={addresses} globalFilter={addressFilter} globalFilterFields={['id', 'country', 'zipCode', 'city', 'street', 'houseNumber', 'extra']} stripedRows paginator rows={10} emptyMessage="No addresses found.">
                                 <Column field="id" header="ID" style={{ width: '5rem' }} />
-                                <Column field="country" header="Country" />
-                                <Column field="zipCode" header="ZIP" />
-                                <Column field="city" header="City" />
-                                <Column field="street" header="Street" />
+                                <Column field="country" header="Country" sortable />
+                                <Column field="zipCode" header="ZIP" sortable />
+                                <Column field="city" header="City" sortable />
+                                <Column field="street" header="Street" sortable />
                                 <Column field="houseNumber" header="No." style={{ width: '5rem' }} />
                                 <Column field="extra" header="Extra" />
                                 <Column header="Actions" style={{ width: '8rem' }} body={(a: AddressDTO) => actionTemplate(() => openEditAddr(a), () => deleteAddr(a))} />
@@ -391,14 +785,50 @@ const OrgStructureView: React.FC = () => {
                     {/* Departments Tab */}
                     {activeTab === 'departments' && (
                         <>
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
-                                <Button label="Add Department" icon="pi pi-plus" onClick={openCreateDept} />
-                            </div>
-                            <DataTable value={departments} stripedRows paginator rows={10} emptyMessage="No departments found.">
+                            {filterHeader(departmentFilter, setDepartmentFilter, 'Filter departments...', <Button label="Add Department" icon="pi pi-plus" onClick={openCreateDept} />)}
+                            <DataTable
+                                value={departments}
+                                globalFilter={departmentFilter}
+                                globalFilterFields={['id', 'name', 'departmentLeadId']}
+                                stripedRows
+                                paginator
+                                rows={10}
+                                emptyMessage="No departments found."
+                                expandedRows={expandedDepartments}
+                                onRowToggle={e => setExpandedDepartments(e.data as Record<string, boolean>)}
+                                rowExpansionTemplate={departmentExpansionTemplate}
+                                dataKey="id"
+                            >
+                                <Column expander style={{ width: '3rem' }} />
                                 <Column field="id" header="ID" style={{ width: '5rem' }} />
-                                <Column field="name" header="Name" />
+                                <Column field="name" header="Name" sortable />
                                 <Column header="Department Lead" body={(d: DepartmentDTO) => userName(d.departmentLeadId)} />
                                 <Column header="Actions" style={{ width: '8rem' }} body={(d: DepartmentDTO) => actionTemplate(() => openEditDept(d), () => deleteDept(d))} />
+                            </DataTable>
+                        </>
+                    )}
+
+                    {/* Rooms Tab */}
+                    {activeTab === 'rooms' && (
+                        <>
+                            {filterHeader(roomFilter, setRoomFilter, 'Search rooms...', <Button label="Add Room" icon="pi pi-plus" onClick={openCreateRoom} />)}
+                            <DataTable
+                                value={rooms}
+                                globalFilter={roomFilter}
+                                globalFilterFields={['id', 'name', 'roomType', 'departmentId', 'buildingId']}
+                                stripedRows
+                                paginator
+                                rows={10}
+                                emptyMessage="No rooms found."
+                            >
+                                <Column field="id" header="ID" style={{ width: '5rem' }} />
+                                <Column field="name" header="Name" sortable />
+                                <Column field="roomType" header="Type" body={roomTypeTemplate} sortable />
+                                <Column header="Department" body={(room: RoomDTO) => departmentName(room.departmentId)} />
+                                <Column header="Building" body={(room: RoomDTO) => buildingName(room.buildingId)} />
+                                <Column field="privacyMode" header="Privacy" body={privacyTemplate} />
+                                <Column field="active" header="Status" body={statusTemplate} />
+                                <Column header="Actions" style={{ width: '8rem' }} body={(room: RoomDTO) => actionTemplate(() => openEditRoom(room), () => deleteRoom(room))} />
                             </DataTable>
                         </>
                     )}
@@ -507,6 +937,117 @@ const OrgStructureView: React.FC = () => {
                     </div>
                 </div>
             </Dialog>
+
+            {/* Room Dialog */}
+            <Dialog
+                header={editingRoom ? 'Edit Room' : 'New Room'}
+                visible={roomDialog}
+                style={{ width: '480px' }}
+                onHide={() => setRoomDialog(false)}
+                footer={
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                        <Button label="Cancel" severity="secondary" outlined onClick={() => setRoomDialog(false)} />
+                        <Button label="Save" icon="pi pi-check" loading={saving} onClick={() => void saveRoom()} />
+                    </div>
+                }
+            >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', paddingTop: '0.5rem' }}>
+                    <div>
+                        <label style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.4rem', color: '#374151' }}>Name *</label>
+                        <InputText value={roomForm.name} onChange={e => setRoomForm(f => ({ ...f, name: e.target.value }))} style={{ width: '100%' }} />
+                    </div>
+                    <div>
+                        <label style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.4rem', color: '#374151' }}>Room Type *</label>
+                        <Dropdown
+                            value={roomForm.roomType}
+                            options={roomTypeOptions}
+                            onChange={e => setRoomForm(f => ({ ...f, roomType: e.value as RoomType }))}
+                            placeholder="Select room type..."
+                            style={{ width: '100%' }}
+                        />
+                    </div>
+                    <div>
+                        <label style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.4rem', color: '#374151' }}>Department *</label>
+                        <Dropdown
+                            value={roomForm.departmentId}
+                            options={departmentOptions}
+                            onChange={e => setRoomForm(f => ({ ...f, departmentId: e.value as number }))}
+                            placeholder="Select department..."
+                            filter
+                            style={{ width: '100%' }}
+                        />
+                    </div>
+                    <div>
+                        <label style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.4rem', color: '#374151' }}>Building *</label>
+                        <Dropdown
+                            value={roomForm.buildingId}
+                            options={buildingOptions}
+                            onChange={e => setRoomForm(f => ({ ...f, buildingId: e.value as number }))}
+                            placeholder="Select building..."
+                            filter
+                            style={{ width: '100%' }}
+                        />
+                    </div>
+                </div>
+            </Dialog>
+
+            {/* Assign Existing User Dialog */}
+            <Dialog
+                header={`Assign User${targetDepartment?.name ? ` to ${targetDepartment.name}` : ''}`}
+                visible={assignDialog}
+                style={{ width: '460px' }}
+                onHide={() => setAssignDialog(false)}
+                footer={
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                        <Button label="Cancel" severity="secondary" outlined onClick={() => setAssignDialog(false)} />
+                        <Button label="Assign" icon="pi pi-check" loading={saving} onClick={() => void assignExistingEmployee()} />
+                    </div>
+                }
+            >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', paddingTop: '0.5rem' }}>
+                    <div>
+                        <label style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.4rem', color: '#374151' }}>User without employee profile *</label>
+                        <Dropdown
+                            value={assignUserId}
+                            options={unassignedUserOptions}
+                            onChange={e => setAssignUserId(e.value as number)}
+                            placeholder="Select user..."
+                            filter
+                            style={{ width: '100%' }}
+                        />
+                    </div>
+                    <div>
+                        <label style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.4rem', color: '#374151' }}>Room *</label>
+                        <Dropdown
+                            value={assignRoomId}
+                            options={roomOptions}
+                            onChange={e => setAssignRoomId(e.value as number)}
+                            placeholder="Select room..."
+                            filter
+                            style={{ width: '100%' }}
+                        />
+                    </div>
+                </div>
+            </Dialog>
+
+            <UserDialog
+                visible={createEmployeeDialog}
+                user={createEmployeeForm}
+                isNewUser
+                validation={createEmployeeValidation}
+                onHide={() => setCreateEmployeeDialog(false)}
+                onSubmit={() => void createDepartmentEmployee()}
+                onInputChange={handleCreateEmployeeInput}
+                onRolesChange={handleCreateEmployeeRoles}
+                onPhoneChange={handleCreateEmployeePhone}
+                departments={targetDepartment ? [targetDepartment] : []}
+                rooms={targetRooms}
+                selectedDepartmentId={createEmployeeDepartmentId}
+                selectedRoomId={createEmployeeRoomId}
+                onDepartmentChange={(departmentId) => void handleCreateEmployeeDepartment(departmentId)}
+                onRoomChange={setCreateEmployeeRoomId}
+                lockedRoles={[UserxRole.EMPLOYEE]}
+            />
 
         </div>
     );

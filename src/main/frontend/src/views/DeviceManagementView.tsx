@@ -194,9 +194,18 @@ const DeviceManagementView: React.FC = () => {
 
     const selectAvailableStation = (station: SensorStationDTO) => {
         setScanDialogVisible(false);
-        if (scanPiId != null) {
-            openCreateStation(scanPiId, station.bleMac ?? '');
-        }
+        setStationIsNew(false);
+        setSelectedStation(station);
+        setStationPiId(station.raspberryPiId ?? scanPiId);
+        setStationForm({
+            name: station.name ?? '',
+            bleMac: station.bleMac ?? '',
+            measurementInterval: station.measurementInterval ?? null,
+            roomId: station.roomId ?? null,
+            deviceStatus: station.deviceStatus ?? SensorStationUpdateDTODeviceStatusEnum.AVAILABLE,
+        });
+        setStationError(null);
+        setStationDialogVisible(true);
     };
 
 
@@ -347,7 +356,9 @@ const DeviceManagementView: React.FC = () => {
                     if (stationPiId != null) {
                         setStationsMap(prev => ({
                             ...prev,
-                            [stationPiId]: (prev[stationPiId] ?? []).map(s => s.id === updated.id ? updated : s),
+                            [stationPiId]: (prev[stationPiId] ?? []).some(s => s.id === updated.id)
+                                ? (prev[stationPiId] ?? []).map(s => s.id === updated.id ? updated : s)
+                                : [...(prev[stationPiId] ?? []), updated],
                         }));
                     }
                     setStationDialogVisible(false);

@@ -11,6 +11,7 @@ import at.qe.skeleton.mappers.ThresholdMapper;
 import at.qe.skeleton.models.ClimateHint;
 import at.qe.skeleton.models.Metric;
 import at.qe.skeleton.models.Threshold;
+import at.qe.skeleton.models.ThresholdType;
 import at.qe.skeleton.repositories.ClimateHintRepository;
 import at.qe.skeleton.repositories.ThresholdRepository;
 import jakarta.transaction.Transactional;
@@ -61,6 +62,11 @@ public class ThresholdService {
     }
 
     public Threshold create(ThresholdCreateDTO dto) {
+        if (thresholdRepository.existsByRoomIdAndMetricAndThresholdType(dto.roomId(), dto.metric(), dto.thresholdType())
+        ) {
+            log.debug("Threshold already exists for room {} and metric {} and threshold type {}", dto.roomId(), dto.metric(), dto.thresholdType());
+            throw new ConflictException("Threshold already exists for room " + dto.roomId() + " and metric " + dto.metric() + " and threshold type " + dto.thresholdType());
+        }
         Threshold entity = new Threshold();
         entity.setMetric(dto.metric());
         entity.setBoundValue(dto.boundValue());
@@ -90,6 +96,14 @@ public class ThresholdService {
 
         ThresholdDTO oldThresholdDTO = thresholdMapper.mapTo(entity);
         Long oldPiId = getRaspberryPiIdOrNull(entity);
+        Long effectiveRoomId = dto.roomId() != null ? dto.roomId() : entity.getRoom().getId();
+        Metric effectiveMetric = dto.metric() != null ? dto.metric() : entity.getMetric();
+        ThresholdType effectiveThresholdType = dto.thresholdType() != null ? dto.thresholdType() : entity.getThresholdType();
+
+        if (thresholdRepository.existsByRoomIdAndMetricAndThresholdTypeAndIdNot(effectiveRoomId, effectiveMetric, effectiveThresholdType, id)) {
+            log.debug("Threshold already exists for room {} and metric {} and threshold type {}", effectiveRoomId, effectiveMetric, effectiveThresholdType);
+            throw new ConflictException("Threshold already exists for room " + effectiveRoomId + " and metric " + effectiveMetric + " and threshold type " + effectiveThresholdType);
+        }
 
         StringBuilder debugInfo = new StringBuilder("Updated threshold details:")
                 .append(" id=").append(id);

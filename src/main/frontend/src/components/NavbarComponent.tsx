@@ -17,7 +17,7 @@ import "../styles/Navbar.css";
  * Navbar component.
  */
 const NavbarComponent: React.FC = () => {
-    const { currentUser: user, fullUser } = useUser();
+    const { currentUser: user } = useUser();
 
     const filterMenu = React.useCallback((items: MenuItemConfig[]): MenuItemConfig[] => {
         if (!user) return [];
@@ -88,7 +88,7 @@ const NavbarComponent: React.FC = () => {
         return null;
     }
 
-    const displayUser = fullUser ?? user;
+    const displayUser = user;
     const displayName = [displayUser.firstName, displayUser.lastName].filter(Boolean).join(' ') || displayUser.username;
     const roles = displayUser.roles ? [...displayUser.roles] : [];
 

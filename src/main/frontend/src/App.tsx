@@ -65,15 +65,11 @@ const App: React.FC = () => {
                             <Route path={ROUTES.THRESHOLDS} Component={ThresholdManagementView}/>
                         </Route>
 
-                        {/* Building Admin and System Admin only */}
-                        <Route element={<PrivateRoute roles={[UserxRole.BUILDING_ADMIN, UserxRole.SYSTEM_ADMIN]}/>}>
-                            <Route path={ManageUsersRoute.url} Component={ManageUsersRoute.component}/>
-                            <Route path={ROUTES.DEVICES} Component={DeviceManagementView}/>
-                        </Route>
-
                         {/* System Admin only */}
                         <Route element={<PrivateRoute roles={[UserxRole.SYSTEM_ADMIN]}/>}>
                             <Route path={ROUTES.BUILDINGS} Component={OrgStructureView}/>
+                            <Route path={ManageUsersRoute.url} Component={ManageUsersRoute.component}/>
+                            <Route path={ROUTES.DEVICES} Component={DeviceManagementView}/>
                         </Route>
                     </Routes>
                 </BrowserRouter>

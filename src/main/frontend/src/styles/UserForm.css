@@ -18,7 +18,7 @@
     overscroll-behavior: contain;
 }
 
-.user-dialog-scroll-body {
+.user-dialog-content {
     max-height: calc(90vh - 10rem);
     overflow-y: auto;
     overscroll-behavior: contain;
