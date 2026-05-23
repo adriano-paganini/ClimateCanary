@@ -4,6 +4,7 @@ import at.qe.skeleton.dtos.ClimateHintDTO;
 import at.qe.skeleton.dtos.ThresholdCreateDTO;
 import at.qe.skeleton.dtos.ThresholdDTO;
 import at.qe.skeleton.dtos.ThresholdUpdateDTO;
+import at.qe.skeleton.dtos.ViolationResolvedDTO;
 import at.qe.skeleton.common.exceptions.ConflictException;
 import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.mappers.ClimateHintMapper;
@@ -11,12 +12,17 @@ import at.qe.skeleton.mappers.ThresholdMapper;
 import at.qe.skeleton.models.ClimateHint;
 import at.qe.skeleton.models.Metric;
 import at.qe.skeleton.models.Threshold;
+import at.qe.skeleton.models.ThresholdViolation;
+import at.qe.skeleton.models.ViolationStatus;
 import at.qe.skeleton.repositories.ClimateHintRepository;
 import at.qe.skeleton.repositories.ThresholdRepository;
+import at.qe.skeleton.repositories.ThresholdViolationRepository;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +32,7 @@ import java.util.Map;
 public class ThresholdService {
 
     private final ThresholdRepository thresholdRepository;
+    private final ThresholdViolationRepository thresholdViolationRepository;
     private final RoomService roomService;
     private final ClimateHintRepository climateHintRepository;
     private final RaspberryPiServerService raspberryPiServerService;
@@ -33,9 +40,14 @@ public class ThresholdService {
     private final ClimateHintMapper climateHintMapper;
 
     public ThresholdService(ThresholdRepository thresholdRepository,
+                            ThresholdViolationRepository thresholdViolationRepository,
                             RoomService roomService,
-                            ClimateHintRepository climateHintRepository, RaspberryPiServerService raspberryPiServerService, ThresholdMapper thresholdMapper, ClimateHintMapper climateHintMapper) {
+                            ClimateHintRepository climateHintRepository,
+                            RaspberryPiServerService raspberryPiServerService,
+                            ThresholdMapper thresholdMapper,
+                            ClimateHintMapper climateHintMapper) {
         this.thresholdRepository = thresholdRepository;
+        this.thresholdViolationRepository = thresholdViolationRepository;
         this.roomService = roomService;
         this.climateHintRepository = climateHintRepository;
         this.raspberryPiServerService = raspberryPiServerService;
@@ -166,6 +178,7 @@ public class ThresholdService {
 
         if (!updatedThreshold.isEnabled()) {
             log.info("Threshold with id={} is disabled, so it will not be sent as active configuration to Raspberry Pi", thresholdId);
+            disableActiveViolations(thresholdId, updatedThreshold);
             return;
         }
 
@@ -192,6 +205,39 @@ public class ThresholdService {
         }
     }
 
+    private void disableActiveViolations(Long thresholdId, Threshold threshold) {
+        List<ThresholdViolation> active = thresholdViolationRepository
+                .findByThreshold_IdAndViolationStatus(thresholdId, ViolationStatus.ACTIVE);
+
+        if (active.isEmpty()) {
+            return;
+        }
+
+        Long piId = getRaspberryPiIdOrNull(threshold);
+        LocalDateTime now = LocalDateTime.now();
+        String endTimestamp = now.format(DateTimeFormatter.ISO_DATE_TIME);
+
+        for (ThresholdViolation v : active) {
+            v.setViolationStatus(ViolationStatus.DISABLED);
+            v.setEndTime(now);
+            thresholdViolationRepository.save(v);
+            log.info("Set threshold violation id={} to DISABLED (threshold id={} disabled)", v.getId(), thresholdId);
+
+            if (piId != null && v.getRoom() != null) {
+                PiRequestResult result = raspberryPiServerService.resolveActiveViolation(
+                        piId,
+                        new ViolationResolvedDTO(v.getMetric(), v.getRoom().getId(), endTimestamp)
+                );
+                if (result != PiRequestResult.SUCCESS) {
+                    log.warn("Could not notify Pi {} about disabled violation id={}: result={}",
+                            piId, v.getId(), result);
+                }
+            }
+        }
+
+        log.info("Disabled {} active violation(s) for threshold id={}", active.size(), thresholdId);
+    }
+
     private Long getRaspberryPiIdOrNull(Threshold threshold) {
         if (threshold == null || threshold.getRoom() == null || threshold.getRoom().getRaspberryPi() == null) {
             return null;
@@ -211,12 +257,9 @@ public class ThresholdService {
         ThresholdDTO thresholdDTO = thresholdMapper.mapTo(entity);
 
         if (piId != null) {
-            Map<ThresholdDTO, List<ClimateHintDTO>> completeThresholdInfo = Map.of(thresholdDTO,
-                    entity.getClimateHints().stream().map(climateHintMapper::mapTo).toList());
-
-            PiRequestResult deletionResult = raspberryPiServerService.informAboutNewThresholds(
+            PiRequestResult deletionResult = raspberryPiServerService.deleteThresholds(
                     piId,
-                    completeThresholdInfo
+                    List.of(thresholdDTO)
             );
 
             if (deletionResult != PiRequestResult.SUCCESS) {

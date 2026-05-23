@@ -22,24 +22,10 @@ class MetricConfig:
 _lock:  asyncio.Lock | None     = None
 _store: dict[str, MetricConfig] = {}
 
-_DEFAULTS: dict[str, MetricConfig] = {
-    "temperature": MetricConfig(
-        threshold=Threshold("temperature", upper_bound=30.0,   lower_bound=16.0),
-        hint_texts=["Bitte Fenster öffnen oder Heizung anpassen."],
-    ),
-    "humidity": MetricConfig(
-        threshold=Threshold("humidity",    upper_bound=70.0,   lower_bound=30.0),
-        hint_texts=["Bitte lüften oder Luftbefeuchter einsetzen."],
-    ),
-    "pressure": MetricConfig(
-        threshold=Threshold("pressure",    upper_bound=1050.0, lower_bound=950.0),
-        hint_texts=["Ungewöhnlicher Luftdruck – bitte Fenster prüfen."],
-    ),
-    "air_quality": MetricConfig(
-        threshold=Threshold("air_quality", upper_bound=50000.0, lower_bound=None),
-        hint_texts=["Schlechte Luftqualität – bitte lüften."],
-    ),
-}
+_NO_CONFIG = MetricConfig(
+    threshold=Threshold("", upper_bound=None, lower_bound=None),
+    hint_texts=[],
+)
 
 def _get_lock() -> asyncio.Lock:
     global _lock
@@ -49,7 +35,7 @@ def _get_lock() -> asyncio.Lock:
 
 
 def get_metric_config(metric: str) -> MetricConfig:
-    return _store.get(metric, _DEFAULTS[metric])
+    return _store.get(metric, _NO_CONFIG)
 
 
 def get_threshold(metric: str) -> Threshold:
@@ -120,7 +106,7 @@ async def remove_threshold_bounds(
                 continue
             bound_type = entry.get("thresholdType", "")
 
-            current = _store.get(metric, _DEFAULTS.get(metric))
+            current = _store.get(metric)
             if current is None:
                 continue
 

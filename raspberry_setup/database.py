@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from datetime import datetime, timedelta
 import aiosqlite
 from bleak import BleakClient
 
@@ -124,6 +125,37 @@ async def remove_station(db: aiosqlite.Connection, address: str) -> None:
     await db.execute("DELETE FROM stations WHERE address = ?", (address,))
     await db.commit()
     log.info(f"[DB] removed station address={address}")
+
+
+async def cleanup_old_rows(db: aiosqlite.Connection, retention_hours: int = 48) -> None:
+    cutoff = (datetime.now() - timedelta(hours=retention_hours)).strftime("%Y-%m-%dT%H:%M:%S.000")
+
+    cursor = await db.execute(
+        "DELETE FROM sensor_data WHERE timestamp < ? AND sent = 1", (cutoff,)
+    )
+    sent_deleted = cursor.rowcount
+
+    async with db.execute(
+        "SELECT COUNT(*) FROM sensor_data WHERE timestamp < ? AND sent = 0", (cutoff,)
+    ) as cursor:
+        (unsent_count,) = await cursor.fetchone()
+
+    if unsent_count:
+        log.warning(f"[DB] cleanup: deleting {unsent_count} unsent row(s) older than "
+                    f"{retention_hours}h — backend was unreachable too long, data lost")
+        await db.execute(
+            "DELETE FROM sensor_data WHERE timestamp < ? AND sent = 0", (cutoff,)
+        )
+
+    cursor = await db.execute(
+        "DELETE FROM threshold_violations WHERE start_time < ?", (cutoff,)
+    )
+    violations_deleted = cursor.rowcount
+
+    await db.commit()
+    log.info(f"[DB] cleanup: removed {sent_deleted} sent measurement(s), "
+             f"{unsent_count} unsent measurement(s), "
+             f"{violations_deleted} violation(s) older than {retention_hours}h")
 
 
 async def load_stations(db: aiosqlite.Connection) -> list[dict]:

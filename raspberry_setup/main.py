@@ -9,7 +9,7 @@ from dataclasses import dataclass
 import config as cfg
 from config import DB_PATH, load_config, load_config_from_string, get_local_ip
 
-from database import init_db, db_writer, load_stations, remove_station
+from database import init_db, db_writer, load_stations, remove_station, cleanup_old_rows
 from ble_worker import ble_worker
 from http_sender import http_sender
 from state import set_privacy_mode
@@ -179,6 +179,12 @@ async def station_manager(
         app_module.stations_event.clear()
 
 
+async def _db_cleanup_loop(db: aiosqlite.Connection) -> None:
+    while True:
+        await asyncio.sleep(3600)
+        await cleanup_old_rows(db)
+
+
 async def main() -> None:
     _setup_logging()
     load_config("conf.yml")
@@ -208,6 +214,7 @@ async def main() -> None:
         await asyncio.gather(
             station_manager(queue, db),
             http_sender(db),
+            _db_cleanup_loop(db),
             server.serve(),
         )
 
