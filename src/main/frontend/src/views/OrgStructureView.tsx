@@ -86,11 +86,10 @@ const EMPTY_DEPT: DeptForm = { name: '', departmentLeadId: null };
 interface RoomForm {
     name: string;
     roomType?: RoomType;
-    privacyMode: boolean;
     departmentId?: number;
     buildingId?: number;
 }
-const EMPTY_ROOM: RoomForm = { name: '', roomType: undefined, privacyMode: false, departmentId: undefined, buildingId: undefined };
+const EMPTY_ROOM: RoomForm = { name: '', roomType: undefined, departmentId: undefined, buildingId: undefined };
 
 const EMPTY_EMPLOYEE_USER: UserxCreateDTO = {
     username: '',
@@ -371,7 +370,6 @@ const OrgStructureView: React.FC = () => {
         setRoomForm({
             name: room.name ?? '',
             roomType: room.roomType,
-            privacyMode: room.privacyMode ?? false,
             departmentId: room.departmentId,
             buildingId: room.buildingId,
         });
@@ -388,7 +386,6 @@ const OrgStructureView: React.FC = () => {
                 const dto: RoomUpdateDTO = {
                     name: roomForm.name,
                     roomType: roomForm.roomType,
-                    privacyMode: roomForm.privacyMode,
                     departmentId: roomForm.departmentId,
                     buildingId: roomForm.buildingId,
                 };
@@ -399,7 +396,7 @@ const OrgStructureView: React.FC = () => {
                 const dto: RoomCreateDTO = {
                     name: roomForm.name,
                     roomType: roomForm.roomType,
-                    privacyMode: roomForm.privacyMode,
+                    privacyMode: false,
                     departmentId: roomForm.departmentId,
                     buildingId: roomForm.buildingId,
                 };
@@ -416,7 +413,7 @@ const OrgStructureView: React.FC = () => {
     };
     const deleteRoom = (room: RoomDTO) => {
         confirmDialog({
-            message: `Delete room "${room.name}"?`,
+            message: `Delete room "${room.name}"? This will deactivate it and decommission all associated Raspberry Pis and Arduinos.`,
             header: 'Confirm Delete',
             icon: 'pi pi-trash',
             acceptClassName: 'p-button-danger',
@@ -824,8 +821,30 @@ const OrgStructureView: React.FC = () => {
                                 <Column field="id" header="ID" style={{ width: '5rem' }} />
                                 <Column field="name" header="Name" sortable />
                                 <Column field="roomType" header="Type" body={roomTypeTemplate} sortable />
-                                <Column header="Department" body={(room: RoomDTO) => departmentName(room.departmentId)} />
-                                <Column header="Building" body={(room: RoomDTO) => buildingName(room.buildingId)} />
+                                <Column
+                                    header="Department"
+                                    body={(room: RoomDTO) => departmentName(room.departmentId)}
+                                    sortable
+                                    sortField="departmentId"
+                                    sortFunction={(e) =>
+                                        [...e.data].sort((a, b) =>
+                                            (e.order ?? 1) *
+                                            departmentName(a.departmentId).localeCompare(departmentName(b.departmentId))
+                                        )
+                                    }
+                                />
+                                <Column
+                                    header="Building"
+                                    body={(room: RoomDTO) => buildingName(room.buildingId)}
+                                    sortable
+                                    sortField="buildingId"
+                                    sortFunction={(e) =>
+                                        [...e.data].sort((a, b) =>
+                                            (e.order ?? 1) *
+                                            buildingName(a.buildingId).localeCompare(buildingName(b.buildingId))
+                                        )
+                                    }
+                                />
                                 <Column field="privacyMode" header="Privacy" body={privacyTemplate} />
                                 <Column field="active" header="Status" body={statusTemplate} />
                                 <Column header="Actions" style={{ width: '8rem' }} body={(room: RoomDTO) => actionTemplate(() => openEditRoom(room), () => deleteRoom(room))} />
