@@ -85,10 +85,11 @@ const EMPTY_DEPT: DeptForm = { name: '', departmentLeadId: null };
 interface RoomForm {
     name: string;
     roomType?: RoomType;
+    privacyMode: boolean;
     departmentId?: number;
     buildingId?: number;
 }
-const EMPTY_ROOM: RoomForm = { name: '', roomType: undefined, departmentId: undefined, buildingId: undefined };
+const EMPTY_ROOM: RoomForm = { name: '', roomType: undefined, privacyMode: false, departmentId: undefined, buildingId: undefined };
 
 const EMPTY_EMPLOYEE_USER: UserxCreateDTO = {
     username: '',
@@ -241,7 +242,7 @@ const OrgStructureView: React.FC = () => {
 
         const leadName = userName(department.departmentLeadId);
 
-        return `${leadName} only has the department lead role and leads no other department. Assign this user another role, assign them as lead of another department, or change the department lead before continuing.`;
+        return `Assign ${leadName} as lead of another department.`;
     };
 
     const leadCanBeChanged = (department: DepartmentDTO | null): boolean => {
@@ -416,6 +417,7 @@ const OrgStructureView: React.FC = () => {
         setRoomForm({
             name: room.name ?? '',
             roomType: room.roomType,
+            privacyMode: room.privacyMode ?? false,
             departmentId: room.departmentId,
             buildingId: room.buildingId,
         });
@@ -432,6 +434,7 @@ const OrgStructureView: React.FC = () => {
                 const dto: RoomUpdateDTO = {
                     name: roomForm.name,
                     roomType: roomForm.roomType,
+                    privacyMode: roomForm.privacyMode,
                     departmentId: roomForm.departmentId,
                     buildingId: roomForm.buildingId,
                 };
@@ -442,7 +445,7 @@ const OrgStructureView: React.FC = () => {
                 const dto: RoomCreateDTO = {
                     name: roomForm.name,
                     roomType: roomForm.roomType,
-                    privacyMode: false,
+                    privacyMode: roomForm.privacyMode,
                     departmentId: roomForm.departmentId,
                     buildingId: roomForm.buildingId,
                 };
@@ -655,7 +658,7 @@ const OrgStructureView: React.FC = () => {
 
         const leadName = userName(department.departmentLeadId);
 
-        return `${leadName} only has the Department Lead role and does not lead another department. Before deleting this department, assign them another role, make them lead another department, or change this department's lead.`;
+        return `Assign ${leadName} as lead of another department.`;
     };
     const departmentActionTemplate = (department: DepartmentDTO) => {
         const deleteBlockReason = getDepartmentDeleteBlockReason(department);
@@ -827,9 +830,7 @@ const OrgStructureView: React.FC = () => {
                         background: #ffffff;
                         box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16);
                         color: #111827;
-                        opacity: 0;
-                        visibility: hidden;
-                        transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease;
+                        display: none;
                         pointer-events: none;
                         text-align: left;
                     }
@@ -849,8 +850,7 @@ const OrgStructureView: React.FC = () => {
 
                     .department-delete-wrapper:hover .department-delete-popover,
                     .department-delete-wrapper:focus-within .department-delete-popover {
-                        opacity: 1;
-                        visibility: visible;
+                        display: block;
                         transform: translateY(-50%) translateX(0);
                     }
 
