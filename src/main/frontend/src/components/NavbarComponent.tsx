@@ -9,7 +9,7 @@ import {useUser} from "../Contexts/AuthenticatedUserContext";
 import {menuConfig, MenuItemConfig} from "../config/menuConfig";
 import {UserxRole} from "../generated-skeleton-api";
 import {MenuItem} from "primereact/menuitem";
-import {Link} from "react-router-dom";
+import {Link, NavLink} from "react-router-dom";
 import {ROUTES} from "../utilities/routes.paths";
 import "../styles/Navbar.css";
 
@@ -53,26 +53,47 @@ const NavbarComponent: React.FC = () => {
             };
 
             menuItem.template = (menuItem, options) => {
-                const handleClick = (e: React.MouseEvent<HTMLElement>) => {
-                    options.onClick?.(e);
-                };
+                const base = options.className ?? "";
 
-                return (
-                    <Link
-                        to={configItem.route ?? "#"}
-                        className={`${options.className ?? ""} p-menuitem-link ${configItem.route === ROUTES.HOME ? "navbar-home-link" : ""}`}
-                        onClick={handleClick}
-                        title={configItem.route === ROUTES.HOME ? "ClimateCanary" : undefined}
-                    >
-                        {configItem.route === ROUTES.HOME ? (
+                // Logo
+                if (configItem.route === ROUTES.HOME) {
+                    return (
+                        <Link
+                            to={ROUTES.HOME}
+                            className={`${base} p-menuitem-link navbar-home-link`}
+                            title="ClimateCanary"
+                        >
                             <img src="/32x32.png" alt="ClimateCanary" className="navbar-home-logo"/>
-                        ) : (
-                            <>
-                                {menuItem.icon && <span className={options.iconClassName}/>}
-                                <span className={options.labelClassName}>{menuItem.label}</span>
-                            </>
-                        )}
-                    </Link>
+                        </Link>
+                    );
+                }
+
+                // Group item (has children, no route) — opens submenu, no navigation
+                if (!configItem.route) {
+                    return (
+                        <a
+                            href="#"
+                            className={`${base} p-menuitem-link`}
+                            onClick={(e) => { e.preventDefault(); options.onClick?.(e); }}
+                        >
+                            {menuItem.icon && <span className={options.iconClassName}/>}
+                            <span className={options.labelClassName}>{menuItem.label}</span>
+                        </a>
+                    );
+                }
+
+                // Regular nav item — highlight when active
+                return (
+                    <NavLink
+                        to={configItem.route}
+                        className={({ isActive }) =>
+                            `${base} p-menuitem-link${isActive ? " navbar-link--active" : ""}`
+                        }
+                        onClick={(e) => options.onClick?.(e)}
+                    >
+                        {menuItem.icon && <span className={options.iconClassName}/>}
+                        <span className={options.labelClassName}>{menuItem.label}</span>
+                    </NavLink>
                 );
             }
             return menuItem;

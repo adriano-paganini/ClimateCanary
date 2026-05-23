@@ -631,7 +631,7 @@ const OrgStructureView: React.FC = () => {
         return (
             <div>
                 <NavbarComponent />
-                <div className="flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
                     <ProgressSpinner />
                 </div>
             </div>

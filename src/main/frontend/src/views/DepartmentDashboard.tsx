@@ -86,7 +86,7 @@ const DepartmentDashboard: React.FC = () => {
         return (
             <div>
                 <NavbarComponent />
-                <div className="flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
                     <ProgressSpinner />
                 </div>
             </div>
@@ -187,7 +187,7 @@ const DepartmentDashboard: React.FC = () => {
             {/* Room grid */}
             <div style={{ padding: '2rem' }}>
                 {loadingDepartmentData ? (
-                    <div className="flex justify-content-center align-items-center" style={{ minHeight: '20rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '20rem' }}>
                         <ProgressSpinner />
                     </div>
                 ) : rooms.length === 0 ? (
