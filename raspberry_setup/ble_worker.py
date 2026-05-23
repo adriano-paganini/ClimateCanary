@@ -57,7 +57,8 @@ def _build_warning_stream(messages: list[str]) -> bytes:
     return b"".join(m.encode("utf-8") + b"\x00" for m in messages)
 
 
-async def _send_warning(client: BleakClient, messages: list[str], tag: str) -> None:
+async def _send_warning(client: BleakClient, messages: list[str], tag: str) -> bool:
+    """Returns True if the transfer completed successfully, False on timeout."""
     stream = _build_warning_stream(messages)
     log.info(f"[BLE:{tag}] warning transfer start ({len(stream)}B): {messages}")
 
@@ -74,7 +75,7 @@ async def _send_warning(client: BleakClient, messages: list[str], tag: str) -> N
 
     if len(stream) == 1:
         log.info(f"[BLE:{tag}] warning transfer complete.")
-        return
+        return True
 
     done = asyncio.Event()
 
@@ -93,8 +94,10 @@ async def _send_warning(client: BleakClient, messages: list[str], tag: str) -> N
     await client.start_notify(WARNING_ACK_REQUEST_UUID, on_ack)
     try:
         await asyncio.wait_for(done.wait(), timeout=60.0)
+        return True
     except asyncio.TimeoutError:
-        log.error(f"[BLE:{tag}] warning transfer timeout!")
+        log.error(f"[BLE:{tag}] warning transfer timeout — will retry on next measurement")
+        return False
     finally:
         await client.stop_notify(WARNING_ACK_REQUEST_UUID)
 
@@ -247,8 +250,8 @@ async def ble_worker(
             if hint_messages:
                 log.info(f"[BLE:{tag}] {len(hint_messages)} hint message(s): {hint_messages}")
             if hint_messages and not warning_active:
-                warning_active = True
-                await _send_warning(client, hint_messages, tag)
+                warning_active = True  # block concurrent sends during transfer
+                warning_active = await _send_warning(client, hint_messages, tag)
                 await client.write_gatt_char(
                     SENSOR_STATUS_UUID, status_payload, response=True
                 )
