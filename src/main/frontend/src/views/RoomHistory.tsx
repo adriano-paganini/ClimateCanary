@@ -76,6 +76,31 @@ const CHART_OPTIONS = {
     },
 };
 
+// Draws a thin vertical line from the x-axis to each data point so values are easy to trace.
+// Only active when there are ≤100 points (dense series would just look like a fill).
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const dropLinePlugin: any = {
+    id: 'dropLines',
+    afterDatasetsDraw(chart: any) {
+        const { ctx, chartArea: { bottom } } = chart;
+        const meta = chart.getDatasetMeta(0);
+        if (!meta || meta.hidden || meta.data.length > 100) return;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(59, 130, 246, 0.2)';
+        ctx.lineWidth = 0.75;
+        ctx.setLineDash([]);
+        meta.data.forEach((el: any) => {
+            if (!el.skip) {
+                ctx.beginPath();
+                ctx.moveTo(el.x, bottom);
+                ctx.lineTo(el.x, el.y);
+                ctx.stroke();
+            }
+        });
+        ctx.restore();
+    },
+};
+
 const RoomHistory: React.FC = () => {
     const { roomId } = useParams<{ roomId: string }>();
     const navigate  = useNavigate();
@@ -122,7 +147,7 @@ const RoomHistory: React.FC = () => {
 
     useEffect(() => { void loadMeasurements(); }, [loadMeasurements]);
 
-    function buildChartData(metric: MeasurementDTOMetricEnum, color: string) {
+    function buildChartData(metric: MeasurementDTOMetricEnum, _color: string) {
         const points = trendsMap[metric] ?? [];
 
         const labels = points.map(p => tickLabel(p.timestamp, timeRange));
@@ -130,14 +155,17 @@ const RoomHistory: React.FC = () => {
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const datasets: any[] = [{
-            label:           metric,
-            data:            values,
-            fill:            false,
-            borderColor:     color,
-            backgroundColor: color + '33',
-            tension:         0.3,
-            pointRadius:     points.length > 200 ? 0 : 3,
-            spanGaps:        false,
+            label:                metric,
+            data:                 values,
+            fill:                 false,
+            borderColor:          '#3b82f6',
+            backgroundColor:      'rgba(59, 130, 246, 0.08)',
+            borderWidth:          1.5,
+            tension:              0.3,
+            pointRadius:          points.length > 200 ? 0 : 4,
+            pointBackgroundColor: '#3b82f6',
+            pointBorderColor:     '#3b82f6',
+            spanGaps:             false,
         }];
 
         // Threshold dashed lines
@@ -206,7 +234,7 @@ const RoomHistory: React.FC = () => {
                         <ProgressSpinner />
                     </div>
                 ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.5rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
                         {METRICS.map(({ key, label, unit, color }) => {
                             const data    = buildChartData(key, color);
                             const isEmpty = (data.datasets[0].data as (number | null)[]).every(v => v === null);
@@ -237,8 +265,8 @@ const RoomHistory: React.FC = () => {
                                             No data for this period
                                         </div>
                                     ) : (
-                                        <div style={{ height: '220px' }}>
-                                            <Chart type="line" data={data} options={CHART_OPTIONS} style={{ height: '100%' }} />
+                                        <div style={{ height: '260px' }}>
+                                            <Chart type="line" data={data} options={CHART_OPTIONS} plugins={[dropLinePlugin]} style={{ height: '100%' }} />
                                         </div>
                                     )}
                                 </div>
