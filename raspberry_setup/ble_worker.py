@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import struct
 import time
 from datetime import datetime
@@ -24,9 +25,10 @@ from config import (
 from state import get_privacy_mode
 from violation_tracker import process_measurement
 
+log = logging.getLogger(__name__)
+
 
 def _build_auth(pi_id: int, room_name: str) -> bytes:
-    """Write TrustedRpiId + room_name into warningAuthCharacteristic."""
     room_bytes = room_name.encode("ascii")
     room_len   = len(room_bytes)
     assert room_len <= 32, "room_name must be ≤ 32 characters"
@@ -52,13 +54,12 @@ def _build_all_good(timestamp_ms: int) -> bytes:
 
 
 def _build_warning_stream(messages: list[str]) -> bytes:
-    """Concatenate null-terminated UTF-8 strings into the wire format."""
     return b"".join(m.encode("utf-8") + b"\x00" for m in messages)
 
 
 async def _send_warning(client: BleakClient, messages: list[str], tag: str) -> None:
     stream = _build_warning_stream(messages)
-    print(f"[BLE:{tag}] warning transfer start ({len(stream)}B): {messages}")
+    log.info(f"[BLE:{tag}] warning transfer start ({len(stream)}B): {messages}")
 
     await client.write_gatt_char(
         WARNING_TOTAL_LEN_UUID,
@@ -72,7 +73,7 @@ async def _send_warning(client: BleakClient, messages: list[str], tag: str) -> N
     )
 
     if len(stream) == 1:
-        print(f"[BLE:{tag}] warning transfer complete.")
+        log.info(f"[BLE:{tag}] warning transfer complete.")
         return
 
     done = asyncio.Event()
@@ -80,7 +81,7 @@ async def _send_warning(client: BleakClient, messages: list[str], tag: str) -> N
     async def on_ack(sender, data: bytearray) -> None:
         (seq,) = struct.unpack("<H", bytes(data))
         if seq >= len(stream):
-            print(f"[BLE:{tag}] warning transfer complete.")
+            log.info(f"[BLE:{tag}] warning transfer complete.")
             done.set()
             return
         await client.write_gatt_char(
@@ -93,16 +94,11 @@ async def _send_warning(client: BleakClient, messages: list[str], tag: str) -> N
     try:
         await asyncio.wait_for(done.wait(), timeout=60.0)
     except asyncio.TimeoutError:
-        print(f"[BLE:{tag}] warning transfer timeout!")
+        log.error(f"[BLE:{tag}] warning transfer timeout!")
     finally:
         await client.stop_notify(WARNING_ACK_REQUEST_UUID)
 
 def _make_iso(anchor_pi_time: float, anchor_arduino_millis: int, pkt_millis: int) -> str:
-    """
-    Convert Arduino-relative millis to a Pi wall-clock ISO 8601 string.
-    anchor_pi_time and anchor_arduino_millis are captured together on the
-    first packet so relative timing between measurements is preserved.
-    """
     unix_seconds = anchor_pi_time + (pkt_millis - anchor_arduino_millis) / 1000.0
     return datetime.fromtimestamp(unix_seconds).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3]
 
@@ -122,7 +118,7 @@ async def ble_worker(
         _build_auth(config.PI_ID, config.ROOM_NAME),
         response=True,
     )
-    print(f"[BLE:{tag}] authenticated (pi_id={config.PI_ID}, room={config.ROOM_NAME!r})")
+    log.info(f"[BLE:{tag}] authenticated (pi_id={config.PI_ID}, room={config.ROOM_NAME!r})")
 
     anchor_pi_time:        float | None = None
     anchor_arduino_millis: int   | None = None
@@ -132,39 +128,37 @@ async def ble_worker(
         if anchor_pi_time is None:
             anchor_pi_time        = time.time()
             anchor_arduino_millis = pkt_millis
-            print(f"[BLE:{tag}] timestamp anchor set at pi={anchor_pi_time:.3f}, "
-                  f"arduino_ms={anchor_arduino_millis}")
+            log.info(f"[BLE:{tag}] timestamp anchor set at pi={anchor_pi_time:.3f}, "
+                     f"arduino_ms={anchor_arduino_millis}")
 
     def _timestamp(pkt_millis: int) -> str:
         return _make_iso(anchor_pi_time, anchor_arduino_millis, pkt_millis)
 
 
-    print(f"[BLE:{tag}] reading cached sensor data…")
+    log.info(f"[BLE:{tag}] reading cached sensor data…")
     cached_packets: list[tuple[int, float, float, float, float]] = []
     last_ts: int | None = None
     while True:
         await client.write_gatt_char(CACHED_DATA_ACK_UUID, b"\x01", response=True)
         raw = await client.read_gatt_char(CACHED_DATA_UUID)
         if not raw or len(raw) < 20:
-            # characteristic was never written → cache was empty from the start
             break
         ts, press, temp, hum, gas = struct.unpack(SENSOR_STRUCT, bytes(raw))
         if ts == last_ts:
-            # Arduino didn't update the characteristic → cache exhausted
             break
         last_ts = ts
         cached_packets.append((ts, press, temp, hum, gas))
-    print(f"[BLE:{tag}] cached read done: {len(cached_packets)} packet(s) collected, timestamps deferred")
+    log.info(f"[BLE:{tag}] cached read done: {len(cached_packets)} packet(s) collected, timestamps deferred")
 
     async with aiohttp.ClientSession() as http_session:
 
         warning_active        = False
-        first_packet_reported = False  # PATCH CONNECTED after first data packet
+        first_packet_reported = False
 
         def on_warning_ack(sender, data: bytearray) -> None:
             nonlocal warning_active
             if data and data[0]:
-                print(f"[BLE:{tag}] warning acknowledged by Arduino.")
+                log.info(f"[BLE:{tag}] warning acknowledged by Arduino.")
                 warning_active = False
 
         await client.start_notify(WARNING_ACK_UUID, on_warning_ack)
@@ -175,7 +169,7 @@ async def ble_worker(
             try:
                 ts, press, temp, hum, gas = struct.unpack(SENSOR_STRUCT, bytes(data))
             except Exception as e:
-                print(f"[BLE:{tag}] parse error: {e}")
+                log.error(f"[BLE:{tag}] parse error: {e}")
                 return
 
             _set_anchor(ts)
@@ -191,14 +185,14 @@ async def ble_worker(
                         "pressure":          c_press,
                         "air_quality":       c_gas,
                     }
-                    print(f"[BLE:{tag}] cached [{i}] {c_pkt['timestamp']}: "
-                          f"{c_temp:.1f}°C  {c_hum:.1f}%  {c_press:.1f}hPa  {c_gas}Ω")
+                    log.info(f"[BLE:{tag}] cached [{i}] {c_pkt['timestamp']}: "
+                             f"{c_temp:.1f}°C  {c_hum:.1f}%  {c_press:.1f}hPa  {c_gas:.1f}Ω")
                     if not get_privacy_mode():
                         queue.put_nowait(c_pkt)
-                        print(f"[BLE:{tag}] cached [{i}] queued for upload")
+                        log.info(f"[BLE:{tag}] cached [{i}] queued for upload")
                     else:
-                        print(f"[BLE:{tag}] cached [{i}] suppressed (privacy mode)")
-                print(f"[BLE:{tag}] cached replay done: {len(cached_packets)} packet(s) enqueued")
+                        log.info(f"[BLE:{tag}] cached [{i}] suppressed (privacy mode)")
+                log.info(f"[BLE:{tag}] cached replay done: {len(cached_packets)} packet(s) enqueued")
                 cached_packets = []
 
             pkt = {
@@ -211,8 +205,8 @@ async def ble_worker(
                 "air_quality":       gas,
             }
 
-            print(f"[BLE:{tag}] {pkt['timestamp']}: {temp:.1f}°C  {hum:.1f}%  "
-                  f"{press:.1f}hPa  {gas}Ω")
+            log.info(f"[BLE:{tag}] {pkt['timestamp']}: {temp:.1f}°C  {hum:.1f}%  "
+                     f"{press:.1f}hPa  {gas:.1f}Ω")
 
             statuses, hint_messages = await process_measurement(
                 pkt, db, http_session, tag
@@ -220,9 +214,9 @@ async def ble_worker(
 
             if not get_privacy_mode():
                 queue.put_nowait(pkt)
-                print(f"[BLE:{tag}] measurement queued for upload")
+                log.info(f"[BLE:{tag}] measurement queued for upload")
             else:
-                print(f"[BLE:{tag}] measurement suppressed (privacy mode)")
+                log.info(f"[BLE:{tag}] measurement suppressed (privacy mode)")
 
             nonlocal first_packet_reported
             if not first_packet_reported:
@@ -233,25 +227,25 @@ async def ble_worker(
                         url, json="CONNECTED",
                         timeout=_aiohttp.ClientTimeout(total=5),
                     ) as resp:
-                        print(f"[BLE:{tag}] PATCH CONNECTED → {resp.status}")
+                        log.info(f"[BLE:{tag}] PATCH CONNECTED → {resp.status}")
                 except Exception as e:
-                    print(f"[BLE:{tag}] PATCH CONNECTED failed: {e}")
+                    log.warning(f"[BLE:{tag}] PATCH CONNECTED failed: {e}")
 
             press_s = statuses.get("pressure",    0)
             temp_s  = statuses.get("temperature", 0)
             hum_s   = statuses.get("humidity",    0)
             gas_s   = statuses.get("air_quality", 0)
 
-            print(f"[BLE:{tag}] statuses → press={press_s} temp={temp_s} "
-                  f"hum={hum_s} gas={gas_s}")
+            log.info(f"[BLE:{tag}] statuses → press={press_s} temp={temp_s} "
+                     f"hum={hum_s} gas={gas_s}")
             status_payload = _build_status(ts, press_s, temp_s, hum_s, gas_s)
             await client.write_gatt_char(
                 SENSOR_STATUS_UUID, status_payload, response=True
             )
-            print(f"[BLE:{tag}] status written to Arduino")
+            log.info(f"[BLE:{tag}] status written to Arduino")
 
             if hint_messages:
-                print(f"[BLE:{tag}] {len(hint_messages)} hint message(s): {hint_messages}")
+                log.info(f"[BLE:{tag}] {len(hint_messages)} hint message(s): {hint_messages}")
             if hint_messages and not warning_active:
                 warning_active = True
                 await _send_warning(client, hint_messages, tag)
@@ -263,11 +257,11 @@ async def ble_worker(
                 await client.write_gatt_char(
                     SENSOR_STATUS_UUID, _build_all_good(ts), response=True
                 )
-                print(f"[BLE:{tag}] all-good sent.")
+                log.info(f"[BLE:{tag}] all-good sent.")
                 warning_active = False
 
         await client.start_notify(DATA_CHAR_UUID, handle_notification)
-        print(f"[BLE:{tag}] subscribed to notifications")
+        log.info(f"[BLE:{tag}] subscribed to notifications")
 
         try:
             while True:

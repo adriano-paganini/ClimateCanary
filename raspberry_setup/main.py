@@ -1,4 +1,6 @@
 import asyncio
+import logging
+import sys
 import aiosqlite
 import uvicorn
 import aiohttp
@@ -15,6 +17,21 @@ import app as app_module
 from app import app
 from thresholds import load_thresholds_from_db
 from violation_tracker import load_window_seconds
+
+log = logging.getLogger(__name__)
+
+
+def _setup_logging() -> None:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)-8s %(message)s",
+        datefmt="%Y-%m-%dT%H:%M:%S",
+        handlers=[
+            logging.StreamHandler(sys.stdout),
+            logging.FileHandler("app.log", encoding="utf-8"),
+        ],
+    )
+
 
 @dataclass
 class Station:
@@ -40,10 +57,9 @@ async def post_booted() -> None:
                 url, json=payload,
                 timeout=aiohttp.ClientTimeout(total=10),
             ) as resp:
-                print(f"[CFG] POST booted → {resp.status}")
+                log.info(f"[CFG] POST booted → {resp.status}")
     except Exception as e:
-        print(f"[CFG] could not post booted: {type(e).__name__}: {e!r}")
-
+        log.warning(f"[CFG] could not post booted: {type(e).__name__}: {e!r}")
 
 
 async def fetch_config_from_backend() -> None:
@@ -65,11 +81,11 @@ async def fetch_config_from_backend() -> None:
                     cfg.BACKEND_URL = saved_url
                     from pathlib import Path
                     Path("conf.yml").write_text(yaml_text)
-                    print("[CFG] config loaded from backend.")
+                    log.info("[CFG] config loaded from backend.")
                 else:
-                    print(f"[CFG] backend returned {resp.status}, using local conf.yml.")
+                    log.warning(f"[CFG] backend returned {resp.status}, using local conf.yml.")
     except Exception as e:
-        print(f"[CFG] could not fetch config: {e}")
+        log.warning(f"[CFG] could not fetch config: {e}")
 
 
 MAX_CONNECT_FAILURES = 5
@@ -88,13 +104,13 @@ async def device_loop(
 
     while True:
         try:
-            print(
+            log.info(
                 f"[BLE:{station.address}] connecting "
                 f"(pi_id={cfg.PI_ID}, sensor_station_id={station.sensor_station_id}, "
                 f"name={station.name!r})…"
             )
             async with BleakClient(station.address, timeout=20.0) as client:
-                print(f"[BLE:{station.address}] connected.")
+                log.info(f"[BLE:{station.address}] connected.")
                 connected_at = _time.monotonic()
                 delay        = 5
                 await asyncio.gather(
@@ -114,12 +130,12 @@ async def device_loop(
             if uptime >= MIN_HEALTHY_UPTIME:
                 fail_count = 0
             fail_count += 1
-            print(
+            log.warning(
                 f"[BLE:{station.address}] lost: {e}  – retrying in {delay}s… "
                 f"(failure {fail_count}/{MAX_CONNECT_FAILURES}, uptime={uptime:.0f}s)"
             )
             if fail_count >= MAX_CONNECT_FAILURES:
-                print(
+                log.error(
                     f"[BLE:{station.address}] too many consecutive failures – "
                     f"removing from DB, waiting for backend to re-scan"
                 )
@@ -140,19 +156,19 @@ async def station_manager(
     while True:
         rows     = await load_stations(db)
         stations = [Station(**r) for r in rows]
-        print(f"[SYS] {len(stations)} station(s) loaded from DB")
+        log.info(f"[SYS] {len(stations)} station(s) loaded from DB")
 
         new_addresses    = {s.address for s in stations}
         active_addresses = set(active_tasks.keys())
 
         for addr in active_addresses - new_addresses:
-            print(f"[SYS] removing station {addr}")
+            log.info(f"[SYS] removing station {addr}")
             active_tasks[addr].cancel()
             del active_tasks[addr]
 
         for station in stations:
             if station.address not in active_tasks:
-                print(f"[SYS] adding station {station.address}")
+                log.info(f"[SYS] adding station {station.address}")
                 task = asyncio.create_task(
                     device_loop(station, queue, db),
                     name=f"ble-{station.address}",
@@ -164,6 +180,7 @@ async def station_manager(
 
 
 async def main() -> None:
+    _setup_logging()
     load_config("conf.yml")
 
     if cfg.BACKEND_URL:
@@ -177,17 +194,17 @@ async def main() -> None:
 
     async with aiosqlite.connect(DB_PATH) as db:
         await init_db(db)
-        print(f"[DB] opened {DB_PATH}")
+        log.info(f"[DB] opened {DB_PATH}")
 
         await load_thresholds_from_db(db)
-        await load_window_seconds(db)
+        await load_window_seconds()
 
         app_module.db_connection = db
 
         uv_config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info")
         server    = uvicorn.Server(uv_config)
 
-        print("[SYS] Starting station manager, HTTP-Sender and Webserver…")
+        log.info("[SYS] Starting station manager, HTTP-Sender and Webserver…")
         await asyncio.gather(
             station_manager(queue, db),
             http_sender(db),
@@ -198,4 +215,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print("Stopped.")
+        log.info("Stopped.")
