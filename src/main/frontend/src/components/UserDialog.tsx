@@ -9,7 +9,7 @@ import {Button} from "primereact/button";
 import UserForm from './UserForm';
 import {UserxValidationResult} from "../utilities/userxUtilities";
 import {Message} from "primereact/message";
-import {UserxCreateDTO, UserxDTO} from "../generated-skeleton-api";
+import {DepartmentDTO, RoomDTO, UserxCreateDTO, UserxDTO, UserxRole} from "../generated-skeleton-api";
 
 interface UserDialogProps {
     visible: boolean;
@@ -22,6 +22,14 @@ interface UserDialogProps {
     onRolesChange: (event: { value: string[] }) => void;
     onPhoneChange: (phone: string) => void;
     disableUsername?: boolean;
+    departments?: DepartmentDTO[];
+    rooms?: RoomDTO[];
+    selectedDepartmentId?: number;
+    selectedRoomId?: number;
+    onDepartmentChange?: (departmentId?: number) => void;
+    onRoomChange?: (roomId?: number) => void;
+    roomsLoading?: boolean;
+    lockedRoles?: UserxRole[];
 }
 
 /**
@@ -46,7 +54,15 @@ const UserDialog: React.FC<UserDialogProps> = ({
                                                    onInputChange,
                                                    onRolesChange,
                                                    onPhoneChange,
-                                                   disableUsername = false
+                                                   disableUsername = false,
+                                                   departments = [],
+                                                   rooms = [],
+                                                   selectedDepartmentId,
+                                                   selectedRoomId,
+                                                   onDepartmentChange,
+                                                   onRoomChange,
+                                                   roomsLoading = false,
+                                                   lockedRoles = []
                                                }) => {
 
     /**
@@ -65,10 +81,11 @@ const UserDialog: React.FC<UserDialogProps> = ({
             header={isNewUser ? "Create New User" : "Edit User"}
             visible={visible}
             style={{width: '50vw'}}
+            contentClassName="user-dialog-content"
             onHide={onHide}
             footer={renderFooter}
         >
-            <div className="user-dialog-scroll-body" onWheelCapture={(event) => event.stopPropagation()}>
+            <div onWheelCapture={(event) => event.stopPropagation()}>
                 {validation.message && (<Message severity="error" text={validation.message} className="mb-3"/>)}
                 {user && (
                     <UserForm
@@ -79,6 +96,14 @@ const UserDialog: React.FC<UserDialogProps> = ({
                         onRolesChange={onRolesChange}
                         onPhoneChange={onPhoneChange}
                         disableUsername={disableUsername}
+                        departments={departments}
+                        rooms={rooms}
+                        selectedDepartmentId={selectedDepartmentId}
+                        selectedRoomId={selectedRoomId}
+                        onDepartmentChange={onDepartmentChange}
+                        onRoomChange={onRoomChange}
+                        roomsLoading={roomsLoading}
+                        lockedRoles={lockedRoles}
                     />
                 )}
             </div>

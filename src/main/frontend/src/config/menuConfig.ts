@@ -43,11 +43,11 @@ export const menuConfig: MenuItemConfig[] = [
     },
     {
         label: 'Devices', icon: 'pi pi-server', route: ROUTES.DEVICES,
-        roles: [UserxRole.BUILDING_ADMIN, UserxRole.SYSTEM_ADMIN],
+        roles: [UserxRole.SYSTEM_ADMIN],
     },
     {
         label: 'User Management', icon: 'pi pi-users', route: ROUTES.MANAGE_USERS,
-        roles: [UserxRole.BUILDING_ADMIN, UserxRole.SYSTEM_ADMIN],
+        roles: [UserxRole.SYSTEM_ADMIN],
     },
     {
         label: 'Organization', icon: 'pi pi-map', route: ROUTES.BUILDINGS,

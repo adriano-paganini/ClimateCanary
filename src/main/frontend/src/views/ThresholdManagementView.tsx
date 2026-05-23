@@ -1,7 +1,7 @@
 import "../styles/App.css";
 import "primereact/resources/themes/lara-light-cyan/theme.css";
 import "primeicons/primeicons.css";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { Column } from "primereact/column";
@@ -92,6 +92,9 @@ const ThresholdManagementView: React.FC = () => {
   const [rooms, setRooms] = useState<RoomDTO[]>([]);
   const [loadingThresholds, setLoadingThresholds] = useState(true);
   const [loadingHints, setLoadingHints] = useState(true);
+  const [hintSearch, setHintSearch] = useState("");
+  const [collapsedThresholdGroups, setCollapsedThresholdGroups] = useState<Record<string, boolean>>({});
+  const [collapsedHintGroups, setCollapsedHintGroups] = useState<Record<string, boolean>>({});
 
   const [thresholdDialogVisible, setThresholdDialogVisible] = useState(false);
   const [editingThreshold, setEditingThreshold] = useState<ThresholdDTO | null>(
@@ -398,9 +401,52 @@ const ThresholdManagementView: React.FC = () => {
   };
 
   //derived state
-  const sortedThresholds = [...thresholds].sort((a, b) =>
-    getRoomName(a.roomId).localeCompare(getRoomName(b.roomId)),
-  );
+  const sortedThresholds = useMemo(() => [...thresholds].sort((a, b) => {
+    const roomComparison = getRoomName(a.roomId).localeCompare(getRoomName(b.roomId));
+    if (roomComparison !== 0) return roomComparison;
+    const metricComparison = (a.metric ?? "").localeCompare(b.metric ?? "");
+    if (metricComparison !== 0) return metricComparison;
+    return (a.thresholdType ?? "").localeCompare(b.thresholdType ?? "");
+  }), [thresholds, rooms]);
+
+  const filteredClimateHints = useMemo(() => {
+    const query = hintSearch.trim().toLowerCase();
+    return climateHints
+      .filter((hint) => !query || (hint.hintText ?? "").toLowerCase().includes(query))
+      .sort((a, b) => {
+        const metricComparison = (a.metric ?? "").localeCompare(b.metric ?? "");
+        if (metricComparison !== 0) return metricComparison;
+        return (a.hintText ?? "").localeCompare(b.hintText ?? "");
+      });
+  }, [climateHints, hintSearch]);
+
+  const groupedThresholds = useMemo(() => {
+    const roomIds = Array.from(new Set(sortedThresholds.map((threshold) => threshold.roomId ?? -1)));
+
+    return roomIds.map((roomId) => {
+      const roomThresholds = sortedThresholds.filter((threshold) => (threshold.roomId ?? -1) === roomId);
+      return {
+        key: String(roomId),
+        label: roomId === -1 ? "Unassigned room" : getRoomName(roomId),
+        rows: roomThresholds,
+        metricGroups: metricOptions
+          .map((option) => ({
+            key: String(option.value),
+            label: option.label,
+            rows: roomThresholds.filter((threshold) => threshold.metric === option.value),
+          }))
+          .filter((group) => group.rows.length > 0),
+      };
+    });
+  }, [sortedThresholds, rooms]);
+
+  const groupedClimateHints = useMemo(() => climateHintMetricOptions
+    .map((option) => ({
+      key: String(option.value),
+      label: option.label,
+      rows: filteredClimateHints.filter((hint) => hint.metric === option.value),
+    }))
+    .filter((group) => group.rows.length > 0), [filteredClimateHints]);
 
   const climateHintOptions = climateHints.map((h) => ({
     label: `[${h.metric}] ${h.hintText}`,
@@ -469,12 +515,13 @@ const ThresholdManagementView: React.FC = () => {
     </div>
   );
 
-  const rowGroupHeaderTemplate = (row: ThresholdDTO) => (
-    <span style={{ fontWeight: "bold" }}>
-      <i className="pi pi-building" style={{ marginRight: "0.5rem" }} />
-      {getRoomName(row.roomId)}
-    </span>
-  );
+  const toggleThresholdGroup = (key: string) => {
+    setCollapsedThresholdGroups((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const toggleHintGroup = (key: string) => {
+    setCollapsedHintGroups((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
   const thresholdDialogFooter = (
     <div>
@@ -517,64 +564,157 @@ const ThresholdManagementView: React.FC = () => {
                 style={{ marginBottom: "1rem" }}
                 onClick={openNewThreshold}
               />
-              <DataTable
-                value={sortedThresholds}
-                loading={loadingThresholds}
-                rowGroupMode="subheader"
-                groupRowsBy="roomId"
-                sortField="roomId"
-                sortOrder={1}
-                rowGroupHeaderTemplate={rowGroupHeaderTemplate}
-                emptyMessage="No thresholds found"
-                stripedRows
-                paginator
-                rows={25}
-              >
-                <Column field="metric" header="Metric" body={metricTemplate} />
-                <Column field="thresholdType" header="Type" />
-                <Column field="boundValue" header="Limit Value" />
-                <Column
-                  field="enabled"
-                  header="Enabled"
-                  body={enabledTemplate}
-                />
-                <Column
-                  body={thresholdActionsTemplate}
-                  header="Actions"
-                  style={{ width: "8rem" }}
-                />
-              </DataTable>
+              {loadingThresholds ? (
+                <DataTable value={[]} loading emptyMessage="Loading thresholds..." />
+              ) : groupedThresholds.length === 0 ? (
+                <div style={{ color: "#64748b", padding: "1rem 0" }}>No thresholds found</div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                  {groupedThresholds.map((group) => {
+                    const collapsed = collapsedThresholdGroups[group.key] ?? false;
+                    return (
+                      <div key={group.key} style={{ border: "1px solid #e5e7eb", borderRadius: "8px", overflow: "hidden" }}>
+                        <button
+                          type="button"
+                          onClick={() => toggleThresholdGroup(group.key)}
+                          style={{
+                            width: "100%",
+                            border: 0,
+                            background: "#f8fafc",
+                            padding: "0.75rem 1rem",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            cursor: "pointer",
+                          }}
+                        >
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", fontWeight: 700 }}>
+                            <i className={`pi ${collapsed ? "pi-chevron-right" : "pi-chevron-down"}`} />
+                            <i className="pi pi-building" />
+                            <span>{group.label}</span>
+                          </span>
+                          <span style={{ color: "#64748b", fontSize: "0.9rem" }}>
+                            {group.rows.length} threshold{group.rows.length === 1 ? "" : "s"}
+                          </span>
+                        </button>
+                        {!collapsed && (
+                          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", padding: "0.75rem" }}>
+                            {group.metricGroups.map((metricGroup) => (
+                              <div key={metricGroup.key}>
+                                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                                  <Tag value={metricGroup.label} severity={metricSeverity(metricGroup.key)} />
+                                  <span style={{ color: "#64748b", fontSize: "0.9rem" }}>
+                                    {metricGroup.rows.length} threshold{metricGroup.rows.length === 1 ? "" : "s"}
+                                  </span>
+                                </div>
+                                <DataTable
+                                  value={metricGroup.rows}
+                                  emptyMessage="No thresholds found"
+                                  stripedRows
+                                  sortField="thresholdType"
+                                  sortOrder={1}
+                                >
+                                  <Column field="thresholdType" header="Type" sortable />
+                                  <Column field="boundValue" header="Limit Value" sortable />
+                                  <Column
+                                    field="enabled"
+                                    header="Enabled"
+                                    body={enabledTemplate}
+                                  />
+                                  <Column
+                                    body={thresholdActionsTemplate}
+                                    header="Actions"
+                                    style={{ width: "8rem" }}
+                                  />
+                                </DataTable>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </Card>
           </TabPanel>
 
           <TabPanel header="Climate Hints" leftIcon="pi pi-lightbulb mr-2">
             <Card>
-              <Button
-                label="Add Climate Hint"
-                icon="pi pi-plus"
-                className="p-button-raised p-button-rounded"
-                style={{ marginBottom: "1rem" }}
-                onClick={openNewHint}
-              />
-              <DataTable
-                value={climateHints}
-                loading={loadingHints}
-                emptyMessage="No climate hints found"
-                stripedRows
-              >
-                <Column
-                  field="metric"
-                  header="Metric"
-                  body={hintMetricTemplate}
-                  style={{ width: "10rem" }}
+              <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", marginBottom: "1rem", flexWrap: "wrap" }}>
+                <InputText
+                  value={hintSearch}
+                  onChange={(e) => setHintSearch(e.target.value)}
+                  placeholder="Search climate hints by text..."
+                  style={{ minWidth: "18rem", flex: "1 1 18rem" }}
                 />
-                <Column field="hintText" header="Hint Text" />
-                <Column
-                  body={hintActionsTemplate}
-                  header="Actions"
-                  style={{ width: "8rem" }}
+                <Button
+                  label="Add Climate Hint"
+                  icon="pi pi-plus"
+                  className="p-button-raised p-button-rounded"
+                  onClick={openNewHint}
                 />
-              </DataTable>
+              </div>
+              {loadingHints ? (
+                <DataTable value={[]} loading emptyMessage="Loading climate hints..." />
+              ) : groupedClimateHints.length === 0 ? (
+                <div style={{ color: "#64748b", padding: "1rem 0" }}>No climate hints found</div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                  {groupedClimateHints.map((group) => {
+                    const collapsed = collapsedHintGroups[group.key] ?? false;
+                    return (
+                      <div key={group.key} style={{ border: "1px solid #e5e7eb", borderRadius: "8px", overflow: "hidden" }}>
+                        <button
+                          type="button"
+                          onClick={() => toggleHintGroup(group.key)}
+                          style={{
+                            width: "100%",
+                            border: 0,
+                            background: "#f8fafc",
+                            padding: "0.75rem 1rem",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            cursor: "pointer",
+                          }}
+                        >
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", fontWeight: 700 }}>
+                            <i className={`pi ${collapsed ? "pi-chevron-right" : "pi-chevron-down"}`} />
+                            <Tag value={group.label} severity={metricSeverity(group.key)} />
+                          </span>
+                          <span style={{ color: "#64748b", fontSize: "0.9rem" }}>
+                            {group.rows.length} hint{group.rows.length === 1 ? "" : "s"}
+                          </span>
+                        </button>
+                        {!collapsed && (
+                          <DataTable
+                            value={group.rows}
+                            emptyMessage="No climate hints found"
+                            stripedRows
+                            sortField="hintText"
+                            sortOrder={1}
+                          >
+                            <Column
+                              field="metric"
+                              header="Metric"
+                              body={hintMetricTemplate}
+                              style={{ width: "10rem" }}
+                              sortable
+                            />
+                            <Column field="hintText" header="Hint Text" sortable />
+                            <Column
+                              body={hintActionsTemplate}
+                              header="Actions"
+                              style={{ width: "8rem" }}
+                            />
+                          </DataTable>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </Card>
           </TabPanel>
         </TabView>
