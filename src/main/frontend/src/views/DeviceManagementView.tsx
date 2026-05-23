@@ -24,8 +24,6 @@ import {
     RaspberryPiUpdateDTO,
     RaspberryPiUpdateDTODeviceStatusEnum,
     RoomDTO,
-    SensorStationCreateDTO,
-    SensorStationCreateDTODeviceStatusEnum,
     SensorStationDTO,
     SensorStationUpdateDTO,
     SensorStationUpdateDTODeviceStatusEnum,
@@ -63,10 +61,6 @@ interface StationForm {
 }
 
 const EMPTY_RPI_FORM: RpiForm = { hostName: '', roomId: null, ipAddress: '', deviceStatus: '' };
-const EMPTY_STATION_FORM: StationForm = {
-    name: '', bleMac: '', measurementInterval: null, roomId: null,
-    deviceStatus: SensorStationCreateDTODeviceStatusEnum.AVAILABLE,
-};
 
 const DeviceManagementView: React.FC = () => {
     const toast = useRef<Toast>(null);
@@ -90,7 +84,7 @@ const DeviceManagementView: React.FC = () => {
     const [stationIsNew, setStationIsNew] = useState(true);
     const [selectedStation, setSelectedStation] = useState<SensorStationDTO | null>(null);
     const [stationPiId, setStationPiId] = useState<number | null>(null);
-    const [stationForm, setStationForm] = useState<StationForm>(EMPTY_STATION_FORM);
+    const [stationForm, setStationForm] = useState<StationForm>({ name: '', bleMac: '', measurementInterval: null, roomId: null, deviceStatus: '' });
     const [stationError, setStationError] = useState<string | null>(null);
 
     // ble scan dialog state
@@ -288,15 +282,6 @@ const DeviceManagementView: React.FC = () => {
 
 
 
-    const openCreateStation = (piId: number, preFillBleMac = '') => {
-        setStationIsNew(true);
-        setSelectedStation(null);
-        setStationPiId(piId);
-        setStationForm({ ...EMPTY_STATION_FORM, bleMac: preFillBleMac });
-        setStationError(null);
-        setStationDialogVisible(true);
-    };
-
     const openEditStation = (station: SensorStationDTO) => {
         setStationIsNew(false);
         setSelectedStation(station);
@@ -313,76 +298,47 @@ const DeviceManagementView: React.FC = () => {
     };
 
     const saveStation = async () => {
-        if (stationIsNew) {
+        if (!selectedStation?.id) return;
+        const isSetup = selectedStation.deviceStatus === SensorStationUpdateDTODeviceStatusEnum.AVAILABLE;
+        if (isSetup) {
             if (!stationForm.name.trim()) { setStationError('Name is required'); return; }
-            if (!stationForm.bleMac.trim()) { setStationError('BLE MAC Address is required'); return; }
             if (stationForm.measurementInterval == null) { setStationError('Measurement Interval is required'); return; }
             if (stationForm.measurementInterval < 3 || stationForm.measurementInterval > 60) { setStationError('Measurement Interval must be between 3 and 60 seconds'); return; }
-            if (!stationForm.roomId) { setStationError('Room is required'); return; }
-            if (stationPiId == null) { setStationError('No Raspberry Pi context'); return; }
             try {
-                const dto: SensorStationCreateDTO = {
+                const dto: SensorStationUpdateDTO = {
                     name: stationForm.name.trim(),
-                    bleMac: stationForm.bleMac.trim(),
-                    measurementInterval: stationForm.measurementInterval,
-                    roomId: stationForm.roomId,
-                    raspberryPiId: stationPiId,
-                    deviceStatus: (stationForm.deviceStatus as SensorStationCreateDTODeviceStatusEnum)
-                        || SensorStationCreateDTODeviceStatusEnum.AVAILABLE,
+                    deviceStatus: SensorStationUpdateDTODeviceStatusEnum.AVAILABLE,
                 };
-                const created = await SensorStationService.create(dto);
-                setStationsMap(prev => ({
-                    ...prev,
-                    [stationPiId]: [...(prev[stationPiId] ?? []), created],
-                }));
+                const updated = await SensorStationService.updateSetup(selectedStation.id, stationForm.measurementInterval, dto);
+                if (stationPiId != null) {
+                    setStationsMap(prev => ({
+                        ...prev,
+                        [stationPiId]: (prev[stationPiId] ?? []).some(s => s.id === updated.id)
+                            ? (prev[stationPiId] ?? []).map(s => s.id === updated.id ? updated : s)
+                            : [...(prev[stationPiId] ?? []), updated],
+                    }));
+                }
                 setStationDialogVisible(false);
-                toast.current?.show({ severity: 'success', summary: 'Created', detail: `Sensor station "${created.name}" created`, life: 3000 });
+                toast.current?.show({ severity: 'success', summary: 'Updated', detail: `Sensor station "${updated.name}" updated`, life: 3000 });
             } catch {
-                toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to create sensor station', life: 3000 });
+                toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to update sensor station', life: 3000 });
             }
         } else {
-            if (!selectedStation?.id) return;
-            const isSetup = selectedStation.deviceStatus === SensorStationUpdateDTODeviceStatusEnum.AVAILABLE;
-            if (isSetup) {
-                if (!stationForm.name.trim()) { setStationError('Name is required'); return; }
-                if (stationForm.measurementInterval == null) { setStationError('Measurement Interval is required'); return; }
-                if (stationForm.measurementInterval < 3 || stationForm.measurementInterval > 60) { setStationError('Measurement Interval must be between 3 and 60 seconds'); return; }
-                try {
-                    const dto: SensorStationUpdateDTO = {
-                        name: stationForm.name.trim(),
-                        deviceStatus: SensorStationUpdateDTODeviceStatusEnum.AVAILABLE,
-                    };
-                    const updated = await SensorStationService.updateSetup(selectedStation.id, stationForm.measurementInterval, dto);
-                    if (stationPiId != null) {
-                        setStationsMap(prev => ({
-                            ...prev,
-                            [stationPiId]: (prev[stationPiId] ?? []).some(s => s.id === updated.id)
-                                ? (prev[stationPiId] ?? []).map(s => s.id === updated.id ? updated : s)
-                                : [...(prev[stationPiId] ?? []), updated],
-                        }));
-                    }
-                    setStationDialogVisible(false);
-                    toast.current?.show({ severity: 'success', summary: 'Updated', detail: `Sensor station "${updated.name}" updated`, life: 3000 });
-                } catch {
-                    toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to update sensor station', life: 3000 });
+            const dto: SensorStationUpdateDTO = {};
+            if (stationForm.name.trim()) dto.name = stationForm.name.trim();
+            if (stationForm.deviceStatus) dto.deviceStatus = stationForm.deviceStatus as SensorStationUpdateDTODeviceStatusEnum;
+            try {
+                const updated = await SensorStationService.update(selectedStation.id, dto);
+                if (stationPiId != null) {
+                    setStationsMap(prev => ({
+                        ...prev,
+                        [stationPiId]: (prev[stationPiId] ?? []).map(s => s.id === updated.id ? updated : s),
+                    }));
                 }
-            } else {
-                const dto: SensorStationUpdateDTO = {};
-                if (stationForm.name.trim()) dto.name = stationForm.name.trim();
-                if (stationForm.deviceStatus) dto.deviceStatus = stationForm.deviceStatus as SensorStationUpdateDTODeviceStatusEnum;
-                try {
-                    const updated = await SensorStationService.update(selectedStation.id, dto);
-                    if (stationPiId != null) {
-                        setStationsMap(prev => ({
-                            ...prev,
-                            [stationPiId]: (prev[stationPiId] ?? []).map(s => s.id === updated.id ? updated : s),
-                        }));
-                    }
-                    setStationDialogVisible(false);
-                    toast.current?.show({ severity: 'success', summary: 'Updated', detail: `Sensor station "${updated.name}" updated`, life: 3000 });
-                } catch {
-                    toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to update sensor station', life: 3000 });
-                }
+                setStationDialogVisible(false);
+                toast.current?.show({ severity: 'success', summary: 'Updated', detail: `Sensor station "${updated.name}" updated`, life: 3000 });
+            } catch {
+                toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to update sensor station', life: 3000 });
             }
         }
     };
@@ -447,12 +403,7 @@ const DeviceManagementView: React.FC = () => {
                             severity="secondary"
                             onClick={() => void downloadConfig(pi)}
                         />
-                        <Button
-                            label="Add Station"
-                            icon="pi pi-plus"
-                            size="small"
-                            onClick={() => openCreateStation(piId)}
-                        />
+
                     </div>
 
                     {stations == null ? (
