@@ -30,7 +30,7 @@ STATUS_CHAR_UUID = SENSOR_STATUS_UUID
 # runtime config
 DB_PATH      = "sensor.db"
 SEND_INTERVAL = 5
-SENSOR_STRUCT = "<LfffL"   # uint32 ts | float press | float temp | float hum | uint32 gas
+SENSOR_STRUCT = "<Lffff"   # uint32 ts | float press | float temp | float hum | float iaq
 
 PI_ID:        int  = None
 ROOM_ID:      int  = None

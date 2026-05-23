@@ -1,9 +1,12 @@
 import asyncio
+import logging
 import aiohttp
 import aiosqlite
 
 import config
 from config import SEND_INTERVAL
+
+log = logging.getLogger(__name__)
 
 async def http_sender(db: aiosqlite.Connection) -> None:
     async with aiohttp.ClientSession() as session:
@@ -39,14 +42,14 @@ async def http_sender(db: aiosqlite.Connection) -> None:
                                     "UPDATE sensor_data SET sent = 1 WHERE id = ?",
                                     (row_id,)
                                 )
-                                print(f"[HTTP] sent row {row_id} → {resp.status}")
+                                log.info(f"[HTTP] sent row {row_id} → {resp.status}")
                             else:
                                 body = await resp.text()
-                                print(f"[HTTP] server returned {resp.status} for row {row_id}: {body}")
+                                log.warning(f"[HTTP] server returned {resp.status} for row {row_id}: {body}")
                     except Exception as e:
-                        print(f"[HTTP] failed for row {row_id}: {e}")
+                        log.warning(f"[HTTP] failed for row {row_id}: {e}")
 
                 await db.commit()
 
             except Exception as e:
-                print(f"[HTTP] sender error: {e}")
+                log.error(f"[HTTP] sender error: {e}")
