@@ -93,10 +93,30 @@ public class DepartmentService {
 
         return updatedDepartment;
     }
+    private void removeDepartmentLeadRoleIfNoLongerLeadingAnyDepartment(Userx leader) {
+        if (leader == null) {
+            return;
+        }
+
+        if (leader.getRoles() == null || !leader.getRoles().contains(UserxRole.DEPARTMENT_LEAD)) {
+            return;
+        }
+
+        boolean stillLeadsAnyDepartment = !departmentRepository.findByDepartmentLeader(leader).isEmpty();
+
+        if (!stillLeadsAnyDepartment) {
+            leader.getRoles().remove(UserxRole.DEPARTMENT_LEAD);
+            userxService.saveUser(leader);
+
+            log.info("Removed department lead role from user with id={} after department deletion", leader.getId());
+            log.debug("Removed department lead role from user with id={} and roles={}", leader.getId(), leader.getRoles());
+        }
+    }
 
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public void delete(Long id) {
         Department department = getDepartmentById(id);
+        Userx previousLeader = department.getDepartmentLeader();
 
         for (Room room : department.getRooms()) {
             room.setDepartment(null);
@@ -111,6 +131,8 @@ public class DepartmentService {
         department.getEmployeeProfiles().clear();
 
         departmentRepository.deleteById(id);
+
+        removeDepartmentLeadRoleIfNoLongerLeadingAnyDepartment(previousLeader);
 
         log.info("Deleted department with id={}", id);
         log.debug("Cleared room and employee profile associations before deleting department id={}", id);

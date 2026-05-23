@@ -6,20 +6,17 @@ import { Tag } from 'primereact/tag';
 import { Dropdown } from 'primereact/dropdown';
 import { Calendar } from 'primereact/calendar';
 import { Toast } from 'primereact/toast';
-import { Badge } from 'primereact/badge';
 import 'primeicons/primeicons.css';
 
 import NavbarComponent from '../components/NavbarComponent';
 import AbsenceCalendar from '../components/AbsenceCalendar';
-import { useUser } from '../Contexts/AuthenticatedUserContext';
-import { DepartmentService } from '../services/DepartmentService';
+import { useDepartment } from '../Contexts/DepartmentContext';
 import {
     AbsenceControllerApi,
     AbsenceDTO,
     AbsenceDTOAbsenceStatusEnum,
     AbsenceUpdateDTOAbsenceStatusEnum,
     AdminControllerApi,
-    DepartmentDTO,
     UserxDTO,
 } from '../generated-skeleton-api';
 
@@ -51,15 +48,15 @@ const TAB_STYLE = (active: boolean): React.CSSProperties => ({
 });
 
 const DepartmentAbsenceView: React.FC = () => {
-    const { fullUser } = useUser();
+    const { departments, selectedDepartmentId, setSelectedDepartmentId, loading, error: deptError } = useDepartment();
     const toast = useRef<Toast>(null);
 
     const [activeTab, setActiveTab] = useState<'manage' | 'overview'>('manage');
     const [calendarEmployeeFilter, setCalendarEmployeeFilter] = useState<number | null>(null);
+    const [manageEmployeeFilter, setManageEmployeeFilter] = useState<number | null>(null);
 
-    const [loading, setLoading] = useState(true);
+    const [loadingAbsences, setLoadingAbsences] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [department, setDepartment] = useState<DepartmentDTO | null>(null);
     const [absences, setAbsences] = useState<AbsenceDTO[]>([]);
     const [userMap, setUserMap] = useState<Record<number, UserxDTO>>({});
 
@@ -67,61 +64,62 @@ const DepartmentAbsenceView: React.FC = () => {
     const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
 
     useEffect(() => {
-        const load = async () => {
+        // User names are loaded via admin API — may not be accessible for all roles.
+        // If 403, the table falls back to showing userxId.
+        const loadUsers = async () => {
             try {
-                const userId = fullUser?.id;
-                if (!userId) {
-                    setError('Could not determine current user.');
-                    return;
-                }
+                const adminApi = new AdminControllerApi();
+                const userData = await adminApi.getAllUsers().then(r => r.data);
+                const map: Record<number, UserxDTO> = {};
+                userData.forEach(u => { if (u.id !== undefined) map[u.id] = u; });
+                setUserMap(map);
+            } catch {
+                // insufficient permissions — userxId shown as fallback
+            }
+        };
+        void loadUsers();
+    }, []);
 
-                const allDepts = await DepartmentService.getAll();
-                const myDept = allDepts.find(d => d.departmentLeadId === userId);
-                if (!myDept?.id) {
-                    setError('No department found for this department lead.');
-                    return;
-                }
-                setDepartment(myDept);
-
+    useEffect(() => {
+        if (!selectedDepartmentId) return;
+        let active = true;
+        const loadAbsences = async () => {
+            setLoadingAbsences(true);
+            try {
                 const absenceApi = new AbsenceControllerApi();
-                const absenceData = await absenceApi.getAll8({ departmentId: myDept.id }).then(r => r.data);
-                setAbsences(absenceData);
-
-                // User names are loaded via admin API — may not be accessible for all roles.
-                // If 403, the table falls back to showing userxId.
-                try {
-                    const adminApi = new AdminControllerApi();
-                    const userData = await adminApi.getAllUsers().then(r => r.data);
-                    const map: Record<number, UserxDTO> = {};
-                    userData.forEach(u => { if (u.id !== undefined) map[u.id] = u; });
-                    setUserMap(map);
-                } catch {
-                    // insufficient permissions — userxId shown as fallback
+                const absenceData = await absenceApi.getAll8({ departmentId: selectedDepartmentId }).then(r => r.data);
+                if (active) {
+                    setError(null);
+                    setAbsences(absenceData);
+                    setCalendarEmployeeFilter(null);
+                    setManageEmployeeFilter(null);
                 }
             } catch (err: unknown) {
                 const msg = err instanceof Error ? err.message : String(err);
-                console.error('DepartmentAbsenceView load error:', err);
-                setError(`Failed to load data: ${msg}`);
+                if (active) setError(`Failed to load absences: ${msg}`);
             } finally {
-                setLoading(false);
+                if (active) setLoadingAbsences(false);
             }
         };
-        void load();
-    }, [fullUser?.id]);
+        void loadAbsences();
+        return () => {
+            active = false;
+        };
+    }, [selectedDepartmentId]);
 
     useEffect(() => {
-        if (!department?.id) return;
+        if (!selectedDepartmentId) return;
         const interval = setInterval(async () => {
             try {
                 const absenceApi = new AbsenceControllerApi();
-                const absenceData = await absenceApi.getAll8({ departmentId: department.id! }).then(r => r.data);
+                const absenceData = await absenceApi.getAll8({ departmentId: selectedDepartmentId }).then(r => r.data);
                 setAbsences(absenceData);
             } catch {
                 // silently ignore polling errors
             }
         }, 30_000);
         return () => clearInterval(interval);
-    }, [department?.id]);
+    }, [selectedDepartmentId]);
 
     const updateStatus = async (absence: AbsenceDTO, newStatus: AbsenceUpdateDTOAbsenceStatusEnum) => {
         if (!absence.id) return;
@@ -145,6 +143,7 @@ const DepartmentAbsenceView: React.FC = () => {
     };
 
     const filteredAbsences = absences.filter(a => {
+        if (manageEmployeeFilter && a.userxId !== manageEmployeeFilter) return false;
         if (statusFilter && a.absenceStatus !== statusFilter) return false;
         const [rangeStart, rangeEnd] = dateRange;
         if (rangeStart && a.endDate && new Date(a.endDate) < rangeStart) return false;
@@ -180,6 +179,21 @@ const DepartmentAbsenceView: React.FC = () => {
     };
 
     const statusOptions = Object.values(AbsenceDTOAbsenceStatusEnum).map(s => ({ label: s, value: s }));
+    const uniqueUserIds = [...new Set(absences.map(a => a.userxId).filter((id): id is number => id !== undefined))];
+    const employeeOptions = uniqueUserIds.map(id => {
+        const u = userMap[id];
+        const label = u
+            ? (`${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || u.username || `User ${id}`)
+            : `User ${id}`;
+        return { label, value: id };
+    });
+    const selectedDepartment = departments.find(department => department.id === selectedDepartmentId) ?? null;
+    const departmentOptions = departments.map(department => ({
+        label: department.name ?? `Department ${department.id}`,
+        value: department.id,
+    }));
+
+    const combinedError = error ?? deptError;
 
     if (loading) {
         return (
@@ -192,12 +206,23 @@ const DepartmentAbsenceView: React.FC = () => {
         );
     }
 
-    if (error) {
+    if (combinedError) {
         return (
             <div>
                 <NavbarComponent />
                 <div className="m-4">
-                    <Message severity="error" text={error} />
+                    <Message severity="error" text={combinedError} />
+                </div>
+            </div>
+        );
+    }
+
+    if (!selectedDepartmentId) {
+        return (
+            <div>
+                <NavbarComponent />
+                <div className="m-4">
+                    <Message severity="info" text="No department selected." />
                 </div>
             </div>
         );
@@ -221,10 +246,23 @@ const DepartmentAbsenceView: React.FC = () => {
                     <h1 style={{ margin: '0 0 0.75rem', color: '#111827', fontSize: '2rem', fontWeight: 700 }}>
                         Team Absences
                     </h1>
-                    {department && (
+                    {departments.length > 1 ? (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(220px, 360px)', gap: '0.5rem' }}>
+                            <label style={{ color: '#6b7280', fontSize: '0.875rem', fontWeight: 600 }}>
+                                Department
+                            </label>
+                            <Dropdown
+                                value={selectedDepartmentId}
+                                options={departmentOptions}
+                                onChange={e => setSelectedDepartmentId(e.value)}
+                                placeholder="Select department"
+                                style={{ width: '100%' }}
+                            />
+                        </div>
+                    ) : selectedDepartment && (
                         <p style={{ margin: 0, color: '#6b7280', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <i className="pi pi-sitemap" style={{ fontSize: '1.1rem' }} />
-                            <span style={{ fontWeight: 500 }}>{department.name}</span>
+                            <span style={{ fontWeight: 500 }}>{selectedDepartment.name}</span>
                         </p>
                     )}
                 </div>
@@ -243,14 +281,6 @@ const DepartmentAbsenceView: React.FC = () => {
 
                 {/* Overview Tab */}
                 {activeTab === 'overview' && (() => {
-                    const uniqueUserIds = [...new Set(absences.map(a => a.userxId).filter((id): id is number => id !== undefined))];
-                    const employeeOptions = uniqueUserIds.map(id => {
-                        const u = userMap[id];
-                        const label = u
-                            ? (`${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || u.username || `User ${id}`)
-                            : `User ${id}`;
-                        return { label, value: id };
-                    });
                     const calAbsences = calendarEmployeeFilter
                         ? absences.filter(a => a.userxId === calendarEmployeeFilter)
                         : absences;
@@ -262,7 +292,11 @@ const DepartmentAbsenceView: React.FC = () => {
                             border: '1px solid #e5e7eb',
                             borderTop: 'none',
                         }}>
-                            {employeeOptions.length > 1 && (
+                            {loadingAbsences ? (
+                                <div className="flex justify-content-center align-items-center" style={{ minHeight: '20rem' }}>
+                                    <ProgressSpinner />
+                                </div>
+                            ) : employeeOptions.length > 1 && (
                                 <div style={{
                                     marginBottom: '2rem',
                                     display: 'grid',
@@ -348,7 +382,7 @@ const DepartmentAbsenceView: React.FC = () => {
                                     </div>
                                 </div>
                             )}
-                            <AbsenceCalendar absences={calAbsences} userMap={userMap} />
+                            {!loadingAbsences && <AbsenceCalendar absences={calAbsences} userMap={userMap} />}
                         </div>
                     );
                 })()}
@@ -363,232 +397,260 @@ const DepartmentAbsenceView: React.FC = () => {
                         borderTop: 'none',
                     }}>
 
-                        {/* Filters */}
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                            gap: '1rem',
-                            marginBottom: '2rem',
-                            padding: '1.5rem',
-                            backgroundColor: '#f8f9fa',
-                            borderRadius: '10px',
-                            border: '1px solid #e9ecef',
-                        }}>
-                            <div>
-                                <label style={{
-                                    display: 'block',
-                                    fontSize: '0.875rem',
-                                    fontWeight: 600,
-                                    color: '#374151',
-                                    marginBottom: '0.5rem',
-                                }}>
-                                    Status
-                                </label>
-                                <Dropdown
-                                    value={statusFilter}
-                                    onChange={e => setStatusFilter(e.value)}
-                                    options={statusOptions}
-                                    placeholder="All statuses"
-                                    showClear
-                                    style={{ width: '100%' }}
-                                />
-                            </div>
-                            <div>
-                                <label style={{
-                                    display: 'block',
-                                    fontSize: '0.875rem',
-                                    fontWeight: 600,
-                                    color: '#374151',
-                                    marginBottom: '0.5rem',
-                                }}>
-                                    From
-                                </label>
-                                <Calendar
-                                    value={dateRange[0]}
-                                    onChange={e => setDateRange([e.value as Date | null, dateRange[1]])}
-                                    placeholder="Start"
-                                    showButtonBar
-                                    showIcon
-                                    maxDate={dateRange[1] ?? undefined}
-                                />
-                            </div>
-                            <div>
-                                <label style={{
-                                    display: 'block',
-                                    fontSize: '0.875rem',
-                                    fontWeight: 600,
-                                    color: '#374151',
-                                    marginBottom: '0.5rem',
-                                }}>
-                                    To
-                                </label>
-                                <Calendar
-                                    value={dateRange[1]}
-                                    onChange={e => setDateRange([dateRange[0], e.value as Date | null])}
-                                    placeholder="End"
-                                    showButtonBar
-                                    showIcon
-                                    minDate={dateRange[0] ?? undefined}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Stats Bar */}
-                        {filteredAbsences.length > 0 && (
-                            <div style={{
-                                display: 'flex',
-                                gap: '1rem',
-                                marginBottom: '2rem',
-                                flexWrap: 'wrap',
-                            }}>
-                                <div style={{
-                                    padding: '1rem 1.25rem',
-                                    backgroundColor: '#f0f9ff',
-                                    border: '1px solid #bfdbfe',
-                                    borderRadius: '8px',
-                                    fontSize: '0.875rem',
-                                    color: '#1e40af',
-                                    fontWeight: 500,
-                                }}>
-                                    <i className="pi pi-list" style={{ marginRight: '0.5rem' }} />
-                                    {filteredAbsences.length} absence{filteredAbsences.length !== 1 ? 's' : ''}
-                                </div>
-                                <div style={{
-                                    padding: '1rem 1.25rem',
-                                    backgroundColor: '#fef3c7',
-                                    border: '1px solid #fcd34d',
-                                    borderRadius: '8px',
-                                    fontSize: '0.875rem',
-                                    color: '#92400e',
-                                    fontWeight: 500,
-                                }}>
-                                    <i className="pi pi-clock" style={{ marginRight: '0.5rem' }} />
-                                    {filteredAbsences.filter(a => a.absenceStatus === AbsenceDTOAbsenceStatusEnum.PLANNED).length} pending approval
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Absences Grid */}
-                        {filteredAbsences.length === 0 ? (
-                            <div style={{
-                                padding: '3rem',
-                                textAlign: 'center',
-                                backgroundColor: '#f8f9fa',
-                                borderRadius: '10px',
-                                border: '1px dashed #d1d5db',
-                            }}>
-                                <i className="pi pi-inbox" style={{ fontSize: '2rem', color: '#d1d5db', marginBottom: '1rem', display: 'block' }} />
-                                <p style={{ color: '#6b7280', margin: 0 }}>No absences found for the selected criteria.</p>
+                        {loadingAbsences ? (
+                            <div className="flex justify-content-center align-items-center" style={{ minHeight: '20rem' }}>
+                                <ProgressSpinner />
                             </div>
                         ) : (
-                            <div style={{
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
-                                gap: '1.5rem',
-                            }}>
-                                {filteredAbsences.map((absence) => (
-                                    <div
-                                        key={absence.id}
-                                        style={{
-                                            backgroundColor: '#fff',
-                                            border: '1px solid #e5e7eb',
-                                            borderRadius: '10px',
-                                            padding: '1.5rem',
-                                            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
-                                            transition: 'all 0.2s ease',
-                                            cursor: 'default',
-                                        }}
-                                        onMouseEnter={(e) => {
-                                            (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
-                                            (e.currentTarget as HTMLElement).style.borderColor = '#d1d5db';
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.05)';
-                                            (e.currentTarget as HTMLElement).style.borderColor = '#e5e7eb';
-                                        }}
-                                    >
-                                        {/* Top Section: Employee & Status */}
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', gap: '1rem' }}>
-                                            <div style={{ flex: 1 }}>
-                                                <h3 style={{
-                                                    margin: '0 0 0.25rem',
-                                                    color: '#111827',
-                                                    fontSize: '1.1rem',
-                                                    fontWeight: 600,
-                                                }}>
-                                                    {getEmployeeName(absence)}
-                                                </h3>
-                                                <p style={{ margin: 0, color: '#6b7280', fontSize: '0.85rem' }}>
-                                                    {getAbsenceTypeLabel(absence.absenceType)}
-                                                </p>
-                                            </div>
-                                            <div>
-                                                {absence.absenceStatus && (
-                                                    <Tag
-                                                        value={absence.absenceStatus}
-                                                        severity={STATUS_SEVERITY[absence.absenceStatus] ?? 'info'}
-                                                        icon={`pi ${STATUS_ICON[absence.absenceStatus] || 'pi-info-circle'}`}
-                                                        style={{ fontSize: '0.8rem' }}
-                                                    />
+                            <>
+                                {/* Filters */}
+                                <div style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                                    gap: '1rem',
+                                    marginBottom: '2rem',
+                                    padding: '1.5rem',
+                                    backgroundColor: '#f8f9fa',
+                                    borderRadius: '10px',
+                                    border: '1px solid #e9ecef',
+                                }}>
+                                    <div>
+                                        <label style={{
+                                            display: 'block',
+                                            fontSize: '0.875rem',
+                                            fontWeight: 600,
+                                            color: '#374151',
+                                            marginBottom: '0.5rem',
+                                        }}>
+                                            Employee
+                                        </label>
+                                        <Dropdown
+                                            value={manageEmployeeFilter}
+                                            onChange={e => setManageEmployeeFilter(e.value)}
+                                            options={employeeOptions}
+                                            placeholder="All employees"
+                                            showClear
+                                            filter
+                                            style={{ width: '100%' }}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label style={{
+                                            display: 'block',
+                                            fontSize: '0.875rem',
+                                            fontWeight: 600,
+                                            color: '#374151',
+                                            marginBottom: '0.5rem',
+                                        }}>
+                                            Status
+                                        </label>
+                                        <Dropdown
+                                            value={statusFilter}
+                                            onChange={e => setStatusFilter(e.value)}
+                                            options={statusOptions}
+                                            placeholder="All statuses"
+                                            showClear
+                                            style={{ width: '100%' }}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label style={{
+                                            display: 'block',
+                                            fontSize: '0.875rem',
+                                            fontWeight: 600,
+                                            color: '#374151',
+                                            marginBottom: '0.5rem',
+                                        }}>
+                                            From
+                                        </label>
+                                        <Calendar
+                                            value={dateRange[0]}
+                                            onChange={e => setDateRange([e.value as Date | null, dateRange[1]])}
+                                            placeholder="Start"
+                                            showButtonBar
+                                            showIcon
+                                            maxDate={dateRange[1] ?? undefined}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label style={{
+                                            display: 'block',
+                                            fontSize: '0.875rem',
+                                            fontWeight: 600,
+                                            color: '#374151',
+                                            marginBottom: '0.5rem',
+                                        }}>
+                                            To
+                                        </label>
+                                        <Calendar
+                                            value={dateRange[1]}
+                                            onChange={e => setDateRange([dateRange[0], e.value as Date | null])}
+                                            placeholder="End"
+                                            showButtonBar
+                                            showIcon
+                                            minDate={dateRange[0] ?? undefined}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Stats Bar */}
+                                {filteredAbsences.length > 0 && (
+                                    <div style={{
+                                        display: 'flex',
+                                        gap: '1rem',
+                                        marginBottom: '2rem',
+                                        flexWrap: 'wrap',
+                                    }}>
+                                        <div style={{
+                                            padding: '1rem 1.25rem',
+                                            backgroundColor: '#f0f9ff',
+                                            border: '1px solid #bfdbfe',
+                                            borderRadius: '8px',
+                                            fontSize: '0.875rem',
+                                            color: '#1e40af',
+                                            fontWeight: 500,
+                                        }}>
+                                            <i className="pi pi-list" style={{ marginRight: '0.5rem' }} />
+                                            {filteredAbsences.length} absence{filteredAbsences.length !== 1 ? 's' : ''}
+                                        </div>
+                                        <div style={{
+                                            padding: '1rem 1.25rem',
+                                            backgroundColor: '#fef3c7',
+                                            border: '1px solid #fcd34d',
+                                            borderRadius: '8px',
+                                            fontSize: '0.875rem',
+                                            color: '#92400e',
+                                            fontWeight: 500,
+                                        }}>
+                                            <i className="pi pi-clock" style={{ marginRight: '0.5rem' }} />
+                                            {filteredAbsences.filter(a => a.absenceStatus === AbsenceDTOAbsenceStatusEnum.PLANNED).length} pending approval
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Absences Grid */}
+                                {filteredAbsences.length === 0 ? (
+                                    <div style={{
+                                        padding: '3rem',
+                                        textAlign: 'center',
+                                        backgroundColor: '#f8f9fa',
+                                        borderRadius: '10px',
+                                        border: '1px dashed #d1d5db',
+                                    }}>
+                                        <i className="pi pi-inbox" style={{ fontSize: '2rem', color: '#d1d5db', marginBottom: '1rem', display: 'block' }} />
+                                        <p style={{ color: '#6b7280', margin: 0 }}>No absences found for the selected criteria.</p>
+                                    </div>
+                                ) : (
+                                    <div style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+                                        gap: '1.5rem',
+                                    }}>
+                                        {filteredAbsences.map((absence) => (
+                                            <div
+                                                key={absence.id}
+                                                style={{
+                                                    backgroundColor: '#fff',
+                                                    border: '1px solid #e5e7eb',
+                                                    borderRadius: '10px',
+                                                    padding: '1.5rem',
+                                                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+                                                    transition: 'all 0.2s ease',
+                                                    cursor: 'default',
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+                                                    (e.currentTarget as HTMLElement).style.borderColor = '#d1d5db';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.05)';
+                                                    (e.currentTarget as HTMLElement).style.borderColor = '#e5e7eb';
+                                                }}
+                                            >
+                                                {/* Top Section: Employee & Status */}
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem', gap: '1rem' }}>
+                                                    <div style={{ flex: 1 }}>
+                                                        <h3 style={{
+                                                            margin: '0 0 0.25rem',
+                                                            color: '#111827',
+                                                            fontSize: '1.1rem',
+                                                            fontWeight: 600,
+                                                        }}>
+                                                            {getEmployeeName(absence)}
+                                                        </h3>
+                                                        <p style={{ margin: 0, color: '#6b7280', fontSize: '0.85rem' }}>
+                                                            {getAbsenceTypeLabel(absence.absenceType)}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        {absence.absenceStatus && (
+                                                            <Tag
+                                                                value={absence.absenceStatus}
+                                                                severity={STATUS_SEVERITY[absence.absenceStatus] ?? 'info'}
+                                                                icon={`pi ${STATUS_ICON[absence.absenceStatus] || 'pi-info-circle'}`}
+                                                                style={{ fontSize: '0.8rem' }}
+                                                            />
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Divider */}
+                                                <div style={{ height: '1px', backgroundColor: '#f3f4f6', margin: '1rem 0' }} />
+
+                                                {/* Period Section */}
+                                                <div style={{ marginBottom: '1rem' }}>
+                                                    <p style={{
+                                                        margin: '0 0 0.5rem',
+                                                        color: '#6b7280',
+                                                        fontSize: '0.8rem',
+                                                        fontWeight: 500,
+                                                        textTransform: 'uppercase',
+                                                        letterSpacing: '0.5px',
+                                                    }}>
+                                                        Period
+                                                    </p>
+                                                    <p style={{
+                                                        margin: 0,
+                                                        color: '#111827',
+                                                        fontSize: '0.95rem',
+                                                        fontWeight: 500,
+                                                    }}>
+                                                        <i className="pi pi-calendar" style={{ marginRight: '0.5rem', color: '#9ca3af', fontSize: '0.85rem' }} />
+                                                        {getPeriodString(absence)}
+                                                    </p>
+                                                </div>
+
+                                                {/* Actions */}
+                                                {absence.absenceStatus === AbsenceDTOAbsenceStatusEnum.PLANNED && (
+                                                    <div style={{
+                                                        display: 'grid',
+                                                        gridTemplateColumns: '1fr 1fr',
+                                                        gap: '0.75rem',
+                                                        marginTop: '1.5rem',
+                                                    }}>
+                                                        <Button
+                                                            label="Approve"
+                                                            icon="pi pi-check"
+                                                            severity="success"
+                                                            size="small"
+                                                            onClick={() => updateStatus(absence, AbsenceUpdateDTOAbsenceStatusEnum.APPROVED)}
+                                                            style={{ width: '100%' }}
+                                                        />
+                                                        <Button
+                                                            label="Reject"
+                                                            icon="pi pi-times"
+                                                            severity="danger"
+                                                            size="small"
+                                                            onClick={() => updateStatus(absence, AbsenceUpdateDTOAbsenceStatusEnum.REJECTED)}
+                                                            style={{ width: '100%' }}
+                                                        />
+                                                    </div>
                                                 )}
                                             </div>
-                                        </div>
-
-                                        {/* Divider */}
-                                        <div style={{ height: '1px', backgroundColor: '#f3f4f6', margin: '1rem 0' }} />
-
-                                        {/* Period Section */}
-                                        <div style={{ marginBottom: '1rem' }}>
-                                            <p style={{
-                                                margin: '0 0 0.5rem',
-                                                color: '#6b7280',
-                                                fontSize: '0.8rem',
-                                                fontWeight: 500,
-                                                textTransform: 'uppercase',
-                                                letterSpacing: '0.5px',
-                                            }}>
-                                                Period
-                                            </p>
-                                            <p style={{
-                                                margin: 0,
-                                                color: '#111827',
-                                                fontSize: '0.95rem',
-                                                fontWeight: 500,
-                                            }}>
-                                                <i className="pi pi-calendar" style={{ marginRight: '0.5rem', color: '#9ca3af', fontSize: '0.85rem' }} />
-                                                {getPeriodString(absence)}
-                                            </p>
-                                        </div>
-
-                                        {/* Actions */}
-                                        {absence.absenceStatus === AbsenceDTOAbsenceStatusEnum.PLANNED && (
-                                            <div style={{
-                                                display: 'grid',
-                                                gridTemplateColumns: '1fr 1fr',
-                                                gap: '0.75rem',
-                                                marginTop: '1.5rem',
-                                            }}>
-                                                <Button
-                                                    label="Approve"
-                                                    icon="pi pi-check"
-                                                    severity="success"
-                                                    size="small"
-                                                    onClick={() => updateStatus(absence, AbsenceUpdateDTOAbsenceStatusEnum.APPROVED)}
-                                                    style={{ width: '100%' }}
-                                                />
-                                                <Button
-                                                    label="Reject"
-                                                    icon="pi pi-times"
-                                                    severity="danger"
-                                                    size="small"
-                                                    onClick={() => updateStatus(absence, AbsenceUpdateDTOAbsenceStatusEnum.REJECTED)}
-                                                    style={{ width: '100%' }}
-                                                />
-                                            </div>
-                                        )}
+                                        ))}
                                     </div>
-                                ))}
-                            </div>
+                                )}
+                            </>
                         )}
                     </div>
                 )}
