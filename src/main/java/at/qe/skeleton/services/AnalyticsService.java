@@ -531,6 +531,7 @@ public class AnalyticsService {
      */
     private void assertOccupancyIfRequired(Userx user, Room room) {
         if (hasRole(user, UserxRole.BUILDING_ADMIN)) return;
+        if (hasRole(user, UserxRole.DEPARTMENT_LEAD)) return;
         if (room.getRoomType() == RoomType.COMMON_AREAS) return;
 
         if (Boolean.TRUE.equals(room.getPrivacyMode())) {
