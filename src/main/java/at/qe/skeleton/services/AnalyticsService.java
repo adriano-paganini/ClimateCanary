@@ -530,7 +530,7 @@ public class AnalyticsService {
      * @throws AccessDeniedException when privacy mode is active (minimum occupancy not met)
      */
     private void assertOccupancyIfRequired(Userx user, Room room) {
-        if (!hasRole(user, UserxRole.EMPLOYEE)) return;
+        if (hasRole(user, UserxRole.BUILDING_ADMIN)) return;
         if (room.getRoomType() == RoomType.COMMON_AREAS) return;
 
         if (Boolean.TRUE.equals(room.getPrivacyMode())) {
