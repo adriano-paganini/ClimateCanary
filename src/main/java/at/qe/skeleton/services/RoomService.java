@@ -104,6 +104,14 @@ public class RoomService {
     public void delete(Long id) {
         Room room = getById(id);
 
+        for (SensorStation ss : room.getSensorStations()) {
+            ss.setDeviceStatus(DeviceStatus.DECOMMISSIONED);
+        }
+
+        if (room.getRaspberryPi() != null) {
+            room.getRaspberryPi().setDeviceStatus(DeviceStatus.DECOMMISSIONED);
+        }
+
         if (room.getDepartment() != null) {
             room.getDepartment().getRooms().remove(room);
             room.setDepartment(null);
@@ -114,22 +122,15 @@ public class RoomService {
             room.setBuilding(null);
         }
 
-        for (EmployeeProfile ep : room.getEmployeeProfiles()) {
-            ep.setRoom(null);
+        for (EmployeeProfile employeeProfile : List.copyOf(room.getEmployeeProfiles())) {
+            employeeProfile.setRoom(null);
         }
         room.getEmployeeProfiles().clear();
 
-        for (SensorStation ss : room.getSensorStations()) {
-            ss.setDeviceStatus(DeviceStatus.DECOMMISSIONED);
-        }
-
-        if (room.getRaspberryPi() != null) {
-            room.getRaspberryPi().setDeviceStatus(DeviceStatus.DECOMMISSIONED);
-        }
-
         room.setActive(false);
+        roomRepository.save(room);
 
         log.info("Soft-deleted room with id={}", id);
-        log.debug("Room id={} marked inactive, associations cleared, and linked devices decommissioned", id);
+        log.debug("Room id={} marked inactive and linked devices decommissioned", id);
     }
 }

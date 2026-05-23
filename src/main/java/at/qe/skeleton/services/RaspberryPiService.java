@@ -165,19 +165,17 @@ public class RaspberryPiService {
     public void delete(Long id) {
         RaspberryPi pi = getById(id);
 
-        Room room = pi.getRoom();
-        if (room != null) {
-            room.setRaspberryPi(null);
+        if (pi.getRoom() != null) {
+            pi.getRoom().setRaspberryPi(null);
             pi.setRoom(null);
         }
 
         for (SensorStation station : List.copyOf(pi.getSensorStations())) {
             station.setRaspberryPi(null);
-            pi.getSensorStations().remove(station);
         }
+        pi.getSensorStations().clear();
 
         repo.delete(pi);
-
         log.info("Deleted raspberry pi with id={}", id);
     }
 
