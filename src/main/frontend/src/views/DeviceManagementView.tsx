@@ -765,18 +765,7 @@ const DeviceManagementView: React.FC = () => {
                         </div>
                     )}
 
-                    {!stationIsNew && selectedStation?.deviceStatus !== SensorStationUpdateDTODeviceStatusEnum.AVAILABLE && (
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: 600 }}>Status</label>
-                            <Dropdown
-                                value={stationForm.deviceStatus}
-                                options={DEVICE_STATUS_OPTIONS}
-                                onChange={e => setStationForm(f => ({ ...f, deviceStatus: e.value }))}
-                                placeholder="Select status"
-                                style={{ width: '100%' }}
-                            />
-                        </div>
-                    )}
+
                 </div>
             </Dialog>
 
