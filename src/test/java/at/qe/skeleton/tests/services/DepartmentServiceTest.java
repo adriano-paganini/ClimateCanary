@@ -6,6 +6,7 @@ import at.qe.skeleton.models.Department;
 import at.qe.skeleton.models.EmployeeProfile;
 import at.qe.skeleton.models.Room;
 import at.qe.skeleton.models.Userx;
+import at.qe.skeleton.models.UserxRole;
 import at.qe.skeleton.repositories.DepartmentRepository;
 import at.qe.skeleton.repositories.EmployeeProfileRepository;
 import at.qe.skeleton.repositories.RoomRepository;
@@ -23,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -166,16 +168,51 @@ class DepartmentServiceTest {
     void update_departmentLeadId_updatesLeader() {
         Userx newLeader = new Userx();
         ReflectionTestUtils.setField(newLeader, "id", 5L);
+        ReflectionTestUtils.setField(department, "id", 1L);
+        leader.setRoles(new HashSet<>(List.of(UserxRole.DEPARTMENT_LEAD)));
 
         DepartmentUpdateDTO dto = new DepartmentUpdateDTO(null, null, 5L);
 
         Mockito.when(departmentRepository.findById(1L)).thenReturn(Optional.of(department));
         Mockito.when(userxService.loadUser(5L)).thenReturn(Optional.of(newLeader));
+        Mockito.when(departmentRepository.findByDepartmentLeader(leader)).thenReturn(List.of(department));
         Mockito.when(departmentRepository.save(department)).thenReturn(department);
 
         departmentService.update(1L, dto);
 
         Assertions.assertThat(department.getDepartmentLeader()).isEqualTo(newLeader);
+        Assertions.assertThat(newLeader.getRoles()).contains(UserxRole.DEPARTMENT_LEAD);
+        Assertions.assertThat(leader.getRoles()).doesNotContain(UserxRole.DEPARTMENT_LEAD);
+        Mockito.verify(userxService).saveUser(newLeader);
+        Mockito.verify(userxService).saveUser(leader);
+    }
+
+    @Test
+    @DisplayName("Update department keeps role on previous leader when they lead another department")
+    void update_departmentLeadId_keepsRoleOnPreviousLeaderWhenLeadingAnotherDepartment() {
+        Userx newLeader = new Userx();
+        ReflectionTestUtils.setField(newLeader, "id", 5L);
+        ReflectionTestUtils.setField(department, "id", 1L);
+        leader.setRoles(new HashSet<>(List.of(UserxRole.DEPARTMENT_LEAD)));
+
+        Department otherDepartment = new Department();
+        ReflectionTestUtils.setField(otherDepartment, "id", 2L);
+        otherDepartment.setDepartmentLeader(leader);
+
+        DepartmentUpdateDTO dto = new DepartmentUpdateDTO(null, null, 5L);
+
+        Mockito.when(departmentRepository.findById(1L)).thenReturn(Optional.of(department));
+        Mockito.when(userxService.loadUser(5L)).thenReturn(Optional.of(newLeader));
+        Mockito.when(departmentRepository.findByDepartmentLeader(leader)).thenReturn(List.of(department, otherDepartment));
+        Mockito.when(departmentRepository.save(department)).thenReturn(department);
+
+        departmentService.update(1L, dto);
+
+        Assertions.assertThat(department.getDepartmentLeader()).isEqualTo(newLeader);
+        Assertions.assertThat(newLeader.getRoles()).contains(UserxRole.DEPARTMENT_LEAD);
+        Assertions.assertThat(leader.getRoles()).contains(UserxRole.DEPARTMENT_LEAD);
+        Mockito.verify(userxService).saveUser(newLeader);
+        Mockito.verify(userxService, Mockito.never()).saveUser(leader);
     }
 
     @Test

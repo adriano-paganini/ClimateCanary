@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { Message } from "primereact/message";
 import { Badge } from "primereact/badge";
 import "primeicons/primeicons.css";
 
 import NavbarComponent from "../components/NavbarComponent";
+import NoDataOverlay from "../components/NoDataOverlay";
 import { useUser } from "../Contexts/AuthenticatedUserContext";
 import { DepartmentService } from "../services/DepartmentService";
 import { MeasurementService } from "../services/MeasurementService";
+import { hasDataGap } from "../utilities/dataGapUtils";
 import {
   ViolationService,
   ViolationStatusEnum,
@@ -20,7 +21,6 @@ import {
   RoomDTO,
   ThresholdViolationDTO,
 } from "../generated-skeleton-api";
-import { ROUTES } from "../utilities/routes.paths";
 
 type Period = "week" | "month";
 
@@ -34,6 +34,7 @@ interface DeptData {
   rooms: RoomDTO[];
   violations: ThresholdViolationDTO[];
   trends: Partial<Record<MeasurementDTOMetricEnum, TrendPoint[]>>;
+  hasGaps: Partial<Record<MeasurementDTOMetricEnum, boolean>>;
 }
 
 const METRICS: {
@@ -198,7 +199,6 @@ const Sparkline: React.FC<SparklineProps> = ({
 
 const ManagementDashboard: React.FC = () => {
   const { currentUser } = useUser();
-  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -224,7 +224,7 @@ const ManagementDashboard: React.FC = () => {
         const results = await Promise.all(
           allDepts.map(async (dept): Promise<DeptData> => {
             if (!dept.id)
-              return { dept, rooms: [], violations: [], trends: {} };
+              return { dept, rooms: [], violations: [], trends: {}, hasGaps: {} };
 
             const rooms = await DepartmentService.getRooms(dept.id);
             const violations = allViolations.filter((v) =>
@@ -242,16 +242,18 @@ const ManagementDashboard: React.FC = () => {
               ),
             );
 
-            const trends: Partial<
-              Record<MeasurementDTOMetricEnum, TrendPoint[]>
-            > = {};
+            const trends: Partial<Record<MeasurementDTOMetricEnum, TrendPoint[]>> = {};
+            const hasGaps: Partial<Record<MeasurementDTOMetricEnum, boolean>> = {};
+            const fromDate = new Date(Date.now() - days * 86_400_000);
+            const toDate = new Date();
             METRICS.forEach(({ key }) => {
               const filtered = allMeasurements.filter((m) => m.metric === key);
               const bucketed = bucketByDay(filtered, days);
               if (bucketed.length > 0) trends[key] = bucketed;
+              hasGaps[key] = hasDataGap(filtered, fromDate, toDate);
             });
 
-            return { dept, rooms, violations, trends };
+            return { dept, rooms, violations, trends, hasGaps };
           }),
         );
 
@@ -463,32 +465,28 @@ const ManagementDashboard: React.FC = () => {
           gap: "1.5rem",
         }}
       >
-        {deptData.map(({ dept, rooms, violations, trends }) => {
+        {deptData.map(({ dept, rooms, violations, trends, hasGaps }) => {
           const violCount = violations.length;
           const statusColor = violationColor(violCount);
 
           return (
             <div
               key={dept.id}
-              onClick={() => navigate(ROUTES.DEPARTMENT_DASHBOARD)}
               style={{
                 background: "#fff",
                 border: "1px solid #e5e7eb",
                 borderRadius: "12px",
                 overflow: "hidden",
                 boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-                cursor: "pointer",
-                transition: "box-shadow 0.2s, transform 0.2s",
+                transition: "box-shadow 0.2s",
               }}
               onMouseEnter={(e) => {
                 const el = e.currentTarget as HTMLElement;
                 el.style.boxShadow = "0 8px 24px rgba(0,0,0,0.1)";
-                el.style.transform = "translateY(-2px)";
               }}
               onMouseLeave={(e) => {
                 const el = e.currentTarget as HTMLElement;
                 el.style.boxShadow = "0 1px 3px rgba(0,0,0,0.05)";
-                el.style.transform = "translateY(0)";
               }}
             >
               {/* Coloured status strip on top */}
@@ -637,11 +635,14 @@ const ManagementDashboard: React.FC = () => {
                               background: "#f9fafb",
                             }}
                           >
-                            <span
-                              style={{ fontSize: "0.85rem", color: "#374151" }}
-                            >
-                              {r.name ?? "—"}
-                            </span>
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                              {r.privacyMode && (
+                                <i className="pi pi-lock" style={{ fontSize: "0.7rem", color: "#6b7280" }} />
+                              )}
+                              <span style={{ fontSize: "0.85rem", color: "#374151" }}>
+                                {r.name ?? "—"}
+                              </span>
+                            </div>
                             <div
                               title={
                                 rViol === 0
@@ -698,30 +699,16 @@ const ManagementDashboard: React.FC = () => {
                     ) : (
                       <div
                         key={key}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.5rem",
-                        }}
+                        style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}
                       >
-                        <span
-                          style={{
-                            fontSize: "0.7rem",
-                            color: "#9ca3af",
-                            width: "80px",
-                          }}
-                        >
+                        <span style={{ fontSize: "0.7rem", color: "#9ca3af", minWidth: "60px", flexShrink: 0 }}>
                           {label}
                         </span>
-                        <span
-                          style={{
-                            fontSize: "0.8rem",
-                            color: "#d1d5db",
-                            fontStyle: "italic",
-                          }}
-                        >
-                          No data
-                        </span>
+                        <NoDataOverlay
+                          height="36px"
+                          message={hasGaps[key] && rooms.some(r => r.privacyMode) ? "Datenschutz aktiv" : "Keine Daten"}
+                          icon={hasGaps[key] && rooms.some(r => r.privacyMode) ? "pi pi-lock" : "pi pi-ban"}
+                        />
                       </div>
                     ),
                   )}

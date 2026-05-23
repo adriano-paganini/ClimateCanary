@@ -7,6 +7,7 @@ import at.qe.skeleton.models.Department;
 import at.qe.skeleton.models.EmployeeProfile;
 import at.qe.skeleton.models.Room;
 import at.qe.skeleton.models.Userx;
+import at.qe.skeleton.models.UserxRole;
 import at.qe.skeleton.repositories.EmployeeProfileRepository;
 import at.qe.skeleton.repositories.UserxRepository;
 import at.qe.skeleton.services.*;
@@ -21,6 +22,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,6 +57,7 @@ class EmployeeProfileServiceTest {
         profile.setUser(user);
         profile.setDepartment(department);
         profile.setRoom(room);
+        user.setEmployeeProfile(profile);
     }
 
 
@@ -272,12 +275,15 @@ class EmployeeProfileServiceTest {
     @Test
     @DisplayName("deletes and clears user")
     void delete_clearsUser() {
+        user.setRoles(EnumSet.of(UserxRole.EMPLOYEE, UserxRole.MANAGEMENT));
         Mockito.when(employeeProfileRepository.findById(42L)).thenReturn(Optional.of(profile));
 
         service.delete(42L);
 
         Assertions.assertThat(profile.getUser()).isNull();
         Assertions.assertThat(user.getEmployeeProfile()).isNull();
+        Assertions.assertThat(user.getRoles()).containsExactly(UserxRole.MANAGEMENT);
+        Mockito.verify(userxRepository).save(user);
         Mockito.verify(employeeProfileRepository).deleteById(42L);
     }
 
