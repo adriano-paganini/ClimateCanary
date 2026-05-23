@@ -11,5 +11,8 @@ public record AbsenceDTO(
         LocalDateTime endDate,
         AbsenceType absenceType,
         AbsenceStatus absenceStatus,
-        Long userxId
+        Long userxId,
+        String username,
+        String userFirstName,
+        String userLastName
 ) {}

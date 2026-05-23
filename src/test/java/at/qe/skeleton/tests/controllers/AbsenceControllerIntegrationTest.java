@@ -72,7 +72,10 @@ class AbsenceControllerIntegrationTest {
                 LocalDateTime.now().plusDays(1),
                 AbsenceType.SICKNESS,
                 AbsenceStatus.PLANNED,
-                10L
+                10L,
+                "user10",
+                "User",
+                "Ten"
         );
 
         absenceDTO2 = new AbsenceDTO(
@@ -81,7 +84,10 @@ class AbsenceControllerIntegrationTest {
                 LocalDateTime.now().plusDays(1),
                 AbsenceType.HOLIDAY,
                 AbsenceStatus.PLANNED,
-                20L
+                20L,
+                "user20",
+                "User",
+                "Twenty"
         );
 
     }

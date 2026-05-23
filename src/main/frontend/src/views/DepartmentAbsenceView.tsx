@@ -16,7 +16,6 @@ import {
     AbsenceDTO,
     AbsenceDTOAbsenceStatusEnum,
     AbsenceUpdateDTOAbsenceStatusEnum,
-    AdminControllerApi,
     UserxDTO,
 } from '../generated-skeleton-api';
 
@@ -47,6 +46,27 @@ const TAB_STYLE = (active: boolean): React.CSSProperties => ({
     borderRadius: '8px 8px 0 0',
 });
 
+type AbsenceWithUser = AbsenceDTO & {
+    username?: string;
+    userFirstName?: string;
+    userLastName?: string;
+};
+
+const buildUserMap = (absences: AbsenceDTO[]): Record<number, UserxDTO> => {
+    const map: Record<number, UserxDTO> = {};
+    absences.forEach(row => {
+        const absence = row as AbsenceWithUser;
+        if (absence.userxId === undefined) return;
+        map[absence.userxId] = {
+            id: absence.userxId,
+            username: absence.username,
+            firstName: absence.userFirstName,
+            lastName: absence.userLastName,
+        };
+    });
+    return map;
+};
+
 const DepartmentAbsenceView: React.FC = () => {
     const { departments, selectedDepartmentId, setSelectedDepartmentId, loading, error: deptError } = useDepartment();
     const toast = useRef<Toast>(null);
@@ -64,23 +84,6 @@ const DepartmentAbsenceView: React.FC = () => {
     const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
 
     useEffect(() => {
-        // User names are loaded via admin API — may not be accessible for all roles.
-        // If 403, the table falls back to showing userxId.
-        const loadUsers = async () => {
-            try {
-                const adminApi = new AdminControllerApi();
-                const userData = await adminApi.getAllUsers().then(r => r.data);
-                const map: Record<number, UserxDTO> = {};
-                userData.forEach(u => { if (u.id !== undefined) map[u.id] = u; });
-                setUserMap(map);
-            } catch {
-                // insufficient permissions — userxId shown as fallback
-            }
-        };
-        void loadUsers();
-    }, []);
-
-    useEffect(() => {
         if (!selectedDepartmentId) return;
         let active = true;
         const loadAbsences = async () => {
@@ -91,6 +94,7 @@ const DepartmentAbsenceView: React.FC = () => {
                 if (active) {
                     setError(null);
                     setAbsences(absenceData);
+                    setUserMap(buildUserMap(absenceData));
                     setCalendarEmployeeFilter(null);
                     setManageEmployeeFilter(null);
                 }
@@ -114,6 +118,7 @@ const DepartmentAbsenceView: React.FC = () => {
                 const absenceApi = new AbsenceControllerApi();
                 const absenceData = await absenceApi.getAll8({ departmentId: selectedDepartmentId }).then(r => r.data);
                 setAbsences(absenceData);
+                setUserMap(buildUserMap(absenceData));
             } catch {
                 // silently ignore polling errors
             }
@@ -155,6 +160,11 @@ const DepartmentAbsenceView: React.FC = () => {
     });
 
     const getEmployeeName = (row: AbsenceDTO) => {
+        const absence = row as AbsenceWithUser;
+        const dtoName = `${absence.userFirstName ?? ''} ${absence.userLastName ?? ''}`.trim();
+        if (dtoName) return dtoName;
+        if (absence.username) return absence.username;
+
         if (row.userxId === undefined) return '—';
         const user = userMap[row.userxId];
         if (!user) return `User ${row.userxId}`;
@@ -181,10 +191,8 @@ const DepartmentAbsenceView: React.FC = () => {
     const statusOptions = Object.values(AbsenceDTOAbsenceStatusEnum).map(s => ({ label: s, value: s }));
     const uniqueUserIds = [...new Set(absences.map(a => a.userxId).filter((id): id is number => id !== undefined))];
     const employeeOptions = uniqueUserIds.map(id => {
-        const u = userMap[id];
-        const label = u
-            ? (`${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || u.username || `User ${id}`)
-            : `User ${id}`;
+        const absence = absences.find(a => a.userxId === id);
+        const label = absence ? getEmployeeName(absence) : `User ${id}`;
         return { label, value: id };
     });
     const selectedDepartment = departments.find(department => department.id === selectedDepartmentId) ?? null;

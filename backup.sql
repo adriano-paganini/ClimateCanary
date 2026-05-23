@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 4a4iyiIWoX3cahL7egKzOb4qRcRSMNsCgl8FUQuKbozZeGgTpaZ67karDKeNVhk
+\restrict Z4avydv0xP9NL1dvrfJfnyoR6Nyl1SCZqg4KCpVGhcCSSl4Gydph7aaf8QTt9C9
 
 -- Dumped from database version 17.10
 -- Dumped by pg_dump version 17.10
@@ -19,6 +19,22 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: sa
+--
+
+-- *not* creating schema, since initdb creates it
+
+
+ALTER SCHEMA public OWNER TO sa;
+
+--
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: sa
+--
+
+COMMENT ON SCHEMA public IS '';
+
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -34,8 +50,8 @@ CREATE TABLE public.absences (
                                  end_date timestamp(6) without time zone,
                                  start_date timestamp(6) without time zone,
                                  userx_id bigint NOT NULL,
-                                 CONSTRAINT absences_absence_status_check CHECK (((absence_status)::text = ANY ((ARRAY['PLANNED'::character varying, 'APPROVED'::character varying, 'REJECTED'::character varying, 'CANCELLED'::character varying])::text[]))),
-    CONSTRAINT absences_absence_type_check CHECK (((absence_type)::text = ANY ((ARRAY['HOLIDAY'::character varying, 'SICKNESS'::character varying, 'PARENTAL_LEAVE'::character varying, 'OTHER'::character varying])::text[])))
+                                 CONSTRAINT absences_absence_status_check CHECK (((absence_status)::text = ANY (ARRAY[('PLANNED'::character varying)::text, ('APPROVED'::character varying)::text, ('REJECTED'::character varying)::text, ('CANCELLED'::character varying)::text]))),
+    CONSTRAINT absences_absence_type_check CHECK (((absence_type)::text = ANY (ARRAY[('HOLIDAY'::character varying)::text, ('SICKNESS'::character varying)::text, ('PARENTAL_LEAVE'::character varying)::text, ('OTHER'::character varying)::text])))
 );
 
 
@@ -219,7 +235,7 @@ CREATE TABLE public.measurement (
                                     "timestamp" timestamp(6) without time zone,
                                     room_id bigint NOT NULL,
                                     sensorstation_id bigint NOT NULL,
-                                    CONSTRAINT measurement_metric_check CHECK (((metric)::text = ANY ((ARRAY['HUMIDITY'::character varying, 'TEMPERATURE'::character varying, 'PRESSURE'::character varying, 'IAQ'::character varying])::text[])))
+                                    CONSTRAINT measurement_metric_check CHECK (((metric)::text = ANY (ARRAY[('HUMIDITY'::character varying)::text, ('TEMPERATURE'::character varying)::text, ('PRESSURE'::character varying)::text, ('IAQ'::character varying)::text])))
 );
 
 
@@ -249,7 +265,7 @@ CREATE TABLE public.raspberrypis (
                                      host_name character varying(255),
                                      ip_address character varying(255),
                                      room_id bigint,
-                                     CONSTRAINT raspberrypis_device_status_check CHECK (((device_status)::text = ANY ((ARRAY['ONLINE'::character varying, 'OFFLINE'::character varying, 'MAINTENANCE'::character varying, 'DEGRADED'::character varying, 'DECOMMISSIONED'::character varying, 'AVAILABLE'::character varying, 'CONNECTED'::character varying, 'CONNECTION_FAILED'::character varying])::text[])))
+                                     CONSTRAINT raspberrypis_device_status_check CHECK (((device_status)::text = ANY (ARRAY[('ONLINE'::character varying)::text, ('OFFLINE'::character varying)::text, ('MAINTENANCE'::character varying)::text, ('DEGRADED'::character varying)::text, ('DECOMMISSIONED'::character varying)::text, ('AVAILABLE'::character varying)::text, ('CONNECTED'::character varying)::text, ('CONNECTION_FAILED'::character varying)::text])))
 );
 
 
@@ -281,7 +297,7 @@ CREATE TABLE public.rooms (
                               room_type character varying(255),
                               building_id bigint,
                               department_id bigint,
-                              CONSTRAINT rooms_room_type_check CHECK (((room_type)::text = ANY ((ARRAY['OFFICE'::character varying, 'COMMON_AREAS'::character varying])::text[])))
+                              CONSTRAINT rooms_room_type_check CHECK (((room_type)::text = ANY (ARRAY[('OFFICE'::character varying)::text, ('COMMON_AREAS'::character varying)::text])))
 );
 
 
@@ -313,7 +329,7 @@ CREATE TABLE public.sensorstations (
                                        name character varying(255),
                                        raspberry_pi_id bigint,
                                        room_id bigint NOT NULL,
-                                       CONSTRAINT sensorstations_device_status_check CHECK (((device_status)::text = ANY ((ARRAY['ONLINE'::character varying, 'OFFLINE'::character varying, 'MAINTENANCE'::character varying, 'DEGRADED'::character varying, 'DECOMMISSIONED'::character varying, 'AVAILABLE'::character varying, 'CONNECTED'::character varying, 'CONNECTION_FAILED'::character varying])::text[])))
+                                       CONSTRAINT sensorstations_device_status_check CHECK (((device_status)::text = ANY (ARRAY[('ONLINE'::character varying)::text, ('OFFLINE'::character varying)::text, ('MAINTENANCE'::character varying)::text, ('DEGRADED'::character varying)::text, ('DECOMMISSIONED'::character varying)::text, ('AVAILABLE'::character varying)::text, ('CONNECTED'::character varying)::text, ('CONNECTION_FAILED'::character varying)::text])))
 );
 
 
@@ -356,8 +372,8 @@ CREATE TABLE public.thresholds (
                                    metric character varying(255),
                                    threshold_type character varying(255),
                                    room_id bigint NOT NULL,
-                                   CONSTRAINT thresholds_metric_check CHECK (((metric)::text = ANY ((ARRAY['HUMIDITY'::character varying, 'TEMPERATURE'::character varying, 'PRESSURE'::character varying, 'IAQ'::character varying])::text[]))),
-    CONSTRAINT thresholds_threshold_type_check CHECK (((threshold_type)::text = ANY ((ARRAY['LOWER'::character varying, 'UPPER'::character varying])::text[])))
+                                   CONSTRAINT thresholds_metric_check CHECK (((metric)::text = ANY (ARRAY[('HUMIDITY'::character varying)::text, ('TEMPERATURE'::character varying)::text, ('PRESSURE'::character varying)::text, ('IAQ'::character varying)::text]))),
+    CONSTRAINT thresholds_threshold_type_check CHECK (((threshold_type)::text = ANY (ARRAY[('LOWER'::character varying)::text, ('UPPER'::character varying)::text])))
 );
 
 
@@ -390,8 +406,8 @@ CREATE TABLE public.thresholdviolations (
                                             violation_status character varying(255),
                                             room_id bigint NOT NULL,
                                             threshold_id bigint NOT NULL,
-                                            CONSTRAINT thresholdviolations_metric_check CHECK (((metric)::text = ANY ((ARRAY['HUMIDITY'::character varying, 'TEMPERATURE'::character varying, 'PRESSURE'::character varying, 'IAQ'::character varying])::text[]))),
-    CONSTRAINT thresholdviolations_violation_status_check CHECK (((violation_status)::text = ANY ((ARRAY['ACTIVE'::character varying, 'RESOLVED'::character varying, 'DISABLED'::character varying])::text[])))
+                                            CONSTRAINT thresholdviolations_metric_check CHECK (((metric)::text = ANY (ARRAY[('HUMIDITY'::character varying)::text, ('TEMPERATURE'::character varying)::text, ('PRESSURE'::character varying)::text, ('IAQ'::character varying)::text]))),
+    CONSTRAINT thresholdviolations_violation_status_check CHECK (((violation_status)::text = ANY (ARRAY[('ACTIVE'::character varying)::text, ('RESOLVED'::character varying)::text, ('DISABLED'::character varying)::text])))
 );
 
 
@@ -454,7 +470,7 @@ ALTER TABLE public.userx ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
 CREATE TABLE public.userx_userx_role (
                                          userx_id bigint NOT NULL,
                                          roles character varying(255),
-                                         CONSTRAINT userx_userx_role_roles_check CHECK (((roles)::text = ANY ((ARRAY['SYSTEM_ADMIN'::character varying, 'BUILDING_ADMIN'::character varying, 'DEPARTMENT_LEAD'::character varying, 'MANAGEMENT'::character varying, 'EMPLOYEE'::character varying])::text[])))
+                                         CONSTRAINT userx_userx_role_roles_check CHECK (((roles)::text = ANY (ARRAY[('SYSTEM_ADMIN'::character varying)::text, ('BUILDING_ADMIN'::character varying)::text, ('DEPARTMENT_LEAD'::character varying)::text, ('MANAGEMENT'::character varying)::text, ('EMPLOYEE'::character varying)::text])))
 );
 
 
@@ -469,13 +485,13 @@ COPY public.absences (id, absence_status, absence_type, end_date, start_date, us
 2	PLANNED	SICKNESS	2026-04-12 18:00:00	2026-04-10 09:00:00	3
 3	PLANNED	PARENTAL_LEAVE	2026-04-09 18:00:00	2026-04-08 09:00:00	3
 4	PLANNED	SICKNESS	2026-04-06 17:00:00	2026-04-05 08:00:00	1
-5	APPROVED	HOLIDAY	2026-01-17 18:00:00	2026-01-15 08:00:00	5
 6	PLANNED	HOLIDAY	2026-05-09 18:00:00	2026-05-05 08:00:00	5
 7	PLANNED	HOLIDAY	2026-05-09 18:00:00	2026-05-05 08:00:00	6
+11	PLANNED	SICKNESS	2026-03-21 18:00:00	2026-03-20 08:00:00	9
+5	APPROVED	HOLIDAY	2026-01-17 18:00:00	2026-01-15 08:00:00	5
 8	APPROVED	SICKNESS	2026-02-04 18:00:00	2026-02-03 08:00:00	6
 9	APPROVED	HOLIDAY	2026-02-14 18:00:00	2026-02-10 08:00:00	7
 10	APPROVED	PARENTAL_LEAVE	2026-03-05 18:00:00	2026-03-01 08:00:00	8
-11	PLANNED	SICKNESS	2026-03-21 18:00:00	2026-03-20 08:00:00	9
 12	APPROVED	HOLIDAY	2026-04-03 18:00:00	2026-04-01 08:00:00	11
 13	APPROVED	HOLIDAY	2026-04-18 18:00:00	2026-04-14 08:00:00	10
 14	APPROVED	OTHER	2026-01-31 18:00:00	2026-01-27 08:00:00	12
@@ -581,6 +597,20 @@ COPY public.measurement (id, measurement, metric, "timestamp", room_id, sensorst
 --
 
 COPY public.raspberrypis (id, device_status, host_name, ip_address, room_id) FROM stdin;
+10	OFFLINE	rpi-eng-c	192.168.2.12	11
+1	OFFLINE	rpi-room1	192.168.1.10	1
+2	OFFLINE	rpi-common1	192.168.1.11	2
+3	OFFLINE	rpi-sales-common	192.168.5.11	3
+4	OFFLINE	rpi-sales-a	192.168.5.10	4
+5	OFFLINE	rpi-mgmt-a	192.168.4.10	5
+6	OFFLINE	rpi-mgmt-b	192.168.4.11	6
+7	OFFLINE	rpi-mgmt-common	192.168.4.12	7
+8	OFFLINE	rpi-eng-a	192.168.2.10	9
+9	OFFLINE	rpi-eng-b	192.168.2.11	10
+11	OFFLINE	rpi-eng-common	192.168.2.13	12
+13	OFFLINE	rpi-hr-b	192.168.3.11	14
+12	OFFLINE	rpi-hr-a	192.168.3.10	13
+14	OFFLINE	rpi-hr-common	192.168.3.12	15
 \.
 
 
@@ -612,6 +642,22 @@ COPY public.rooms (id, active, name, privacy_mode, room_type, building_id, depar
 --
 
 COPY public.sensorstations (id, ble_mac, device_status, measurement_interval, name, raspberry_pi_id, room_id) FROM stdin;
+1	02:FF:5E:ED:01:03	CONNECTION_FAILED	15	Eng-C-S1	10	11
+2	02:FF:5E:ED:00:01	CONNECTION_FAILED	5	Station A	1	1
+3	02:FF:5E:ED:00:02	CONNECTION_FAILED	10	Station B	2	2
+4	02:FF:5E:ED:04:10	CONNECTION_FAILED	25	Sales-Common-S1	3	3
+5	02:FF:5E:ED:04:01	CONNECTION_FAILED	11	Sales-A-S1	4	4
+6	02:FF:5E:ED:03:01	CONNECTION_FAILED	9	Mgmt-A-S1	5	5
+7	02:FF:5E:ED:03:02	CONNECTION_FAILED	30	Mgmt-B-S1	6	6
+8	02:FF:5E:ED:03:10	CONNECTION_FAILED	18	Mgmt-Common-S1	7	7
+9	02:FF:5E:ED:01:01	CONNECTION_FAILED	4	Eng-A-S1	8	9
+10	02:FF:5E:ED:01:02	CONNECTION_FAILED	6	Eng-B-S1	9	10
+11	02:FF:5E:ED:01:10	CONNECTION_FAILED	8	Eng-Common-S1	11	12
+12	02:FF:5E:ED:02:02	CONNECTION_FAILED	7	HR-B-S1	13	14
+13	02:FF:5E:ED:02:01	CONNECTION_FAILED	12	HR-A-S1	12	13
+14	02:FF:5E:ED:02:10	CONNECTION_FAILED	20	HR-Common-S1	14	15
+15	02:FF:5E:ED:01:04	CONNECTION_FAILED	13	Eng-A-S2	8	9
+16	02:FF:5E:ED:01:05	CONNECTION_FAILED	17	Eng-A-S3	8	9
 \.
 
 
@@ -654,6 +700,20 @@ COPY public.thresholds (id, bound_value, enabled, metric, threshold_type, room_i
 --
 
 COPY public.thresholdviolations (id, end_time, metric, start_time, value, violation_status, room_id, threshold_id) FROM stdin;
+1	2026-04-13 11:00:00	TEMPERATURE	2026-04-13 10:00:00	28	RESOLVED	1	1
+2	\N	HUMIDITY	2026-04-23 07:45:00	65	ACTIVE	1	1
+3	\N	HUMIDITY	2026-04-23 06:30:00	63.5	ACTIVE	13	10
+4	2026-02-20 19:00:00	TEMPERATURE	2026-02-20 14:00:00	27.1	RESOLVED	14	12
+5	2026-03-20 18:00:00	TEMPERATURE	2026-03-20 12:00:00	27.8	RESOLVED	10	6
+6	\N	IAQ	2026-04-22 14:00:00	431	ACTIVE	9	5
+7	2026-03-15 16:00:00	TEMPERATURE	2026-03-15 11:30:00	26.9	RESOLVED	14	12
+8	\N	TEMPERATURE	2026-04-22 12:00:00	29.2	ACTIVE	4	16
+9	2026-01-25 18:00:00	IAQ	2026-01-25 12:00:00	512	RESOLVED	4	18
+10	2026-03-08 15:30:00	HUMIDITY	2026-03-08 09:00:00	69.1	RESOLVED	9	4
+11	2026-01-30 17:00:00	IAQ	2026-01-30 13:00:00	362	RESOLVED	13	11
+12	\N	HUMIDITY	2026-04-21 08:00:00	72.3	ACTIVE	10	7
+13	2026-02-28 17:30:00	IAQ	2026-02-28 13:00:00	498	RESOLVED	4	18
+14	2026-02-15 16:00:00	TEMPERATURE	2026-02-15 11:00:00	28.4	RESOLVED	9	2
 \.
 
 
@@ -765,7 +825,7 @@ SELECT pg_catalog.setval('public.measurement_id_seq', 1, false);
 -- Name: raspberrypis_id_seq; Type: SEQUENCE SET; Schema: public; Owner: sa
 --
 
-SELECT pg_catalog.setval('public.raspberrypis_id_seq', 1, false);
+SELECT pg_catalog.setval('public.raspberrypis_id_seq', 14, true);
 
 
 --
@@ -779,7 +839,7 @@ SELECT pg_catalog.setval('public.rooms_id_seq', 15, true);
 -- Name: sensorstations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: sa
 --
 
-SELECT pg_catalog.setval('public.sensorstations_id_seq', 1, false);
+SELECT pg_catalog.setval('public.sensorstations_id_seq', 16, true);
 
 
 --
@@ -793,7 +853,7 @@ SELECT pg_catalog.setval('public.thresholds_id_seq', 18, true);
 -- Name: thresholdviolations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: sa
 --
 
-SELECT pg_catalog.setval('public.thresholdviolations_id_seq', 1, false);
+SELECT pg_catalog.setval('public.thresholdviolations_id_seq', 14, true);
 
 
 --
@@ -1132,7 +1192,16 @@ ALTER TABLE ONLY public.userx
 
 
 --
+-- Name: SCHEMA public; Type: ACL; Schema: -; Owner: sa
+--
+
+REVOKE USAGE ON SCHEMA public FROM PUBLIC;
+GRANT ALL ON SCHEMA public TO PUBLIC;
+
+
+--
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 4a4iyiIWoX3cahL7egKzOb4qRcRSMNsCgl8FUQuKbozZeGgTpaZ67karDKeNVhk
+\unrestrict Z4avydv0xP9NL1dvrfJfnyoR6Nyl1SCZqg4KCpVGhcCSSl4Gydph7aaf8QTt9C9
+

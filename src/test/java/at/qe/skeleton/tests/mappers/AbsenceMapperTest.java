@@ -18,6 +18,9 @@ class AbsenceMapperTest {
     void mapTo_shouldMapAllFields() {
         Userx user = new Userx();
         ReflectionTestUtils.setField(user, "id", 99L);
+        user.setUsername("john");
+        user.setFirstName("John");
+        user.setLastName("Doe");
 
         Absence absence = new Absence();
         ReflectionTestUtils.setField(absence, "id", 1L);
@@ -36,6 +39,9 @@ class AbsenceMapperTest {
         Assertions.assertThat(dto.absenceType()).isEqualTo(AbsenceType.HOLIDAY);
         Assertions.assertThat(dto.absenceStatus()).isEqualTo(AbsenceStatus.APPROVED);
         Assertions.assertThat(dto.userxId()).isEqualTo(99L);
+        Assertions.assertThat(dto.username()).isEqualTo("john");
+        Assertions.assertThat(dto.userFirstName()).isEqualTo("John");
+        Assertions.assertThat(dto.userLastName()).isEqualTo("Doe");
     }
 
     @Test
@@ -46,7 +52,10 @@ class AbsenceMapperTest {
                 LocalDateTime.now().plusDays(1),
                 AbsenceType.SICKNESS,
                 AbsenceStatus.PLANNED,
-                99L
+                99L,
+                "john",
+                "John",
+                "Doe"
         );
 
         Assertions.assertThatThrownBy(() -> mapper.mapFrom(dto))
