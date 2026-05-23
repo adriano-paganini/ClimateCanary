@@ -5,7 +5,6 @@ import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog';
 import { DataTable } from 'primereact/datatable';
 import { Dialog } from 'primereact/dialog';
 import { Dropdown } from 'primereact/dropdown';
-import { Tooltip } from 'primereact/tooltip';
 import { InputText } from 'primereact/inputtext';
 import { Message } from 'primereact/message';
 import { ProgressSpinner } from 'primereact/progressspinner';
@@ -665,6 +664,17 @@ const OrgStructureView: React.FC = () => {
         const deleteBlockReason = getDepartmentDeleteBlockReason(department);
         const deleteDisabled = deleteBlockReason !== null;
 
+        const deleteButton = (
+            <Button
+                icon="pi pi-trash"
+                size="small"
+                severity="danger"
+                outlined
+                disabled={deleteDisabled}
+                onClick={() => deleteDept(department)}
+            />
+        );
+
         return (
             <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                 <Button
@@ -675,35 +685,16 @@ const OrgStructureView: React.FC = () => {
                     onClick={() => openEditDept(department)}
                 />
 
-                <Button
-                    icon="pi pi-trash"
-                    size="small"
-                    severity="danger"
-                    outlined
-                    disabled={deleteDisabled}
-                    onClick={() => deleteDept(department)}
-                />
-
-                {deleteDisabled && (
-                    <span
-                        className="department-delete-info"
-                        data-pr-tooltip={deleteBlockReason ?? undefined}
-                        data-pr-position="left"
-                        style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: '1.8rem',
-                            height: '1.8rem',
-                            borderRadius: '999px',
-                            backgroundColor: '#fef3c7',
-                            border: '1px solid #f59e0b',
-                            color: '#92400e',
-                            cursor: 'help',
-                        }}
-                    >
-                    <i className="pi pi-info-circle" style={{ fontSize: '0.95rem' }} />
-                </span>
+                {deleteDisabled ? (
+                    <span className="department-delete-wrapper">
+                        {deleteButton}
+                        <span className="department-delete-popover" role="tooltip">
+                            <span className="department-delete-popover__title">Department cannot be deleted</span>
+                            <span className="department-delete-popover__text">{deleteBlockReason}</span>
+                        </span>
+                    </span>
+                ) : (
+                    deleteButton
                 )}
             </div>
         );
@@ -814,12 +805,74 @@ const OrgStructureView: React.FC = () => {
             <Toast ref={toast} />
             <ConfirmDialog />
 
-            <Tooltip
-                target=".department-delete-info"
-                position="left"
-                showDelay={150}
-                hideDelay={100}
-            />
+            <style>
+                {`
+                    .department-delete-wrapper {
+                        position: relative;
+                        display: inline-flex;
+                        cursor: help;
+                    }
+
+                    .department-delete-wrapper .p-button {
+                        pointer-events: none;
+                    }
+
+                    .department-delete-popover {
+                        position: absolute;
+                        top: 50%;
+                        right: calc(100% + 0.75rem);
+                        transform: translateY(-50%) translateX(0.25rem);
+                        z-index: 1000;
+                        width: 19rem;
+                        padding: 0.85rem 1rem;
+                        border-radius: 0.75rem;
+                        border: 1px solid #e5e7eb;
+                        background: #ffffff;
+                        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16);
+                        color: #111827;
+                        opacity: 0;
+                        visibility: hidden;
+                        transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease;
+                        pointer-events: none;
+                        text-align: left;
+                    }
+
+                    .department-delete-popover::after {
+                        content: "";
+                        position: absolute;
+                        top: 50%;
+                        right: -0.45rem;
+                        width: 0.85rem;
+                        height: 0.85rem;
+                        transform: translateY(-50%) rotate(45deg);
+                        background: #ffffff;
+                        border-top: 1px solid #e5e7eb;
+                        border-right: 1px solid #e5e7eb;
+                    }
+
+                    .department-delete-wrapper:hover .department-delete-popover,
+                    .department-delete-wrapper:focus-within .department-delete-popover {
+                        opacity: 1;
+                        visibility: visible;
+                        transform: translateY(-50%) translateX(0);
+                    }
+
+                    .department-delete-popover__title {
+                        display: block;
+                        margin-bottom: 0.35rem;
+                        font-weight: 700;
+                        font-size: 0.9rem;
+                        color: #92400e;
+                    }
+
+                    .department-delete-popover__text {
+                        display: block;
+                        font-size: 0.82rem;
+                        line-height: 1.35;
+                        color: #4b5563;
+                    }
+                `}
+            </style>
 
             <div style={{ padding: '1.5rem 2rem', maxWidth: '1400px', margin: '0 auto' }}>
                 {/* Header */}
