@@ -163,7 +163,7 @@ class ThresholdServiceTest {
 
     @Test
     @DisplayName("create rejects duplicate threshold for same room, metric and type")
-    void create_duplicateRoomMetricAndType_throwsIllegalArgumentException() {
+    void create_duplicateRoomMetricAndType_throwsConflictException() {
         ThresholdCreateDTO dto = new ThresholdCreateDTO(
                 1L, Metric.TEMPERATURE, 25.0F, ThresholdType.UPPER, null);
 
@@ -171,8 +171,8 @@ class ThresholdServiceTest {
                 .thenReturn(true);
 
         Assertions.assertThatThrownBy(() -> thresholdService.create(dto))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("A threshold for the given room, metric, and type already exists");
+                .isInstanceOf(ConflictException.class)
+                .hasMessage("Threshold already exists for room 1 and metric TEMPERATURE and threshold type UPPER");
 
         Mockito.verify(thresholdRepository, Mockito.never()).save(Mockito.any());
     }
@@ -234,7 +234,7 @@ class ThresholdServiceTest {
 
     @Test
     @DisplayName("update rejects duplicate threshold for effective room, metric and type")
-    void update_duplicateRoomMetricAndType_throwsIllegalArgumentException() {
+    void update_duplicateRoomMetricAndType_throwsConflictException() {
         ThresholdUpdateDTO dto = new ThresholdUpdateDTO(
                 null,
                 Metric.HUMIDITY,
@@ -250,8 +250,8 @@ class ThresholdServiceTest {
                 .thenReturn(true);
 
         Assertions.assertThatThrownBy(() -> thresholdService.update(100L, dto))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("A threshold for the given room, metric, and type already exists");
+                .isInstanceOf(ConflictException.class)
+                .hasMessage("Threshold already exists for room 1 and metric HUMIDITY and threshold type LOWER");
 
         Mockito.verify(thresholdRepository, Mockito.never()).save(Mockito.any());
     }
