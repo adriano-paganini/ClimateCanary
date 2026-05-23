@@ -33,7 +33,11 @@ const HomePage = () => {
         return <Navigate to={ROUTES.MANAGEMENT_DASHBOARD} replace/>;
     }
 
-    if (roles?.has(UserxRole.DEPARTMENT_LEAD) || roles?.has(UserxRole.EMPLOYEE)) {
+    if (roles?.has(UserxRole.DEPARTMENT_LEAD)) {
+        return <Navigate to={ROUTES.DEPARTMENT_DASHBOARD} replace/>;
+    }
+
+    if (roles?.has(UserxRole.EMPLOYEE)) {
         return <Navigate to={ROUTES.DASHBOARD} replace/>;
     }
 

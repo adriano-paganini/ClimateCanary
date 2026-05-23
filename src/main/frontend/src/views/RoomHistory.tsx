@@ -11,6 +11,7 @@ import { format, subDays, subHours } from 'date-fns';
 import globalAxios from 'axios';
 
 import NavbarComponent from '../components/NavbarComponent';
+import { useUser } from '../Contexts/AuthenticatedUserContext';
 import { ThresholdService } from '../services/ThresholdService';
 import { RoomService } from '../services/RoomService';
 import {
@@ -18,6 +19,7 @@ import {
     RoomDTO,
     ThresholdDTO,
     ThresholdDTOThresholdTypeEnum,
+    UserxRole,
 } from '../generated-skeleton-api';
 
 interface TrendPoint {
@@ -79,6 +81,7 @@ const CHART_OPTIONS = {
 const RoomHistory: React.FC = () => {
     const { roomId } = useParams<{ roomId: string }>();
     const navigate  = useNavigate();
+    const { currentUser } = useUser();
     const numId     = roomId ? parseInt(roomId, 10) : NaN;
 
     const [timeRange,  setTimeRange]  = useState<TimeRange>('24h');
@@ -179,7 +182,11 @@ const RoomHistory: React.FC = () => {
                         icon="pi pi-arrow-left"
                         label="Back"
                         className="p-button-text"
-                        onClick={() => navigate(ROUTES.DASHBOARD)}
+                        onClick={() => navigate(
+                            currentUser?.roles?.has(UserxRole.DEPARTMENT_LEAD)
+                                ? ROUTES.DEPARTMENT_DASHBOARD
+                                : ROUTES.DASHBOARD,
+                        )}
                     />
                     <h2 style={{ margin: 0, color: '#111827' }}>
                         {room?.name ? `${room.name} — History` : `Room ${roomId} — History`}

@@ -5,10 +5,11 @@
 import './styles/App.css';
 import "primereact/resources/themes/lara-light-cyan/theme.css";
 import React, {Suspense} from "react";
-import {BrowserRouter, Route, Routes} from "react-router-dom";
+import {BrowserRouter, Outlet, Route, Routes} from "react-router-dom";
 import {HomePageRoute, LoginsRoute, LogoutsRoute, ManageUsersRoute} from "./routes";
 import PrivateRoute from './components/PrivateRoute';
 import {UserProvider} from "./Contexts/AuthenticatedUserContext";
+import {DepartmentProvider} from "./Contexts/DepartmentContext";
 import {UserxRole} from "./generated-skeleton-api";
 import {ROUTES} from "./utilities/routes.paths";
 import LoadingScreen from "./components/LoadingScreen";
@@ -38,20 +39,23 @@ const App: React.FC = () => {
                         <Route element={<PrivateRoute/>}>
                             <Route path={HomePageRoute.url} Component={HomePageRoute.component}/>
                             <Route path={LogoutsRoute.url} Component={LogoutsRoute.component}/>
-                            <Route path={ROUTES.DASHBOARD} Component={EmployeeDashboard}/>
-                            <Route path={ROUTES.DASHBOARD_HISTORY} Component={RoomHistory}/>
                             <Route path={ROUTES.PROFILE} Component={UserProfileView}/>
                         </Route>
 
-                        {/* Employee and Department Lead */}
-                        <Route element={<PrivateRoute roles={[UserxRole.EMPLOYEE, UserxRole.DEPARTMENT_LEAD]}/>}>
+                        {/* Employee only */}
+                        <Route element={<PrivateRoute roles={[UserxRole.EMPLOYEE]}/>}>
+                            <Route path={ROUTES.DASHBOARD} Component={EmployeeDashboard}/>
+                            <Route path={ROUTES.DASHBOARD_HISTORY} Component={RoomHistory}/>
                             <Route path={ROUTES.ABSENCE} Component={AbsenceView}/>
                         </Route>
 
                         {/* Department Lead only */}
                         <Route element={<PrivateRoute roles={[UserxRole.DEPARTMENT_LEAD]}/>}>
-                            <Route path={ROUTES.DEPARTMENT_DASHBOARD} Component={DepartmentDashboard}/>
-                            <Route path={ROUTES.DEPARTMENT_ABSENCES} Component={DepartmentAbsenceView}/>
+                            <Route element={<DepartmentProvider><Outlet/></DepartmentProvider>}>
+                                <Route path={ROUTES.DEPARTMENT_DASHBOARD} Component={DepartmentDashboard}/>
+                                <Route path={ROUTES.DASHBOARD_HISTORY} Component={RoomHistory}/>
+                                <Route path={ROUTES.DEPARTMENT_ABSENCES} Component={DepartmentAbsenceView}/>
+                            </Route>
                         </Route>
 
                         {/* Management only */}
