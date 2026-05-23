@@ -57,7 +57,7 @@ COPY --from=backend-build /app/target/*.jar app.jar
 
 # Limit memory for deployment server restriction reasons
 # TODO test if better option: -XX:MaxRAMPercentage=75
-ENV JAVA_OPTS="-Xmx256m"
+ENV JAVA_OPTS="-Xmx1g"
 
 EXPOSE 8080
 

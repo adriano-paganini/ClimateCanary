@@ -33,7 +33,7 @@ public class ThresholdViolationController {
     ) {
         return ResponseEntity.ok(thresholdViolationService.findAll(violationStatus, roomId, departmentId)
                 .stream()
-                .map(thresholdViolationMapper::mapTo)
+                .map(thresholdViolationMapper::mapToListItem)
                 .toList()
         );
     }
