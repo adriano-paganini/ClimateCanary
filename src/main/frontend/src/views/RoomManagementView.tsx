@@ -9,7 +9,6 @@ import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { DataTable } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
 import { Dropdown } from "primereact/dropdown";
-import { InputSwitch } from "primereact/inputswitch";
 import { InputText } from "primereact/inputtext";
 import { Tag } from "primereact/tag";
 import { Toast } from "primereact/toast";
@@ -35,7 +34,6 @@ const roomTypeOptions = Object.values(RoomType).map((v) => ({
 const emptyForm = (): Partial<RoomCreateDTO> => ({
   name: "",
   roomType: undefined,
-  privacyMode: false,
   departmentId: undefined,
   buildingId: undefined,
 });
@@ -114,7 +112,6 @@ const RoomManagementView: React.FC = () => {
     setForm({
       name: room.name ?? "",
       roomType: room.roomType,
-      privacyMode: room.privacyMode ?? false,
       departmentId: room.departmentId,
       buildingId: room.buildingId,
     });
@@ -143,7 +140,7 @@ const RoomManagementView: React.FC = () => {
         const dto: RoomCreateDTO = {
           name: form.name,
           roomType: form.roomType,
-          privacyMode: form.privacyMode ?? false,
+          privacyMode: false,
           departmentId: form.departmentId,
           buildingId: form.buildingId,
         };
@@ -159,7 +156,6 @@ const RoomManagementView: React.FC = () => {
         const dto: RoomUpdateDTO = {
           name: form.name,
           roomType: form.roomType,
-          privacyMode: form.privacyMode,
           departmentId: form.departmentId,
           buildingId: form.buildingId,
         };
@@ -185,7 +181,7 @@ const RoomManagementView: React.FC = () => {
 
   const confirmDelete = (room: RoomDTO) => {
     confirmDialog({
-      message: `Delete room "${room.name}"? This will deactivate it and decommission all associated devices.`,
+      message: `Delete room "${room.name}"? This will deactivate it and decommission all associated Raspberry Pis and Arduinos.`,
       header: "Confirm Delete",
       icon: "pi pi-exclamation-triangle",
       acceptClassName: "p-button-danger",
@@ -308,10 +304,30 @@ const RoomManagementView: React.FC = () => {
             <Column
               header="Department"
               body={(row: RoomDTO) => getDepartmentName(row.departmentId)}
+              sortable
+              sortField="departmentId"
+              sortFunction={(e) =>
+                [...e.data].sort((a, b) =>
+                  (e.order ?? 1) *
+                  getDepartmentName(a.departmentId).localeCompare(
+                    getDepartmentName(b.departmentId)
+                  )
+                )
+              }
             />
             <Column
               header="Building"
               body={(row: RoomDTO) => getBuildingName(row.buildingId)}
+              sortable
+              sortField="buildingId"
+              sortFunction={(e) =>
+                [...e.data].sort((a, b) =>
+                  (e.order ?? 1) *
+                  getBuildingName(a.buildingId).localeCompare(
+                    getBuildingName(b.buildingId)
+                  )
+                )
+              }
             />
             <Column field="privacyMode" header="Privacy Mode" body={privacyTemplate} />
             <Column field="active" header="Status" body={activeTemplate} />
@@ -382,17 +398,6 @@ const RoomManagementView: React.FC = () => {
               placeholder="Select building"
               style={{ width: "100%" }}
               filter
-            />
-          </div>
-          <div
-            className="field"
-            style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}
-          >
-            <label htmlFor="r-privacy">Privacy Mode</label>
-            <InputSwitch
-              id="r-privacy"
-              checked={form.privacyMode ?? false}
-              onChange={(e) => setForm((f) => ({ ...f, privacyMode: e.value }))}
             />
           </div>
         </div>
