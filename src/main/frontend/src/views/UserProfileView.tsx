@@ -1,17 +1,21 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from 'primereact/button';
+import { Dialog } from 'primereact/dialog';
+import { Divider } from 'primereact/divider';
 import { Dropdown } from 'primereact/dropdown';
 import { InputText } from 'primereact/inputtext';
 import { Message } from 'primereact/message';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Tag } from 'primereact/tag';
-import { Divider } from 'primereact/divider';
 import { Toast } from 'primereact/toast';
 import 'primeicons/primeicons.css';
 
 import NavbarComponent from '../components/NavbarComponent';
 import { COUNTRY_CODE_OPTIONS } from '../components/UserForm';
 import { useUser } from '../Contexts/AuthenticatedUserContext';
+import { AuthApi } from '../utilities/authApi';
+import { ROUTES } from '../utilities/routes.paths';
 import { UserService } from '../services/UserService';
 import { UserxDTO, UserxRole } from '../generated-skeleton-api';
 
@@ -32,9 +36,10 @@ const ROLE_SEVERITY: Record<string, string> = {
 };
 
 const UserProfileView: React.FC = () => {
-    const { fullUser, refreshCurrentUser } = useUser();
+    const { fullUser, refreshCurrentUser, logout } = useUser();
+    const navigate = useNavigate();
     const toastRef = React.useRef<Toast>(null);
-    
+
     const [user, setUser] = useState<UserxDTO | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -47,6 +52,11 @@ const UserProfileView: React.FC = () => {
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
     const [fieldErrors, setFieldErrors] = useState<Partial<Record<'firstName' | 'lastName' | 'email' | 'phone', string>>>({});
+
+    const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
+    const [deletePassword, setDeletePassword] = useState('');
+    const [deleteConfirmation, setDeleteConfirmation] = useState('');
+    const [deleteSubmitting, setDeleteSubmitting] = useState(false);
 
     useEffect(() => {
         if (fullUser) {
@@ -137,6 +147,40 @@ const UserProfileView: React.FC = () => {
             setSaving(false);
         }
     };
+
+    const openDeleteDialog = () => {
+        setDeletePassword('');
+        setDeleteConfirmation('');
+        setDeleteDialogVisible(true);
+    };
+
+    const closeDeleteDialog = () => {
+        if (deleteSubmitting) return;
+        setDeleteDialogVisible(false);
+    };
+
+    const handleDeleteAccount = async () => {
+        const username = fullUser?.username;
+        if (!username) return;
+
+        if (deleteConfirmation !== 'DELETE ME') {
+            toastRef.current?.show({ severity: 'warn', summary: 'Confirmation required', detail: 'Type DELETE ME to confirm deletion.', life: 3000 });
+            return;
+        }
+
+        setDeleteSubmitting(true);
+        try {
+            await AuthApi.login({ username, password: deletePassword });
+            await UserService.deleteCurrentUser();
+            logout();
+            navigate(ROUTES.LOGIN, { replace: true });
+        } catch {
+            toastRef.current?.show({ severity: 'error', summary: 'Error', detail: 'Password confirmation failed or account could not be deleted.', life: 3000 });
+            setDeleteSubmitting(false);
+        }
+    };
+
+    const canSubmitDelete = deletePassword.length > 0 && deleteConfirmation === 'DELETE ME' && !deleteSubmitting;
 
     if (loading) {
         return (
@@ -342,12 +386,80 @@ const UserProfileView: React.FC = () => {
                                         )}
                                     </div>
                                 </div>
+
+                                {/* Danger Zone */}
+                                <Divider style={{ margin: '2rem 0' }} />
+                                <div>
+                                    <h3 style={{ margin: '0 0 0.5rem', color: '#991b1b', fontSize: '1rem', fontWeight: 700 }}>Danger Zone</h3>
+                                    <p style={{ margin: '0 0 1rem', color: '#6b7280', fontSize: '0.875rem' }}>
+                                        Permanently delete your account. This action cannot be undone.
+                                    </p>
+                                    <Button
+                                        label="Delete my account"
+                                        icon="pi pi-trash"
+                                        severity="danger"
+                                        outlined
+                                        onClick={openDeleteDialog}
+                                    />
+                                </div>
                             </div>
                         )}
                     </div>
                 </div>
 
             </div>
+
+            {/* Delete Account Dialog */}
+            <Dialog
+                header="Delete your account"
+                visible={deleteDialogVisible}
+                style={{ width: '32rem', maxWidth: '95vw' }}
+                modal
+                closable={!deleteSubmitting}
+                onHide={closeDeleteDialog}
+                footer={
+                    <div>
+                        <Button label="Cancel" icon="pi pi-times" text onClick={closeDeleteDialog} disabled={deleteSubmitting} />
+                        <Button
+                            label="Delete my account"
+                            icon="pi pi-trash"
+                            severity="danger"
+                            onClick={() => void handleDeleteAccount()}
+                            disabled={!canSubmitDelete}
+                            loading={deleteSubmitting}
+                        />
+                    </div>
+                }
+            >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <p style={{ margin: 0 }}>
+                        You are deleting your own account. Confirm your password and type <strong>DELETE ME</strong> to continue.
+                    </p>
+                    <div>
+                        <label htmlFor="delete-password" className="font-bold block" style={{ marginBottom: '0.35rem' }}>Password</label>
+                        <InputText
+                            id="delete-password"
+                            type="password"
+                            value={deletePassword}
+                            onChange={e => setDeletePassword(e.target.value)}
+                            disabled={deleteSubmitting}
+                            style={{ width: '100%' }}
+                            autoComplete="current-password"
+                        />
+                    </div>
+                    <div>
+                        <label htmlFor="delete-confirmation" className="font-bold block" style={{ marginBottom: '0.35rem' }}>Confirmation</label>
+                        <InputText
+                            id="delete-confirmation"
+                            value={deleteConfirmation}
+                            onChange={e => setDeleteConfirmation(e.target.value)}
+                            disabled={deleteSubmitting}
+                            placeholder="DELETE ME"
+                            style={{ width: '100%' }}
+                        />
+                    </div>
+                </div>
+            </Dialog>
         </div>
     );
 };
