@@ -162,8 +162,18 @@ const UserForm: React.FC<UserFormProps> =
             UserxRole.MANAGEMENT,
             UserxRole.EMPLOYEE,
         ];
-        const userRoles = allowedRoles.map(role => ({ label: role, value: role }));
-        const selectedRoles = Array.from(new Set([...rolesToArray(user.roles), ...lockedRoles]));
+        const existingRoles = rolesToArray(user.roles);
+        const nonEditableRoles = !isNewUser && existingRoles.includes(UserxRole.DEPARTMENT_LEAD)
+            ? [UserxRole.DEPARTMENT_LEAD]
+            : [];
+        const roleOptions = Array.from(new Set([...allowedRoles, ...nonEditableRoles]));
+        const protectedRoles = Array.from(new Set([...lockedRoles, ...nonEditableRoles]));
+        const userRoles = roleOptions.map(role => ({
+            label: role,
+            value: role,
+            disabled: protectedRoles.includes(role),
+        }));
+        const selectedRoles = Array.from(new Set([...existingRoles, ...protectedRoles]));
         const isEmployee = hasUserRole(user, UserxRole.EMPLOYEE) || lockedRoles.includes(UserxRole.EMPLOYEE);
         const departmentOptions = departments
             .filter(department => department.id !== undefined)
@@ -283,10 +293,11 @@ const UserForm: React.FC<UserFormProps> =
                                 name="roles"
                                 value={selectedRoles}
                                 onChange={(event) => onRolesChange({
-                                    value: Array.from(new Set([...(event.value as string[]), ...lockedRoles])),
+                                    value: Array.from(new Set([...(event.value as string[]), ...protectedRoles])),
                                 })}
                                 options={userRoles}
                                 optionLabel="label"
+                                optionDisabled="disabled"
                                 placeholder="Select Roles"
                                 className="w-full md:w-20rem"
                                 appendTo="self"
@@ -294,9 +305,9 @@ const UserForm: React.FC<UserFormProps> =
                                 scrollHeight="14rem"
                                 invalid={!!fieldErrors?.roles}
                             />
-                            {lockedRoles.length > 0 && (
+                            {protectedRoles.length > 0 && (
                                 <small style={{ display: "block", color: "#64748b" }}>
-                                    Required roles cannot be removed here.
+                                    Disabled roles cannot be changed here.
                                 </small>
                             )}
                             {fieldErrors?.roles && <small className="p-error">{fieldErrors.roles}</small>}

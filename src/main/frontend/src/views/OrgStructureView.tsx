@@ -39,7 +39,6 @@ import {
 import { createUserxRoleArrayFromStrings, rolesToArray, UserxValidationResult } from '../utilities/userxUtilities';
 
 type Tab = 'buildings' | 'addresses' | 'departments' | 'rooms';
-type EmployeeGroupBy = 'none' | 'department' | 'room';
 
 function apiError(err: unknown, fallback: string, conflictMsg?: string): string {
     const response = (err as { response?: { status?: number; data?: { message?: string } } })?.response;
@@ -86,10 +85,11 @@ const EMPTY_DEPT: DeptForm = { name: '', departmentLeadId: null };
 interface RoomForm {
     name: string;
     roomType?: RoomType;
+    privacyMode: boolean;
     departmentId?: number;
     buildingId?: number;
 }
-const EMPTY_ROOM: RoomForm = { name: '', roomType: undefined, departmentId: undefined, buildingId: undefined };
+const EMPTY_ROOM: RoomForm = { name: '', roomType: undefined, privacyMode: false, departmentId: undefined, buildingId: undefined };
 
 const EMPTY_EMPLOYEE_USER: UserxCreateDTO = {
     username: '',
@@ -120,7 +120,6 @@ const OrgStructureView: React.FC = () => {
     const [buildingFilter, setBuildingFilter] = useState('');
     const [departmentFilter, setDepartmentFilter] = useState('');
     const [roomFilter, setRoomFilter] = useState('');
-    const [employeeGroupBy, setEmployeeGroupBy] = useState<EmployeeGroupBy>('none');
     const [expandedDepartments, setExpandedDepartments] = useState<Record<string, boolean>>({});
 
     const [addrDialog, setAddrDialog] = useState(false);
@@ -217,6 +216,38 @@ const OrgStructureView: React.FC = () => {
     const buildingName = (id?: number) => {
         if (!id) return '—';
         return buildings.find(b => b.id === id)?.name ?? `Building ${id}`;
+    };
+
+    const isOnlyDepartmentLeadRole = (user?: UserxDTO): boolean => {
+        const roles = rolesToArray(user?.roles);
+        return roles.length === 1 && roles.includes(UserxRole.DEPARTMENT_LEAD);
+    };
+
+    const getDepartmentsLedByUser = (userId?: number): DepartmentDTO[] => {
+        if (!userId) return [];
+        return departments.filter(department => department.departmentLeadId === userId);
+    };
+
+    const wouldLeaveLeadWithoutRole = (department: DepartmentDTO): boolean => {
+        if (!department.departmentLeadId) return false;
+
+        const lead = users.find(user => user.id === department.departmentLeadId);
+        if (!lead) return false;
+
+        return getDepartmentsLedByUser(lead.id).length === 1 && isOnlyDepartmentLeadRole(lead);
+    };
+
+    const getDepartmentLeadBlockReason = (department: DepartmentDTO): string | null => {
+        if (!wouldLeaveLeadWithoutRole(department)) return null;
+
+        const leadName = userName(department.departmentLeadId);
+
+        return `Assign ${leadName} as lead of another department.`;
+    };
+
+    const leadCanBeChanged = (department: DepartmentDTO | null): boolean => {
+        if (!department) return true;
+        return !wouldLeaveLeadWithoutRole(department);
     };
 
 
@@ -327,6 +358,16 @@ const OrgStructureView: React.FC = () => {
             showError('Please provide a name and select a department lead.');
             return;
         }
+
+        if (
+            editingDept?.departmentLeadId &&
+            editingDept.departmentLeadId !== deptForm.departmentLeadId &&
+            !leadCanBeChanged(editingDept)
+        ) {
+            showError(getDepartmentLeadBlockReason(editingDept) ?? 'This department lead cannot be changed.');
+            return;
+        }
+
         setSaving(true);
         try {
             if (editingDept?.id) {
@@ -346,6 +387,12 @@ const OrgStructureView: React.FC = () => {
         }
     };
     const deleteDept = (d: DepartmentDTO) => {
+        const blockReason = getDepartmentLeadBlockReason(d);
+        if (blockReason) {
+            showError(blockReason);
+            return;
+        }
+
         confirmDialog({
             message: `Delete department "${d.name}"?`,
             header: 'Confirm Delete',
@@ -370,6 +417,7 @@ const OrgStructureView: React.FC = () => {
         setRoomForm({
             name: room.name ?? '',
             roomType: room.roomType,
+            privacyMode: room.privacyMode ?? false,
             departmentId: room.departmentId,
             buildingId: room.buildingId,
         });
@@ -386,6 +434,7 @@ const OrgStructureView: React.FC = () => {
                 const dto: RoomUpdateDTO = {
                     name: roomForm.name,
                     roomType: roomForm.roomType,
+                    privacyMode: roomForm.privacyMode,
                     departmentId: roomForm.departmentId,
                     buildingId: roomForm.buildingId,
                 };
@@ -396,7 +445,7 @@ const OrgStructureView: React.FC = () => {
                 const dto: RoomCreateDTO = {
                     name: roomForm.name,
                     roomType: roomForm.roomType,
-                    privacyMode: false,
+                    privacyMode: roomForm.privacyMode,
                     departmentId: roomForm.departmentId,
                     buildingId: roomForm.buildingId,
                 };
@@ -521,7 +570,7 @@ const OrgStructureView: React.FC = () => {
             const createdProfile = await EmployeeProfileService.create({
                 userxId: createdUser.id!,
                 departmentId: createEmployeeDepartmentId!,
-                roomId: createEmployeeRoomId,
+                roomId: createEmployeeRoomId!,
             });
             setUsers(prev => [...prev, createdUser]);
             setEmployeeProfiles(prev => [...prev, createdProfile]);
@@ -604,6 +653,52 @@ const OrgStructureView: React.FC = () => {
             <Button icon="pi pi-trash" size="small" severity="danger" outlined onClick={onDelete} />
         </div>
     );
+    const getDepartmentDeleteBlockReason = (department: DepartmentDTO): string | null => {
+        if (!wouldLeaveLeadWithoutRole(department)) return null;
+
+        const leadName = userName(department.departmentLeadId);
+
+        return `Assign ${leadName} as lead of another department.`;
+    };
+    const departmentActionTemplate = (department: DepartmentDTO) => {
+        const deleteBlockReason = getDepartmentDeleteBlockReason(department);
+        const deleteDisabled = deleteBlockReason !== null;
+
+        const deleteButton = (
+            <Button
+                icon="pi pi-trash"
+                size="small"
+                severity="danger"
+                outlined
+                disabled={deleteDisabled}
+                onClick={() => deleteDept(department)}
+            />
+        );
+
+        return (
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <Button
+                    icon="pi pi-pencil"
+                    size="small"
+                    severity="secondary"
+                    outlined
+                    onClick={() => openEditDept(department)}
+                />
+
+                {deleteDisabled ? (
+                    <span className="department-delete-wrapper">
+                        {deleteButton}
+                        <span className="department-delete-popover" role="tooltip">
+                            <span className="department-delete-popover__title">Department cannot be deleted</span>
+                            <span className="department-delete-popover__text">{deleteBlockReason}</span>
+                        </span>
+                    </span>
+                ) : (
+                    deleteButton
+                )}
+            </div>
+        );
+    };
 
     const filterHeader = (value: string, onChange: (value: string) => void, placeholder: string, action?: React.ReactNode) => (
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem', alignItems: 'center' }}>
@@ -619,10 +714,12 @@ const OrgStructureView: React.FC = () => {
         value: a.id,
     }));
 
-    const userOptions = users.map(u => ({
-        label: (`${u.firstName ?? ''} ${u.lastName ?? ''}`).trim() || u.username || `User ${u.id}`,
-        value: u.id,
-    }));
+    const userOptions = users
+        .filter(user => user.enabled !== false)
+        .map(u => ({
+            label: (`${u.firstName ?? ''} ${u.lastName ?? ''}`).trim() || u.username || `User ${u.id}`,
+            value: u.id,
+        }));
     const unassignedUserOptions = users
         .filter(user => user.enabled !== false && !employeeProfiles.some(profile => profile.userxId === user.id))
         .map(u => ({
@@ -632,11 +729,6 @@ const OrgStructureView: React.FC = () => {
     const departmentOptions = departments.map(d => ({ label: d.name ?? `Department ${d.id}`, value: d.id }));
     const buildingOptions = buildings.map(b => ({ label: b.name ?? `Building ${b.id}`, value: b.id }));
     const roomOptions = targetRooms.map(room => ({ label: room.name ?? `Room ${room.id}`, value: room.id }));
-    const employeeGroupOptions: Array<{ label: string; value: EmployeeGroupBy }> = [
-        { label: 'No grouping', value: 'none' },
-        { label: 'Department', value: 'department' },
-        { label: 'Room', value: 'room' },
-    ];
     const roomTypeTemplate = (row: RoomDTO) => (
         <Tag value={row.roomType?.replace('_', ' ') ?? '—'} severity={row.roomType === RoomType.OFFICE ? 'info' : 'warning'} />
     );
@@ -651,6 +743,8 @@ const OrgStructureView: React.FC = () => {
             {rolesToArray(user?.roles).map(role => <Tag key={role} value={role} />)}
         </div>
     );
+    const canChangeEditingDepartmentLead = leadCanBeChanged(editingDept);
+
     const departmentExpansionTemplate = (department: DepartmentDTO) => {
         const members = getDepartmentMembers(department.id);
         const canRemoveProfile = (user?: UserxDTO) => {
@@ -662,12 +756,6 @@ const OrgStructureView: React.FC = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', alignItems: 'center', marginBottom: '1rem' }}>
                     <h3 style={{ margin: 0, fontSize: '1rem' }}>Employees</h3>
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <Dropdown
-                            value={employeeGroupBy}
-                            options={employeeGroupOptions}
-                            onChange={event => setEmployeeGroupBy(event.value as EmployeeGroupBy)}
-                            style={{ width: '12rem' }}
-                        />
                         <Button label="Assign User" icon="pi pi-user-plus" size="small" outlined onClick={() => void openAssignEmployee(department)} />
                         <Button label="Create Employee" icon="pi pi-plus" size="small" onClick={() => void openCreateDepartmentEmployee(department)} />
                     </div>
@@ -676,10 +764,6 @@ const OrgStructureView: React.FC = () => {
                     value={members}
                     emptyMessage="No employees assigned."
                     size="small"
-                    rowGroupMode={employeeGroupBy === 'none' ? undefined : 'subheader'}
-                    groupRowsBy={employeeGroupBy === 'department' ? 'departmentName' : employeeGroupBy === 'room' ? 'roomName' : undefined}
-                    sortField={employeeGroupBy === 'department' ? 'departmentName' : employeeGroupBy === 'room' ? 'roomName' : undefined}
-                    sortOrder={employeeGroupBy === 'none' ? undefined : 1}
                 >
                     <Column field="user.username" header="Username" sortable body={(row: { user?: UserxDTO }) => row.user?.username ?? '—'} />
                     <Column field="user.firstName" header="First Name" sortable body={(row: { user?: UserxDTO }) => row.user?.firstName ?? '—'} />
@@ -720,6 +804,72 @@ const OrgStructureView: React.FC = () => {
             <NavbarComponent />
             <Toast ref={toast} />
             <ConfirmDialog />
+
+            <style>
+                {`
+                    .department-delete-wrapper {
+                        position: relative;
+                        display: inline-flex;
+                        cursor: help;
+                    }
+
+                    .department-delete-wrapper .p-button {
+                        pointer-events: none;
+                    }
+
+                    .department-delete-popover {
+                        position: absolute;
+                        top: 50%;
+                        right: calc(100% + 0.75rem);
+                        transform: translateY(-50%) translateX(0.25rem);
+                        z-index: 1000;
+                        width: 19rem;
+                        padding: 0.85rem 1rem;
+                        border-radius: 0.75rem;
+                        border: 1px solid #e5e7eb;
+                        background: #ffffff;
+                        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16);
+                        color: #111827;
+                        display: none;
+                        pointer-events: none;
+                        text-align: left;
+                    }
+
+                    .department-delete-popover::after {
+                        content: "";
+                        position: absolute;
+                        top: 50%;
+                        right: -0.45rem;
+                        width: 0.85rem;
+                        height: 0.85rem;
+                        transform: translateY(-50%) rotate(45deg);
+                        background: #ffffff;
+                        border-top: 1px solid #e5e7eb;
+                        border-right: 1px solid #e5e7eb;
+                    }
+
+                    .department-delete-wrapper:hover .department-delete-popover,
+                    .department-delete-wrapper:focus-within .department-delete-popover {
+                        display: block;
+                        transform: translateY(-50%) translateX(0);
+                    }
+
+                    .department-delete-popover__title {
+                        display: block;
+                        margin-bottom: 0.35rem;
+                        font-weight: 700;
+                        font-size: 0.9rem;
+                        color: #92400e;
+                    }
+
+                    .department-delete-popover__text {
+                        display: block;
+                        font-size: 0.82rem;
+                        line-height: 1.35;
+                        color: #4b5563;
+                    }
+                `}
+            </style>
 
             <div style={{ padding: '1.5rem 2rem', maxWidth: '1400px', margin: '0 auto' }}>
                 {/* Header */}
@@ -800,7 +950,7 @@ const OrgStructureView: React.FC = () => {
                                 <Column field="id" header="ID" style={{ width: '5rem' }} />
                                 <Column field="name" header="Name" sortable />
                                 <Column header="Department Lead" body={(d: DepartmentDTO) => userName(d.departmentLeadId)} />
-                                <Column header="Actions" style={{ width: '8rem' }} body={(d: DepartmentDTO) => actionTemplate(() => openEditDept(d), () => deleteDept(d))} />
+                                <Column header="Actions" style={{ width: '10rem' }} body={(d: DepartmentDTO) => departmentActionTemplate(d)} />
                             </DataTable>
                         </>
                     )}
@@ -951,8 +1101,14 @@ const OrgStructureView: React.FC = () => {
                             onChange={e => setDeptForm(f => ({ ...f, departmentLeadId: e.value as number }))}
                             placeholder="Select user…"
                             filter
+                            disabled={editingDept !== null && !canChangeEditingDepartmentLead}
                             style={{ width: '100%' }}
                         />
+                        {editingDept !== null && !canChangeEditingDepartmentLead && (
+                            <small style={{ color: '#b45309', display: 'block', marginTop: '0.4rem' }}>
+                                This lead cannot be changed because this is the only department they lead and they have no other user groups.
+                            </small>
+                        )}
                     </div>
                 </div>
             </Dialog>

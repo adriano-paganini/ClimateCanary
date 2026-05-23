@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { Message } from "primereact/message";
 import { Badge } from "primereact/badge";
@@ -20,7 +19,6 @@ import {
   RoomDTO,
   ThresholdViolationDTO,
 } from "../generated-skeleton-api";
-import { ROUTES } from "../utilities/routes.paths";
 
 type Period = "week" | "month";
 
@@ -198,7 +196,6 @@ const Sparkline: React.FC<SparklineProps> = ({
 
 const ManagementDashboard: React.FC = () => {
   const { currentUser } = useUser();
-  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -470,25 +467,21 @@ const ManagementDashboard: React.FC = () => {
           return (
             <div
               key={dept.id}
-              onClick={() => navigate(ROUTES.DEPARTMENT_DASHBOARD)}
               style={{
                 background: "#fff",
                 border: "1px solid #e5e7eb",
                 borderRadius: "12px",
                 overflow: "hidden",
                 boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-                cursor: "pointer",
-                transition: "box-shadow 0.2s, transform 0.2s",
+                transition: "box-shadow 0.2s",
               }}
               onMouseEnter={(e) => {
                 const el = e.currentTarget as HTMLElement;
                 el.style.boxShadow = "0 8px 24px rgba(0,0,0,0.1)";
-                el.style.transform = "translateY(-2px)";
               }}
               onMouseLeave={(e) => {
                 const el = e.currentTarget as HTMLElement;
                 el.style.boxShadow = "0 1px 3px rgba(0,0,0,0.05)";
-                el.style.transform = "translateY(0)";
               }}
             >
               {/* Coloured status strip on top */}
