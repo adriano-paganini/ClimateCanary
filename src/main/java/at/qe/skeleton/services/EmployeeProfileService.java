@@ -4,6 +4,8 @@ import at.qe.skeleton.common.exceptions.ConflictException;
 import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.EmployeeProfileUpdateDTO;
 import at.qe.skeleton.models.EmployeeProfile;
+import at.qe.skeleton.models.Userx;
+import at.qe.skeleton.models.UserxRole;
 import at.qe.skeleton.repositories.EmployeeProfileRepository;
 import at.qe.skeleton.repositories.UserxRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -115,13 +118,24 @@ public class EmployeeProfileService {
         EmployeeProfile ep = getById(id);
 
         if (ep.getUser() != null) {
+            Userx user = ep.getUser();
             ep.getUser().setEmployeeProfile(null);
+
+            Set<UserxRole> roles = user.getRoles();
+            if (roles != null) {
+                roles.remove(UserxRole.EMPLOYEE);
+                user.setRoles(roles);
+            }
+
+            user.setEmployeeProfile(null);
             ep.setUser(null);
+
+            userxRepository.save(user);
+            log.info("Updated user roles after deleting employee profile with id={}", id);
         }
 
         employeeProfileRepository.deleteById(id);
 
         log.info("Deleted employee profile with id={}", id);
-        log.debug("Removed user association before deleting employee profile id={}", id);
     }
 }

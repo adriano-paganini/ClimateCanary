@@ -50,10 +50,15 @@ export function UserProvider({children}: { children: React.ReactNode }) {
         return () => window.removeEventListener("storage", handler);
     }, []);
 
+    const normalizeUser = (user: UserxDTO): UserxDTO => ({
+        ...user,
+        roles: new Set([...(Array.isArray(user.roles) ? user.roles : user.roles ?? [])] as UserxRole[]),
+    });
+
     const refreshCurrentUser = useCallback(async () => {
         try {
             const user = await UserService.getCurrentUser();
-            setFullUser(user);
+            setFullUser(normalizeUser(user));
         } catch {
             setFullUser(null);
         }
@@ -84,7 +89,7 @@ export function UserProvider({children}: { children: React.ReactNode }) {
         setToken(null);
     };
 
-    const currentUser = useMemo<UserxDTO | null>(() => {
+    const tokenUser = useMemo<UserxDTO | null>(() => {
         if (!token) {
             return null;
         }
@@ -108,6 +113,8 @@ export function UserProvider({children}: { children: React.ReactNode }) {
             return null;
         }
     }, [token]);
+
+    const currentUser = fullUser ?? tokenUser;
 
     // JWT is signed by the backend — if valid and not expired, the user is authenticated.
     // Actual API calls will be rejected by the backend if the token is invalid.

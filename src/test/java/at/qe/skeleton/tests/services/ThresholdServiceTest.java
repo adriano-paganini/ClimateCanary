@@ -4,10 +4,12 @@ import at.qe.skeleton.common.exceptions.ConflictException;
 import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.ThresholdCreateDTO;
 import at.qe.skeleton.dtos.ThresholdUpdateDTO;
+import at.qe.skeleton.mappers.ClimateHintMapper;
 import at.qe.skeleton.mappers.ThresholdMapper;
 import at.qe.skeleton.models.*;
 import at.qe.skeleton.repositories.ClimateHintRepository;
 import at.qe.skeleton.repositories.ThresholdRepository;
+import at.qe.skeleton.services.RaspberryPiServerService;
 import at.qe.skeleton.services.RoomService;
 import at.qe.skeleton.services.ThresholdService;
 import org.assertj.core.api.Assertions;
@@ -19,6 +21,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.HashSet;
 import java.util.List;
@@ -39,6 +42,12 @@ class ThresholdServiceTest {
     @Mock
     private ThresholdMapper thresholdMapper;
 
+    @Mock
+    private RaspberryPiServerService raspberryPiServerService;
+
+    @Mock
+    private ClimateHintMapper climateHintMapper;
+
     @InjectMocks
     private ThresholdService thresholdService;
 
@@ -49,10 +58,14 @@ class ThresholdServiceTest {
     @BeforeEach
     void setUp() {
         room = new Room();
+        ReflectionTestUtils.setField(room, "id", 1L);
 
         climateHint = new ClimateHint();
+        ReflectionTestUtils.setField(climateHint, "id", 10L);
+        climateHint.setMetric(Metric.TEMPERATURE);
 
         threshold = new Threshold();
+        ReflectionTestUtils.setField(threshold, "id", 100L);
         threshold.setMetric(Metric.TEMPERATURE);
         threshold.setBoundValue(25.0F);
         threshold.setThresholdType(ThresholdType.UPPER);
@@ -149,6 +162,22 @@ class ThresholdServiceTest {
     }
 
     @Test
+    @DisplayName("create rejects duplicate threshold for same room, metric and type")
+    void create_duplicateRoomMetricAndType_throwsConflictException() {
+        ThresholdCreateDTO dto = new ThresholdCreateDTO(
+                1L, Metric.TEMPERATURE, 25.0F, ThresholdType.UPPER, null);
+
+        Mockito.when(thresholdRepository.existsByRoomIdAndMetricAndThresholdType(1L, Metric.TEMPERATURE, ThresholdType.UPPER))
+                .thenReturn(true);
+
+        Assertions.assertThatThrownBy(() -> thresholdService.create(dto))
+                .isInstanceOf(ConflictException.class)
+                .hasMessage("Threshold already exists for room 1 and metric TEMPERATURE and threshold type UPPER");
+
+        Mockito.verify(thresholdRepository, Mockito.never()).save(Mockito.any());
+    }
+
+    @Test
     @DisplayName("create saves threshold without climate hints when none provided")
     void create_withoutClimateHints() {
         ThresholdCreateDTO dto = new ThresholdCreateDTO(
@@ -167,6 +196,8 @@ class ThresholdServiceTest {
     @DisplayName("update modifies all fields when provided")
     void update_allFields() {
         Room newRoom = new Room();
+        ReflectionTestUtils.setField(newRoom, "id", 2L);
+        climateHint.setMetric(Metric.HUMIDITY);
 
         List<Long> hintIds = List.of(10L);
 
@@ -199,6 +230,30 @@ class ThresholdServiceTest {
         Assertions.assertThat(result.getRoom()).isEqualTo(newRoom);
         Assertions.assertThat(result.isEnabled()).isFalse();
         Assertions.assertThat(result.getClimateHints()).containsExactly(climateHint);
+    }
+
+    @Test
+    @DisplayName("update rejects duplicate threshold for effective room, metric and type")
+    void update_duplicateRoomMetricAndType_throwsConflictException() {
+        ThresholdUpdateDTO dto = new ThresholdUpdateDTO(
+                null,
+                Metric.HUMIDITY,
+                50.0F,
+                ThresholdType.LOWER,
+                null,
+                null
+        );
+
+        Mockito.when(thresholdRepository.findById(100L))
+                .thenReturn(Optional.of(threshold));
+        Mockito.when(thresholdRepository.existsByRoomIdAndMetricAndThresholdTypeAndIdNot(1L, Metric.HUMIDITY, ThresholdType.LOWER, 100L))
+                .thenReturn(true);
+
+        Assertions.assertThatThrownBy(() -> thresholdService.update(100L, dto))
+                .isInstanceOf(ConflictException.class)
+                .hasMessage("Threshold already exists for room 1 and metric HUMIDITY and threshold type LOWER");
+
+        Mockito.verify(thresholdRepository, Mockito.never()).save(Mockito.any());
     }
 
     @Test

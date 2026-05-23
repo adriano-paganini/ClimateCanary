@@ -49,6 +49,7 @@ public class ThresholdController {
     @PostMapping
     public ResponseEntity<ThresholdDTO> create(@Valid @RequestBody ThresholdCreateDTO dto) {
         Threshold created = thresholdService.create(dto);
+
         return ResponseEntity.ok(thresholdMapper.mapTo(created));
     }
 

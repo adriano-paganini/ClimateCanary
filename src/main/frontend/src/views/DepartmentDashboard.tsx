@@ -3,89 +3,84 @@ import { useNavigate } from 'react-router-dom';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Message } from 'primereact/message';
 import { Button } from 'primereact/button';
+import { Dropdown } from 'primereact/dropdown';
 import 'primeicons/primeicons.css';
 
 import NavbarComponent from '../components/NavbarComponent';
 import RoomCard from '../components/RoomCard';
 import { useUser } from '../Contexts/AuthenticatedUserContext';
-import { DepartmentService } from '../services/DepartmentService';
+import { useDepartment } from '../Contexts/DepartmentContext';
 import { MeasurementService } from '../services/MeasurementService';
 import { ViolationService, ViolationStatusEnum } from '../services/ViolationService';
-import { DepartmentDTO, MeasurementDTO, RoomDTO, ThresholdViolationDTO } from '../generated-skeleton-api';
+import { DepartmentService } from '../services/DepartmentService';
+import { MeasurementDTO, RoomDTO, ThresholdViolationDTO } from '../generated-skeleton-api';
 import { ROUTES } from '../utilities/routes.paths';
 
 const DepartmentDashboard: React.FC = () => {
-    const { fullUser, currentUser } = useUser();
+    const { currentUser } = useUser();
+    const { departments, selectedDepartmentId, setSelectedDepartmentId, loading, error: deptError } = useDepartment();
     const navigate = useNavigate();
 
-    const [loading, setLoading] = useState(true);
+    const [loadingDepartmentData, setLoadingDepartmentData] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [department, setDepartment] = useState<DepartmentDTO | null>(null);
     const [rooms, setRooms] = useState<RoomDTO[]>([]);
     const [measurementsByRoom, setMeasurementsByRoom] = useState<Record<number, MeasurementDTO[]>>({});
     const [violationsByRoom, setViolationsByRoom] = useState<Record<number, ThresholdViolationDTO[]>>({});
 
     useEffect(() => {
-        const load = async () => {
+        if (!selectedDepartmentId) return;
+
+        const loadDepartmentData = async () => {
+            setLoadingDepartmentData(true);
+            setError(null);
             try {
-                const userId = fullUser?.id;
-                if (!userId) {
-                    setError('Could not determine current user.');
-                    return;
-                }
-
-                // Find the department where this user is the lead
-                const allDepts = await DepartmentService.getAll();
-                const myDept = allDepts.find(d => d.departmentLeadId === userId);
-                if (!myDept?.id) {
-                    setError('No department found for this department lead.');
-                    return;
-                }
-                setDepartment(myDept);
-
-                // Fetch all rooms and active violations in parallel
                 const [deptRooms, allViolations] = await Promise.all([
-                    DepartmentService.getRooms(myDept.id),
+                    DepartmentService.getRooms(selectedDepartmentId),
                     ViolationService.getAll({
                         violationStatus: ViolationStatusEnum.ACTIVE,
-                        departmentId: myDept.id,
+                        departmentId: selectedDepartmentId,
                     }),
                 ]);
                 setRooms(deptRooms);
 
-                // Load latest measurements for every room in parallel
-                if (deptRooms.length > 0) {
-                    const allMeasurements = await Promise.all(
-                        deptRooms.map(r =>
-                            r.id
-                                ? MeasurementService.getLatestPerMetric(r.id).then(m => Object.values(m))
-                                : Promise.resolve([]),
-                        ),
-                    );
+                const allMeasurements = await Promise.all(
+                    deptRooms.map(r =>
+                        r.id
+                            ? MeasurementService.getLatestPerMetric(r.id).then(m => Object.values(m))
+                            : Promise.resolve([]),
+                    ),
+                );
 
-                    const measMap: Record<number, MeasurementDTO[]> = {};
-                    const violMap: Record<number, ThresholdViolationDTO[]> = {};
-                    deptRooms.forEach((r, i) => {
-                        if (r.id !== undefined) {
-                            measMap[r.id] = allMeasurements[i];
-                            violMap[r.id] = allViolations.filter(v => v.roomId === r.id);
-                        }
-                    });
-                    setMeasurementsByRoom(measMap);
-                    setViolationsByRoom(violMap);
-                }
+                const measMap: Record<number, MeasurementDTO[]> = {};
+                const violMap: Record<number, ThresholdViolationDTO[]> = {};
+                deptRooms.forEach((r, i) => {
+                    if (r.id !== undefined) {
+                        measMap[r.id] = allMeasurements[i];
+                        violMap[r.id] = allViolations.filter(v => v.roomId === r.id);
+                    }
+                });
+                setMeasurementsByRoom(measMap);
+                setViolationsByRoom(violMap);
             } catch (err: unknown) {
                 const msg = err instanceof Error ? err.message : String(err);
-                console.error('Department dashboard load error:', err);
+                console.error('Department dashboard data load error:', err);
                 setError(`Failed to load department data: ${msg}`);
             } finally {
-                setLoading(false);
+                setLoadingDepartmentData(false);
             }
         };
-        void load();
-    }, [fullUser?.id]);
+
+        void loadDepartmentData();
+    }, [selectedDepartmentId]);
 
     const totalActiveViolations = Object.values(violationsByRoom).flat().length;
+    const department = departments.find(d => d.id === selectedDepartmentId) ?? null;
+    const departmentOptions = departments.map(d => ({
+        label: d.name ?? `Department ${d.id}`,
+        value: d.id,
+    }));
+
+    const combinedError = error ?? deptError;
 
     if (loading) {
         return (
@@ -98,12 +93,12 @@ const DepartmentDashboard: React.FC = () => {
         );
     }
 
-    if (error) {
+    if (combinedError) {
         return (
             <div>
                 <NavbarComponent />
                 <div className="m-4">
-                    <Message severity="error" text={error} />
+                    <Message severity="error" text={combinedError} />
                 </div>
             </div>
         );
@@ -120,7 +115,17 @@ const DepartmentDashboard: React.FC = () => {
                         <h2 style={{ margin: '0 0 0.25rem', color: '#111827' }}>
                             Welcome{currentUser?.firstName ? `, ${currentUser.firstName}` : ''}
                         </h2>
-                        {department && (
+                        {departments.length > 1 ? (
+                            <div style={{ marginTop: '0.75rem', maxWidth: '360px' }}>
+                                <Dropdown
+                                    value={selectedDepartmentId}
+                                    options={departmentOptions}
+                                    onChange={e => setSelectedDepartmentId(e.value)}
+                                    placeholder="Select department"
+                                    style={{ width: '100%' }}
+                                />
+                            </div>
+                        ) : department && (
                             <p style={{ margin: 0, color: '#6b7280', fontSize: '0.95rem' }}>
                                 <i className="pi pi-sitemap" style={{ marginRight: '0.4rem' }} />
                                 {department.name}
@@ -181,7 +186,11 @@ const DepartmentDashboard: React.FC = () => {
 
             {/* Room grid */}
             <div style={{ padding: '2rem' }}>
-                {rooms.length === 0 ? (
+                {loadingDepartmentData ? (
+                    <div className="flex justify-content-center align-items-center" style={{ minHeight: '20rem' }}>
+                        <ProgressSpinner />
+                    </div>
+                ) : rooms.length === 0 ? (
                     <div style={{
                         padding: '2rem',
                         textAlign: 'center',

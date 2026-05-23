@@ -8,10 +8,11 @@ import { Password } from "primereact/password";
 import { MultiSelect } from "primereact/multiselect";
 import { Dropdown } from "primereact/dropdown";
 import { Message } from "primereact/message";
-import { UserxCreateDTO, UserxDTO, UserxRole } from "../generated-skeleton-api";
+import { DepartmentDTO, RoomDTO, UserxCreateDTO, UserxDTO, UserxRole } from "../generated-skeleton-api";
 import "../styles/UserForm.css";
+import {hasUserRole, rolesToArray} from "../utilities/userxUtilities";
 
-const COUNTRY_CODE_OPTIONS: Array<{ label: string; value: string; search: string }> = [
+export const COUNTRY_CODE_OPTIONS: Array<{ label: string; value: string; search: string }> = [
     { label: "+93 Afghanistan", value: "+93", search: "Afghanistan +93" },
     { label: "+355 Albania", value: "+355", search: "Albania +355" },
     { label: "+213 Algeria", value: "+213", search: "Algeria +213" },
@@ -107,7 +108,7 @@ const COUNTRY_CODE_OPTIONS: Array<{ label: string; value: string; search: string
     { label: "+84 Vietnam", value: "+84", search: "Vietnam +84" },
 ];
 
-type UserFormFieldErrors = Partial<Record<keyof UserxCreateDTO | keyof UserxDTO, string>>;
+type UserFormFieldErrors = Partial<Record<keyof UserxCreateDTO | keyof UserxDTO | 'departmentId' | 'roomId', string>>;
 
 interface UserFormProps {
     user: UserxDTO | UserxCreateDTO;
@@ -117,6 +118,14 @@ interface UserFormProps {
     onRolesChange: (event: { value: string[] }) => void;
     onPhoneChange: (phone: string) => void;
     disableUsername?: boolean;
+    departments?: DepartmentDTO[];
+    rooms?: RoomDTO[];
+    selectedDepartmentId?: number;
+    selectedRoomId?: number;
+    onDepartmentChange?: (departmentId?: number) => void;
+    onRoomChange?: (roomId?: number) => void;
+    roomsLoading?: boolean;
+    lockedRoles?: UserxRole[];
 }
 
 /**
@@ -138,8 +147,40 @@ const UserForm: React.FC<UserFormProps> =
          onRolesChange,
          onPhoneChange,
          disableUsername = false,
+         departments = [],
+         rooms = [],
+         selectedDepartmentId,
+         selectedRoomId,
+         onDepartmentChange,
+         onRoomChange,
+         roomsLoading = false,
+         lockedRoles = [],
      }) => {
-        const userRoles = Object.values(UserxRole).map(role => ({ label: role, value: role }));
+        const allowedRoles = [
+            UserxRole.SYSTEM_ADMIN,
+            UserxRole.BUILDING_ADMIN,
+            UserxRole.MANAGEMENT,
+            UserxRole.EMPLOYEE,
+        ];
+        const existingRoles = rolesToArray(user.roles);
+        const nonEditableRoles = !isNewUser && existingRoles.includes(UserxRole.DEPARTMENT_LEAD)
+            ? [UserxRole.DEPARTMENT_LEAD]
+            : [];
+        const roleOptions = Array.from(new Set([...allowedRoles, ...nonEditableRoles]));
+        const protectedRoles = Array.from(new Set([...lockedRoles, ...nonEditableRoles]));
+        const userRoles = roleOptions.map(role => ({
+            label: role,
+            value: role,
+            disabled: protectedRoles.includes(role),
+        }));
+        const selectedRoles = Array.from(new Set([...existingRoles, ...protectedRoles]));
+        const isEmployee = hasUserRole(user, UserxRole.EMPLOYEE) || lockedRoles.includes(UserxRole.EMPLOYEE);
+        const departmentOptions = departments
+            .filter(department => department.id !== undefined)
+            .map(department => ({ label: department.name ?? `Department ${department.id}`, value: department.id }));
+        const roomOptions = rooms
+            .filter(room => room.id !== undefined)
+            .map(room => ({ label: room.name ?? `Room ${room.id}`, value: room.id }));
         const normalizedPhone = user.phone ?? "";
         const selectedCountry = COUNTRY_CODE_OPTIONS.find(option => normalizedPhone.startsWith(option.value))?.value ?? "+43";
         const localPhone = normalizedPhone.startsWith(selectedCountry)
@@ -250,10 +291,13 @@ const UserForm: React.FC<UserFormProps> =
                             <MultiSelect
                                 inputId="roles"
                                 name="roles"
-                                value={[...(user.roles ?? [])]}
-                                onChange={onRolesChange}
+                                value={selectedRoles}
+                                onChange={(event) => onRolesChange({
+                                    value: Array.from(new Set([...(event.value as string[]), ...protectedRoles])),
+                                })}
                                 options={userRoles}
                                 optionLabel="label"
+                                optionDisabled="disabled"
                                 placeholder="Select Roles"
                                 className="w-full md:w-20rem"
                                 appendTo="self"
@@ -261,8 +305,49 @@ const UserForm: React.FC<UserFormProps> =
                                 scrollHeight="14rem"
                                 invalid={!!fieldErrors?.roles}
                             />
+                            {protectedRoles.length > 0 && (
+                                <small style={{ display: "block", color: "#64748b" }}>
+                                    Disabled roles cannot be changed here.
+                                </small>
+                            )}
                             {fieldErrors?.roles && <small className="p-error">{fieldErrors.roles}</small>}
                         </div>
+
+                        {isEmployee && (
+                            <>
+                                <div className="flex-auto mb-3">
+                                    <label htmlFor="departmentId" className="font-bold block">Department</label>
+                                    <Dropdown
+                                        inputId="departmentId"
+                                        value={selectedDepartmentId}
+                                        options={departmentOptions}
+                                        onChange={(event) => onDepartmentChange?.(event.value)}
+                                        placeholder="Select Department"
+                                        className={fieldErrors?.departmentId ? "p-invalid" : undefined}
+                                        appendTo="self"
+                                        panelClassName="user-form-overlay-panel"
+                                    />
+                                    {fieldErrors?.departmentId && <small className="p-error">{fieldErrors.departmentId}</small>}
+                                </div>
+
+                                <div className="flex-auto mb-3">
+                                    <label htmlFor="roomId" className="font-bold block">Room</label>
+                                    <Dropdown
+                                        inputId="roomId"
+                                        value={selectedRoomId}
+                                        options={roomOptions}
+                                        onChange={(event) => onRoomChange?.(event.value)}
+                                        placeholder={selectedDepartmentId ? "Select Room" : "Select Department first"}
+                                        disabled={!selectedDepartmentId || roomsLoading}
+                                        loading={roomsLoading}
+                                        className={fieldErrors?.roomId ? "p-invalid" : undefined}
+                                        appendTo="self"
+                                        panelClassName="user-form-overlay-panel"
+                                    />
+                                    {fieldErrors?.roomId && <small className="p-error">{fieldErrors.roomId}</small>}
+                                </div>
+                            </>
+                        )}
 
                         <div className="flex-auto mb-3">
                             <label htmlFor="phone" className="font-bold block">Phone</label>

@@ -16,11 +16,22 @@ import UserListComponent from "./UserListComponent";
 import UserDialog from "./UserDialog";
 
 
-import {createUserxRoleArrayFromStrings, UserxValidationResult} from '../utilities/userxUtilities';
-import {AdminControllerApi, UserxCreateDTO, UserxDTO, UserxUpdateDTO} from "../generated-skeleton-api";
+import {createUserxRoleArrayFromStrings, hasUserRole, rolesToArray, UserxValidationResult} from '../utilities/userxUtilities';
+import {
+    AdminControllerApi,
+    DepartmentDTO,
+    EmployeeProfileDTO,
+    RoomDTO,
+    UserxCreateDTO,
+    UserxDTO,
+    UserxRole,
+    UserxUpdateDTO
+} from "../generated-skeleton-api";
 import {useUser} from "../Contexts/AuthenticatedUserContext";
 import {AuthApi} from "../utilities/authApi";
 import {UserService} from "../services/UserService";
+import {DepartmentService} from "../services/DepartmentService";
+import {EmployeeProfileService} from "../services/EmployeeProfileService";
 import {useNavigate} from "react-router-dom";
 import {ROUTES} from "../utilities/routes.paths";
 
@@ -40,6 +51,12 @@ const UserTable = () => {
     const [selfDeleteConfirmation, setSelfDeleteConfirmation] = useState<string>('');
     const [selfDeleteSubmitting, setSelfDeleteSubmitting] = useState<boolean>(false);
     const [validation, setValidation] = useState<UserxValidationResult>({valid: true});
+    const [departments, setDepartments] = useState<DepartmentDTO[]>([]);
+    const [departmentRooms, setDepartmentRooms] = useState<RoomDTO[]>([]);
+    const [roomsLoading, setRoomsLoading] = useState<boolean>(false);
+    const [employeeProfile, setEmployeeProfile] = useState<EmployeeProfileDTO | null>(null);
+    const [employeeDepartmentId, setEmployeeDepartmentId] = useState<number | undefined>(undefined);
+    const [employeeRoomId, setEmployeeRoomId] = useState<number | undefined>(undefined);
 
     const toast = useRef<Toast | null>(null);
 
@@ -61,6 +78,51 @@ const UserTable = () => {
         void fetchUsers();
     }, []);
 
+    useEffect(() => {
+        const fetchDepartments = async () => {
+            try {
+                setDepartments(await DepartmentService.getAll());
+            } catch (err: any) {
+                console.error('Error fetching departments:', err);
+                toast.current?.show({severity: 'error', summary: 'Error', detail: 'Error loading departments', life: 3000});
+            }
+        };
+        void fetchDepartments();
+    }, []);
+
+    const hasEmployeeRole = (user: UserxDTO | UserxCreateDTO | null) =>
+        hasUserRole(user, UserxRole.EMPLOYEE);
+
+    const resetEmployeeAssignment = () => {
+        setEmployeeProfile(null);
+        setEmployeeDepartmentId(undefined);
+        setEmployeeRoomId(undefined);
+        setDepartmentRooms([]);
+        setRoomsLoading(false);
+    }
+
+    const loadRoomsForDepartment = async (departmentId?: number, preferredRoomId?: number) => {
+        setEmployeeDepartmentId(departmentId);
+        setEmployeeRoomId(undefined);
+        setDepartmentRooms([]);
+
+        if (departmentId === undefined) return;
+
+        setRoomsLoading(true);
+        try {
+            const rooms = await DepartmentService.getRooms(departmentId);
+            setDepartmentRooms(rooms);
+            if (preferredRoomId !== undefined && rooms.some(room => room.id === preferredRoomId)) {
+                setEmployeeRoomId(preferredRoomId);
+            }
+        } catch (err: any) {
+            console.error('Error fetching department rooms:', err);
+            toast.current?.show({severity: 'error', summary: 'Error', detail: 'Error loading rooms', life: 3000});
+        } finally {
+            setRoomsLoading(false);
+        }
+    }
+
     /**
      * Validate the user object.
      */
@@ -72,7 +134,7 @@ const UserTable = () => {
 
         const required: (keyof UserxCreateDTO)[] = ['firstName', 'lastName', 'username', 'email', 'phone'];
         const {requirePassword = true} = opts; // password input on edit user not needed
-        const fieldErrors: Partial<Record<keyof UserxCreateDTO, string>> = {};
+        const fieldErrors: UserxValidationResult['fieldErrors'] = {};
 
         required.forEach((k) => {
             const v = (user[k] as unknown as string) ?? '';
@@ -110,8 +172,17 @@ const UserTable = () => {
         if (requirePassword && !pwd.trim()) fieldErrors.password = 'Required';
 
         // at least one role required (see also UserxCreateDTO in backend
-        if (!user.roles || user.roles.size === 0) {
+        if (rolesToArray(user.roles).length === 0) {
             fieldErrors.roles = 'Required';
+        }
+
+        if (hasEmployeeRole(user)) {
+            if (employeeDepartmentId === undefined) {
+                fieldErrors.departmentId = 'Required';
+            }
+            if (employeeRoomId === undefined) {
+                fieldErrors.roomId = 'Required';
+            }
         }
 
         const valid = Object.keys(fieldErrors).length === 0;
@@ -158,6 +229,7 @@ const UserTable = () => {
         try {
             const adminControllerAPI = new AdminControllerApi();
             const newUser = await adminControllerAPI.createUser({userxCreateDTO: userToCreate}).then(response => response.data);
+            await syncEmployeeProfile(newUser, userToCreate);
             setUsers([...users, newUser as UserxDTO]);
         } catch (err: any) {
             console.error('Error saving user:', err);
@@ -190,11 +262,49 @@ const UserTable = () => {
                 userxUpdateDTO,
                 id: userToUpdate.id
             }).then(response => response.data);
+            await syncEmployeeProfile(updatedUser, userToUpdate);
             setUsers(users.map((user: UserxDTO) => user.id === updatedUser.id ? updatedUser : user));
         } catch (err: any) {
             console.error('Error updating user:', err);
             toast.current?.show({severity: 'error', summary: 'Error', detail: 'Error updating user', life: 3000});
         }
+    }
+
+    const syncEmployeeProfile = async (savedUser: UserxDTO, sourceUser: UserxDTO | UserxCreateDTO) => {
+        if (!savedUser.id) return;
+
+        if (!hasEmployeeRole(sourceUser)) {
+            const profileId = employeeProfile?.id
+                ?? (await EmployeeProfileService.getAll(savedUser.id)).find(profile => profile.id !== undefined)?.id;
+
+            if (profileId !== undefined) {
+                await EmployeeProfileService.delete(profileId);
+                setEmployeeProfile(null);
+                setEmployeeDepartmentId(undefined);
+                setEmployeeRoomId(undefined);
+                setDepartmentRooms([]);
+            }
+            return;
+        }
+
+        if (employeeDepartmentId === undefined || employeeRoomId === undefined) return;
+
+        if (employeeProfile?.id) {
+            const updatedProfile = await EmployeeProfileService.update(employeeProfile.id, {
+                userxId: savedUser.id,
+                departmentId: employeeDepartmentId,
+                roomId: employeeRoomId,
+            });
+            setEmployeeProfile(updatedProfile);
+            return;
+        }
+
+        const createdProfile = await EmployeeProfileService.create({
+            userxId: savedUser.id,
+            departmentId: employeeDepartmentId,
+            roomId: employeeRoomId,
+        });
+        setEmployeeProfile(createdProfile);
     }
 
     /**
@@ -294,7 +404,23 @@ const UserTable = () => {
         setSelectedUser(user);
         setValidation({valid: true});
         setIsNewUser(false);
-        showDialog()
+        resetEmployeeAssignment();
+        showDialog();
+
+        if (user.id && hasEmployeeRole(user)) {
+            void EmployeeProfileService.getAll(user.id)
+                .then(async (profiles) => {
+                    const profile = profiles[0] ?? null;
+                    setEmployeeProfile(profile);
+                    if (profile?.departmentId !== undefined) {
+                        await loadRoomsForDepartment(profile.departmentId, profile.roomId);
+                    }
+                })
+                .catch((err: any) => {
+                    console.error('Error fetching employee profile:', err);
+                    toast.current?.show({severity: 'error', summary: 'Error', detail: 'Error loading employee profile', life: 3000});
+                });
+        }
     };
 
     /**
@@ -312,6 +438,7 @@ const UserTable = () => {
             password: ''
         };
         setSelectedUser(newUser);
+        resetEmployeeAssignment();
         showDialog()
         setIsNewUser(true);
     }
@@ -346,6 +473,17 @@ const UserTable = () => {
         const roles = createUserxRoleArrayFromStrings(event.value);
 
         setSelectedUser({...selectedUser, roles: new Set(roles)});
+        if (!roles.includes(UserxRole.EMPLOYEE)) {
+            resetEmployeeAssignment();
+        }
+    }
+
+    const handleEmployeeDepartmentChange = (departmentId?: number) => {
+        void loadRoomsForDepartment(departmentId);
+    }
+
+    const handleEmployeeRoomChange = (roomId?: number) => {
+        setEmployeeRoomId(roomId);
     }
 
     const activeUsers = users.filter(user => user.enabled !== false);
@@ -409,7 +547,14 @@ const UserTable = () => {
                         onHide={hideDialog} onSubmit={handleSubmit}
                         onInputChange={handleInputChange} onRolesChange={handleRolesChange}
                         onPhoneChange={handlePhoneChange}
-                        disableUsername={!isNewUser}/>
+                        disableUsername={!isNewUser}
+                        departments={departments}
+                        rooms={departmentRooms}
+                        selectedDepartmentId={employeeDepartmentId}
+                        selectedRoomId={employeeRoomId}
+                        onDepartmentChange={handleEmployeeDepartmentChange}
+                        onRoomChange={handleEmployeeRoomChange}
+                        roomsLoading={roomsLoading}/>
             <Dialog
                 header="Delete your account"
                 visible={selfDeleteDialogVisible}
