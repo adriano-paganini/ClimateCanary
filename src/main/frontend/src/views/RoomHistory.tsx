@@ -2,7 +2,7 @@ import '../styles/App.css';
 import '../styles/AbsenceCalendar.css';
 import 'primeicons/primeicons.css';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { Button } from 'primereact/button';
 import { Chart } from 'primereact/chart';
 import { Message } from 'primereact/message';
@@ -23,7 +23,6 @@ import {
     MeasurementDTOMetricEnum,
     RoomDTO,
     ThresholdDTO,
-    UserxRole,
 } from '../generated-skeleton-api';
 
 import { ROUTES } from '../utilities/routes.paths';
@@ -99,8 +98,9 @@ const dropLinePlugin: any = {
 const RoomHistory: React.FC = () => {
     const { roomId } = useParams<{ roomId: string }>();
     const navigate  = useNavigate();
-    const { currentUser } = useUser();
+    const { pathname } = useLocation();
     const numId     = roomId ? parseInt(roomId, 10) : NaN;
+    const openedFromDepartment = pathname.startsWith('/department/rooms/');
 
     const [currentDate, setCurrentDate] = useState(new Date());
     const [room,       setRoom]       = useState<RoomDTO | null>(null);
@@ -213,7 +213,7 @@ const RoomHistory: React.FC = () => {
                         label="Back"
                         className="p-button-text"
                         onClick={() => navigate(
-                            currentUser?.roles?.has(UserxRole.DEPARTMENT_LEAD)
+                            openedFromDepartment
                                 ? ROUTES.DEPARTMENT_DASHBOARD
                                 : ROUTES.DASHBOARD,
                         )}

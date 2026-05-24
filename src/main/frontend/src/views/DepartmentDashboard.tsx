@@ -351,6 +351,7 @@ const DepartmentDashboard: React.FC = () => {
                                         room={room}
                                         measurements={room.id !== undefined ? measurementsByRoom[room.id] ?? [] : []}
                                         violations={room.id !== undefined ? violationsByRoom[room.id] ?? [] : []}
+                                        historyRoute={ROUTES.DEPARTMENT_ROOM_HISTORY}
                                     />
                                     {loadingRoom && (
                                         <div

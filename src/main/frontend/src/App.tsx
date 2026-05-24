@@ -53,7 +53,7 @@ const App: React.FC = () => {
                         <Route element={<PrivateRoute roles={[UserxRole.DEPARTMENT_LEAD]}/>}>
                             <Route element={<DepartmentProvider><Outlet/></DepartmentProvider>}>
                                 <Route path={ROUTES.DEPARTMENT_DASHBOARD} Component={DepartmentDashboard}/>
-                                <Route path={ROUTES.DASHBOARD_HISTORY} Component={RoomHistory}/>
+                                <Route path={ROUTES.DEPARTMENT_ROOM_HISTORY} Component={RoomHistory}/>
                                 <Route path={ROUTES.DEPARTMENT_ABSENCES} Component={DepartmentAbsenceView}/>
                             </Route>
                         </Route>

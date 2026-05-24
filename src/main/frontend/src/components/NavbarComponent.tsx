@@ -46,7 +46,9 @@ const NavbarComponent: React.FC = () => {
     const isRouteActive = React.useCallback((route?: string): boolean => {
         if (!route) return false;
         if (route === ROUTES.HOME) return pathname === route;
-        if (route === ROUTES.DEPARTMENT_DASHBOARD) return pathname === route;
+        if (route === ROUTES.DEPARTMENT_DASHBOARD) {
+            return pathname === route || pathname.startsWith('/department/rooms/');
+        }
 
         return pathname === route || pathname.startsWith(`${route}/`);
     }, [pathname]);
@@ -110,7 +112,7 @@ const NavbarComponent: React.FC = () => {
                         to={configItem.route}
                         end={configItem.route === ROUTES.HOME || configItem.route === ROUTES.DEPARTMENT_DASHBOARD}
                         className={({ isActive }) =>
-                            `${base} p-menuitem-link${isActive ? " navbar-link--active" : ""}`
+                            `${base} p-menuitem-link${(isActive || isRouteActive(configItem.route)) ? " navbar-link--active" : ""}`
                         }
                         onClick={(e) => options.onClick?.(e)}
                     >
