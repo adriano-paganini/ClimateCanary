@@ -273,7 +273,7 @@ const DeviceManagementView: React.FC = () => {
             if (rpiForm.roomId) dto.roomId = rpiForm.roomId;
             try {
                 const updated = await RaspberryPiService.update(selectedPi.id, dto);
-                setPis(prev => prev.map(p => p.id === updated.id ? updated : p));
+                setPis(await RaspberryPiService.getAll());
                 setRpiDialogVisible(false);
                 toast.current?.show({ severity: 'success', summary: 'Updated', detail: `Raspberry Pi "${updated.hostName}" updated`, life: 3000 });
             } catch {
@@ -296,7 +296,7 @@ const DeviceManagementView: React.FC = () => {
         if (pi.id == null) return;
         try {
             await RaspberryPiService.delete(pi.id);
-            setPis(prev => prev.filter(p => p.id !== pi.id));
+            setPis(await RaspberryPiService.getAll());
             toast.current?.show({ severity: 'success', summary: 'Deleted', detail: `Raspberry Pi "${pi.hostName}" deleted`, life: 3000 });
         } catch {
             toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to delete Raspberry Pi', life: 3000 });
