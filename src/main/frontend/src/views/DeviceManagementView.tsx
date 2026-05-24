@@ -418,14 +418,6 @@ const DeviceManagementView: React.FC = () => {
                             outlined
                             onClick={() => openScanDialog(piId)}
                         />
-                        <Button
-                            label="Download conf.yaml"
-                            icon="pi pi-download"
-                            size="small"
-                            outlined
-                            severity="secondary"
-                            onClick={() => void downloadConfig(pi)}
-                        />
 
                     </div>
 
@@ -625,18 +617,18 @@ const DeviceManagementView: React.FC = () => {
                                             text="Setup required: Download conf.yaml, copy it to this Raspberry Pi's SD card, and power it on - the Pi will appear Online once it has booted and connected to the backend"
                                             style={{ width: '100%' }}
                                         />
-                                        <div style={{ marginTop: '0.5rem' }}>
-                                            <Button
-                                                icon="pi pi-download"
-                                                label="Download conf.yaml"
-                                                size="small"
-                                                severity="warning"
-                                                outlined
-                                                onClick={() => void downloadConfig(pi)}
-                                            />
-                                        </div>
                                     </div>
                                 )}
+                                <div style={{ marginTop: '0.5rem' }}>
+                                    <Button
+                                        icon="pi pi-download"
+                                        label="Download conf.yaml"
+                                        size="small"
+                                        severity={pi.ipAddress ? 'secondary' : 'warning'}
+                                        outlined
+                                        onClick={() => void downloadConfig(pi)}
+                                    />
+                                </div>
                                 {expandedRows === pi.id && rowExpansionTemplate(pi)}
                             </Card>
                         ))
