@@ -70,9 +70,14 @@ const climateHintMetricOptions = Object.values(
   ClimateHintCreateDTOMetricEnum,
 ).map((v) => ({ label: v, value: v }));
 
-const emptyThresholdForm = (): Partial<ThresholdCreateDTO> & {
-  enabled: boolean;
-} => ({
+const METRIC_BOUNDS: Record<string, { min: number; max: number; unit: string }> = {
+  TEMPERATURE: { min: -50,  max: 100,  unit: "°C"  },
+  HUMIDITY:    { min: 0,    max: 100,  unit: "%"   },
+  PRESSURE:    { min: 870,  max: 1085, unit: "hPa" },
+  IAQ:         { min: 0,    max: 500,  unit: ""    },
+};
+
+const emptyThresholdForm = (): Partial<ThresholdCreateDTO> & { enabled: boolean } => ({
   roomId: undefined,
   metric: undefined,
   boundValue: undefined,
@@ -97,11 +102,10 @@ const ThresholdManagementView: React.FC = () => {
   const [collapsedHintGroups, setCollapsedHintGroups] = useState<Record<string, boolean>>({});
 
   const [thresholdDialogVisible, setThresholdDialogVisible] = useState(false);
-  const [editingThreshold, setEditingThreshold] = useState<ThresholdDTO | null>(
-    null,
-  );
+  const [editingThreshold, setEditingThreshold] = useState<ThresholdDTO | null>(null);
   const [isNewThreshold, setIsNewThreshold] = useState(false);
   const [thresholdForm, setThresholdForm] = useState(emptyThresholdForm());
+  const [boundValueError, setBoundValueError] = useState<string | null>(null);
 
   const [hintDialogVisible, setHintDialogVisible] = useState(false);
   const [editingHint, setEditingHint] = useState<ClimateHintDTO | null>(null);
@@ -168,6 +172,7 @@ const ThresholdManagementView: React.FC = () => {
     setThresholdForm(emptyThresholdForm());
     setEditingThreshold(null);
     setIsNewThreshold(true);
+    setBoundValueError(null);
     setThresholdDialogVisible(true);
   };
 
@@ -176,18 +181,19 @@ const ThresholdManagementView: React.FC = () => {
       roomId: threshold.roomId,
       metric: threshold.metric as ThresholdCreateDTOMetricEnum | undefined,
       boundValue: threshold.boundValue,
-      thresholdType: threshold.thresholdType as
-        | ThresholdCreateDTOThresholdTypeEnum
-        | undefined,
+      thresholdType: threshold.thresholdType as ThresholdCreateDTOThresholdTypeEnum | undefined,
       climateHintIds: threshold.climateHintIds ?? [],
       enabled: threshold.enabled ?? true,
     });
     setEditingThreshold(threshold);
     setIsNewThreshold(false);
+    setBoundValueError(null);
     setThresholdDialogVisible(true);
   };
 
   const saveThreshold = async () => {
+    setBoundValueError(null);
+
     if (
       !thresholdForm.roomId ||
       !thresholdForm.metric ||
@@ -200,6 +206,14 @@ const ThresholdManagementView: React.FC = () => {
         detail: "Please fill in all required fields",
         life: 3000,
       });
+      return;
+    }
+
+    const bounds = METRIC_BOUNDS[thresholdForm.metric];
+    if (bounds && (thresholdForm.boundValue < bounds.min || thresholdForm.boundValue > bounds.max)) {
+      setBoundValueError(
+        `Value must be between ${bounds.min} and ${bounds.max}${bounds.unit ? " " + bounds.unit : ""}.`,
+      );
       return;
     }
     try {
@@ -448,10 +462,12 @@ const ThresholdManagementView: React.FC = () => {
     }))
     .filter((group) => group.rows.length > 0), [filteredClimateHints]);
 
-  const climateHintOptions = climateHints.map((h) => ({
-    label: `[${h.metric}] ${h.hintText}`,
-    value: h.id,
-  }));
+  const climateHintOptions = useMemo(() =>
+    climateHints
+      .filter((h) => !thresholdForm.metric || h.metric === thresholdForm.metric)
+      .map((h) => ({ label: h.hintText ?? "", value: h.id })),
+    [climateHints, thresholdForm.metric],
+  );
 
   const roomOptions = rooms.map((r) => ({
     label: r.name ?? `Room ${r.id}`,
@@ -756,9 +772,17 @@ const ThresholdManagementView: React.FC = () => {
               id="t-metric"
               value={thresholdForm.metric}
               options={metricOptions}
-              onChange={(e) =>
-                setThresholdForm((f) => ({ ...f, metric: e.value }))
-              }
+              onChange={(e) => {
+                const newMetric: ThresholdCreateDTOMetricEnum = e.value;
+                setThresholdForm((f) => ({
+                  ...f,
+                  metric: newMetric,
+                  climateHintIds: (f.climateHintIds ?? []).filter((id) =>
+                    climateHints.find((h) => h.id === id)?.metric === newMetric,
+                  ),
+                }));
+                setBoundValueError(null);
+              }}
               placeholder="Select metric"
               style={{ width: "100%" }}
             />
@@ -777,21 +801,28 @@ const ThresholdManagementView: React.FC = () => {
             />
           </div>
           <div className="field">
-            <label htmlFor="t-value">Limit Value *</label>
+            <label htmlFor="t-value">
+              Limit Value *
+              {thresholdForm.metric && METRIC_BOUNDS[thresholdForm.metric] && (
+                <span style={{ fontWeight: 400, color: "#6b7280", marginLeft: "0.4rem", fontSize: "0.85rem" }}>
+                  {`(${METRIC_BOUNDS[thresholdForm.metric].min} – ${METRIC_BOUNDS[thresholdForm.metric].max}${METRIC_BOUNDS[thresholdForm.metric].unit ? " " + METRIC_BOUNDS[thresholdForm.metric].unit : ""})`}
+                </span>
+              )}
+            </label>
             <InputNumber
               id="t-value"
               value={thresholdForm.boundValue ?? null}
-              onValueChange={(e) =>
-                setThresholdForm((f) => ({
-                  ...f,
-                  boundValue: e.value ?? undefined,
-                }))
-              }
+              onValueChange={(e) => {
+                setBoundValueError(null);
+                setThresholdForm((f) => ({ ...f, boundValue: e.value ?? undefined }));
+              }}
               placeholder="Enter limit value"
+              className={boundValueError ? "p-invalid" : undefined}
               style={{ width: "100%" }}
               useGrouping={false}
               maxFractionDigits={2}
             />
+            {boundValueError && <small className="p-error">{boundValueError}</small>}
           </div>
           <div className="field">
             <label htmlFor="t-hints">Climate Hints</label>

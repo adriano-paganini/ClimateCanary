@@ -1,4 +1,5 @@
 import '../styles/App.css';
+import '../styles/AbsenceCalendar.css';
 import 'primeicons/primeicons.css';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -6,46 +7,26 @@ import { Button } from 'primereact/button';
 import { Chart } from 'primereact/chart';
 import { Message } from 'primereact/message';
 import { ProgressSpinner } from 'primereact/progressspinner';
-import { format, subDays, subHours } from 'date-fns';
+import { addDays, format } from 'date-fns';
 
 import type { Plugin } from 'chart.js';
-import globalAxios from 'axios';
 
 import NavbarComponent from '../components/NavbarComponent';
 import NoDataOverlay from '../components/NoDataOverlay';
 import { useUser } from '../Contexts/AuthenticatedUserContext';
 import { findGapRanges } from '../utilities/dataGapUtils';
+import { buildRoomHistoryChartData, TrendPoint } from '../utilities/roomHistoryChartData';
+import { AnalyticsService } from '../services/AnalyticsService';
 import { ThresholdService } from '../services/ThresholdService';
 import { RoomService } from '../services/RoomService';
 import {
     MeasurementDTOMetricEnum,
     RoomDTO,
     ThresholdDTO,
-    ThresholdDTOThresholdTypeEnum,
     UserxRole,
 } from '../generated-skeleton-api';
 
-interface TrendPoint {
-    timestamp: string;
-    value: number;
-}
-
-interface RoomTrendDTO {
-    roomId: number;
-    metric: string;
-    bucketSize: string;
-    granularityReduced: boolean;
-    points: TrendPoint[];
-}
 import { ROUTES } from '../utilities/routes.paths';
-
-type TimeRange = '24h' | '7d' | '30d';
-
-const TIME_RANGES: { label: string; value: TimeRange }[] = [
-    { label: '24h',     value: '24h' },
-    { label: '7 days',  value: '7d'  },
-    { label: '30 days', value: '30d' },
-];
 
 const METRICS: { key: MeasurementDTOMetricEnum; label: string; unit: string; color: string }[] = [
     { key: MeasurementDTOMetricEnum.TEMPERATURE, label: 'Temperature',      unit: '°C',  color: '#f97316' },
@@ -54,18 +35,27 @@ const METRICS: { key: MeasurementDTOMetricEnum; label: string; unit: string; col
     { key: MeasurementDTOMetricEnum.IAQ,         label: 'Air Quality (IAQ)', unit: '',   color: '#22c55e' },
 ];
 
-function rangeStart(range: TimeRange): Date {
-    const now = new Date();
-    if (range === '24h') return subHours(now, 24);
-    if (range === '7d')  return subDays(now, 7);
-    return subDays(now, 30);
+function dateOnly(date: Date): string {
+    return format(date, 'yyyy-MM-dd');
 }
 
-function tickLabel(ts: string, range: TimeRange): string {
-    const d = new Date(ts);
-    if (range === '24h') return format(d, 'HH:mm');
-    if (range === '7d')  return format(d, 'MM/dd HH:mm');
-    return format(d, 'MM/dd');
+function dateFromInput(value: string): Date | null {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+    const date = new Date(`${value}T00:00:00`);
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function dayStart(date: Date): Date {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function dayWindow(date: Date): { from: Date; to: Date } {
+    const from = dayStart(date);
+    return { from, to: addDays(from, 1) };
+}
+
+function visibleDayLabel(date: Date): string {
+    return format(dayStart(date), 'dd.MM.yyyy');
 }
 
 const CHART_OPTIONS = {
@@ -112,7 +102,7 @@ const RoomHistory: React.FC = () => {
     const { currentUser } = useUser();
     const numId     = roomId ? parseInt(roomId, 10) : NaN;
 
-    const [timeRange,  setTimeRange]  = useState<TimeRange>('24h');
+    const [currentDate, setCurrentDate] = useState(new Date());
     const [room,       setRoom]       = useState<RoomDTO | null>(null);
     const [trendsMap,  setTrendsMap]  = useState<Record<string, TrendPoint[]>>({});
     const [thresholds, setThresholds] = useState<ThresholdDTO[]>([]);
@@ -131,14 +121,18 @@ const RoomHistory: React.FC = () => {
         setLoading(true);
         setError(null);
         setPrivacyRestricted(false);
-        const from = format(rangeStart(timeRange), "yyyy-MM-dd'T'HH:mm:ss");
-        const to   = format(new Date(), "yyyy-MM-dd'T'HH:mm:ss");
+        const window = dayWindow(currentDate);
+        const from = format(window.from, "yyyy-MM-dd'T'HH:mm:ss");
+        const to   = format(window.to, "yyyy-MM-dd'T'HH:mm:ss");
         try {
             const results = await Promise.all(
                 METRICS.map(({ key }) =>
-                    globalAxios.get<RoomTrendDTO>(`/api/analytics/rooms/${numId}/trends`, {
-                        params: { metric: key, from, to },
-                    }).then(r => ({ metric: key, points: r.data.points }))
+                    AnalyticsService.getRoomTrend(numId, key, from, to)
+                        .then(data => ({
+                            metric: key,
+                            points: (data.points ?? [])
+                                .filter((point): point is TrendPoint => point.timestamp !== undefined && point.value !== undefined),
+                        }))
                 )
             );
             const map: Record<string, TrendPoint[]> = {};
@@ -156,48 +150,24 @@ const RoomHistory: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }, [numId, timeRange]);
+    }, [numId, currentDate]);
 
     useEffect(() => { void loadMeasurements(); }, [loadMeasurements]);
 
-    function buildChartData(metric: MeasurementDTOMetricEnum, _color: string) {
+    function buildChartData(metric: MeasurementDTOMetricEnum) {
         const points = trendsMap[metric] ?? [];
+        return buildRoomHistoryChartData(metric, points, thresholds);
+    }
 
-        const labels = points.map(p => tickLabel(p.timestamp, timeRange));
-        const values = points.map(p => p.value ?? null);
+    function navigateDay(direction: -1 | 1) {
+        setCurrentDate(addDays(dayStart(currentDate), direction));
+    }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const datasets: any[] = [{
-            label:                metric,
-            data:                 values,
-            fill:                 false,
-            borderColor:          '#3b82f6',
-            backgroundColor:      'rgba(59, 130, 246, 0.08)',
-            borderWidth:          1.5,
-            tension:              0.3,
-            pointRadius:          points.length > 200 ? 0 : 4,
-            pointBackgroundColor: '#3b82f6',
-            pointBorderColor:     '#3b82f6',
-            spanGaps:             false,
-        }];
-
-        // Threshold dashed lines
-        const activeThresholds = thresholds.filter(t => t.metric === metric && t.enabled !== false && t.boundValue !== undefined);
-        for (const t of activeThresholds) {
-            const isUpper = t.thresholdType === ThresholdDTOThresholdTypeEnum.UPPER;
-            datasets.push({
-                label:       isUpper ? 'Upper limit' : 'Lower limit',
-                data:        Array(labels.length).fill(t.boundValue),
-                borderColor: isUpper ? '#ef4444' : '#f59e0b',
-                borderDash:  [6, 4],
-                borderWidth: 2,
-                pointRadius: 0,
-                fill:        false,
-                tension:     0,
-            });
+    function jumpToDate(value: string) {
+        const nextDate = dateFromInput(value);
+        if (nextDate) {
+            setCurrentDate(nextDate);
         }
-
-        return { labels, datasets };
     }
 
     function buildGapPlugin(metric: MeasurementDTOMetricEnum): Plugin {
@@ -266,17 +236,32 @@ const RoomHistory: React.FC = () => {
                     </div>
                 )}
 
-                {/* Time range buttons */}
-                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem' }}>
-                    {TIME_RANGES.map(r => (
-                        <Button
-                            key={r.value}
-                            label={r.label}
-                            size="small"
-                            outlined={timeRange !== r.value}
-                            onClick={() => setTimeRange(r.value)}
+                <div className="absence-calendar-header" style={{ gridTemplateColumns: 'auto 1fr auto' }}>
+                    <div className="absence-calendar-navigation">
+                        <button type="button" onClick={() => navigateDay(-1)} aria-label="Previous day">
+                            <i className="pi pi-chevron-left" aria-hidden="true" />
+                        </button>
+                        <button type="button" onClick={() => setCurrentDate(new Date())}>
+                            Today
+                        </button>
+                        <button type="button" onClick={() => navigateDay(1)} aria-label="Next day">
+                            <i className="pi pi-chevron-right" aria-hidden="true" />
+                        </button>
+                    </div>
+
+                    <div className="absence-calendar-range">
+                        {visibleDayLabel(currentDate)}
+                    </div>
+
+                    <div className="absence-date-jump">
+                        <label htmlFor="room-history-jump-date">Jump to</label>
+                        <input
+                            id="room-history-jump-date"
+                            type="date"
+                            value={dateOnly(currentDate)}
+                            onChange={event => jumpToDate(event.target.value)}
                         />
-                    ))}
+                    </div>
                 </div>
 
                 {error && <Message severity="error" text={error} style={{ marginBottom: '1rem', display: 'block' }} />}
@@ -290,9 +275,10 @@ const RoomHistory: React.FC = () => {
                     </div>
                 ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1.5rem' }}>
-                        {METRICS.map(({ key, label, unit, color }) => {
-                            const data    = buildChartData(key, color);
+                        {METRICS.map(({ key, label, unit }) => {
+                            const data    = buildChartData(key);
                             const isEmpty = (data.datasets[0].data as (number | null)[]).every(v => v === null);
+                            const hasThresholds = data.datasets.length > 1;
                             return (
                                 <div
                                     key={key}
@@ -306,7 +292,7 @@ const RoomHistory: React.FC = () => {
                                     <h3 style={{ margin: '0 0 1rem', color: '#374151', fontSize: '1rem', fontWeight: 600 }}>
                                         {label}{unit && ` (${unit})`}
                                     </h3>
-                                    {privacyRestricted || isEmpty ? (
+                                    {privacyRestricted || (isEmpty && !hasThresholds) ? (
                                         <NoDataOverlay
                                             message={privacyRestricted ? 'Datenschutz aktiv — keine Daten verfügbar' : 'Keine Daten verfügbar'}
                                             icon={privacyRestricted ? 'pi pi-lock' : 'pi pi-ban'}

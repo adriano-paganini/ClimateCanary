@@ -1,5 +1,6 @@
 package at.qe.skeleton.tests.services;
 
+import at.qe.skeleton.common.exceptions.ConflictException;
 import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.DepartmentUpdateDTO;
 import at.qe.skeleton.models.Department;
@@ -283,10 +284,10 @@ class DepartmentServiceTest {
     }
 
     @Test
-    @DisplayName("Delete department clears rooms and employees and deletes")
-    void delete_existingDepartment_clearsRoomsAndEmployeesAndDeletes() {
+    @DisplayName("Delete department clears rooms and deletes when no employees are assigned")
+    void delete_existingDepartment_clearsRoomsAndDeletesWhenNoEmployeesAssigned() {
         room1.setDepartment(department);
-        employeeProfile.setDepartment(department);
+        department.getEmployeeProfiles().clear();
 
         Mockito.when(departmentRepository.findById(1L)).thenReturn(Optional.of(department));
 
@@ -295,13 +296,27 @@ class DepartmentServiceTest {
         Assertions.assertThat(room1.getDepartment()).isNull();
         Mockito.verify(roomRepository).save(room1);
 
-        Assertions.assertThat(employeeProfile.getDepartment()).isNull();
-        Mockito.verify(employeeProfileRepository).save(employeeProfile);
-
         Assertions.assertThat(department.getRooms()).isEmpty();
         Assertions.assertThat(department.getEmployeeProfiles()).isEmpty();
 
         Mockito.verify(departmentRepository).deleteById(1L);
+    }
+
+    @Test
+    @DisplayName("Delete department throws ConflictException when employees are assigned")
+    void delete_throwsConflictException_whenEmployeesAreAssigned() {
+        employeeProfile.setDepartment(department);
+
+        Mockito.when(departmentRepository.findById(1L)).thenReturn(Optional.of(department));
+        Mockito.when(employeeProfileRepository.countByDepartment_Id(1L)).thenReturn(1L);
+
+        Assertions.assertThatThrownBy(() -> departmentService.delete(1L))
+                .isInstanceOf(ConflictException.class)
+                .hasMessageContaining("1 assigned employees");
+
+        Assertions.assertThat(employeeProfile.getDepartment()).isEqualTo(department);
+        Mockito.verify(departmentRepository, Mockito.never()).deleteById(Mockito.any());
+        Mockito.verify(employeeProfileRepository, Mockito.never()).save(Mockito.any());
     }
 
     @Test

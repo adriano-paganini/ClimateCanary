@@ -1,11 +1,12 @@
 package at.qe.skeleton.services;
 
+import at.qe.skeleton.common.exceptions.ConflictException;
 import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.RoomUpdateDTO;
 import at.qe.skeleton.models.DeviceStatus;
-import at.qe.skeleton.models.EmployeeProfile;
 import at.qe.skeleton.models.Room;
 import at.qe.skeleton.models.SensorStation;
+import at.qe.skeleton.repositories.EmployeeProfileRepository;
 import at.qe.skeleton.repositories.RoomRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -21,13 +22,16 @@ public class RoomService {
     private final RoomRepository roomRepository;
     private final DepartmentService departmentService;
     private final BuildingService buildingService;
+    private final EmployeeProfileRepository employeeProfileRepository;
 
     public RoomService(RoomRepository repo,
                        DepartmentService departmentService,
-                       BuildingService buildingService) {
+                       BuildingService buildingService,
+                       EmployeeProfileRepository employeeProfileRepository) {
         this.roomRepository = repo;
         this.departmentService = departmentService;
         this.buildingService = buildingService;
+        this.employeeProfileRepository = employeeProfileRepository;
     }
 
     public List<Room> getAll() {
@@ -103,6 +107,10 @@ public class RoomService {
     @Transactional
     public void delete(Long id) {
         Room room = getById(id);
+        long assignedEmployeeCount = employeeProfileRepository.countByRoom_Id(id);
+        if (assignedEmployeeCount > 0) {
+            throw new ConflictException("Room with id " + id + " has " + assignedEmployeeCount + " assigned employees");
+        }
 
         for (SensorStation ss : room.getSensorStations()) {
             ss.setDeviceStatus(DeviceStatus.DECOMMISSIONED);
@@ -122,9 +130,6 @@ public class RoomService {
             room.setBuilding(null);
         }
 
-        for (EmployeeProfile employeeProfile : List.copyOf(room.getEmployeeProfiles())) {
-            employeeProfile.setRoom(null);
-        }
         room.getEmployeeProfiles().clear();
 
         room.setActive(false);

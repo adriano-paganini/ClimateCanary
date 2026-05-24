@@ -1,5 +1,6 @@
 package at.qe.skeleton.services;
 
+import at.qe.skeleton.common.exceptions.ConflictException;
 import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.DepartmentUpdateDTO;
 import at.qe.skeleton.models.*;
@@ -116,6 +117,11 @@ public class DepartmentService {
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public void delete(Long id) {
         Department department = getDepartmentById(id);
+        long assignedEmployeeCount = employeeProfileRepository.countByDepartment_Id(id);
+        if (assignedEmployeeCount > 0) {
+            throw new ConflictException("Department with id " + id + " has " + assignedEmployeeCount + " assigned employees");
+        }
+
         Userx previousLeader = department.getDepartmentLeader();
 
         for (Room room : department.getRooms()) {
