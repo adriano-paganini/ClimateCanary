@@ -1,8 +1,10 @@
 .navbar-link--active,
 .navbar-link--active:hover {
-    background-color: rgba(0, 0, 0, 0.07) !important;
-    color: #0f172a !important;
-    border-radius: 4px;
+    background: linear-gradient(180deg, #eef8ff 0%, #e4f3ff 100%) !important;
+    color: #075985 !important;
+    border: 1px solid #bae6fd;
+    border-radius: 7px;
+    box-shadow: inset 0 -2px 0 #0ea5e9;
     font-weight: 600;
 }
 
@@ -19,6 +21,74 @@
     width: 32px;
     height: 32px;
     object-fit: contain;
+}
+
+.navbar-group-link {
+    gap: 0.45rem;
+    border: 1px solid transparent;
+    border-radius: 7px;
+    transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease, color 120ms ease;
+}
+
+.navbar-group-link--active,
+.navbar-group-link--active:hover {
+    border-color: #bae6fd !important;
+    background: linear-gradient(180deg, #eef8ff 0%, #e4f3ff 100%) !important;
+    color: #075985 !important;
+    box-shadow: inset 0 -2px 0 #0ea5e9;
+    font-weight: 700;
+}
+
+.navbar-group-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-left: auto;
+}
+
+.navbar-group-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.35rem;
+    height: 1.35rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 0.72rem;
+    font-weight: 750;
+    line-height: 1;
+}
+
+.navbar-group-chevron {
+    color: #64748b;
+    font-size: 0.75rem;
+    transition: transform 140ms ease, color 140ms ease;
+}
+
+.p-menuitem-active > .p-menuitem-content > .navbar-group-link .navbar-group-chevron,
+.p-highlight > .p-menuitem-content > .navbar-group-link .navbar-group-chevron,
+.navbar-group-link--active .navbar-group-chevron {
+    color: #0369a1;
+    transform: rotate(90deg);
+}
+
+.p-menuitem-active > .p-menuitem-content > .navbar-group-link .navbar-group-count,
+.p-highlight > .p-menuitem-content > .navbar-group-link .navbar-group-count,
+.navbar-group-link--active .navbar-group-count {
+    border-color: #7dd3fc;
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.navbar-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
 }
 
 .navbar-user-actions {
@@ -160,6 +230,33 @@
 }
 
 @media (max-width: 760px) {
+    .p-menubar .navbar-group-link {
+        width: 100%;
+        border-radius: 6px;
+        border: 1px solid transparent;
+    }
+
+    .p-menubar .p-menuitem-active > .p-menuitem-content > .navbar-group-link,
+    .p-menubar .p-highlight > .p-menuitem-content > .navbar-group-link {
+        border-color: #bae6fd;
+        background: #f0f9ff;
+        color: #0c4a6e;
+        font-weight: 700;
+        box-shadow: inset 3px 0 0 #0ea5e9;
+    }
+
+    .p-menubar .p-menuitem-active > .p-submenu-list,
+    .p-menubar .p-highlight > .p-submenu-list {
+        margin: 0.25rem 0 0.45rem 0.8rem;
+        padding-left: 0.55rem;
+        border-left: 2px solid #bae6fd;
+    }
+
+    .p-menubar .p-submenu-list .p-menuitem-link {
+        border-radius: 6px;
+        padding-left: 0.85rem;
+    }
+
     .navbar-user-actions {
         gap: 0.35rem;
         margin-right: 0.35rem;

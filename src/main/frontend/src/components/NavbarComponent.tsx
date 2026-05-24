@@ -9,7 +9,7 @@ import {useUser} from "../Contexts/AuthenticatedUserContext";
 import {menuConfig, MenuItemConfig} from "../config/menuConfig";
 import {UserxRole} from "../generated-skeleton-api";
 import {MenuItem} from "primereact/menuitem";
-import {Link, NavLink} from "react-router-dom";
+import {Link, NavLink, useLocation} from "react-router-dom";
 import {ROUTES} from "../utilities/routes.paths";
 import "../styles/Navbar.css";
 
@@ -18,6 +18,7 @@ import "../styles/Navbar.css";
  */
 const NavbarComponent: React.FC = () => {
     const { currentUser: user } = useUser();
+    const { pathname } = useLocation();
 
     const filterMenu = React.useCallback((items: MenuItemConfig[]): MenuItemConfig[] => {
         if (!user) return [];
@@ -42,9 +43,22 @@ const NavbarComponent: React.FC = () => {
 
     // we want to use navigate (react router) to ensure pure client-side navigation on menu item click
     // incidentally, we also want to fix primereact component-related aria warnings
+    const isRouteActive = React.useCallback((route?: string): boolean => {
+        if (!route) return false;
+        if (route === ROUTES.HOME) return pathname === route;
+        if (route === ROUTES.DEPARTMENT_DASHBOARD) return pathname === route;
+
+        return pathname === route || pathname.startsWith(`${route}/`);
+    }, [pathname]);
+
+    const hasActiveChild = React.useCallback((item: MenuItemConfig): boolean => {
+        return isRouteActive(item.route) || !!item.items?.some(child => hasActiveChild(child));
+    }, [isRouteActive]);
+
     const buildMenubar = React.useCallback((items: MenuItemConfig[]): MenuItem[] => {
         return items.map(configItem => {
             const children = configItem.items ? buildMenubar(configItem.items) : undefined;
+            const childActive = hasActiveChild(configItem);
 
             const menuItem: MenuItem = {
                 label: configItem.label,
@@ -70,14 +84,22 @@ const NavbarComponent: React.FC = () => {
 
                 // Group item (has children, no route) — opens submenu, no navigation
                 if (!configItem.route) {
+                    const childCount = children?.length ?? 0;
+
                     return (
                         <a
                             href="#"
-                            className={`${base} p-menuitem-link`}
+                            className={`${base} p-menuitem-link navbar-group-link${childActive ? " navbar-group-link--active" : ""}`}
                             onClick={(e) => { e.preventDefault(); options.onClick?.(e); }}
+                            aria-current={childActive ? "page" : undefined}
                         >
                             {menuItem.icon && <span className={options.iconClassName}/>}
                             <span className={options.labelClassName}>{menuItem.label}</span>
+                            <span className="navbar-group-meta" aria-hidden="true">
+                                {childCount > 0 && <span className="navbar-group-count">{childCount}</span>}
+                                <i className="pi pi-chevron-right navbar-group-chevron"/>
+                            </span>
+                            <span className="navbar-sr-only">Toggle {menuItem.label} menu</span>
                         </a>
                     );
                 }
@@ -86,6 +108,7 @@ const NavbarComponent: React.FC = () => {
                 return (
                     <NavLink
                         to={configItem.route}
+                        end={configItem.route === ROUTES.HOME || configItem.route === ROUTES.DEPARTMENT_DASHBOARD}
                         className={({ isActive }) =>
                             `${base} p-menuitem-link${isActive ? " navbar-link--active" : ""}`
                         }
@@ -98,7 +121,7 @@ const NavbarComponent: React.FC = () => {
             }
             return menuItem;
         });
-    }, []);
+    }, [hasActiveChild]);
 
     const filteredItems = React.useMemo(() => filterMenu(menuConfig), [filterMenu]);
 

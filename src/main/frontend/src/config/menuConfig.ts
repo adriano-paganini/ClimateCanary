@@ -22,12 +22,12 @@ export const menuConfig: MenuItemConfig[] = [
         roles: [UserxRole.EMPLOYEE],
     },
     {
-        label: 'Department', icon: 'pi pi-sitemap', route: ROUTES.DEPARTMENT_DASHBOARD,
+        label: 'Department', icon: 'pi pi-sitemap',
         roles: [UserxRole.DEPARTMENT_LEAD],
-    },
-    {
-        label: 'Team Absences', icon: 'pi pi-calendar-times', route: ROUTES.DEPARTMENT_ABSENCES,
-        roles: [UserxRole.DEPARTMENT_LEAD],
+        items: [
+            { label: 'Overview',      icon: 'pi pi-chart-line',     route: ROUTES.DEPARTMENT_DASHBOARD, roles: [UserxRole.DEPARTMENT_LEAD] },
+            { label: 'Team Absences', icon: 'pi pi-calendar-times', route: ROUTES.DEPARTMENT_ABSENCES,  roles: [UserxRole.DEPARTMENT_LEAD] },
+        ],
     },
     {
         label: 'Overview', icon: 'pi pi-chart-bar', route: ROUTES.MANAGEMENT_DASHBOARD,
