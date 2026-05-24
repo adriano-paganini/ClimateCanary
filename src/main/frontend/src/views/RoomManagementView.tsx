@@ -118,6 +118,7 @@ const RoomManagementView: React.FC = () => {
     const [privacyRestricted, setPrivacyRestricted] = useState(false);
 
     const toast = useRef<Toast | null>(null);
+    const analyticsRequestId = useRef(0);
 
     const selectedRoom = useMemo(
         () => rooms.find(room => room.id === selectedRoomId) ?? null,
@@ -135,6 +136,15 @@ const RoomManagementView: React.FC = () => {
     }, [buildings]);
 
     useEffect(() => {
+        const loadReferenceData = async () => {
+            const [buildingData, departmentData] = await Promise.all([
+                BuildingService.getAll().catch(() => []),
+                DepartmentService.getAll().catch(() => []),
+            ]);
+            setBuildings(buildingData);
+            setDepartments(departmentData);
+        };
+
         const loadRooms = async () => {
             setLoadingRooms(true);
             try {
@@ -154,44 +164,60 @@ const RoomManagementView: React.FC = () => {
             }
         };
 
+        void loadReferenceData();
         void loadRooms();
-        BuildingService.getAll().then(setBuildings).catch(() => setBuildings([]));
-        DepartmentService.getAll().then(setDepartments).catch(() => setDepartments([]));
     }, []);
 
     useEffect(() => {
         if (!selectedRoomId) return;
 
+        const requestId = analyticsRequestId.current + 1;
+        analyticsRequestId.current = requestId;
+
         const loadAnalytics = async () => {
             setLoadingAnalytics(true);
             setAnalyticsError(null);
             setPrivacyRestricted(false);
+            setSummary(null);
+            setTrend(null);
+            setViolationSummary(null);
+            setViolations([]);
+            setThresholds([]);
             const from = toLocalDateTimeParam(rangeStart(timeRange));
             const to = toLocalDateTimeParam(new Date());
+            const isCurrentRequest = () => analyticsRequestId.current === requestId;
 
             try {
-                const [summaryData, trendData, violationSummaryData, activeViolations, resolvedViolations, thresholdData] =
-                    await Promise.all([
-                        AnalyticsService.getRoomSummary(selectedRoomId, from, to),
-                        AnalyticsService.getRoomTrend(selectedRoomId, selectedMetric, from, to),
-                        AnalyticsService.getRoomViolations(selectedRoomId),
-                        ViolationService.getAll({
-                            roomId: selectedRoomId,
-                            violationStatus: GetAllViolationStatusEnum.ACTIVE,
-                        }),
-                        ViolationService.getAll({
-                            roomId: selectedRoomId,
-                            violationStatus: GetAllViolationStatusEnum.RESOLVED,
-                        }),
-                        ThresholdService.getAll({ roomId: selectedRoomId }),
-                    ]);
-
+                const summaryData = await AnalyticsService.getRoomSummary(selectedRoomId, from, to);
+                if (!isCurrentRequest()) return;
                 setSummary(summaryData);
-                setTrend(trendData);
+
+                const violationSummaryData = await AnalyticsService.getRoomViolations(selectedRoomId);
+                if (!isCurrentRequest()) return;
                 setViolationSummary(violationSummaryData);
+
+                const [activeViolations, resolvedViolations] = await Promise.all([
+                    ViolationService.getAll({
+                        roomId: selectedRoomId,
+                        violationStatus: GetAllViolationStatusEnum.ACTIVE,
+                    }),
+                    ViolationService.getAll({
+                        roomId: selectedRoomId,
+                        violationStatus: GetAllViolationStatusEnum.RESOLVED,
+                    }),
+                ]);
+                if (!isCurrentRequest()) return;
                 setViolations([...activeViolations, ...resolvedViolations]);
+
+                const thresholdData = await ThresholdService.getAll({ roomId: selectedRoomId });
+                if (!isCurrentRequest()) return;
                 setThresholds(thresholdData);
+
+                const trendData = await AnalyticsService.getRoomTrend(selectedRoomId, selectedMetric, from, to);
+                if (!isCurrentRequest()) return;
+                setTrend(trendData);
             } catch (err: unknown) {
+                if (!isCurrentRequest()) return;
                 const status = (err as { response?: { status?: number } })?.response?.status;
                 if (status === 403) {
                     setPrivacyRestricted(true);
@@ -204,7 +230,9 @@ const RoomManagementView: React.FC = () => {
                 setViolations([]);
                 setThresholds([]);
             } finally {
-                setLoadingAnalytics(false);
+                if (isCurrentRequest()) {
+                    setLoadingAnalytics(false);
+                }
             }
         };
 
