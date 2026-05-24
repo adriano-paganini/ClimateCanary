@@ -392,6 +392,23 @@ const DeviceManagementView: React.FC = () => {
 
     const roomOptions = rooms.map(r => ({ label: r.name ?? `Room ${r.id}`, value: r.id }));
 
+    const takenRoomIds = new Set(
+        pis
+            .filter(p => rpiIsNew || p.id !== selectedPi?.id)
+            .map(p => p.roomId)
+            .filter((id): id is number => id != null)
+    );
+
+    const roomItemTemplate = (option: { label: string; value: number }) => {
+        const taken = takenRoomIds.has(option.value);
+        return (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>{option.label}</span>
+                {taken && <Tag value="Taken" severity="danger" style={{ fontSize: '0.7rem', marginLeft: '0.5rem' }} />}
+            </div>
+        );
+    };
+
     const statusTag = (status?: string) => (
         <Tag value={status ?? '—'} severity={statusSeverity(status)} />
     );
@@ -666,7 +683,14 @@ const DeviceManagementView: React.FC = () => {
                         <Dropdown
                             value={rpiForm.roomId}
                             options={roomOptions}
-                            onChange={e => setRpiForm(f => ({ ...f, roomId: e.value }))}
+                            itemTemplate={roomItemTemplate}
+                            onChange={e => {
+                                if (takenRoomIds.has(e.value)) {
+                                    toast.current?.show({ severity: 'warn', summary: 'Room already assigned', detail: 'This room already has a Raspberry Pi. Choose a different room.', life: 4000 });
+                                    return;
+                                }
+                                setRpiForm(f => ({ ...f, roomId: e.value }));
+                            }}
                             placeholder="Select a room"
                             style={{ width: '100%' }}
                         />
