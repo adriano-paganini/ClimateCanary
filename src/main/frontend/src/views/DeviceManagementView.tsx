@@ -92,6 +92,7 @@ const DeviceManagementView: React.FC = () => {
     const [scanPiId, setScanPiId] = useState<number | null>(null);
     const [scanning, setScanning] = useState(false);
     const [scanTriggered, setScanTriggered] = useState(false);
+    const [scanCountdown, setScanCountdown] = useState<number | null>(null);
     const [availableStations, setAvailableStations] = useState<SensorStationDTO[]>([]);
 
     const fetchPis = useCallback(async () => {
@@ -156,22 +157,32 @@ const DeviceManagementView: React.FC = () => {
         setAvailableStations([]);
         setScanning(false);
         setScanTriggered(false);
+        setScanCountdown(null);
         setScanDialogVisible(true);
     };
 
     const startScan = async () => {
         if (scanPiId == null) return;
         setScanning(true);
+        setScanTriggered(true);
+        setScanCountdown(10);
+        setAvailableStations([]);
         try {
             await SensorStationService.triggerScan(scanPiId);
-            setScanTriggered(true);
-            setAvailableStations([]);
         } catch {
+            setScanTriggered(false);
+            setScanCountdown(null);
             toast.current?.show({ severity: 'error', summary: 'Scan Failed', detail: 'BLE scan failed. Make sure the Raspberry Pi is online.', life: 4000 });
         } finally {
             setScanning(false);
         }
     };
+
+    useEffect(() => {
+        if (scanCountdown == null || scanCountdown <= 0) return;
+        const id = setTimeout(() => setScanCountdown(c => (c ?? 1) - 1), 1_000);
+        return () => clearTimeout(id);
+    }, [scanCountdown]);
 
     useEffect(() => {
         if (!scanTriggered || scanPiId == null) return;
@@ -801,7 +812,11 @@ const DeviceManagementView: React.FC = () => {
                 {scanTriggered && availableStations.length === 0 && (
                     <Message
                         severity="info"
-                        text="Scan started — checking for nearby Arduino devices every 5 seconds. You'll be notified when one is found."
+                        text={
+                            scanCountdown != null && scanCountdown > 0
+                                ? `Scanning… ${scanCountdown}s remaining`
+                                : 'Scan complete — watching for nearby Arduino devices every 5 seconds. You\'ll be notified when one is found.'
+                        }
                         style={{ width: '100%', marginBottom: '1rem' }}
                     />
                 )}
