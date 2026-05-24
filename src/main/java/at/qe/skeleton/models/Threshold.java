@@ -35,7 +35,7 @@ public class Threshold {
     @OneToMany(mappedBy = "threshold")
     private List<ThresholdViolation> violations = new ArrayList<>();
 
-    @ManyToOne(optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "room_id")
     private Room room;
 

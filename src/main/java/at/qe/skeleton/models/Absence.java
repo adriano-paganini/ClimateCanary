@@ -27,7 +27,7 @@ public class Absence {
     @Enumerated(EnumType.STRING)
     private AbsenceStatus absenceStatus;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "userx_id", nullable = false)
     private Userx user;
 

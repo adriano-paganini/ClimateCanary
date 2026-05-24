@@ -36,11 +36,11 @@ public class Measurement {
     @Enumerated(EnumType.STRING)
     private Metric metric;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id", nullable = false)
     private Room room;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sensorstation_id", nullable = false)
     private SensorStation sensorStation;
 

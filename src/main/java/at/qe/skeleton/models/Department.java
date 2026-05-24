@@ -24,7 +24,7 @@ public class Department {
     @OneToMany(mappedBy = "department")
     private List<Room> rooms = new ArrayList<>();
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "userx_id")
     private Userx departmentLeader;
 
