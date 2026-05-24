@@ -1,4 +1,5 @@
 import '../styles/App.css';
+import '../styles/AbsenceCalendar.css';
 import 'primeicons/primeicons.css';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -38,15 +39,23 @@ function dateOnly(date: Date): string {
     return format(date, 'yyyy-MM-dd');
 }
 
-function dayStart(dateValue: string): Date {
-    return new Date(`${dateValue}T00:00:00`);
+function dateFromInput(value: string): Date | null {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+    const date = new Date(`${value}T00:00:00`);
+    return Number.isNaN(date.getTime()) ? null : date;
 }
 
-function dayWindow(dateValue: string): { from: Date; to: Date } {
-    const from = dayStart(dateValue);
-    const nextDay = addDays(from, 1);
-    const now = new Date();
-    return { from, to: nextDay > now ? now : nextDay };
+function dayStart(date: Date): Date {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function dayWindow(date: Date): { from: Date; to: Date } {
+    const from = dayStart(date);
+    return { from, to: addDays(from, 1) };
+}
+
+function visibleDayLabel(date: Date): string {
+    return format(dayStart(date), 'dd.MM.yyyy');
 }
 
 const CHART_OPTIONS = {
@@ -93,7 +102,7 @@ const RoomHistory: React.FC = () => {
     const { currentUser } = useUser();
     const numId     = roomId ? parseInt(roomId, 10) : NaN;
 
-    const [startDate,  setStartDate]  = useState(dateOnly(new Date()));
+    const [currentDate, setCurrentDate] = useState(new Date());
     const [room,       setRoom]       = useState<RoomDTO | null>(null);
     const [trendsMap,  setTrendsMap]  = useState<Record<string, TrendPoint[]>>({});
     const [thresholds, setThresholds] = useState<ThresholdDTO[]>([]);
@@ -112,7 +121,7 @@ const RoomHistory: React.FC = () => {
         setLoading(true);
         setError(null);
         setPrivacyRestricted(false);
-        const window = dayWindow(startDate);
+        const window = dayWindow(currentDate);
         const from = format(window.from, "yyyy-MM-dd'T'HH:mm:ss");
         const to   = format(window.to, "yyyy-MM-dd'T'HH:mm:ss");
         try {
@@ -141,7 +150,7 @@ const RoomHistory: React.FC = () => {
         } finally {
             setLoading(false);
         }
-    }, [numId, startDate]);
+    }, [numId, currentDate]);
 
     useEffect(() => { void loadMeasurements(); }, [loadMeasurements]);
 
@@ -150,9 +159,15 @@ const RoomHistory: React.FC = () => {
         return buildRoomHistoryChartData(metric, points, thresholds);
     }
 
-    function handleStartDateChange(value: string) {
-        if (!value) return;
-        setStartDate(value > dateOnly(new Date()) ? dateOnly(new Date()) : value);
+    function navigateDay(direction: -1 | 1) {
+        setCurrentDate(addDays(dayStart(currentDate), direction));
+    }
+
+    function jumpToDate(value: string) {
+        const nextDate = dateFromInput(value);
+        if (nextDate) {
+            setCurrentDate(nextDate);
+        }
     }
 
     function buildGapPlugin(metric: MeasurementDTOMetricEnum): Plugin {
@@ -221,30 +236,32 @@ const RoomHistory: React.FC = () => {
                     </div>
                 )}
 
-                {/* Fixed one-day data window */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
-                    <label htmlFor="room-history-start-date" style={{ color: '#374151', fontWeight: 600 }}>
-                        Start date
-                    </label>
-                    <input
-                        id="room-history-start-date"
-                        type="date"
-                        value={startDate}
-                        max={dateOnly(new Date())}
-                        onChange={event => handleStartDateChange(event.target.value)}
-                        style={{
-                            border: '1px solid #d1d5db',
-                            borderRadius: '6px',
-                            padding: '0.45rem 0.65rem',
-                            color: '#111827',
-                        }}
-                    />
-                    <Button
-                        label="Today"
-                        size="small"
-                        outlined={startDate !== dateOnly(new Date())}
-                        onClick={() => setStartDate(dateOnly(new Date()))}
-                    />
+                <div className="absence-calendar-header" style={{ gridTemplateColumns: 'auto 1fr auto' }}>
+                    <div className="absence-calendar-navigation">
+                        <button type="button" onClick={() => navigateDay(-1)} aria-label="Previous day">
+                            <i className="pi pi-chevron-left" aria-hidden="true" />
+                        </button>
+                        <button type="button" onClick={() => setCurrentDate(new Date())}>
+                            Today
+                        </button>
+                        <button type="button" onClick={() => navigateDay(1)} aria-label="Next day">
+                            <i className="pi pi-chevron-right" aria-hidden="true" />
+                        </button>
+                    </div>
+
+                    <div className="absence-calendar-range">
+                        {visibleDayLabel(currentDate)}
+                    </div>
+
+                    <div className="absence-date-jump">
+                        <label htmlFor="room-history-jump-date">Jump to</label>
+                        <input
+                            id="room-history-jump-date"
+                            type="date"
+                            value={dateOnly(currentDate)}
+                            onChange={event => jumpToDate(event.target.value)}
+                        />
+                    </div>
                 </div>
 
                 {error && <Message severity="error" text={error} style={{ marginBottom: '1rem', display: 'block' }} />}
