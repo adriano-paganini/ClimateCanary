@@ -22,7 +22,6 @@ import {
     RaspberryPiCreateDTO,
     RaspberryPiDTO,
     RaspberryPiUpdateDTO,
-    RaspberryPiUpdateDTODeviceStatusEnum,
     RoomDTO,
     SensorStationDTO,
     SensorStationUpdateDTO,
@@ -38,18 +37,10 @@ function statusSeverity(status?: string): TagSeverity {
     return 'secondary';
 }
 
-const DEVICE_STATUS_OPTIONS = [
-    { label: 'Online',      value: RaspberryPiUpdateDTODeviceStatusEnum.ONLINE },
-    { label: 'Offline',     value: RaspberryPiUpdateDTODeviceStatusEnum.OFFLINE },
-    { label: 'Maintenance', value: RaspberryPiUpdateDTODeviceStatusEnum.MAINTENANCE },
-    { label: 'Degraded',    value: RaspberryPiUpdateDTODeviceStatusEnum.DEGRADED },
-];
 
 interface RpiForm {
     hostName: string;
     roomId: number | null;
-    ipAddress: string;
-    deviceStatus: string;
 }
 
 interface StationForm {
@@ -60,7 +51,7 @@ interface StationForm {
     deviceStatus: string;
 }
 
-const EMPTY_RPI_FORM: RpiForm = { hostName: '', roomId: null, ipAddress: '', deviceStatus: '' };
+const EMPTY_RPI_FORM: RpiForm = { hostName: '', roomId: null };
 
 const DeviceManagementView: React.FC = () => {
     const toast = useRef<Toast>(null);
@@ -236,8 +227,6 @@ const DeviceManagementView: React.FC = () => {
         setRpiForm({
             hostName: pi.hostName ?? '',
             roomId: pi.roomId ?? null,
-            ipAddress: pi.ipAddress ?? '',
-            deviceStatus: pi.deviceStatus ?? '',
         });
         setRpiError(null);
         setRpiDialogVisible(true);
@@ -281,9 +270,7 @@ const DeviceManagementView: React.FC = () => {
             }
             const dto: RaspberryPiUpdateDTO = {};
             if (rpiForm.hostName.trim()) dto.hostName = rpiForm.hostName.trim();
-            if (rpiForm.ipAddress.trim()) dto.ipAddress = rpiForm.ipAddress.trim();
             if (rpiForm.roomId) dto.roomId = rpiForm.roomId;
-            if (rpiForm.deviceStatus) dto.deviceStatus = rpiForm.deviceStatus as RaspberryPiUpdateDTODeviceStatusEnum;
             try {
                 const updated = await RaspberryPiService.update(selectedPi.id, dto);
                 setPis(prev => prev.map(p => p.id === updated.id ? updated : p));
@@ -692,29 +679,6 @@ const DeviceManagementView: React.FC = () => {
                             style={{ width: '100%' }}
                         />
                     </div>
-                    {!rpiIsNew && (
-                        <>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: 600 }}>IP Address</label>
-                                <InputText
-                                    value={rpiForm.ipAddress}
-                                    onChange={e => setRpiForm(f => ({ ...f, ipAddress: e.target.value }))}
-                                    style={{ width: '100%' }}
-                                    placeholder="e.g. 192.168.1.42"
-                                />
-                            </div>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: 600 }}>Status</label>
-                                <Dropdown
-                                    value={rpiForm.deviceStatus}
-                                    options={DEVICE_STATUS_OPTIONS}
-                                    onChange={e => setRpiForm(f => ({ ...f, deviceStatus: e.value }))}
-                                    placeholder="Select status"
-                                    style={{ width: '100%' }}
-                                />
-                            </div>
-                        </>
-                    )}
                 </div>
             </Dialog>
 
