@@ -14,8 +14,12 @@ import java.util.List;
 @Entity
 @Table(indexes = {
         @Index(
-                name = "idx_measurement_room_metric_timestamp",
+                name = "idx_measurement_room_metric_timestamp_desc",
                 columnList = "room_id, metric, timestamp DESC"
+        ),
+        @Index(
+                name = "idx_measurement_room_metric_timestamp_asc",
+                columnList = "room_id, metric, timestamp"
         )
 })
 public class Measurement {
