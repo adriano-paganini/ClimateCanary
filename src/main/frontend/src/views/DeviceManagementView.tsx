@@ -92,7 +92,6 @@ const DeviceManagementView: React.FC = () => {
     const [scanPiId, setScanPiId] = useState<number | null>(null);
     const [scanning, setScanning] = useState(false);
     const [scanTriggered, setScanTriggered] = useState(false);
-    const [checkingDevices, setCheckingDevices] = useState(false);
     const [availableStations, setAvailableStations] = useState<SensorStationDTO[]>([]);
 
     const fetchPis = useCallback(async () => {
@@ -157,7 +156,6 @@ const DeviceManagementView: React.FC = () => {
         setAvailableStations([]);
         setScanning(false);
         setScanTriggered(false);
-        setCheckingDevices(false);
         setScanDialogVisible(true);
     };
 
@@ -175,21 +173,25 @@ const DeviceManagementView: React.FC = () => {
         }
     };
 
-    const checkForDevices = async () => {
-        if (scanPiId == null) return;
-        setCheckingDevices(true);
-        try {
-            const found = await SensorStationService.getAvailableForPi(scanPiId);
-            setAvailableStations(found);
-            if (found.length === 0) {
-                toast.current?.show({ severity: 'info', summary: 'No Devices Found', detail: 'No Arduino devices in setup mode found yet. Try again in a moment.', life: 4000 });
-            }
-        } catch {
-            toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Could not fetch available devices.', life: 4000 });
-        } finally {
-            setCheckingDevices(false);
-        }
-    };
+    useEffect(() => {
+        if (!scanTriggered || scanPiId == null) return;
+        const id = setInterval(async () => {
+            try {
+                const found = await SensorStationService.getAvailableForPi(scanPiId);
+                if (found.length > 0) {
+                    setAvailableStations(found);
+                    clearInterval(id);
+                    toast.current?.show({
+                        severity: 'success',
+                        summary: 'Devices Found',
+                        detail: `${found.length} Arduino device(s) discovered. Select one to set it up.`,
+                        life: 6000,
+                    });
+                }
+            } catch { /* ignore polling errors */ }
+        }, 5_000);
+        return () => clearInterval(id);
+    }, [scanTriggered, scanPiId]);
 
     const selectAvailableStation = (station: SensorStationDTO) => {
         setScanDialogVisible(false);
@@ -791,24 +793,15 @@ const DeviceManagementView: React.FC = () => {
                     <Button
                         label={scanning ? 'Scanning…' : 'Start Scan'}
                         icon={scanning ? 'pi pi-spin pi-spinner' : 'pi pi-wifi'}
-                        disabled={scanning || checkingDevices}
+                        disabled={scanning}
                         onClick={() => void startScan()}
                     />
-                    {scanTriggered && (
-                        <Button
-                            label={checkingDevices ? 'Checking…' : 'Check for Devices'}
-                            icon={checkingDevices ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'}
-                            outlined
-                            disabled={scanning || checkingDevices}
-                            onClick={() => void checkForDevices()}
-                        />
-                    )}
                 </div>
 
-                {scanTriggered && availableStations.length === 0 && !checkingDevices && (
+                {scanTriggered && availableStations.length === 0 && (
                     <Message
                         severity="info"
-                        text="Scan started. The Raspberry Pi is now scanning (~10 seconds). Click 'Check for Devices' once the scan is done."
+                        text="Scan started — checking for nearby Arduino devices every 5 seconds. You'll be notified when one is found."
                         style={{ width: '100%', marginBottom: '1rem' }}
                     />
                 )}
