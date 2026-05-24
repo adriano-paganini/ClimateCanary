@@ -66,8 +66,8 @@ const Login = () => {
 
         .login-bg-logo {
           position: absolute;
-          width: min(520px, 90vw);
-          height: min(520px, 90vw);
+          width: min(750px, 95vw); 
+          height: min(750px, 95vw);
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
@@ -109,6 +109,15 @@ const Login = () => {
         @keyframes cardIn {
           from { opacity: 0; transform: translateY(18px) scale(0.97); }
           to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        @keyframes bgPulse {
+          0%, 100% { transform: translate(-50%, -50%) scale(1);    opacity: 0.13; }
+          50%       { transform: translate(-50%, -50%) scale(1.06); opacity: 0.18; }
+        }
+        
+        .login-bg-logo {
+          animation: bgPulse 4s ease-in-out infinite;
         }
 
         .login-logo-wrap {
@@ -258,10 +267,19 @@ const Login = () => {
           padding: 14px;
           border-radius: 50%;
         }
+        
+        .app-name-label {
+          font-size: 11px;
+          font-weight: 500;n
+          color: #2a9a68;
+          text-transform: uppercase;
+          letter-spacing: 0.13em;
+          text-align: center;
+          margin: 0.9rem 0 0.1rem;
+        }
       `}</style>
 
             <div className="login-wrap">
-                {/* Large faded background logo */}
                 <div className="login-bg-logo" aria-hidden="true">
                     <img src={logo} alt="" />
                 </div>
@@ -271,6 +289,7 @@ const Login = () => {
                         <i className="pi pi-user login-user-icon" />
                     </div>
 
+                    <p className="app-name-label">Climate Canary</p>
                     <h2 className="login-title">Welcome back</h2>
                     <p className="login-subtitle">Sign in to your account</p>
 
