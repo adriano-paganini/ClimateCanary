@@ -1,5 +1,4 @@
 #!/bin/bash
-
 set -e
 cd "$(dirname "$0")"
 
@@ -11,7 +10,9 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 cp pi-gateway.service /etc/systemd/system/
+cp start-container.sh /home/pi/start-container.sh
+chmod +x /home/pi/start-container.sh
 systemctl daemon-reload
 systemctl enable "$SERVICE_NAME"
 
-echo "Service installed and enabled. Run restart.sh to build and start."
+echo "Service installed and enabled. Next, copy conf.yml onto the RPI."
