@@ -249,12 +249,30 @@ const DeviceManagementView: React.FC = () => {
             if (!rpiForm.roomId) { setRpiError('Room is required'); return; }
             try {
                 const dto: RaspberryPiCreateDTO = { hostName: rpiForm.hostName.trim(), roomId: rpiForm.roomId };
-                const created = await RaspberryPiService.create(dto);
-                setPis(prev => [...prev, created]);
+                await RaspberryPiService.create(dto);
+                setPis(await RaspberryPiService.getAll());
                 setRpiDialogVisible(false);
-                toast.current?.show({ severity: 'success', summary: 'Created', detail: `Raspberry Pi "${created.hostName}" created`, life: 3000 });
-            } catch {
-                toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to create Raspberry Pi', life: 3000 });
+                toast.current?.show({ severity: 'success', summary: 'Created', detail: `Raspberry Pi "${rpiForm.hostName.trim()}" created`, life: 3000 });
+            } catch (e: any) {
+                const status = e?.response?.status;
+                const data = e?.response?.data;
+                let detail: string;
+                if (status === 400) {
+                    if (data?.message?.includes('already has a RaspberryPi')) {
+                        detail = 'This room already has a Raspberry Pi assigned. Choose a different room.';
+                    } else if (data && typeof data === 'object' && !data.message) {
+                        detail = Object.entries(data).map(([f, m]) => `${f}: ${m}`).join(', ');
+                    } else {
+                        detail = data?.message ?? 'Invalid input.';
+                    }
+                } else if (status === 404) {
+                    detail = 'Selected room not found. Please refresh and try again.';
+                } else if (status === 403) {
+                    detail = 'You don\'t have permission to create Raspberry Pis.';
+                } else {
+                    detail = 'Server error. Please try again later.';
+                }
+                toast.current?.show({ severity: 'error', summary: 'Creation Failed', detail, life: 5000 });
             }
         } else {
             if (!selectedPi?.id) {
