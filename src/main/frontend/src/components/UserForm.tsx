@@ -124,6 +124,7 @@ interface UserFormProps {
     selectedRoomId?: number;
     onDepartmentChange?: (departmentId?: number) => void;
     onRoomChange?: (roomId?: number) => void;
+    departmentsLoading?: boolean;
     roomsLoading?: boolean;
     lockedRoles?: UserxRole[];
 }
@@ -153,6 +154,7 @@ const UserForm: React.FC<UserFormProps> =
          selectedRoomId,
          onDepartmentChange,
          onRoomChange,
+         departmentsLoading = false,
          roomsLoading = false,
          lockedRoles = [],
      }) => {
@@ -323,6 +325,8 @@ const UserForm: React.FC<UserFormProps> =
                                         options={departmentOptions}
                                         onChange={(event) => onDepartmentChange?.(event.value)}
                                         placeholder="Select Department"
+                                        disabled={departmentsLoading}
+                                        loading={departmentsLoading}
                                         className={fieldErrors?.departmentId ? "p-invalid" : undefined}
                                         appendTo="self"
                                         panelClassName="user-form-overlay-panel"

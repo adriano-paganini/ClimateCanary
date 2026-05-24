@@ -12,6 +12,12 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
+@Table(indexes = {
+        @Index(
+                name = "idx_measurement_room_metric_timestamp",
+                columnList = "room_id, metric, timestamp DESC"
+        )
+})
 public class Measurement {
 
     @Id

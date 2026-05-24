@@ -4,16 +4,11 @@
  */
 import React, { useState } from "react";
 import { Button } from "primereact/button";
-import { jwtDecode, JwtPayload } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../Contexts/AuthenticatedUserContext";
-import { BEARER_TOKEN_LOCAL_STORAGE_KEY } from "../config/config";
-import { UserxRole } from "../generated-skeleton-api";
 import { ROUTES } from "../utilities/routes.paths";
 
 import logo from "../../public/512x512.png"
-
-type CustomJwtPayload = JwtPayload & { roles: string[] };
 
 const Login = () => {
     const [username, setUsername] = useState("");
@@ -25,23 +20,6 @@ const Login = () => {
     const { login } = useUser();
     const navigate = useNavigate();
 
-    const getRoleBasedRedirect = (): string => {
-        const token = localStorage.getItem(BEARER_TOKEN_LOCAL_STORAGE_KEY);
-        if (!token) return ROUTES.DASHBOARD;
-        try {
-            const decoded = jwtDecode<CustomJwtPayload>(token);
-            const roles = new Set(decoded.roles ?? []);
-            if (roles.has(UserxRole.SYSTEM_ADMIN)) return ROUTES.MANAGE_USERS;
-            if (roles.has(UserxRole.BUILDING_ADMIN)) return ROUTES.ROOMS;
-            if (roles.has(UserxRole.MANAGEMENT)) return ROUTES.MANAGEMENT_DASHBOARD;
-            if (roles.has(UserxRole.DEPARTMENT_LEAD)) return ROUTES.DEPARTMENT_DASHBOARD;
-            if (roles.has(UserxRole.EMPLOYEE)) return ROUTES.DASHBOARD;
-        } catch {
-            // fallthrough to default
-        }
-        return ROUTES.HOME;
-    };
-
     const handleLogin = async (e: any) => {
         e.preventDefault();
         if (loading) return;
@@ -51,7 +29,7 @@ const Login = () => {
 
         try {
             await login({ username, password });
-            navigate(getRoleBasedRedirect(), { replace: true });
+            navigate(ROUTES.PROFILE, { replace: true });
         } catch (err: any) {
             const status = err?.response?.status as number | undefined;
             if (status === 401 || status === 403) {

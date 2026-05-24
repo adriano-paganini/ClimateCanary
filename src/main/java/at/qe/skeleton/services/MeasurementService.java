@@ -70,7 +70,7 @@ public class MeasurementService {
 
     public Map<Metric, Measurement> getLatestPerMetric(Long roomId) {
         Map<Metric, Measurement> latestMeasurements = Arrays.stream(Metric.values())
-                .map(metric -> measurementRepository.findLatestByRoomIdAndMetric(roomId, metric))
+                .map(metric -> measurementRepository.findTopByRoomIdAndMetricOrderByTimestampDesc(roomId, metric))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toMap(Measurement::getMetric, m -> m));

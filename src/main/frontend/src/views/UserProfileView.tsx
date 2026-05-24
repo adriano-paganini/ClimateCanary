@@ -391,9 +391,6 @@ const UserProfileView: React.FC = () => {
                                 <Divider style={{ margin: '2rem 0' }} />
                                 <div>
                                     <h3 style={{ margin: '0 0 0.5rem', color: '#991b1b', fontSize: '1rem', fontWeight: 700 }}>Danger Zone</h3>
-                                    <p style={{ margin: '0 0 1rem', color: '#6b7280', fontSize: '0.875rem' }}>
-                                        Permanently delete your account. This action cannot be undone.
-                                    </p>
                                     <Button
                                         label="Delete my account"
                                         icon="pi pi-trash"

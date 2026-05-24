@@ -170,12 +170,9 @@ public class RaspberryPiService {
             pi.setRoom(null);
         }
 
-        for (SensorStation station : List.copyOf(pi.getSensorStations())) {
-            station.setRaspberryPi(null);
-        }
-        pi.getSensorStations().clear();
-
-        repo.delete(pi);
+        pi.getSensorStations().forEach(station -> station.setDeviceStatus(DeviceStatus.DECOMMISSIONED));
+        pi.setDeviceStatus(DeviceStatus.DECOMMISSIONED);
+        repo.save(pi);
         log.info("Deleted raspberry pi with id={}", id);
     }
 

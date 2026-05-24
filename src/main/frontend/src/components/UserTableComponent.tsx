@@ -2,7 +2,7 @@
  * This code is part of the skeleton project provided for students of the course "Software
  * Engineering" offered by Innsbruck University.
  */
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 
 import {Button} from "primereact/button";
 import {Card} from 'primereact/card';
@@ -35,6 +35,11 @@ import {EmployeeProfileService} from "../services/EmployeeProfileService";
 import {useNavigate} from "react-router-dom";
 import {ROUTES} from "../utilities/routes.paths";
 
+let cachedDepartments: DepartmentDTO[] | null = null;
+let cachedDepartmentsRequest: Promise<DepartmentDTO[]> | null = null;
+const cachedRoomsByDepartment = new Map<number, RoomDTO[]>();
+const cachedRoomRequestsByDepartment = new Map<number, Promise<RoomDTO[]>>();
+
 /**
  * Component for managing users.
  */
@@ -51,7 +56,9 @@ const UserTable = () => {
     const [selfDeleteConfirmation, setSelfDeleteConfirmation] = useState<string>('');
     const [selfDeleteSubmitting, setSelfDeleteSubmitting] = useState<boolean>(false);
     const [validation, setValidation] = useState<UserxValidationResult>({valid: true});
-    const [departments, setDepartments] = useState<DepartmentDTO[]>([]);
+    const [departments, setDepartments] = useState<DepartmentDTO[]>(() => cachedDepartments ?? []);
+    const [departmentsLoaded, setDepartmentsLoaded] = useState<boolean>(() => cachedDepartments !== null);
+    const [departmentsLoading, setDepartmentsLoading] = useState<boolean>(false);
     const [departmentRooms, setDepartmentRooms] = useState<RoomDTO[]>([]);
     const [roomsLoading, setRoomsLoading] = useState<boolean>(false);
     const [employeeProfile, setEmployeeProfile] = useState<EmployeeProfileDTO | null>(null);
@@ -78,16 +85,37 @@ const UserTable = () => {
         void fetchUsers();
     }, []);
 
-    useEffect(() => {
-        const fetchDepartments = async () => {
-            try {
-                setDepartments(await DepartmentService.getAll());
-            } catch (err: any) {
-                console.error('Error fetching departments:', err);
-                toast.current?.show({severity: 'error', summary: 'Error', detail: 'Error loading departments', life: 3000});
-            }
-        };
-        void fetchDepartments();
+    const ensureDepartmentsLoaded = useCallback(async (): Promise<DepartmentDTO[]> => {
+        if (cachedDepartments !== null) {
+            setDepartments(cachedDepartments);
+            setDepartmentsLoaded(true);
+            return cachedDepartments;
+        }
+
+        if (cachedDepartmentsRequest === null) {
+            cachedDepartmentsRequest = DepartmentService.getAll()
+                .then((data) => {
+                    cachedDepartments = data;
+                    return data;
+                })
+                .finally(() => {
+                    cachedDepartmentsRequest = null;
+                });
+        }
+
+        setDepartmentsLoading(true);
+        try {
+            const data = await cachedDepartmentsRequest;
+            setDepartments(data);
+            setDepartmentsLoaded(true);
+            return data;
+        } catch (err: any) {
+            console.error('Error fetching departments:', err);
+            toast.current?.show({severity: 'error', summary: 'Error', detail: 'Error loading departments', life: 3000});
+            throw err;
+        } finally {
+            setDepartmentsLoading(false);
+        }
     }, []);
 
     const hasEmployeeRole = (user: UserxDTO | UserxCreateDTO | null) =>
@@ -108,9 +136,27 @@ const UserTable = () => {
 
         if (departmentId === undefined) return;
 
+        const cachedRooms = cachedRoomsByDepartment.get(departmentId);
+        if (cachedRooms) {
+            setDepartmentRooms(cachedRooms);
+            if (preferredRoomId !== undefined && cachedRooms.some(room => room.id === preferredRoomId)) {
+                setEmployeeRoomId(preferredRoomId);
+            }
+            return;
+        }
+
         setRoomsLoading(true);
         try {
-            const rooms = await DepartmentService.getRooms(departmentId);
+            let request = cachedRoomRequestsByDepartment.get(departmentId);
+            if (!request) {
+                request = DepartmentService.getRooms(departmentId).then((rooms) => {
+                    cachedRoomsByDepartment.set(departmentId, rooms);
+                    return rooms;
+                });
+                cachedRoomRequestsByDepartment.set(departmentId, request);
+            }
+
+            const rooms = await request;
             setDepartmentRooms(rooms);
             if (preferredRoomId !== undefined && rooms.some(room => room.id === preferredRoomId)) {
                 setEmployeeRoomId(preferredRoomId);
@@ -119,6 +165,7 @@ const UserTable = () => {
             console.error('Error fetching department rooms:', err);
             toast.current?.show({severity: 'error', summary: 'Error', detail: 'Error loading rooms', life: 3000});
         } finally {
+            cachedRoomRequestsByDepartment.delete(departmentId);
             setRoomsLoading(false);
         }
     }
@@ -408,9 +455,12 @@ const UserTable = () => {
         showDialog();
 
         if (user.id && hasEmployeeRole(user)) {
-            void EmployeeProfileService.getAll(user.id)
+            void Promise.all([
+                ensureDepartmentsLoaded(),
+                EmployeeProfileService.getAll(user.id),
+            ])
                 .then(async (profiles) => {
-                    const profile = profiles[0] ?? null;
+                    const profile = profiles[1][0] ?? null;
                     setEmployeeProfile(profile);
                     if (profile?.departmentId !== undefined) {
                         await loadRoomsForDepartment(profile.departmentId, profile.roomId);
@@ -473,6 +523,9 @@ const UserTable = () => {
         const roles = createUserxRoleArrayFromStrings(event.value);
 
         setSelectedUser({...selectedUser, roles: new Set(roles)});
+        if (roles.includes(UserxRole.EMPLOYEE)) {
+            void ensureDepartmentsLoaded();
+        }
         if (!roles.includes(UserxRole.EMPLOYEE)) {
             resetEmployeeAssignment();
         }
@@ -554,6 +607,7 @@ const UserTable = () => {
                         selectedRoomId={employeeRoomId}
                         onDepartmentChange={handleEmployeeDepartmentChange}
                         onRoomChange={handleEmployeeRoomChange}
+                        departmentsLoading={departmentsLoading}
                         roomsLoading={roomsLoading}/>
             <Dialog
                 header="Delete your account"
