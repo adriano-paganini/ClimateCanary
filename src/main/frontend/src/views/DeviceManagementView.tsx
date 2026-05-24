@@ -118,6 +118,11 @@ const DeviceManagementView: React.FC = () => {
         void fetchRooms();
     }, [fetchPis, fetchRooms]);
 
+    useEffect(() => {
+        const id = setInterval(() => void fetchPis(), 30_000);
+        return () => clearInterval(id);
+    }, [fetchPis]);
+
     const fetchSensorStations = async (piId: number) => {
         try {
             const data = await RaspberryPiService.getSensorStations(piId);
