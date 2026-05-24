@@ -1,8 +1,9 @@
 import "../styles/App.css";
+import "../styles/AbsenceCalendar.css";
 import "primereact/resources/themes/lara-light-cyan/theme.css";
 import "primeicons/primeicons.css";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { format, subDays, subHours, subYears } from "date-fns";
+import { addDays, addYears, format } from "date-fns";
 import type { Plugin } from "chart.js";
 import { Card } from "primereact/card";
 import { Chart } from "primereact/chart";
@@ -69,20 +70,52 @@ const CHART_OPTIONS = {
 
 const toLocalDateTimeParam = (date: Date): string => format(date, "yyyy-MM-dd'T'HH:mm:ss");
 
-const rangeStart = (range: TimeRange): Date => {
-    const now = new Date();
+const dateOnly = (date: Date): string => format(date, "yyyy-MM-dd");
+
+const dateFromInput = (value: string): Date | null => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+    const date = new Date(`${value}T00:00:00`);
+    return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const rangeStart = (date: Date): Date =>
+    new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+const shiftRangeAnchor = (date: Date, range: TimeRange, direction: -1 | 1): Date => {
     switch (range) {
         case "24h":
-            return subHours(now, 24);
+            return addDays(date, direction);
         case "7d":
-            return subDays(now, 7);
+            return addDays(date, 7 * direction);
         case "30d":
-            return subDays(now, 30);
+            return addDays(date, 30 * direction);
         case "90d":
-            return subDays(now, 90);
+            return addDays(date, 90 * direction);
         case "1y":
-            return subYears(now, 1);
+            return addYears(date, direction);
     }
+};
+
+const rangeWindow = (date: Date, range: TimeRange): { from: Date; to: Date } => {
+    const endDay = rangeStart(date);
+    const to = addDays(endDay, 1);
+    switch (range) {
+        case "24h":
+            return { from: endDay, to };
+        case "7d":
+            return { from: addDays(endDay, -6), to };
+        case "30d":
+            return { from: addDays(endDay, -29), to };
+        case "90d":
+            return { from: addDays(endDay, -89), to };
+        case "1y":
+            return { from: addDays(addYears(endDay, -1), 1), to };
+    }
+};
+
+const visibleRangeLabel = (date: Date, range: TimeRange): string => {
+    const window = rangeWindow(date, range);
+    return `${format(window.from, "dd.MM.yy")} - ${format(addDays(window.to, -1), "dd.MM.yy")}`;
 };
 
 const tickLabel = (timestamp: string, range: TimeRange): string => {
@@ -90,6 +123,14 @@ const tickLabel = (timestamp: string, range: TimeRange): string => {
     if (range === "24h") return format(date, "HH:mm");
     if (range === "7d" || range === "30d") return format(date, "MM/dd HH:mm");
     return format(date, "MM/dd");
+};
+
+const thresholdOnlyLabels = (range: TimeRange): string[] => {
+    if (range === "24h") return ["00:00", "06:00", "12:00", "18:00", "24:00"];
+    if (range === "7d") return ["Day 1", "Day 2", "Day 3", "Day 4", "Day 5", "Day 6", "Day 7"];
+    if (range === "30d") return ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5"];
+    if (range === "90d") return ["Month 1", "Month 2", "Month 3"];
+    return ["Q1", "Q2", "Q3", "Q4"];
 };
 
 const formatNumber = (value?: number, digits = 1): string =>
@@ -105,6 +146,7 @@ const RoomManagementView: React.FC = () => {
     const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
     const [roomFilter, setRoomFilter] = useState("");
     const [timeRange, setTimeRange] = useState<TimeRange>("24h");
+    const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedMetric, setSelectedMetric] = useState<MeasurementDTOMetricEnum>(MeasurementDTOMetricEnum.TEMPERATURE);
 
     const [summary, setSummary] = useState<RoomSummaryDTO | null>(null);
@@ -183,8 +225,9 @@ const RoomManagementView: React.FC = () => {
             setViolationSummary(null);
             setViolations([]);
             setThresholds([]);
-            const from = toLocalDateTimeParam(rangeStart(timeRange));
-            const to = toLocalDateTimeParam(new Date());
+            const window = rangeWindow(currentDate, timeRange);
+            const from = toLocalDateTimeParam(window.from);
+            const to = toLocalDateTimeParam(window.to);
             const isCurrentRequest = () => analyticsRequestId.current === requestId;
 
             try {
@@ -237,7 +280,7 @@ const RoomManagementView: React.FC = () => {
         };
 
         void loadAnalytics();
-    }, [selectedRoomId, selectedMetric, timeRange]);
+    }, [selectedRoomId, selectedMetric, currentDate, timeRange]);
 
     const filteredRooms = useMemo(() => {
         const query = roomFilter.trim().toLowerCase();
@@ -257,10 +300,19 @@ const RoomManagementView: React.FC = () => {
             .filter(point => point.timestamp && point.value !== undefined && point.value !== null)
             .sort((a, b) => new Date(a.timestamp!).getTime() - new Date(b.timestamp!).getTime());
 
-        const labels = points.map(point => tickLabel(point.timestamp!, timeRange));
+        const activeThresholds = thresholds.filter(threshold =>
+            threshold.metric === selectedMetric &&
+            threshold.enabled !== false &&
+            threshold.boundValue !== undefined
+        );
+        const labels = points.length > 0
+            ? points.map(point => tickLabel(point.timestamp!, timeRange))
+            : activeThresholds.length > 0
+                ? thresholdOnlyLabels(timeRange)
+                : [];
         const datasets = [{
             label: metric.label,
-            data: points.map(point => point.value ?? null),
+            data: points.length > 0 ? points.map(point => point.value ?? null) : labels.map(() => null),
             fill: false,
             borderColor: metric.color,
             backgroundColor: `${metric.color}33`,
@@ -269,12 +321,7 @@ const RoomManagementView: React.FC = () => {
             spanGaps: false,
         }];
 
-        thresholds
-            .filter(threshold =>
-                threshold.metric === selectedMetric &&
-                threshold.enabled !== false &&
-                threshold.boundValue !== undefined
-            )
+        activeThresholds
             .forEach(threshold => {
                 const isUpper = threshold.thresholdType === ThresholdDTOThresholdTypeEnum.UPPER;
                 datasets.push({
@@ -291,6 +338,16 @@ const RoomManagementView: React.FC = () => {
             });
 
         return { labels, datasets };
+    };
+
+    const jumpToDate = (value: string) => {
+        const nextDate = dateFromInput(value);
+        if (!nextDate) return;
+        setCurrentDate(nextDate);
+    };
+
+    const navigateRange = (direction: -1 | 1) => {
+        setCurrentDate(shiftRangeAnchor(rangeStart(currentDate), timeRange, direction));
     };
 
     const buildGapPlugin = (): Plugin => {
@@ -337,6 +394,7 @@ const RoomManagementView: React.FC = () => {
 
     const chartData = buildChartData();
     const chartEmpty = (chartData.datasets[0].data as (number | null)[]).every(value => value === null);
+    const chartHasThresholds = chartData.datasets.length > 1;
 
     return (
         <div>
@@ -380,7 +438,19 @@ const RoomManagementView: React.FC = () => {
                             >
                                 <Column field="name" header="Room" sortable style={{ width: "34%" }} />
                                 <Column field="roomType" header="Type" body={roomTypeTemplate} sortable style={{ width: "28%" }} />
-                                <Column header="Department" body={(row: RoomDTO) => getDepartmentName(row.departmentId)} sortable style={{ width: "38%" }} />
+                                <Column
+                                    header="Department"
+                                    body={(row: RoomDTO) => getDepartmentName(row.departmentId)}
+                                    sortable
+                                    sortField="departmentId"
+                                    sortFunction={(event) =>
+                                        [...event.data].sort((a, b) =>
+                                            (event.order ?? 1) *
+                                            getDepartmentName(a.departmentId).localeCompare(getDepartmentName(b.departmentId))
+                                        )
+                                    }
+                                    style={{ width: "38%" }}
+                                />
                             </DataTable>
                         </div>
                     </Card>
@@ -398,21 +468,58 @@ const RoomManagementView: React.FC = () => {
                                                 {getBuildingName(selectedRoom?.buildingId)} - {getDepartmentName(selectedRoom?.departmentId)}
                                             </p>
                                         </div>
-                                        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-                                            <Dropdown
-                                                value={timeRange}
-                                                options={TIME_RANGES.map(range => ({
-                                                    label: `${range.label} (${range.bucketHint})`,
-                                                    value: range.value,
-                                                }))}
-                                                onChange={event => setTimeRange(event.value)}
-                                                style={{ minWidth: "12rem" }}
-                                            />
+                                        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "center" }}>
                                             <Dropdown
                                                 value={selectedMetric}
                                                 options={METRICS.map(metric => ({ label: metric.label, value: metric.key }))}
                                                 onChange={event => setSelectedMetric(event.value)}
                                                 style={{ minWidth: "12rem" }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="absence-calendar-header">
+                                        <div className="absence-agenda-control">
+                                            <select
+                                                id="room-climate-timeframe"
+                                                value={timeRange}
+                                                onChange={event => setTimeRange(event.target.value as TimeRange)}
+                                            >
+                                                {TIME_RANGES.map(range => (
+                                                    <option key={range.value} value={range.value}>
+                                                        {range.label} ({range.bucketHint})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="absence-calendar-navigation">
+                                            <button type="button" onClick={() => navigateRange(-1)} aria-label="Previous range">
+                                                <i className="pi pi-chevron-left" aria-hidden="true" />
+                                            </button>
+                                            <button type="button" onClick={() => setCurrentDate(new Date())}>
+                                                Today
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => navigateRange(1)}
+                                                aria-label="Next range"
+                                            >
+                                                <i className="pi pi-chevron-right" aria-hidden="true" />
+                                            </button>
+                                        </div>
+
+                                        <div className="absence-calendar-range">
+                                            {visibleRangeLabel(currentDate, timeRange)}
+                                        </div>
+
+                                        <div className="absence-date-jump">
+                                            <label htmlFor="room-climate-jump-date">Jump to</label>
+                                            <input
+                                                id="room-climate-jump-date"
+                                                type="date"
+                                                value={dateOnly(currentDate)}
+                                                onChange={event => jumpToDate(event.target.value)}
                                             />
                                         </div>
                                     </div>
@@ -438,7 +545,7 @@ const RoomManagementView: React.FC = () => {
                                         <div style={{ minHeight: "360px", display: "flex", alignItems: "center", justifyContent: "center" }}>
                                             <ProgressSpinner />
                                         </div>
-                                    ) : privacyRestricted || chartEmpty ? (
+                                    ) : privacyRestricted || (chartEmpty && !chartHasThresholds) ? (
                                         <NoDataOverlay
                                             height="360px"
                                             message={privacyRestricted ? "Datenschutz aktiv — keine Daten verfügbar" : "No trend data for the selected room and period."}
