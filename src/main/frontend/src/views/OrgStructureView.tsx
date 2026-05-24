@@ -245,6 +245,19 @@ const OrgStructureView: React.FC = () => {
         return `Assign ${leadName} as lead of another department.`;
     };
 
+    const pluralizeEmployee = (count: number): string =>
+        `${count} employee${count === 1 ? '' : 's'}`;
+
+    const countDepartmentEmployees = (departmentId?: number): number => {
+        if (!departmentId) return 0;
+        return employeeProfiles.filter(profile => profile.departmentId === departmentId).length;
+    };
+
+    const countRoomEmployees = (roomId?: number): number => {
+        if (!roomId) return 0;
+        return employeeProfiles.filter(profile => profile.roomId === roomId).length;
+    };
+
     const leadCanBeChanged = (department: DepartmentDTO | null): boolean => {
         if (!department) return true;
         return !wouldLeaveLeadWithoutRole(department);
@@ -387,7 +400,7 @@ const OrgStructureView: React.FC = () => {
         }
     };
     const deleteDept = (d: DepartmentDTO) => {
-        const blockReason = getDepartmentLeadBlockReason(d);
+        const blockReason = getDepartmentDeleteBlockReason(d);
         if (blockReason) {
             showError(blockReason);
             return;
@@ -461,6 +474,12 @@ const OrgStructureView: React.FC = () => {
         }
     };
     const deleteRoom = (room: RoomDTO) => {
+        const blockReason = getRoomDeleteBlockReason(room);
+        if (blockReason) {
+            showError(blockReason);
+            return;
+        }
+
         confirmDialog({
             message: `Delete room "${room.name}"? This will deactivate it and decommission all associated Raspberry Pis and Arduinos.`,
             header: 'Confirm Delete',
@@ -654,12 +673,39 @@ const OrgStructureView: React.FC = () => {
         </div>
     );
     const getDepartmentDeleteBlockReason = (department: DepartmentDTO): string | null => {
+        const employeeCount = countDepartmentEmployees(department.id);
+        if (employeeCount > 0) {
+            return `Reassign or remove ${pluralizeEmployee(employeeCount)} from this department before deleting it.`;
+        }
+
         if (!wouldLeaveLeadWithoutRole(department)) return null;
 
         const leadName = userName(department.departmentLeadId);
 
         return `Assign ${leadName} as lead of another department.`;
     };
+
+    const getRoomDeleteBlockReason = (room: RoomDTO): string | null => {
+        const employeeCount = countRoomEmployees(room.id);
+        if (employeeCount === 0) return null;
+
+        return `Reassign or remove ${pluralizeEmployee(employeeCount)} from this room before deleting it.`;
+    };
+
+    const blockedDeleteButton = (
+        deleteButton: React.ReactNode,
+        title: string,
+        reason: string,
+    ) => (
+        <span className="blocked-delete-wrapper">
+            {deleteButton}
+            <span className="blocked-delete-popover" role="tooltip">
+                <span className="blocked-delete-popover__title">{title}</span>
+                <span className="blocked-delete-popover__text">{reason}</span>
+            </span>
+        </span>
+    );
+
     const departmentActionTemplate = (department: DepartmentDTO) => {
         const deleteBlockReason = getDepartmentDeleteBlockReason(department);
         const deleteDisabled = deleteBlockReason !== null;
@@ -686,13 +732,41 @@ const OrgStructureView: React.FC = () => {
                 />
 
                 {deleteDisabled ? (
-                    <span className="department-delete-wrapper">
-                        {deleteButton}
-                        <span className="department-delete-popover" role="tooltip">
-                            <span className="department-delete-popover__title">Department cannot be deleted</span>
-                            <span className="department-delete-popover__text">{deleteBlockReason}</span>
-                        </span>
-                    </span>
+                    blockedDeleteButton(deleteButton, 'Department cannot be deleted', deleteBlockReason)
+                ) : (
+                    deleteButton
+                )}
+            </div>
+        );
+    };
+
+    const roomActionTemplate = (room: RoomDTO) => {
+        const deleteBlockReason = getRoomDeleteBlockReason(room);
+        const deleteDisabled = deleteBlockReason !== null;
+
+        const deleteButton = (
+            <Button
+                icon="pi pi-trash"
+                size="small"
+                severity="danger"
+                outlined
+                disabled={deleteDisabled}
+                onClick={() => deleteRoom(room)}
+            />
+        );
+
+        return (
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <Button
+                    icon="pi pi-pencil"
+                    size="small"
+                    severity="secondary"
+                    outlined
+                    onClick={() => openEditRoom(room)}
+                />
+
+                {deleteDisabled ? (
+                    blockedDeleteButton(deleteButton, 'Room cannot be deleted', deleteBlockReason)
                 ) : (
                     deleteButton
                 )}
@@ -807,17 +881,17 @@ const OrgStructureView: React.FC = () => {
 
             <style>
                 {`
-                    .department-delete-wrapper {
+                    .blocked-delete-wrapper {
                         position: relative;
                         display: inline-flex;
                         cursor: help;
                     }
 
-                    .department-delete-wrapper .p-button {
+                    .blocked-delete-wrapper .p-button {
                         pointer-events: none;
                     }
 
-                    .department-delete-popover {
+                    .blocked-delete-popover {
                         position: absolute;
                         top: 50%;
                         right: calc(100% + 0.75rem);
@@ -835,7 +909,7 @@ const OrgStructureView: React.FC = () => {
                         text-align: left;
                     }
 
-                    .department-delete-popover::after {
+                    .blocked-delete-popover::after {
                         content: "";
                         position: absolute;
                         top: 50%;
@@ -848,13 +922,13 @@ const OrgStructureView: React.FC = () => {
                         border-right: 1px solid #e5e7eb;
                     }
 
-                    .department-delete-wrapper:hover .department-delete-popover,
-                    .department-delete-wrapper:focus-within .department-delete-popover {
+                    .blocked-delete-wrapper:hover .blocked-delete-popover,
+                    .blocked-delete-wrapper:focus-within .blocked-delete-popover {
                         display: block;
                         transform: translateY(-50%) translateX(0);
                     }
 
-                    .department-delete-popover__title {
+                    .blocked-delete-popover__title {
                         display: block;
                         margin-bottom: 0.35rem;
                         font-weight: 700;
@@ -862,7 +936,7 @@ const OrgStructureView: React.FC = () => {
                         color: #92400e;
                     }
 
-                    .department-delete-popover__text {
+                    .blocked-delete-popover__text {
                         display: block;
                         font-size: 0.82rem;
                         line-height: 1.35;
@@ -997,7 +1071,7 @@ const OrgStructureView: React.FC = () => {
                                 />
                                 <Column field="privacyMode" header="Privacy" body={privacyTemplate} />
                                 <Column field="active" header="Status" body={statusTemplate} />
-                                <Column header="Actions" style={{ width: '8rem' }} body={(room: RoomDTO) => actionTemplate(() => openEditRoom(room), () => deleteRoom(room))} />
+                                <Column header="Actions" style={{ width: '10rem' }} body={(room: RoomDTO) => roomActionTemplate(room)} />
                             </DataTable>
                         </>
                     )}

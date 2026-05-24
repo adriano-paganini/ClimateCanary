@@ -1,9 +1,11 @@
 package at.qe.skeleton.tests.services;
 
+import at.qe.skeleton.common.exceptions.ConflictException;
 import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.RoomUpdateDTO;
 import at.qe.skeleton.models.*;
 import at.qe.skeleton.repositories.RoomRepository;
+import at.qe.skeleton.repositories.EmployeeProfileRepository;
 import at.qe.skeleton.services.BuildingService;
 import at.qe.skeleton.services.DepartmentService;
 import at.qe.skeleton.services.RoomService;
@@ -33,6 +35,9 @@ class RoomServiceTest {
 
     @Mock
     private BuildingService buildingService;
+
+    @Mock
+    private EmployeeProfileRepository employeeProfileRepository;
 
     @InjectMocks
     private RoomService roomService;
@@ -239,8 +244,8 @@ class RoomServiceTest {
 
     @Test
     @WithMockUser(authorities = "SYSTEM_ADMIN")
-    @DisplayName("delete removes room reference from all employee profiles")
-    void delete_nullsRoomOnEmployeeProfiles() {
+    @DisplayName("delete throws ConflictException when employee profiles still reference room")
+    void delete_throwsConflictException_whenEmployeeProfilesReferenceRoom() {
         EmployeeProfile ep1 = new EmployeeProfile();
         ep1.setRoom(room);
         EmployeeProfile ep2 = new EmployeeProfile();
@@ -249,12 +254,15 @@ class RoomServiceTest {
         room.getEmployeeProfiles().add(ep2);
 
         Mockito.when(roomRepository.findByIdAndActiveTrue(1L)).thenReturn(Optional.of(room));
+        Mockito.when(employeeProfileRepository.countByRoom_Id(1L)).thenReturn(2L);
 
-        roomService.delete(1L);
+        Assertions.assertThatThrownBy(() -> roomService.delete(1L))
+                .isInstanceOf(ConflictException.class)
+                .hasMessageContaining("2 assigned employees");
 
-        Assertions.assertThat(ep1.getRoom()).isNull();
-        Assertions.assertThat(ep2.getRoom()).isNull();
-        Assertions.assertThat(room.getEmployeeProfiles()).isEmpty();
+        Assertions.assertThat(room.isActive()).isTrue();
+        Assertions.assertThat(ep1.getRoom()).isEqualTo(room);
+        Assertions.assertThat(ep2.getRoom()).isEqualTo(room);
     }
 
     @Test
