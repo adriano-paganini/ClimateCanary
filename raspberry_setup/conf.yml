@@ -1,5 +1,5 @@
 pi:
-  id: 16
+  id: 15
   room_id: 15
   room_name: "Common Area 2"
   host_name: "rpi-test"

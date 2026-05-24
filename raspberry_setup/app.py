@@ -28,7 +28,6 @@ class SensorStationDTO(BaseModel):
     roomId:              Optional[int] = None
 
 class OccupancyDTO(BaseModel):
-    id:          int
     roomName:    str
     privacyMode: bool
 
@@ -105,6 +104,14 @@ async def receive_occupancy(piId: int, payload: OccupancyDTO):
     _check_pi_id(piId)
     set_privacy_mode(payload.privacyMode)
     config.PRIVACY_MODE = payload.privacyMode
+    try:
+        p = Path("conf.yml")
+        import yaml as _yaml
+        data = _yaml.safe_load(p.read_text())
+        data["pi"]["privacy_mode"] = payload.privacyMode
+        p.write_text(_yaml.dump(data, allow_unicode=True))
+    except Exception as e:
+        log.warning(f"[CFG] could not persist privacy_mode to conf.yml: {e}")
     log.info(f"[CFG] privacy_mode={payload.privacyMode}, room={payload.roomName}")
     return {"status": "ok"}
 

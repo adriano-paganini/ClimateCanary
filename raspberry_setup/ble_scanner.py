@@ -56,6 +56,14 @@ async def _do_scan() -> list[str]:
         log.warning("[SCAN] WARN: no setup devices found.")
     else:
         log.info(f"[SCAN] found {len(addresses)} device(s): {addresses}")
+        import app as _app
+        from database import remove_station
+        db = _app.db_connection
+        if db is not None:
+            for addr in addresses:
+                await remove_station(db, addr)
+            _app.stations_event.set()
+            await asyncio.sleep(2.0)  # let station_manager cancel device_loop tasks
         await _post_discovered(addresses)
 
     return addresses
