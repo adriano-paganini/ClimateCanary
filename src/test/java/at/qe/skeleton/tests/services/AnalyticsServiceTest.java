@@ -3,6 +3,8 @@ package at.qe.skeleton.tests.services;
 import at.qe.skeleton.common.exceptions.BadRequestException;
 import at.qe.skeleton.dtos.*;
 import at.qe.skeleton.models.*;
+import at.qe.skeleton.repositories.MeasurementRepository;
+import at.qe.skeleton.repositories.ThresholdViolationRepository;
 import at.qe.skeleton.services.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -47,6 +49,12 @@ public class AnalyticsServiceTest {
 
     @Mock
     private AuthenticatedUserService  authenticatedUserService;
+
+    @Mock
+    private MeasurementRepository measurementRepository;
+
+    @Mock
+    private ThresholdViolationRepository thresholdViolationRepository;
 
     @InjectMocks
     private AnalyticsService analyticsService;

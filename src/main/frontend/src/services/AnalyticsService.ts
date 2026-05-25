@@ -43,6 +43,26 @@ export interface RoomViolationSummaryDTO {
     byMetric?: ViolationBreakdownDTO[];
 }
 
+export interface ManagementClimateTrendDTO {
+    metric?: MeasurementDTOMetricEnum;
+    weeklyDirection?: string;
+    monthlyDirection?: string;
+}
+
+export interface ManagementDepartmentClimateDTO {
+    departmentId?: number;
+    departmentName?: string;
+    activeWarnings?: number;
+    warningsByMetric?: ViolationBreakdownDTO[];
+    trends?: ManagementClimateTrendDTO[];
+}
+
+export interface ManagementClimateDashboardDTO {
+    generatedAt?: string;
+    totalActiveWarnings?: number;
+    departments?: ManagementDepartmentClimateDTO[];
+}
+
 const dateParams = (from?: string, to?: string) => ({
     ...(from ? { from } : {}),
     ...(to ? { to } : {}),
@@ -69,5 +89,10 @@ export const AnalyticsService = {
     getRoomViolations: (roomId: number): Promise<RoomViolationSummaryDTO> =>
         globalAxios
             .get<RoomViolationSummaryDTO>(`/api/analytics/rooms/${roomId}/violations`)
+            .then(r => r.data),
+
+    getManagementClimateDashboard: (): Promise<ManagementClimateDashboardDTO> =>
+        globalAxios
+            .get<ManagementClimateDashboardDTO>(`/api/analytics/company/management-climate`)
             .then(r => r.data),
 };
