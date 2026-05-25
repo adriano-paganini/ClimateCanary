@@ -81,6 +81,12 @@ const dateFromInput = (value: string): Date | null => {
 const rangeStart = (date: Date): Date =>
     new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
+const isFutureRangeAnchor = (date: Date): boolean =>
+    rangeStart(date).getTime() > rangeStart(new Date()).getTime();
+
+const clampToToday = (date: Date): Date =>
+    isFutureRangeAnchor(date) ? rangeStart(new Date()) : date;
+
 const shiftRangeAnchor = (date: Date, range: TimeRange, direction: -1 | 1): Date => {
     switch (range) {
         case "24h":
@@ -343,11 +349,12 @@ const RoomManagementView: React.FC = () => {
     const jumpToDate = (value: string) => {
         const nextDate = dateFromInput(value);
         if (!nextDate) return;
-        setCurrentDate(nextDate);
+        setCurrentDate(clampToToday(nextDate));
     };
 
     const navigateRange = (direction: -1 | 1) => {
-        setCurrentDate(shiftRangeAnchor(rangeStart(currentDate), timeRange, direction));
+        const nextDate = shiftRangeAnchor(rangeStart(currentDate), timeRange, direction);
+        setCurrentDate(clampToToday(nextDate));
     };
 
     const buildGapPlugin = (): Plugin => {
@@ -395,6 +402,9 @@ const RoomManagementView: React.FC = () => {
     const chartData = buildChartData();
     const chartEmpty = (chartData.datasets[0].data as (number | null)[]).every(value => value === null);
     const chartHasThresholds = chartData.datasets.length > 1;
+    const nextRangeWouldBeFuture = isFutureRangeAnchor(
+        shiftRangeAnchor(rangeStart(currentDate), timeRange, 1)
+    );
 
     return (
         <div>
@@ -506,6 +516,7 @@ const RoomManagementView: React.FC = () => {
                                                 type="button"
                                                 onClick={() => navigateRange(1)}
                                                 aria-label="Next range"
+                                                disabled={nextRangeWouldBeFuture}
                                             >
                                                 <i className="pi pi-chevron-right" aria-hidden="true" />
                                             </button>
@@ -520,6 +531,7 @@ const RoomManagementView: React.FC = () => {
                                             <input
                                                 id="room-climate-jump-date"
                                                 type="date"
+                                                max={dateOnly(new Date())}
                                                 value={dateOnly(currentDate)}
                                                 onChange={event => jumpToDate(event.target.value)}
                                             />
