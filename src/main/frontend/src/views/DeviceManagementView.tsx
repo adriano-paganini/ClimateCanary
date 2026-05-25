@@ -769,7 +769,7 @@ const DeviceManagementView: React.FC = () => {
                             itemTemplate={roomItemTemplate}
                             onChange={e => {
                                 if (takenRoomIds.has(e.value)) {
-                                    toast.current?.show({ severity: 'warn', summary: 'Room already assigned', detail: 'This room already has a Raspberry Pi. Choose a different room.', life: 4000 });
+                                    toast.current?.show({ severity: 'error', summary: 'Room already assigned', detail: 'This room already has a Raspberry Pi. Choose a different room.', life: 4000 });
                                     return;
                                 }
                                 setRpiForm(f => ({ ...f, roomId: e.value }));
