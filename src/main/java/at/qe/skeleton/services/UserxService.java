@@ -22,8 +22,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Service for accessing and manipulating user data.
@@ -247,8 +249,12 @@ public class UserxService implements UserDetailsService {
             debugInfo.append(", phone=").append(dto.phone());
         }
         if (dto.roles() != null) {
-            user.setRoles(dto.roles());
-            debugInfo.append(", roles=").append(dto.roles());
+            Set<UserxRole> updatedRoles = new HashSet<>(dto.roles());
+            if (isRemovingEmployeeRoleFromSystemAdmin(user, updatedRoles)) {
+                updatedRoles.add(UserxRole.SYSTEM_ADMIN);
+            }
+            user.setRoles(updatedRoles);
+            debugInfo.append(", roles=").append(updatedRoles);
         }
         if (dto.enabled() != null && dto.enabled()) {
             user.setEnabled(true);
@@ -283,6 +289,15 @@ public class UserxService implements UserDetailsService {
         log.debug(debugInfo.toString());
 
         return updatedUser;
+    }
+
+    private boolean isRemovingEmployeeRoleFromSystemAdmin(Userx user, Set<UserxRole> updatedRoles) {
+        Set<UserxRole> currentRoles = user.getRoles();
+        return currentRoles != null
+                && currentRoles.contains(UserxRole.SYSTEM_ADMIN)
+                && currentRoles.contains(UserxRole.EMPLOYEE)
+                && !updatedRoles.contains(UserxRole.EMPLOYEE)
+                && !updatedRoles.contains(UserxRole.SYSTEM_ADMIN);
     }
 
     @Transactional

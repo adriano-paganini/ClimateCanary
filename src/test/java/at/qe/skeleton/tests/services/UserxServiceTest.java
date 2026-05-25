@@ -199,6 +199,25 @@ class UserxServiceTest {
     @DirtiesContext
     @Test
     @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
+    void testUpdateUserPreservesSystemAdminWhenRemovingEmployeeRole() {
+        Long adminId = 1000L;
+
+        Userx updatedAdmin = userService.updateUser(
+                adminId,
+                new UserxUpdateDTO(null, Set.of(UserxRole.DEPARTMENT_LEAD), null, null, null, null)
+        );
+
+        Assertions.assertTrue(updatedAdmin.getRoles().contains(UserxRole.SYSTEM_ADMIN),
+                "Removing employee assignment must not silently remove an existing system admin role");
+        Assertions.assertFalse(updatedAdmin.getRoles().contains(UserxRole.EMPLOYEE),
+                "Employee role should still be removable independently from system admin");
+        Assertions.assertTrue(updatedAdmin.getRoles().contains(UserxRole.DEPARTMENT_LEAD),
+                "Requested non-employee role should be preserved");
+    }
+
+    @DirtiesContext
+    @Test
+    @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})
     void testUpdateUser() {
         Long userId = 2000L;
         Optional<Userx> adminUserOpt = userService.loadUser(1000L);
