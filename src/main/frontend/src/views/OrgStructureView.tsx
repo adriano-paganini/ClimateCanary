@@ -1161,7 +1161,13 @@ const OrgStructureView: React.FC = () => {
                         <Dropdown
                             value={bldgForm.addressId}
                             options={addressOptions}
-                            onChange={e => setBldgForm(f => ({ ...f, addressId: e.value as number }))}
+                            onChange={e => {
+                                if (takenAddressIds.has(e.value)) {
+                                    showError('This address is already assigned to another building. Choose a different address.');
+                                    return;
+                                }
+                                setBldgForm(f => ({ ...f, addressId: e.value as number }));
+                            }}
                             placeholder="Select address…"
                             filter
                             itemTemplate={addressItemTemplate}
@@ -1281,7 +1287,13 @@ const OrgStructureView: React.FC = () => {
                         <Dropdown
                             value={assignUserId}
                             options={userOptions}
-                            onChange={e => setAssignUserId(e.value as number)}
+                            onChange={e => {
+                                if (takenUserIds.has(e.value)) {
+                                    showError('This user already has an employee profile. Choose a different user.');
+                                    return;
+                                }
+                                setAssignUserId(e.value as number);
+                            }}
                             placeholder="Select user..."
                             filter
                             itemTemplate={assignUserItemTemplate}
