@@ -74,6 +74,22 @@ const CHART_OPTIONS = {
     },
 };
 
+function chartOptions(maxTicksLimit: number) {
+    return {
+        ...CHART_OPTIONS,
+        scales: {
+            ...CHART_OPTIONS.scales,
+            x: {
+                ...CHART_OPTIONS.scales.x,
+                ticks: {
+                    ...CHART_OPTIONS.scales.x.ticks,
+                    maxTicksLimit,
+                },
+            },
+        },
+    };
+}
+
 // Draws a thin vertical line from the x-axis to each data point so values are easy to trace.
 // Only active when there are ≤100 points (dense series would just look like a fill).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -113,6 +129,7 @@ const RoomHistory: React.FC = () => {
     const [loading,    setLoading]    = useState(true);
     const [error,      setError]      = useState<string | null>(null);
     const [privacyRestricted, setPrivacyRestricted] = useState(false);
+    const [trendMeta, setTrendMeta] = useState<Record<string, { bucketSize?: string; granularityReduced?: boolean }>>({});
 
     useEffect(() => {
         if (isNaN(numId)) return;
@@ -125,6 +142,7 @@ const RoomHistory: React.FC = () => {
         setLoading(true);
         setError(null);
         setPrivacyRestricted(false);
+        setTrendMeta({});
         const window = dayWindow(currentDate);
         const from = format(window.from, "yyyy-MM-dd'T'HH:mm:ss");
         const to   = format(window.to, "yyyy-MM-dd'T'HH:mm:ss");
@@ -136,14 +154,19 @@ const RoomHistory: React.FC = () => {
                             metric: key,
                             points: (data.points ?? [])
                                 .filter((point): point is TrendPoint => point.timestamp !== undefined && point.value !== undefined),
+                            bucketSize: data.bucketSize,
+                            granularityReduced: data.granularityReduced,
                         }))
                 )
             );
             const map: Record<string, TrendPoint[]> = {};
-            for (const { metric, points } of results) {
+            const meta: Record<string, { bucketSize?: string; granularityReduced?: boolean }> = {};
+            for (const { metric, points, bucketSize, granularityReduced } of results) {
                 map[metric] = points;
+                meta[metric] = { bucketSize, granularityReduced };
             }
             setTrendsMap(map);
+            setTrendMeta(meta);
         } catch (err: unknown) {
             const status = (err as { response?: { status?: number } })?.response?.status;
             if (status === 403) {
@@ -163,7 +186,17 @@ const RoomHistory: React.FC = () => {
         return buildRoomHistoryChartData(metric, points, thresholds);
     }
 
+    function xAxisTickLimit(metric: MeasurementDTOMetricEnum): number {
+        return trendMeta[metric]?.bucketSize === 'raw' ? 24 : 8;
+    }
+
     const nextDayWouldBeFuture = isFutureDay(addDays(dayStart(currentDate), 1));
+    const reducedGranularity = Object.values(trendMeta).some(meta => meta.granularityReduced);
+    const reducedBuckets = Array.from(new Set(
+        Object.values(trendMeta)
+            .filter(meta => meta.granularityReduced && meta.bucketSize)
+            .map(meta => meta.bucketSize),
+    ));
 
     function navigateDay(direction: -1 | 1) {
         const nextDate = addDays(dayStart(currentDate), direction);
@@ -246,6 +279,22 @@ const RoomHistory: React.FC = () => {
                     </div>
                 )}
 
+                {openedFromDepartment && reducedGranularity && (
+                    <div style={{
+                        display: 'flex', alignItems: 'center', gap: '0.6rem',
+                        padding: '0.65rem 1rem', marginBottom: '1.25rem',
+                        backgroundColor: '#fff7ed', border: '1px solid #fed7aa',
+                        borderRadius: '6px', color: '#9a3412', fontSize: '0.9rem',
+                    }}>
+                        <i className="pi pi-filter" style={{ color: '#ea580c' }} />
+                        <span>
+                            Reduzierte Granularität aktiv
+                            {reducedBuckets.length > 0 ? ` (${reducedBuckets.join(', ')})` : ''}.
+                            Büroverläufe werden für Abteilungsleitungen aggregiert angezeigt.
+                        </span>
+                    </div>
+                )}
+
                 <div className="absence-calendar-header" style={{ gridTemplateColumns: 'auto 1fr auto' }}>
                     <div className="absence-calendar-navigation">
                         <button type="button" onClick={() => navigateDay(-1)} aria-label="Previous day">
@@ -317,7 +366,7 @@ const RoomHistory: React.FC = () => {
                                             <Chart
                                                 type="line"
                                                 data={data}
-                                                options={CHART_OPTIONS}
+                                                options={chartOptions(xAxisTickLimit(key))}
                                                 plugins={[buildGapPlugin(key)]}
                                                 style={{ height: '100%' }}
                                             />

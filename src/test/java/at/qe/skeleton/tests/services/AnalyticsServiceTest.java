@@ -368,8 +368,8 @@ public class AnalyticsServiceTest {
     }
 
     @Test
-    @DisplayName("getRoomTrend – DEPARTMENT_LEAD on office with privacy mode ON does not force reduced granularity")
-    void getRoomTrend_departmentLeadOfficePrivacyModeOn_notForceReduced() {
+    @DisplayName("getRoomTrend – DEPARTMENT_LEAD on office with privacy mode ON still forces reduced granularity")
+    void getRoomTrend_departmentLeadOfficePrivacyModeOn_forcesReducedGranularity() {
         officeRoom.setPrivacyMode(true);
 
         Mockito.when(roomService.getById(10L)).thenReturn(officeRoom);
@@ -379,7 +379,8 @@ public class AnalyticsServiceTest {
 
         RoomTrendDTO result = analyticsService.getRoomTrend(10L, Metric.TEMPERATURE, FROM, TO);
 
-        assertThat(result.granularityReduced()).isFalse();
+        assertThat(result.granularityReduced()).isTrue();
+        assertThat(result.bucketSize()).isEqualTo("1d");
     }
 
     @Test

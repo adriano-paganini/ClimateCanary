@@ -177,16 +177,14 @@ public class AnalyticsService {
                 roomId, metric, roomTrendHelper.effectiveFrom(), roomTrendHelper.effectiveTo());
 
         /*
-         * DEPARTMENT_LEAD + office room: apply forced reduced granularity only when the room
-         * is above minimum occupancy (privacy mode OFF). If privacy mode is ON, the room would
-         * have already been blocked by assertOccupancyIfRequired for EMPLOYEEs; DEPARTMENT_LEAD
-         * is exempt from the hard block but still sees reduced granularity for occupied offices.
+         * DEPARTMENT_LEAD + office room: always apply forced reduced granularity.
+         * A privacy-mode change is only a snapshot of current occupancy; it must not make
+         * already stored office data available to department leads at raw granularity.
          *
          * Common areas are always shown at full granularity for all roles.
          */
         boolean forceReduced = hasRole(roomTrendHelper.currentUser(), UserxRole.DEPARTMENT_LEAD)
-                && roomTrendHelper.room().getRoomType() == RoomType.OFFICE
-                && !Boolean.TRUE.equals(roomTrendHelper.room().getPrivacyMode());
+                && roomTrendHelper.room().getRoomType() == RoomType.OFFICE;
 
         String bucketSize = forceReduced
                 ? forcedReducedBucket(roomTrendHelper.effectiveFrom(), roomTrendHelper.effectiveTo())

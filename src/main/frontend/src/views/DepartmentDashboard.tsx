@@ -10,10 +10,10 @@ import NavbarComponent from '../components/NavbarComponent';
 import RoomCard from '../components/RoomCard';
 import { useUser } from '../Contexts/AuthenticatedUserContext';
 import { useDepartment } from '../Contexts/DepartmentContext';
-import { MeasurementService } from '../services/MeasurementService';
 import { ViolationService, ViolationStatusEnum } from '../services/ViolationService';
 import { DepartmentService } from '../services/DepartmentService';
-import { MeasurementDTO, RoomDTO, ThresholdViolationDTO } from '../generated-skeleton-api';
+import { AnalyticsService } from '../services/AnalyticsService';
+import { MeasurementDTO, MeasurementDTOMetricEnum, RoomDTO, ThresholdViolationDTO } from '../generated-skeleton-api';
 import { ROUTES } from '../utilities/routes.paths';
 
 interface RoomDashboardData {
@@ -57,16 +57,27 @@ async function getRoomsCached(departmentId: number): Promise<RoomDTO[]> {
 }
 
 async function loadRoomDashboardData(roomId: number): Promise<RoomDashboardData> {
-    const [latestPerMetric, violations] = await Promise.all([
-        MeasurementService.getLatestPerMetric(roomId),
+    const [summary, violations] = await Promise.all([
+        AnalyticsService.getRoomSummary(roomId),
         ViolationService.getAll({
             roomId,
             violationStatus: ViolationStatusEnum.ACTIVE,
         }),
     ]);
 
+    const measurements: MeasurementDTO[] = Object.entries(summary.metrics ?? {})
+        .filter((entry): entry is [MeasurementDTOMetricEnum, NonNullable<typeof summary.metrics>[MeasurementDTOMetricEnum]] =>
+            entry[1]?.latest !== undefined && entry[1]?.latest !== null,
+        )
+        .map(([metric, stats]) => ({
+            roomId,
+            metric,
+            measurement: stats.latest,
+            timestamp: summary.generatedAt,
+        }));
+
     return {
-        measurements: Object.values(latestPerMetric),
+        measurements,
         violations,
     };
 }
