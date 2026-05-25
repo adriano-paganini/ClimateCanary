@@ -51,6 +51,15 @@ public class RaspberryPiController {
         return ResponseEntity.ok(pis);
     }
 
+    @GetMapping("/decomissioned")
+    public ResponseEntity<List<RaspberryPiDTO>> getAllDecomissioned() {
+        List<RaspberryPiDTO> pis = raspberryPiService.getAllDecomissioned()
+                .stream()
+                .map(raspberryPiMapper::mapTo)
+                .toList();
+        return ResponseEntity.ok(pis);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<RaspberryPiDTO> getById(@PathVariable Long id) {
         return ResponseEntity.ok(raspberryPiMapper.mapTo(raspberryPiService.getById(id)));

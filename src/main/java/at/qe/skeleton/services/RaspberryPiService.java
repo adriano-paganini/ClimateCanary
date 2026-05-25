@@ -33,6 +33,12 @@ public class RaspberryPiService {
     public List<RaspberryPi> getAll() {
         return repo.findAllActive();
     }
+
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
+    public List<RaspberryPi> getAllDecomissioned(){
+        return repo.findAllByDecomissionedTrue();
+    }
+
     public List<RaspberryPi> getAllInternal(){
         return repo.findAll();
     }

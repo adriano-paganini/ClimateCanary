@@ -73,6 +73,28 @@ class RaspberryPiServiceTest {
     }
 
     @Test
+    @DisplayName("Should return all decommissioned Raspberry Pi devices")
+    void getAllDecomissioned_returnsAllDecommissionedPis() {
+        RaspberryPi decommissionedPi = new RaspberryPi();
+        decommissionedPi.setDeviceStatus(DeviceStatus.DECOMMISSIONED);
+        Mockito.when(repo.findAllByDecomissionedTrue()).thenReturn(List.of(decommissionedPi));
+
+        List<RaspberryPi> result = raspberryPiService.getAllDecomissioned();
+
+        Assertions.assertThat(result).containsExactly(decommissionedPi);
+        Mockito.verify(repo).findAllByDecomissionedTrue();
+    }
+
+    @Test
+    @DisplayName("Should return empty list when no decommissioned Raspberry Pi devices exist")
+    void getAllDecomissioned_returnsEmptyListWhenNoneExist() {
+        Mockito.when(repo.findAllByDecomissionedTrue()).thenReturn(List.of());
+
+        Assertions.assertThat(raspberryPiService.getAllDecomissioned()).isEmpty();
+        Mockito.verify(repo).findAllByDecomissionedTrue();
+    }
+
+    @Test
     @DisplayName("Should return all Raspberry Pi devices through internal path")
     void getAllInternal_returnsAllPis() {
         RaspberryPi inactivePi = new RaspberryPi();
