@@ -150,7 +150,9 @@ public class SensorStationService {
     }
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public void delete(Long id) {
-        repo.deleteById(id);
+        SensorStation station = getByIdInternal(id);
+        station.setDeviceStatus(DeviceStatus.DECOMMISSIONED);
+        repo.save(station);
         log.info("Deleted sensor station with id={}", id);
     }
 }

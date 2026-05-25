@@ -8,6 +8,7 @@ services:
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./docker-DB.sql:/docker-entrypoint-initdb.d/10-docker-DB.sql:ro
     restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
@@ -23,7 +24,6 @@ services:
       - "${HOST_PORT:-8080}:8080"
     environment:
       SPRING_PROFILES_ACTIVE: prod
-      SPRING_SQL_INIT_MODE: never
       APP_JWT_SECRET: "${APP_JWT_SECRET}"
       APP_BACKEND_URL: "${APP_BACKEND_URL:-http://localhost:8080}"
       SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/${POSTGRES_DB}"

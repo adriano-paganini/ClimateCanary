@@ -2,7 +2,7 @@ import '../styles/App.css';
 import '../styles/AbsenceCalendar.css';
 import 'primeicons/primeicons.css';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import { Button } from 'primereact/button';
 import { Chart } from 'primereact/chart';
 import { Message } from 'primereact/message';
@@ -23,7 +23,6 @@ import {
     MeasurementDTOMetricEnum,
     RoomDTO,
     ThresholdDTO,
-    UserxRole,
 } from '../generated-skeleton-api';
 
 import { ROUTES } from '../utilities/routes.paths';
@@ -56,6 +55,10 @@ function dayWindow(date: Date): { from: Date; to: Date } {
 
 function visibleDayLabel(date: Date): string {
     return format(dayStart(date), 'dd.MM.yyyy');
+}
+
+function isFutureDay(date: Date): boolean {
+    return dayStart(date).getTime() > dayStart(new Date()).getTime();
 }
 
 const CHART_OPTIONS = {
@@ -99,8 +102,9 @@ const dropLinePlugin: any = {
 const RoomHistory: React.FC = () => {
     const { roomId } = useParams<{ roomId: string }>();
     const navigate  = useNavigate();
-    const { currentUser } = useUser();
+    const { pathname } = useLocation();
     const numId     = roomId ? parseInt(roomId, 10) : NaN;
+    const openedFromDepartment = pathname.startsWith('/department/rooms/');
 
     const [currentDate, setCurrentDate] = useState(new Date());
     const [room,       setRoom]       = useState<RoomDTO | null>(null);
@@ -159,8 +163,14 @@ const RoomHistory: React.FC = () => {
         return buildRoomHistoryChartData(metric, points, thresholds);
     }
 
+    const nextDayWouldBeFuture = isFutureDay(addDays(dayStart(currentDate), 1));
+
     function navigateDay(direction: -1 | 1) {
-        setCurrentDate(addDays(dayStart(currentDate), direction));
+        const nextDate = addDays(dayStart(currentDate), direction);
+        if (direction === 1 && isFutureDay(nextDate)) {
+            return;
+        }
+        setCurrentDate(nextDate);
     }
 
     function jumpToDate(value: string) {
@@ -213,7 +223,7 @@ const RoomHistory: React.FC = () => {
                         label="Back"
                         className="p-button-text"
                         onClick={() => navigate(
-                            currentUser?.roles?.has(UserxRole.DEPARTMENT_LEAD)
+                            openedFromDepartment
                                 ? ROUTES.DEPARTMENT_DASHBOARD
                                 : ROUTES.DASHBOARD,
                         )}
@@ -244,7 +254,12 @@ const RoomHistory: React.FC = () => {
                         <button type="button" onClick={() => setCurrentDate(new Date())}>
                             Today
                         </button>
-                        <button type="button" onClick={() => navigateDay(1)} aria-label="Next day">
+                        <button
+                            type="button"
+                            onClick={() => navigateDay(1)}
+                            aria-label="Next day"
+                            disabled={nextDayWouldBeFuture}
+                        >
                             <i className="pi pi-chevron-right" aria-hidden="true" />
                         </button>
                     </div>

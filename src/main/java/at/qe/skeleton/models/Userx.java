@@ -36,7 +36,7 @@ public class Userx implements Persistable<Long>, Serializable, Comparable<Userx>
     @Column(nullable = false)
     @CreationTimestamp
     private LocalDateTime createDate;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Userx updateUser;
     @UpdateTimestamp
     private LocalDateTime updateDate;
@@ -60,7 +60,7 @@ public class Userx implements Persistable<Long>, Serializable, Comparable<Userx>
     private List<Absence> absences = new ArrayList<>();
 
     @SuppressWarnings("java:S1948")
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private EmployeeProfile employeeProfile;
 
     boolean enabled;

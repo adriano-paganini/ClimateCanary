@@ -80,7 +80,7 @@ public class ScheduledMethods {
         }
     }
 
-    @Scheduled(cron = "* */5 * * * *")
+    @Scheduled(cron = "0 */5 * * * *")
     @Transactional
     public void checkHeartbeat() {
         List<RaspberryPi> pis = raspberryPiService.getAllInternal();

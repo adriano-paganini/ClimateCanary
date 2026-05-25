@@ -73,6 +73,28 @@ class RaspberryPiServiceTest {
     }
 
     @Test
+    @DisplayName("Should return all decommissioned Raspberry Pi devices")
+    void getAllDecomissioned_returnsAllDecommissionedPis() {
+        RaspberryPi decommissionedPi = new RaspberryPi();
+        decommissionedPi.setDeviceStatus(DeviceStatus.DECOMMISSIONED);
+        Mockito.when(repo.findAllByDecomissionedTrue()).thenReturn(List.of(decommissionedPi));
+
+        List<RaspberryPi> result = raspberryPiService.getAllDecomissioned();
+
+        Assertions.assertThat(result).containsExactly(decommissionedPi);
+        Mockito.verify(repo).findAllByDecomissionedTrue();
+    }
+
+    @Test
+    @DisplayName("Should return empty list when no decommissioned Raspberry Pi devices exist")
+    void getAllDecomissioned_returnsEmptyListWhenNoneExist() {
+        Mockito.when(repo.findAllByDecomissionedTrue()).thenReturn(List.of());
+
+        Assertions.assertThat(raspberryPiService.getAllDecomissioned()).isEmpty();
+        Mockito.verify(repo).findAllByDecomissionedTrue();
+    }
+
+    @Test
     @DisplayName("Should return all Raspberry Pi devices through internal path")
     void getAllInternal_returnsAllPis() {
         RaspberryPi inactivePi = new RaspberryPi();
@@ -320,8 +342,8 @@ class RaspberryPiServiceTest {
     }
 
     @Test
-    @DisplayName("Should delete Raspberry Pi and clear associations")
-    void delete_deletesRaspberryPiAndClearsAssociations() {
+    @DisplayName("Should decommission Raspberry Pi and clear associations")
+    void delete_decommissionsRaspberryPiAndClearsAssociations() {
         Room room = new Room();
         room.setRaspberryPi(pi);
         pi.setRoom(room);
@@ -331,17 +353,21 @@ class RaspberryPiServiceTest {
         pi.getSensorStations().add(station);
 
         Mockito.when(repo.findById(1L)).thenReturn(Optional.of(pi));
+        Mockito.when(repo.save(Mockito.any(RaspberryPi.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
         raspberryPiService.delete(1L);
+
+        Assertions.assertThat(pi.getDeviceStatus())
+                .isEqualTo(DeviceStatus.DECOMMISSIONED);
 
         Assertions.assertThat(pi.getRoom()).isNull();
         Assertions.assertThat(room.getRaspberryPi()).isNull();
 
-        Assertions.assertThat(pi.getSensorStations()).isEmpty();
-        Assertions.assertThat(station.getRaspberryPi()).isNull();
 
         Mockito.verify(repo).findById(1L);
-        Mockito.verify(repo).delete(pi);
+        Mockito.verify(repo).save(pi);
+        Mockito.verify(repo, Mockito.never()).delete(pi);
         Mockito.verify(repo, Mockito.never()).deleteById(Mockito.anyLong());
     }
 

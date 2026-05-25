@@ -401,8 +401,8 @@ const RoomManagementView: React.FC = () => {
             <NavbarComponent />
             <Toast ref={toast} />
 
-            <div style={{ padding: "1.5rem 2rem" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", marginBottom: "1rem" }}>
+            <div className="room-management-page">
+                <div className="room-management-header">
                     <div>
                         <h2 style={{ margin: 0 }}>Room Climate Data</h2>
                         <p style={{ margin: "0.35rem 0 0", color: "#64748b" }}>
@@ -411,8 +411,8 @@ const RoomManagementView: React.FC = () => {
                     </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "minmax(420px, 480px) minmax(0, 1fr)", gap: "1rem", alignItems: "start" }}>
-                    <Card style={{ minWidth: 0 }}>
+                <div className="room-management-layout">
+                    <Card className="room-management-room-card">
                         <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
                             <InputText
                                 value={roomFilter}
@@ -434,10 +434,11 @@ const RoomManagementView: React.FC = () => {
                                 rows={10}
                                 sortField="name"
                                 sortOrder={1}
+                                className="room-management-table"
                                 tableStyle={{ tableLayout: "fixed", width: "100%" }}
                             >
                                 <Column field="name" header="Room" sortable style={{ width: "34%" }} />
-                                <Column field="roomType" header="Type" body={roomTypeTemplate} sortable style={{ width: "28%" }} />
+                                <Column field="roomType" header="Type" body={roomTypeTemplate} sortable style={{ width: "28%" }} className="room-management-optional-column" />
                                 <Column
                                     header="Department"
                                     body={(row: RoomDTO) => getDepartmentName(row.departmentId)}
@@ -449,31 +450,32 @@ const RoomManagementView: React.FC = () => {
                                             getDepartmentName(a.departmentId).localeCompare(getDepartmentName(b.departmentId))
                                         )
                                     }
+                                    className="room-management-optional-column"
                                     style={{ width: "38%" }}
                                 />
                             </DataTable>
                         </div>
                     </Card>
 
-                    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                    <div className="room-management-detail-stack">
                         {!selectedRoomId ? (
                             <Message severity="info" text="Select a room to view climate data." />
                         ) : (
                             <>
                                 <Card>
-                                    <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap", marginBottom: "1rem" }}>
+                                    <div className="room-management-card-header">
                                         <div>
                                             <h3 style={{ margin: 0 }}>{selectedRoom?.name ?? `Room ${selectedRoomId}`}</h3>
                                             <p style={{ margin: "0.35rem 0 0", color: "#64748b" }}>
                                                 {getBuildingName(selectedRoom?.buildingId)} - {getDepartmentName(selectedRoom?.departmentId)}
                                             </p>
                                         </div>
-                                        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "center" }}>
+                                        <div className="room-management-actions">
                                             <Dropdown
                                                 value={selectedMetric}
                                                 options={METRICS.map(metric => ({ label: metric.label, value: metric.key }))}
                                                 onChange={event => setSelectedMetric(event.value)}
-                                                style={{ minWidth: "12rem" }}
+                                                className="room-management-metric-dropdown"
                                             />
                                         </div>
                                     </div>
@@ -557,14 +559,14 @@ const RoomManagementView: React.FC = () => {
                                                 <Tag value={`Bucket: ${trend?.bucketSize ?? "-"}`} severity="info" />
                                                 {trend?.granularityReduced && <Tag value="Reduced granularity" severity="warning" />}
                                             </div>
-                                            <div style={{ height: "360px" }}>
+                                            <div className="room-management-chart">
                                                 <Chart type="line" data={chartData} options={CHART_OPTIONS} plugins={[buildGapPlugin()]} style={{ height: "100%" }} />
                                             </div>
                                         </>
                                     )}
                                 </Card>
 
-                                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(130px, 1fr))", gap: "1rem" }}>
+                                <div className="room-management-summary-grid">
                                     {METRICS.map(metric => {
                                         const stats = summaryForMetric(metric.key);
                                         return (
@@ -604,12 +606,13 @@ const RoomManagementView: React.FC = () => {
                                         rows={8}
                                         sortField="startTime"
                                         sortOrder={-1}
+                                        className="room-management-violations-table"
                                     >
                                         <Column field="metric" header="Metric" body={(row: ThresholdViolationDTO) => metricLabel(row.metric)} sortable />
                                         <Column field="value" header="Value" body={(row: ThresholdViolationDTO) => formatNumber(row.value)} sortable />
-                                        <Column field="violationStatus" header="Status" body={violationStatusTemplate} sortable />
-                                        <Column field="startTime" header="Started" body={(row: ThresholdViolationDTO) => dateTemplate(row.startTime)} sortable />
-                                        <Column field="endTime" header="Ended" body={(row: ThresholdViolationDTO) => dateTemplate(row.endTime)} sortable />
+                                        <Column field="violationStatus" header="Status" body={violationStatusTemplate} sortable className="room-management-optional-column" />
+                                        <Column field="startTime" header="Started" body={(row: ThresholdViolationDTO) => dateTemplate(row.startTime)} sortable className="room-management-optional-column" />
+                                        <Column field="endTime" header="Ended" body={(row: ThresholdViolationDTO) => dateTemplate(row.endTime)} sortable className="room-management-optional-column" />
                                     </DataTable>
                                 </Card>
                             </>

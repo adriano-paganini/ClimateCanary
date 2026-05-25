@@ -8,6 +8,7 @@ export const ROUTES = {
     DASHBOARD_HISTORY: '/dashboard/:roomId/history',
     ABSENCE: '/absence',
     DEPARTMENT_DASHBOARD: '/department',
+    DEPARTMENT_ROOM_HISTORY: '/department/rooms/:roomId/history',
     DEPARTMENT_ABSENCES: '/department/absences',
     DEPARTMENT_ALERTS: '/department/alerts',
     MANAGEMENT_DASHBOARD: '/management',

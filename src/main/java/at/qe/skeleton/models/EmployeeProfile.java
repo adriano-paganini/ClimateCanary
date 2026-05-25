@@ -16,15 +16,15 @@ public class EmployeeProfile {
     @Setter(AccessLevel.NONE)
     private Long id;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "userx_id", nullable = false, unique = true)
     private Userx user;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id")
     private Room room;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "department_id")
     private Department department;
 
@@ -52,4 +52,3 @@ public class EmployeeProfile {
         }
     }
 }
-

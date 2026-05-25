@@ -16,6 +16,81 @@ import { DepartmentService } from '../services/DepartmentService';
 import { MeasurementDTO, RoomDTO, ThresholdViolationDTO } from '../generated-skeleton-api';
 import { ROUTES } from '../utilities/routes.paths';
 
+interface RoomDashboardData {
+    measurements: MeasurementDTO[];
+    violations: ThresholdViolationDTO[];
+}
+
+interface HydrationStatus {
+    label: string;
+    done: number;
+    total: number;
+}
+
+const cachedRoomsByDepartment = new Map<number, RoomDTO[]>();
+const cachedRoomRequestsByDepartment = new Map<number, Promise<RoomDTO[]>>();
+const cachedRoomData = new Map<number, RoomDashboardData>();
+const cachedRoomDataRequests = new Map<number, Promise<RoomDashboardData>>();
+
+function delay(ms: number): Promise<void> {
+    return new Promise(resolve => window.setTimeout(resolve, ms));
+}
+
+async function getRoomsCached(departmentId: number): Promise<RoomDTO[]> {
+    const cached = cachedRoomsByDepartment.get(departmentId);
+    if (cached) return cached;
+
+    let request = cachedRoomRequestsByDepartment.get(departmentId);
+    if (!request) {
+        request = DepartmentService.getRooms(departmentId)
+            .then(rooms => {
+                cachedRoomsByDepartment.set(departmentId, rooms);
+                return rooms;
+            })
+            .finally(() => {
+                cachedRoomRequestsByDepartment.delete(departmentId);
+            });
+        cachedRoomRequestsByDepartment.set(departmentId, request);
+    }
+
+    return request;
+}
+
+async function loadRoomDashboardData(roomId: number): Promise<RoomDashboardData> {
+    const [latestPerMetric, violations] = await Promise.all([
+        MeasurementService.getLatestPerMetric(roomId),
+        ViolationService.getAll({
+            roomId,
+            violationStatus: ViolationStatusEnum.ACTIVE,
+        }),
+    ]);
+
+    return {
+        measurements: Object.values(latestPerMetric),
+        violations,
+    };
+}
+
+async function getRoomDashboardDataCached(roomId: number): Promise<RoomDashboardData> {
+    const cached = cachedRoomData.get(roomId);
+    if (cached) return cached;
+
+    let request = cachedRoomDataRequests.get(roomId);
+    if (!request) {
+        request = loadRoomDashboardData(roomId)
+            .then(data => {
+                cachedRoomData.set(roomId, data);
+                return data;
+            })
+            .finally(() => {
+                cachedRoomDataRequests.delete(roomId);
+            });
+        cachedRoomDataRequests.set(roomId, request);
+    }
+
+    return request;
+}
+
 const DepartmentDashboard: React.FC = () => {
     const { currentUser } = useUser();
     const { departments, selectedDepartmentId, setSelectedDepartmentId, loading, error: deptError } = useDepartment();
@@ -26,51 +101,91 @@ const DepartmentDashboard: React.FC = () => {
     const [rooms, setRooms] = useState<RoomDTO[]>([]);
     const [measurementsByRoom, setMeasurementsByRoom] = useState<Record<number, MeasurementDTO[]>>({});
     const [violationsByRoom, setViolationsByRoom] = useState<Record<number, ThresholdViolationDTO[]>>({});
+    const [loadingRoomIds, setLoadingRoomIds] = useState<Set<number>>(new Set());
+    const [hydrationStatus, setHydrationStatus] = useState<HydrationStatus | null>(null);
 
     useEffect(() => {
-        if (!selectedDepartmentId) return;
+        if (!selectedDepartmentId) {
+            setRooms([]);
+            setMeasurementsByRoom({});
+            setViolationsByRoom({});
+            setLoadingRoomIds(new Set());
+            setHydrationStatus(null);
+            return;
+        }
 
-        const loadDepartmentData = async () => {
+        let active = true;
+
+        const loadDepartmentDataDynamically = async () => {
             setLoadingDepartmentData(true);
             setError(null);
+            setRooms([]);
+            setMeasurementsByRoom({});
+            setViolationsByRoom({});
+            setLoadingRoomIds(new Set());
+            setHydrationStatus(null);
+
             try {
-                const [deptRooms, allViolations] = await Promise.all([
-                    DepartmentService.getRooms(selectedDepartmentId),
-                    ViolationService.getAll({
-                        violationStatus: ViolationStatusEnum.ACTIVE,
-                        departmentId: selectedDepartmentId,
-                    }),
-                ]);
+                const deptRooms = await getRoomsCached(selectedDepartmentId);
+                if (!active) return;
+
                 setRooms(deptRooms);
+                setLoadingDepartmentData(false);
 
-                const allMeasurements = await Promise.all(
-                    deptRooms.map(r =>
-                        r.id
-                            ? MeasurementService.getLatestPerMetric(r.id).then(m => Object.values(m))
-                            : Promise.resolve([]),
-                    ),
-                );
+                const roomsWithIds = deptRooms.filter((room): room is RoomDTO & { id: number } => room.id !== undefined);
+                if (roomsWithIds.length === 0) {
+                    setHydrationStatus(null);
+                    return;
+                }
 
-                const measMap: Record<number, MeasurementDTO[]> = {};
-                const violMap: Record<number, ThresholdViolationDTO[]> = {};
-                deptRooms.forEach((r, i) => {
-                    if (r.id !== undefined) {
-                        measMap[r.id] = allMeasurements[i];
-                        violMap[r.id] = allViolations.filter(v => v.roomId === r.id);
+                for (let i = 0; i < roomsWithIds.length; i++) {
+                    if (!active) return;
+
+                    const room = roomsWithIds[i];
+                    setHydrationStatus({
+                        label: `Loading data for ${room.name ?? `Room ${room.id}`}`,
+                        done: i,
+                        total: roomsWithIds.length,
+                    });
+                    setLoadingRoomIds(prev => new Set(prev).add(room.id));
+
+                    if (!cachedRoomData.has(room.id)) {
+                        await delay(250);
                     }
-                });
-                setMeasurementsByRoom(measMap);
-                setViolationsByRoom(violMap);
+
+                    const data = await getRoomDashboardDataCached(room.id);
+                    if (!active) return;
+
+                    setMeasurementsByRoom(prev => ({ ...prev, [room.id]: data.measurements }));
+                    setViolationsByRoom(prev => ({ ...prev, [room.id]: data.violations }));
+                    setLoadingRoomIds(prev => {
+                        const next = new Set(prev);
+                        next.delete(room.id);
+                        return next;
+                    });
+                    setHydrationStatus({
+                        label: `Loaded ${room.name ?? `Room ${room.id}`}`,
+                        done: i + 1,
+                        total: roomsWithIds.length,
+                    });
+                }
             } catch (err: unknown) {
                 const msg = err instanceof Error ? err.message : String(err);
                 console.error('Department dashboard data load error:', err);
-                setError(`Failed to load department data: ${msg}`);
+                if (active) setError(`Failed to load department data: ${msg}`);
             } finally {
-                setLoadingDepartmentData(false);
+                if (active) {
+                    setLoadingDepartmentData(false);
+                    setLoadingRoomIds(new Set());
+                }
             }
         };
 
-        void loadDepartmentData();
+        void loadDepartmentDataDynamically();
+
+        return () => {
+            active = false;
+        };
     }, [selectedDepartmentId]);
 
     const totalActiveViolations = Object.values(violationsByRoom).flat().length;
@@ -152,6 +267,30 @@ const DepartmentDashboard: React.FC = () => {
                     </div>
                 )}
 
+                {hydrationStatus && hydrationStatus.done < hydrationStatus.total && (
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '1rem',
+                            background: '#eff6ff',
+                            border: '1px solid #bfdbfe',
+                            color: '#1e3a8a',
+                            borderRadius: '8px',
+                            padding: '0.65rem 0.9rem',
+                            marginBottom: '1rem',
+                            fontSize: '0.9rem',
+                        }}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                            <i className="pi pi-spin pi-spinner" />
+                            <span>{hydrationStatus.label}</span>
+                        </div>
+                        <span>{hydrationStatus.done}/{hydrationStatus.total}</span>
+                    </div>
+                )}
+
                 {/* Section title */}
                 <div style={{
                     display: 'flex',
@@ -203,14 +342,42 @@ const DepartmentDashboard: React.FC = () => {
                     </div>
                 ) : (
                     <div className="flex flex-wrap gap-3">
-                        {rooms.map(room => (
-                            <RoomCard
-                                key={room.id}
-                                room={room}
-                                measurements={measurementsByRoom[room.id!] ?? []}
-                                violations={violationsByRoom[room.id!] ?? []}
-                            />
-                        ))}
+                        {rooms.map(room => {
+                            const loadingRoom = room.id !== undefined && loadingRoomIds.has(room.id);
+
+                            return (
+                                <div key={room.id} style={{ position: 'relative' }}>
+                                    <RoomCard
+                                        room={room}
+                                        measurements={room.id !== undefined ? measurementsByRoom[room.id] ?? [] : []}
+                                        violations={room.id !== undefined ? violationsByRoom[room.id] ?? [] : []}
+                                        historyRoute={ROUTES.DEPARTMENT_ROOM_HISTORY}
+                                    />
+                                    {loadingRoom && (
+                                        <div
+                                            style={{
+                                                position: 'absolute',
+                                                inset: 0,
+                                                background: 'rgba(255,255,255,0.78)',
+                                                borderRadius: '10px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                zIndex: 20,
+                                                color: '#1e3a8a',
+                                                fontWeight: 600,
+                                                pointerEvents: 'none',
+                                            }}
+                                        >
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <i className="pi pi-spin pi-spinner" />
+                                                Loading...
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
             </div>

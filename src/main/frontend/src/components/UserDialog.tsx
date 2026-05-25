@@ -28,6 +28,7 @@ interface UserDialogProps {
     selectedRoomId?: number;
     onDepartmentChange?: (departmentId?: number) => void;
     onRoomChange?: (roomId?: number) => void;
+    departmentsLoading?: boolean;
     roomsLoading?: boolean;
     lockedRoles?: UserxRole[];
 }
@@ -61,6 +62,7 @@ const UserDialog: React.FC<UserDialogProps> = ({
                                                    selectedRoomId,
                                                    onDepartmentChange,
                                                    onRoomChange,
+                                                   departmentsLoading = false,
                                                    roomsLoading = false,
                                                    lockedRoles = []
                                                }) => {
@@ -102,6 +104,7 @@ const UserDialog: React.FC<UserDialogProps> = ({
                         selectedRoomId={selectedRoomId}
                         onDepartmentChange={onDepartmentChange}
                         onRoomChange={onRoomChange}
+                        departmentsLoading={departmentsLoading}
                         roomsLoading={roomsLoading}
                         lockedRoles={lockedRoles}
                     />

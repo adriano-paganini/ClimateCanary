@@ -4,16 +4,11 @@
  */
 import React, { useState } from "react";
 import { Button } from "primereact/button";
-import { jwtDecode, JwtPayload } from "jwt-decode";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../Contexts/AuthenticatedUserContext";
-import { BEARER_TOKEN_LOCAL_STORAGE_KEY } from "../config/config";
-import { UserxRole } from "../generated-skeleton-api";
 import { ROUTES } from "../utilities/routes.paths";
 
 import logo from "../../public/512x512.png"
-
-type CustomJwtPayload = JwtPayload & { roles: string[] };
 
 const Login = () => {
     const [username, setUsername] = useState("");
@@ -25,23 +20,6 @@ const Login = () => {
     const { login } = useUser();
     const navigate = useNavigate();
 
-    const getRoleBasedRedirect = (): string => {
-        const token = localStorage.getItem(BEARER_TOKEN_LOCAL_STORAGE_KEY);
-        if (!token) return ROUTES.DASHBOARD;
-        try {
-            const decoded = jwtDecode<CustomJwtPayload>(token);
-            const roles = new Set(decoded.roles ?? []);
-            if (roles.has(UserxRole.SYSTEM_ADMIN)) return ROUTES.MANAGE_USERS;
-            if (roles.has(UserxRole.BUILDING_ADMIN)) return ROUTES.ROOMS;
-            if (roles.has(UserxRole.MANAGEMENT)) return ROUTES.MANAGEMENT_DASHBOARD;
-            if (roles.has(UserxRole.DEPARTMENT_LEAD)) return ROUTES.DEPARTMENT_DASHBOARD;
-            if (roles.has(UserxRole.EMPLOYEE)) return ROUTES.DASHBOARD;
-        } catch {
-            // fallthrough to default
-        }
-        return ROUTES.HOME;
-    };
-
     const handleLogin = async (e: any) => {
         e.preventDefault();
         if (loading) return;
@@ -51,7 +29,7 @@ const Login = () => {
 
         try {
             await login({ username, password });
-            navigate(getRoleBasedRedirect(), { replace: true });
+            navigate(ROUTES.PROFILE, { replace: true });
         } catch (err: any) {
             const status = err?.response?.status as number | undefined;
             if (status === 401 || status === 403) {
@@ -88,8 +66,8 @@ const Login = () => {
 
         .login-bg-logo {
           position: absolute;
-          width: min(520px, 90vw);
-          height: min(520px, 90vw);
+          width: min(750px, 95vw); 
+          height: min(750px, 95vw);
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
@@ -131,6 +109,15 @@ const Login = () => {
         @keyframes cardIn {
           from { opacity: 0; transform: translateY(18px) scale(0.97); }
           to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        
+        @keyframes bgPulse {
+          0%, 100% { transform: translate(-50%, -50%) scale(1);    opacity: 0.13; }
+          50%       { transform: translate(-50%, -50%) scale(1.06); opacity: 0.18; }
+        }
+        
+        .login-bg-logo {
+          animation: bgPulse 4s ease-in-out infinite;
         }
 
         .login-logo-wrap {
@@ -280,10 +267,19 @@ const Login = () => {
           padding: 14px;
           border-radius: 50%;
         }
+        
+        .app-name-label {
+          font-size: 11px;
+          font-weight: 500;n
+          color: #2a9a68;
+          text-transform: uppercase;
+          letter-spacing: 0.13em;
+          text-align: center;
+          margin: 0.9rem 0 0.1rem;
+        }
       `}</style>
 
             <div className="login-wrap">
-                {/* Large faded background logo */}
                 <div className="login-bg-logo" aria-hidden="true">
                     <img src={logo} alt="" />
                 </div>
@@ -293,6 +289,7 @@ const Login = () => {
                         <i className="pi pi-user login-user-icon" />
                     </div>
 
+                    <p className="app-name-label">Climate Canary</p>
                     <h2 className="login-title">Welcome back</h2>
                     <p className="login-subtitle">Sign in to your account</p>
 
