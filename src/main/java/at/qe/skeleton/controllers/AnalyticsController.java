@@ -348,6 +348,25 @@ public class AnalyticsController {
         return ResponseEntity.ok(analyticsService.getCompanyDashboard(from, to));
     }
 
+    @Operation(
+            summary = "Management climate dashboard",
+            description = """
+            Returns only department-level climate changes and active warning counts for
+            management users. The response does not include room-level data, raw values,
+            averages, or time-series measurements.
+            """,
+            responses = {
+            @ApiResponse(responseCode = "200", description = "Dashboard returned successfully",
+                    content = @Content(schema = @Schema(implementation = ManagementClimateDashboardDTO.class))),
+            @ApiResponse(responseCode = "403", description = "Access denied",
+                    content = @Content)
+    })
+    @PreAuthorize("hasAuthority('MANAGEMENT')")
+    @GetMapping("/company/management-climate")
+    public ResponseEntity<ManagementClimateDashboardDTO> getManagementClimateDashboard() {
+        return ResponseEntity.ok(analyticsService.getManagementClimateDashboard());
+    }
+
     /**
      * Retrieves a company-wide violation summary broken down by metric and (conditionally) by room.
      *

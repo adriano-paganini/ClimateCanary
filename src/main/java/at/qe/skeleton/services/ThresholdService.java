@@ -13,6 +13,7 @@ import at.qe.skeleton.models.ClimateHint;
 import at.qe.skeleton.models.Metric;
 import at.qe.skeleton.models.Threshold;
 import at.qe.skeleton.models.ThresholdViolation;
+import at.qe.skeleton.models.ThresholdType;
 import at.qe.skeleton.models.ViolationStatus;
 import at.qe.skeleton.repositories.ClimateHintRepository;
 import at.qe.skeleton.repositories.ThresholdRepository;
@@ -73,6 +74,14 @@ public class ThresholdService {
     }
 
     public Threshold create(ThresholdCreateDTO dto) {
+        if (thresholdRepository.existsByRoomIdAndMetricAndThresholdType(
+                dto.roomId(),
+                dto.metric(),
+                dto.thresholdType()
+        )) {
+            throw duplicateThresholdException(dto.roomId(), dto.metric(), dto.thresholdType());
+        }
+
         Threshold entity = new Threshold();
         entity.setMetric(dto.metric());
         entity.setBoundValue(dto.boundValue());
@@ -99,6 +108,19 @@ public class ThresholdService {
     @Transactional
     public Threshold update(Long id, ThresholdUpdateDTO dto) {
         Threshold entity = getThresholdById(id);
+
+        Long effectiveRoomId = dto.roomId() != null ? dto.roomId() : entity.getRoom().getId();
+        Metric effectiveMetric = dto.metric() != null ? dto.metric() : entity.getMetric();
+        var effectiveThresholdType = dto.thresholdType() != null ? dto.thresholdType() : entity.getThresholdType();
+
+        if (thresholdRepository.existsByRoomIdAndMetricAndThresholdTypeAndIdNot(
+                effectiveRoomId,
+                effectiveMetric,
+                effectiveThresholdType,
+                id
+        )) {
+            throw duplicateThresholdException(effectiveRoomId, effectiveMetric, effectiveThresholdType);
+        }
 
         ThresholdDTO oldThresholdDTO = thresholdMapper.mapTo(entity);
         Long oldPiId = getRaspberryPiIdOrNull(entity);
@@ -243,6 +265,14 @@ public class ThresholdService {
             return null;
         }
         return threshold.getRoom().getRaspberryPi().getId();
+    }
+
+    private ConflictException duplicateThresholdException(Long roomId, Metric metric, ThresholdType thresholdType) {
+        return new ConflictException(
+                "Threshold already exists for room " + roomId
+                        + " and metric " + metric
+                        + " and threshold type " + thresholdType
+        );
     }
 
     @Transactional

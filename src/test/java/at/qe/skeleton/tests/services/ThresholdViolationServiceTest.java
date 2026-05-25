@@ -232,7 +232,7 @@ class ThresholdViolationServiceTest {
         Measurement measurement = new Measurement();
         ReflectionTestUtils.setField(measurement, "id", 99L);
 
-        when(raspberryPiService.getById(5L)).thenReturn(raspberryPi);
+        when(raspberryPiService.getByIdInternal(5L)).thenReturn(raspberryPi);
         when(thresholdRepository.findByRoom_IdAndMetric(10L, Metric.TEMPERATURE))
                 .thenReturn(List.of(threshold));
         when(measurementService.getFiltered(eq(10L), eq(Metric.TEMPERATURE), eq(parsedStartTime), any(LocalDateTime.class)))
@@ -267,7 +267,7 @@ class ThresholdViolationServiceTest {
         Threshold lowerThreshold = threshold(6L, ThresholdType.LOWER, 18.0F);
         Threshold upperThreshold = threshold(7L, ThresholdType.UPPER, 30.0F);
 
-        when(raspberryPiService.getById(5L)).thenReturn(raspberryPi);
+        when(raspberryPiService.getByIdInternal(5L)).thenReturn(raspberryPi);
         when(thresholdRepository.findByRoom_IdAndMetric(10L, Metric.TEMPERATURE))
                 .thenReturn(List.of(lowerThreshold, upperThreshold));
         when(measurementService.getFiltered(eq(10L), eq(Metric.TEMPERATURE), any(LocalDateTime.class), any(LocalDateTime.class)))
@@ -299,7 +299,7 @@ class ThresholdViolationServiceTest {
         Threshold lowerThreshold = threshold(6L, ThresholdType.LOWER, 18.0F);
         Threshold upperThreshold = threshold(7L, ThresholdType.UPPER, 30.0F);
 
-        when(raspberryPiService.getById(5L)).thenReturn(raspberryPi);
+        when(raspberryPiService.getByIdInternal(5L)).thenReturn(raspberryPi);
         when(thresholdRepository.findByRoom_IdAndMetric(10L, Metric.TEMPERATURE))
                 .thenReturn(List.of(lowerThreshold, upperThreshold));
         when(measurementService.getFiltered(eq(10L), eq(Metric.TEMPERATURE), any(LocalDateTime.class), any(LocalDateTime.class)))
@@ -327,7 +327,7 @@ class ThresholdViolationServiceTest {
                 31.5F
         );
 
-        when(raspberryPiService.getById(5L)).thenReturn(raspberryPiInRoom(5L, 10L));
+        when(raspberryPiService.getByIdInternal(5L)).thenReturn(raspberryPiInRoom(5L, 10L));
         when(thresholdRepository.findByRoom_IdAndMetric(10L, Metric.TEMPERATURE))
                 .thenReturn(List.of());
 
@@ -355,7 +355,7 @@ class ThresholdViolationServiceTest {
         violation.setStartTime(startTime);
         violation.setViolationStatus(ViolationStatus.ACTIVE);
 
-        when(raspberryPiService.getById(5L)).thenReturn(raspberryPi);
+        when(raspberryPiService.getByIdInternal(5L)).thenReturn(raspberryPi);
         when(thresholdViolationRepository.findByRoomIdAndMetricAndViolationStatus(
                 10L,
                 Metric.TEMPERATURE,
@@ -383,7 +383,7 @@ class ThresholdViolationServiceTest {
                 "2026-05-18T15:00:00.000"
         );
 
-        when(raspberryPiService.getById(5L)).thenReturn(raspberryPiInRoom(5L, 10L));
+        when(raspberryPiService.getByIdInternal(5L)).thenReturn(raspberryPiInRoom(5L, 10L));
 
         assertThatThrownBy(() -> thresholdViolationService.update(5L, dto))
                 .isInstanceOf(NotFoundException.class)
@@ -402,7 +402,7 @@ class ThresholdViolationServiceTest {
                 "2026-05-18T15:00:00.000"
         );
 
-        when(raspberryPiService.getById(5L)).thenReturn(raspberryPiInRoom(5L, 10L));
+        when(raspberryPiService.getByIdInternal(5L)).thenReturn(raspberryPiInRoom(5L, 10L));
         when(thresholdViolationRepository.findByRoomIdAndMetricAndViolationStatus(
                 10L,
                 Metric.TEMPERATURE,

@@ -4,6 +4,8 @@ import at.qe.skeleton.common.exceptions.BadRequestException;
 import at.qe.skeleton.common.exceptions.ConflictException;
 import at.qe.skeleton.dtos.*;
 import at.qe.skeleton.models.*;
+import at.qe.skeleton.repositories.MeasurementRepository;
+import at.qe.skeleton.repositories.ThresholdViolationRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -45,6 +47,8 @@ public class AnalyticsService {
     private final DepartmentService departmentService;
     private final EmployeeProfileService employeeProfileService;
     private final AuthenticatedUserService authenticatedUserService;
+    private final MeasurementRepository measurementRepository;
+    private final ThresholdViolationRepository thresholdViolationRepository;
     private static final String YOU_MAY_ONLY_VIEW_YOUR_OWN_DEPARTMENT = "You may only view your own department.";
 
     public AnalyticsService(
@@ -53,13 +57,17 @@ public class AnalyticsService {
             RoomService roomService,
             DepartmentService departmentService,
             EmployeeProfileService employeeProfileService,
-            AuthenticatedUserService authenticatedUserService) {
+            AuthenticatedUserService authenticatedUserService,
+            MeasurementRepository measurementRepository,
+            ThresholdViolationRepository thresholdViolationRepository) {
         this.measurementService = measurementService;
         this.thresholdViolationService = thresholdViolationService;
         this.roomService = roomService;
         this.departmentService = departmentService;
         this.employeeProfileService = employeeProfileService;
         this.authenticatedUserService = authenticatedUserService;
+        this.measurementRepository = measurementRepository;
+        this.thresholdViolationRepository = thresholdViolationRepository;
     }
 
     private RoomTrendHelperDTO createRoomTrendHelperDTO(Long roomId, LocalDateTime from, LocalDateTime to) {
@@ -169,16 +177,14 @@ public class AnalyticsService {
                 roomId, metric, roomTrendHelper.effectiveFrom(), roomTrendHelper.effectiveTo());
 
         /*
-         * DEPARTMENT_LEAD + office room: apply forced reduced granularity only when the room
-         * is above minimum occupancy (privacy mode OFF). If privacy mode is ON, the room would
-         * have already been blocked by assertOccupancyIfRequired for EMPLOYEEs; DEPARTMENT_LEAD
-         * is exempt from the hard block but still sees reduced granularity for occupied offices.
+         * DEPARTMENT_LEAD + office room: always apply forced reduced granularity.
+         * A privacy-mode change is only a snapshot of current occupancy; it must not make
+         * already stored office data available to department leads at raw granularity.
          *
          * Common areas are always shown at full granularity for all roles.
          */
         boolean forceReduced = hasRole(roomTrendHelper.currentUser(), UserxRole.DEPARTMENT_LEAD)
-                && roomTrendHelper.room().getRoomType() == RoomType.OFFICE
-                && !Boolean.TRUE.equals(roomTrendHelper.room().getPrivacyMode());
+                && roomTrendHelper.room().getRoomType() == RoomType.OFFICE;
 
         String bucketSize = forceReduced
                 ? forcedReducedBucket(roomTrendHelper.effectiveFrom(), roomTrendHelper.effectiveTo())
@@ -409,6 +415,50 @@ public class AnalyticsService {
         log.debug("Generated company dashboard: departments={}, totalRooms={}, activeViolations={}",
                 departments.size(), totalRooms, activeViolations);
         return new CompanyDashboardDTO(LocalDateTime.now(), totalRooms, totalEmployees, activeViolations, departmentDTOs);
+    }
+
+    /**
+     * Returns the restricted management climate view: department-level warning counts
+     * and direction-only week/month climate changes.
+     *
+     * <p>No room identifiers, room names, raw values, averages, or time series are exposed.</p>
+     */
+    @PreAuthorize("hasAuthority('MANAGEMENT')")
+    public ManagementClimateDashboardDTO getManagementClimateDashboard() {
+        LocalDateTime now = LocalDateTime.now();
+
+        List<Department> departments = departmentService.getAll();
+
+        Map<String, MeasurementRepository.DepartmentMetricPeriodAverage> weeklyAverages =
+                indexAverages(measurementRepository.findDepartmentMetricPeriodAverages(
+                        now.minusDays(14), now.minusDays(7), now));
+        Map<String, MeasurementRepository.DepartmentMetricPeriodAverage> monthlyAverages =
+                indexAverages(measurementRepository.findDepartmentMetricPeriodAverages(
+                        now.minusDays(60), now.minusDays(30), now));
+
+        Map<Long, List<ThresholdViolationRepository.DepartmentWarningCount>> warningsByDepartment =
+                thresholdViolationRepository.countWarningsByDepartmentAndMetric(ViolationStatus.ACTIVE)
+                        .stream()
+                        .collect(Collectors.groupingBy(ThresholdViolationRepository.DepartmentWarningCount::getDepartmentId));
+
+        List<ManagementDepartmentClimateDTO> departmentDTOs = departments.stream()
+                .filter(department -> department.getId() != null)
+                .map(department -> buildManagementDepartmentClimate(
+                        department,
+                        weeklyAverages,
+                        monthlyAverages,
+                        warningsByDepartment.getOrDefault(department.getId(), Collections.emptyList())))
+                .sorted(Comparator.comparing(ManagementDepartmentClimateDTO::departmentName,
+                        Comparator.nullsLast(String::compareToIgnoreCase)))
+                .toList();
+
+        int totalActiveWarnings = departmentDTOs.stream()
+                .mapToInt(ManagementDepartmentClimateDTO::activeWarnings)
+                .sum();
+
+        log.debug("Generated management climate dashboard: departments={}, activeWarnings={}",
+                departmentDTOs.size(), totalActiveWarnings);
+        return new ManagementClimateDashboardDTO(now, totalActiveWarnings, departmentDTOs);
     }
 
     /**
@@ -872,6 +922,83 @@ public class AnalyticsService {
                                 .count()))
                 .filter(dto -> dto.count() > 0)
                 .toList();
+    }
+
+    private Map<String, MeasurementRepository.DepartmentMetricPeriodAverage> indexAverages(
+            List<MeasurementRepository.DepartmentMetricPeriodAverage> averages) {
+        return averages.stream()
+                .collect(Collectors.toMap(
+                        row -> averageKey(row.getDepartmentId(), row.getMetric()),
+                        row -> row,
+                        (left, right) -> left
+                ));
+    }
+
+    private ManagementDepartmentClimateDTO buildManagementDepartmentClimate(
+            Department department,
+            Map<String, MeasurementRepository.DepartmentMetricPeriodAverage> weeklyAverages,
+            Map<String, MeasurementRepository.DepartmentMetricPeriodAverage> monthlyAverages,
+            List<ThresholdViolationRepository.DepartmentWarningCount> warnings) {
+
+        Map<Metric, Integer> warningCountByMetric = warnings.stream()
+                .collect(Collectors.toMap(
+                        ThresholdViolationRepository.DepartmentWarningCount::getMetric,
+                        warning -> warning.getWarningCount() == null ? 0 : warning.getWarningCount().intValue(),
+                        Integer::sum
+                ));
+
+        List<ViolationBreakdownDTO> warningsByMetric = Arrays.stream(Metric.values())
+                .map(metric -> new ViolationBreakdownDTO(metric.name(), warningCountByMetric.getOrDefault(metric, 0)))
+                .filter(warning -> warning.count() > 0)
+                .toList();
+
+        int activeWarnings = warningsByMetric.stream()
+                .mapToInt(ViolationBreakdownDTO::count)
+                .sum();
+
+        List<ManagementClimateTrendDTO> trends = Arrays.stream(Metric.values())
+                .map(metric -> new ManagementClimateTrendDTO(
+                        metric,
+                        trendDirection(weeklyAverages.get(averageKey(department.getId(), metric)), metric),
+                        trendDirection(monthlyAverages.get(averageKey(department.getId(), metric)), metric)))
+                .toList();
+
+        return new ManagementDepartmentClimateDTO(
+                department.getId(),
+                department.getName(),
+                activeWarnings,
+                warningsByMetric,
+                trends
+        );
+    }
+
+    private String averageKey(Long departmentId, Metric metric) {
+        return departmentId + ":" + metric.name();
+    }
+
+    private String trendDirection(MeasurementRepository.DepartmentMetricPeriodAverage average, Metric metric) {
+        if (average == null || average.getCurrentAverage() == null || average.getPreviousAverage() == null) {
+            return "NO_DATA";
+        }
+
+        double currentDistance = comfortDistance(metric, average.getCurrentAverage());
+        double previousDistance = comfortDistance(metric, average.getPreviousAverage());
+        double delta = currentDistance - previousDistance;
+
+        if (Math.abs(delta) < 0.01) {
+            return "UNCHANGED";
+        }
+        return delta < 0 ? "IMPROVED" : "WORSENED";
+    }
+
+    private double comfortDistance(Metric metric, double value) {
+        double target = switch (metric) {
+            case TEMPERATURE -> 22.0;
+            case HUMIDITY -> 45.0;
+            case PRESSURE -> 1013.25;
+            case IAQ -> 0.0;
+        };
+        return Math.abs(value - target);
     }
 
     private void validateRange(LocalDateTime from, LocalDateTime to) {

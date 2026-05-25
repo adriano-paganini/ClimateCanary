@@ -44,7 +44,7 @@ const cachedRoomRequestsByDepartment = new Map<number, Promise<RoomDTO[]>>();
  * Component for managing users.
  */
 const UserTable = () => {
-    const {currentUser, fullUser, logout} = useUser();
+    const {currentUser, fullUser, logout, refreshCurrentUser} = useUser();
     const navigate = useNavigate();
     const [users, setUsers] = useState<UserxDTO[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
@@ -311,6 +311,9 @@ const UserTable = () => {
             }).then(response => response.data);
             await syncEmployeeProfile(updatedUser, userToUpdate);
             setUsers(users.map((user: UserxDTO) => user.id === updatedUser.id ? updatedUser : user));
+            if (!isNewUser && isCurrentUser(updatedUser)) {
+                await refreshCurrentUser();
+            }
         } catch (err: any) {
             console.error('Error updating user:', err);
             toast.current?.show({severity: 'error', summary: 'Error', detail: 'Error updating user', life: 3000});
@@ -547,6 +550,12 @@ const UserTable = () => {
         (currentUserId !== undefined && user.id === currentUserId) ||
         (currentUsername !== undefined && user.username === currentUsername);
     const canSubmitSelfDelete = selfDeletePassword.length > 0 && selfDeleteConfirmation === 'DELETE ME' && !selfDeleteSubmitting;
+    const lockedRoles = !isNewUser
+        && selectedUser
+        && isCurrentUser(selectedUser as UserxDTO)
+        && hasUserRole(selectedUser, UserxRole.SYSTEM_ADMIN)
+        ? [UserxRole.SYSTEM_ADMIN]
+        : [];
 
     const selfDeleteFooter = (
         <div>
@@ -608,7 +617,8 @@ const UserTable = () => {
                         onDepartmentChange={handleEmployeeDepartmentChange}
                         onRoomChange={handleEmployeeRoomChange}
                         departmentsLoading={departmentsLoading}
-                        roomsLoading={roomsLoading}/>
+                        roomsLoading={roomsLoading}
+                        lockedRoles={lockedRoles}/>
             <Dialog
                 header="Delete your account"
                 visible={selfDeleteDialogVisible}

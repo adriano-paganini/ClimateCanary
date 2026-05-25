@@ -787,6 +787,21 @@ const OrgStructureView: React.FC = () => {
         label: addressLabel(a.id),
         value: a.id,
     }));
+    const takenAddressIds = new Set(
+        buildings
+            .filter(b => editingBldg == null || b.id !== editingBldg.id)
+            .map(b => b.addressId)
+            .filter((id): id is number => id != null)
+    );
+    const addressItemTemplate = (option: { label: string; value: number }) => {
+        const taken = takenAddressIds.has(option.value);
+        return (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>{option.label}</span>
+                {taken && <Tag value="Taken" severity="danger" style={{ fontSize: '0.7rem', marginLeft: '0.5rem' }} />}
+            </div>
+        );
+    };
 
     const userOptions = users
         .filter(user => user.enabled !== false)
@@ -794,12 +809,18 @@ const OrgStructureView: React.FC = () => {
             label: (`${u.firstName ?? ''} ${u.lastName ?? ''}`).trim() || u.username || `User ${u.id}`,
             value: u.id,
         }));
-    const unassignedUserOptions = users
-        .filter(user => user.enabled !== false && !employeeProfiles.some(profile => profile.userxId === user.id))
-        .map(u => ({
-            label: (`${u.firstName ?? ''} ${u.lastName ?? ''}`).trim() || u.username || `User ${u.id}`,
-            value: u.id,
-        }));
+    const takenUserIds = new Set(
+        employeeProfiles.map(p => p.userxId).filter((id): id is number => id != null)
+    );
+    const assignUserItemTemplate = (option: { label: string; value: number }) => {
+        const taken = takenUserIds.has(option.value);
+        return (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>{option.label}</span>
+                {taken && <Tag value="Taken" severity="danger" style={{ fontSize: '0.7rem', marginLeft: '0.5rem' }} />}
+            </div>
+        );
+    };
     const departmentOptions = departments.map(d => ({ label: d.name ?? `Department ${d.id}`, value: d.id }));
     const buildingOptions = buildings.map(b => ({ label: b.name ?? `Building ${b.id}`, value: b.id }));
     const roomOptions = targetRooms.map(room => ({ label: room.name ?? `Room ${room.id}`, value: room.id }));
@@ -1143,6 +1164,7 @@ const OrgStructureView: React.FC = () => {
                             onChange={e => setBldgForm(f => ({ ...f, addressId: e.value as number }))}
                             placeholder="Select address…"
                             filter
+                            itemTemplate={addressItemTemplate}
                             style={{ width: '100%' }}
                         />
                     </div>
@@ -1255,13 +1277,14 @@ const OrgStructureView: React.FC = () => {
             >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', paddingTop: '0.5rem' }}>
                     <div>
-                        <label style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.4rem', color: '#374151' }}>User without employee profile *</label>
+                        <label style={{ display: 'block', fontWeight: 600, fontSize: '0.875rem', marginBottom: '0.4rem', color: '#374151' }}>User *</label>
                         <Dropdown
                             value={assignUserId}
-                            options={unassignedUserOptions}
+                            options={userOptions}
                             onChange={e => setAssignUserId(e.value as number)}
                             placeholder="Select user..."
                             filter
+                            itemTemplate={assignUserItemTemplate}
                             style={{ width: '100%' }}
                         />
                     </div>
