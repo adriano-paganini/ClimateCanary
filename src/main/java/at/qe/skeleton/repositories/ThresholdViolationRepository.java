@@ -36,6 +36,8 @@ public interface ThresholdViolationRepository extends AbstractRepository<Thresho
 
     Optional<ThresholdViolation> findByRoomIdAndMetricAndViolationStatus(Long roomId, Metric metric,ViolationStatus violationStatus);
 
+    List<ThresholdViolation> findByThreshold_Id(Long thresholdId);
+
     List<ThresholdViolation> findByThreshold_IdAndViolationStatus(Long thresholdId, ViolationStatus violationStatus);
 
     @Query("""

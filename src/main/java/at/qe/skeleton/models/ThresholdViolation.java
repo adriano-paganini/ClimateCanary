@@ -32,7 +32,7 @@ public class ThresholdViolation {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "threshold_id")
     private Threshold threshold;
 

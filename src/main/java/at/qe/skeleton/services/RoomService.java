@@ -43,6 +43,11 @@ public class RoomService {
                 .orElseThrow(() -> new NotFoundException("Room with id " + id + " not found"));
     }
 
+    public Room getByIdInternal(Long id) {
+        return roomRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Room with id " + id + " not found"));
+    }
+
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public Room create(Room room) {
         Room savedRoom = roomRepository.save(room);

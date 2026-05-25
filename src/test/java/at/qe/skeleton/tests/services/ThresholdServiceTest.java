@@ -400,6 +400,8 @@ class ThresholdServiceTest {
 
         Mockito.when(thresholdRepository.findById(100L))
                 .thenReturn(Optional.of(threshold));
+        Mockito.when(thresholdViolationRepository.findByThreshold_Id(100L))
+                .thenReturn(List.of());
 
         thresholdService.delete(100L);
 
@@ -417,6 +419,8 @@ class ThresholdServiceTest {
         Mockito.when(thresholdRepository.findById(100L))
                 .thenReturn(Optional.of(threshold));
         Mockito.when(thresholdMapper.mapTo(threshold)).thenReturn(thresholdDTO);
+        Mockito.when(thresholdViolationRepository.findByThreshold_Id(100L))
+                .thenReturn(List.of());
 
         thresholdService.delete(100L);
 
@@ -433,15 +437,23 @@ class ThresholdServiceTest {
     }
 
     @Test
-    @DisplayName("delete throws ConflictException when violations exist")
-    void delete_withViolations() {
-        threshold.getViolations().add(new ThresholdViolation());
+    @DisplayName("delete detaches existing violations before deleting threshold")
+    void delete_withViolations_detachesReferences() {
+        ThresholdViolation violation = new ThresholdViolation();
+        violation.setThreshold(threshold);
+        threshold.getViolations().add(violation);
 
         Mockito.when(thresholdRepository.findById(100L))
                 .thenReturn(Optional.of(threshold));
+        Mockito.when(thresholdViolationRepository.findByThreshold_Id(100L))
+                .thenReturn(List.of(violation));
 
-        Assertions.assertThatThrownBy(() -> thresholdService.delete(100L))
-                .isInstanceOf(ConflictException.class);
+        thresholdService.delete(100L);
+
+        Assertions.assertThat(violation.getThreshold()).isNull();
+        Assertions.assertThat(threshold.getViolations()).isEmpty();
+        Mockito.verify(thresholdViolationRepository).save(violation);
+        Mockito.verify(thresholdRepository).delete(threshold);
     }
 
     @Test

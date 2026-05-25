@@ -250,10 +250,6 @@ public class ThresholdService {
     public void delete(Long id) {
         Threshold entity = getThresholdById(id);
 
-        if (!entity.getViolations().isEmpty()) {
-            throw new ConflictException("Threshold cannot be deleted because it has violations");
-        }
-
         Long piId = getRaspberryPiIdOrNull(entity);
         ThresholdDTO thresholdDTO = thresholdMapper.mapTo(entity);
 
@@ -262,10 +258,23 @@ public class ThresholdService {
         }
 
         clearClimateHints(entity);
+        detachViolations(id, entity);
         thresholdRepository.delete(entity);
         thresholdPiSyncService.synchronize(id, piId, thresholdDTO, null, null, List.of(), false, List.of());
 
         log.info("Deleted threshold with id={}", id);
         log.debug("Cleared climate hint associations before deleting threshold id={}", id);
+    }
+
+    private void detachViolations(Long thresholdId, Threshold threshold) {
+        List<ThresholdViolation> violations = thresholdViolationRepository.findByThreshold_Id(thresholdId);
+
+        for (ThresholdViolation violation : violations) {
+            violation.setThreshold(null);
+            thresholdViolationRepository.save(violation);
+        }
+
+        threshold.getViolations().clear();
+        log.debug("Detached {} threshold violation(s) before deleting threshold id={}", violations.size(), thresholdId);
     }
 }
