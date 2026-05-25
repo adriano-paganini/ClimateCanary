@@ -58,6 +58,7 @@ const DeviceManagementView: React.FC = () => {
 
     const [pis, setPis] = useState<RaspberryPiDTO[]>([]);
     const [decommissionedPis, setDecommissionedPis] = useState<RaspberryPiDTO[]>([]);
+    const [allStations, setAllStations] = useState<SensorStationDTO[]>([]);
     const [rooms, setRooms] = useState<RoomDTO[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -105,6 +106,14 @@ const DeviceManagementView: React.FC = () => {
         }
     }, []);
 
+    const fetchAllStations = useCallback(async () => {
+        try {
+            setAllStations(await SensorStationService.getAll());
+        } catch {
+            // non-critical
+        }
+    }, []);
+
     const fetchRooms = useCallback(async () => {
         try {
             setRooms(await RoomService.getAll());
@@ -116,8 +125,9 @@ const DeviceManagementView: React.FC = () => {
     useEffect(() => {
         void fetchPis();
         void fetchDecommissionedPis();
+        void fetchAllStations();
         void fetchRooms();
-    }, [fetchPis, fetchDecommissionedPis, fetchRooms]);
+    }, [fetchPis, fetchDecommissionedPis, fetchAllStations, fetchRooms]);
 
     useEffect(() => {
         const id = setInterval(() => void fetchPis(), 30_000);
@@ -395,6 +405,7 @@ const DeviceManagementView: React.FC = () => {
                 ...prev,
                 [piId]: (prev[piId] ?? []).filter(s => s.id !== station.id),
             }));
+            void fetchAllStations();
             toast.current?.show({ severity: 'success', summary: 'Deleted', detail: `Sensor station "${station.name}" deleted`, life: 3000 });
         } catch {
             toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to delete sensor station', life: 3000 });
@@ -679,6 +690,25 @@ const DeviceManagementView: React.FC = () => {
                             header="Status"
                             style={{ width: '9rem' }}
                             body={(pi: RaspberryPiDTO) => statusTag(pi.deviceStatus)}
+                        />
+                    </DataTable>
+                </section>
+
+                <section style={{ marginTop: '2rem' }}>
+                    <h2 style={{ fontSize: '1.15rem', margin: '0 0 0.75rem' }}>Deleted Sensor Stations</h2>
+                    <DataTable
+                        value={allStations.filter(s => s.deviceStatus === 'DECOMMISSIONED')}
+                        emptyMessage="No deleted sensor stations."
+                        size="small"
+                    >
+                        <Column field="id" header="ID" style={{ width: '4rem' }} />
+                        <Column field="name" header="Name" />
+                        <Column field="bleMac" header="BLE MAC" />
+                        <Column field="measurementInterval" header="Interval (s)" style={{ width: '8rem' }} />
+                        <Column
+                            header="Status"
+                            style={{ width: '9rem' }}
+                            body={(s: SensorStationDTO) => statusTag(s.deviceStatus)}
                         />
                     </DataTable>
                 </section>
