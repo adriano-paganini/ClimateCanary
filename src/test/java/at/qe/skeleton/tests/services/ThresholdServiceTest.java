@@ -9,8 +9,10 @@ import at.qe.skeleton.mappers.ThresholdMapper;
 import at.qe.skeleton.models.*;
 import at.qe.skeleton.repositories.ClimateHintRepository;
 import at.qe.skeleton.repositories.ThresholdRepository;
+import at.qe.skeleton.repositories.ThresholdViolationRepository;
 import at.qe.skeleton.services.RaspberryPiServerService;
 import at.qe.skeleton.services.RoomService;
+import at.qe.skeleton.services.ThresholdPiSyncService;
 import at.qe.skeleton.services.ThresholdService;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,6 +36,9 @@ class ThresholdServiceTest {
     private ThresholdRepository thresholdRepository;
 
     @Mock
+    private ThresholdViolationRepository thresholdViolationRepository;
+
+    @Mock
     private RoomService roomService;
 
     @Mock
@@ -44,6 +49,9 @@ class ThresholdServiceTest {
 
     @Mock
     private RaspberryPiServerService raspberryPiServerService;
+
+    @Mock
+    private ThresholdPiSyncService thresholdPiSyncService;
 
     @Mock
     private ClimateHintMapper climateHintMapper;
@@ -158,6 +166,7 @@ class ThresholdServiceTest {
         Assertions.assertThat(result.getBoundValue()).isEqualTo(25.0F);
         Assertions.assertThat(result.getThresholdType()).isEqualTo(ThresholdType.UPPER);
         Assertions.assertThat(result.getClimateHints()).containsExactly(climateHint);
+        Assertions.assertThat(climateHint.getThresholds()).containsExactly(result);
         Assertions.assertThat(result.isEnabled()).isTrue();
     }
 
@@ -221,6 +230,8 @@ class ThresholdServiceTest {
 
         Mockito.when(thresholdRepository.save(threshold))
                 .thenReturn(threshold);
+        Mockito.when(thresholdViolationRepository.findByThreshold_IdAndViolationStatus(100L, ViolationStatus.ACTIVE))
+                .thenReturn(List.of());
 
         Threshold result = thresholdService.update(100L, dto);
 
@@ -230,6 +241,39 @@ class ThresholdServiceTest {
         Assertions.assertThat(result.getRoom()).isEqualTo(newRoom);
         Assertions.assertThat(result.isEnabled()).isFalse();
         Assertions.assertThat(result.getClimateHints()).containsExactly(climateHint);
+        Assertions.assertThat(climateHint.getThresholds()).containsExactly(result);
+    }
+
+    @Test
+    @DisplayName("update removes old climate hint owning-side association")
+    void update_replacesClimateHints_bidirectionally() {
+        ClimateHint oldHint = new ClimateHint();
+        ReflectionTestUtils.setField(oldHint, "id", 9L);
+        oldHint.setMetric(Metric.TEMPERATURE);
+        oldHint.getThresholds().add(threshold);
+        threshold.getClimateHints().add(oldHint);
+
+        ThresholdUpdateDTO dto = new ThresholdUpdateDTO(
+                null,
+                null,
+                null,
+                null,
+                List.of(10L),
+                null
+        );
+
+        Mockito.when(thresholdRepository.findById(100L))
+                .thenReturn(Optional.of(threshold));
+        Mockito.when(climateHintRepository.findAllById(List.of(10L)))
+                .thenReturn(List.of(climateHint));
+        Mockito.when(thresholdRepository.save(threshold))
+                .thenReturn(threshold);
+
+        Threshold result = thresholdService.update(100L, dto);
+
+        Assertions.assertThat(result.getClimateHints()).containsExactly(climateHint);
+        Assertions.assertThat(climateHint.getThresholds()).containsExactly(result);
+        Assertions.assertThat(oldHint.getThresholds()).doesNotContain(result);
     }
 
     @Test
@@ -277,6 +321,7 @@ class ThresholdServiceTest {
     @DisplayName("delete removes threshold and clears climate hints")
     void delete_success() {
         threshold.getClimateHints().add(climateHint);
+        climateHint.getThresholds().add(threshold);
 
         Mockito.when(thresholdRepository.findById(100L))
                 .thenReturn(Optional.of(threshold));
@@ -284,6 +329,7 @@ class ThresholdServiceTest {
         thresholdService.delete(100L);
 
         Assertions.assertThat(threshold.getClimateHints()).isEmpty();
+        Assertions.assertThat(climateHint.getThresholds()).doesNotContain(threshold);
         Mockito.verify(thresholdRepository).delete(threshold);
     }
 

@@ -9,6 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
 
 @Slf4j
@@ -76,6 +77,9 @@ public class ClimateHintService {
         ClimateHint entity = climateHintRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Climate hint not found with id: " + id));
 
+        for (var threshold : new HashSet<>(entity.getThresholds())) {
+            threshold.getClimateHints().remove(entity);
+        }
         entity.getThresholds().clear();
         climateHintRepository.delete(entity);
 
