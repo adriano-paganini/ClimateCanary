@@ -28,7 +28,6 @@ class SensorStationDTO(BaseModel):
     roomId:              Optional[int] = None
 
 class OccupancyDTO(BaseModel):
-    id:          int
     roomName:    str
     privacyMode: bool
 
@@ -64,8 +63,8 @@ def _parse_threshold_key(key: str) -> dict | None:
 class ViolationResolvedDTO(BaseModel):
     metric:   str
     roomId:   int
-    endTime:  str   # ISO string p.ex "2026-05-04T14:30:00.123"
-    status:   str   # "RESOLVED"
+    endTime:  str            # ISO string e.g. "2026-05-04T14:30:00.123"
+    status:   Optional[str] = None  # computed method on Java record, may not be serialised
 
 
 def _check_pi_id(piId: int) -> None:
@@ -105,6 +104,14 @@ async def receive_occupancy(piId: int, payload: OccupancyDTO):
     _check_pi_id(piId)
     set_privacy_mode(payload.privacyMode)
     config.PRIVACY_MODE = payload.privacyMode
+    try:
+        p = Path("conf.yml")
+        import yaml as _yaml
+        data = _yaml.safe_load(p.read_text())
+        data["pi"]["privacy_mode"] = payload.privacyMode
+        p.write_text(_yaml.dump(data, allow_unicode=True))
+    except Exception as e:
+        log.warning(f"[CFG] could not persist privacy_mode to conf.yml: {e}")
     log.info(f"[CFG] privacy_mode={payload.privacyMode}, room={payload.roomName}")
     return {"status": "ok"}
 
@@ -226,6 +233,7 @@ async def resolve_violation(piId: int, payload: ViolationResolvedDTO):
 
     db = _check_db()
     from violation_tracker import resolve_violation as do_resolve
-    await do_resolve(payload.metric, payload.roomId, db)
+    metric = _METRIC_MAP.get(payload.metric, payload.metric.lower())
+    await do_resolve(metric, payload.roomId, db)
     log.info(f"[VIO] manual resolve: metric={payload.metric}, room={payload.roomId}, end={payload.endTime}")
     return {"status": "ok"}

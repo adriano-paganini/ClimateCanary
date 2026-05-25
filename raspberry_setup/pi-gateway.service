@@ -1,0 +1,16 @@
+[Unit]
+Description=Pi Gateway
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=simple
+User=pi
+ExecStart=/home/pi/start-container.sh
+ExecStop=/usr/bin/docker stop pi-gateway
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

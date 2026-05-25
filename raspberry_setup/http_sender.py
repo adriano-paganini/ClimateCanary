@@ -43,6 +43,13 @@ async def http_sender(db: aiosqlite.Connection) -> None:
                                     (row_id,)
                                 )
                                 log.info(f"[HTTP] sent row {row_id} → {resp.status}")
+                            elif 400 <= resp.status < 500:
+                                body = await resp.text()
+                                log.error(f"[HTTP] permanent error {resp.status} for row {row_id}, discarding: {body}")
+                                await db.execute(
+                                    "UPDATE sensor_data SET sent = 1 WHERE id = ?",
+                                    (row_id,)
+                                )
                             else:
                                 body = await resp.text()
                                 log.warning(f"[HTTP] server returned {resp.status} for row {row_id}: {body}")

@@ -12,6 +12,13 @@ import config
 from state import get_privacy_mode
 from thresholds import get_threshold, get_hint_texts
 
+_TO_BACKEND_METRIC: dict[str, str] = {
+    "temperature": "TEMPERATURE",
+    "humidity":    "HUMIDITY",
+    "pressure":    "PRESSURE",
+    "air_quality": "IAQ",
+}
+
 log = logging.getLogger(__name__)
 
 def _to_iso(dt: datetime) -> str:
@@ -200,7 +207,7 @@ async def _post_violation(
 ) -> Optional[int]:
     url = f"{config.BACKEND_URL}/api/cpi/{config.PI_ID}/violation"
     payload = {
-        "metric":    metric,
+        "metric":    _TO_BACKEND_METRIC.get(metric, metric.upper()),
         "roomId":    room_id,
         "startTime": _to_iso(start_time),
         "avgValue":  avg_value,
@@ -229,7 +236,7 @@ async def _patch_violation(
 ) -> None:
     url = f"{config.BACKEND_URL}/api/cpi/{config.PI_ID}/violation/resolve"
     payload = {
-        "metric":  metric,
+        "metric":  _TO_BACKEND_METRIC.get(metric, metric.upper()),
         "roomId":  room_id,
         "endTime": _to_iso(end_time),
         "status":  "RESOLVED",
