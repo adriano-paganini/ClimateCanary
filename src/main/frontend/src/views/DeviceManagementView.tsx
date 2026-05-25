@@ -318,6 +318,7 @@ const DeviceManagementView: React.FC = () => {
             await RaspberryPiService.delete(pi.id);
             setPis(await RaspberryPiService.getAll());
             void fetchDecommissionedPis();
+            void fetchAllStations();
             toast.current?.show({ severity: 'success', summary: 'Deleted', detail: `Raspberry Pi "${pi.hostName}" deleted`, life: 3000 });
         } catch {
             toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to delete Raspberry Pi', life: 3000 });
@@ -405,7 +406,11 @@ const DeviceManagementView: React.FC = () => {
                 ...prev,
                 [piId]: (prev[piId] ?? []).filter(s => s.id !== station.id),
             }));
-            void fetchAllStations();
+            setAllStations(prev =>
+                prev.some(s => s.id === station.id)
+                    ? prev.map(s => s.id === station.id ? { ...s, deviceStatus: 'DECOMMISSIONED' } : s)
+                    : [...prev, { ...station, deviceStatus: 'DECOMMISSIONED' }]
+            );
             toast.current?.show({ severity: 'success', summary: 'Deleted', detail: `Sensor station "${station.name}" deleted`, life: 3000 });
         } catch {
             toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to delete sensor station', life: 3000 });
