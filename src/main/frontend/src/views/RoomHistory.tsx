@@ -57,6 +57,10 @@ function visibleDayLabel(date: Date): string {
     return format(dayStart(date), 'dd.MM.yyyy');
 }
 
+function isFutureDay(date: Date): boolean {
+    return dayStart(date).getTime() > dayStart(new Date()).getTime();
+}
+
 const CHART_OPTIONS = {
     responsive: true,
     maintainAspectRatio: false,
@@ -159,8 +163,14 @@ const RoomHistory: React.FC = () => {
         return buildRoomHistoryChartData(metric, points, thresholds);
     }
 
+    const nextDayWouldBeFuture = isFutureDay(addDays(dayStart(currentDate), 1));
+
     function navigateDay(direction: -1 | 1) {
-        setCurrentDate(addDays(dayStart(currentDate), direction));
+        const nextDate = addDays(dayStart(currentDate), direction);
+        if (direction === 1 && isFutureDay(nextDate)) {
+            return;
+        }
+        setCurrentDate(nextDate);
     }
 
     function jumpToDate(value: string) {
@@ -244,7 +254,12 @@ const RoomHistory: React.FC = () => {
                         <button type="button" onClick={() => setCurrentDate(new Date())}>
                             Today
                         </button>
-                        <button type="button" onClick={() => navigateDay(1)} aria-label="Next day">
+                        <button
+                            type="button"
+                            onClick={() => navigateDay(1)}
+                            aria-label="Next day"
+                            disabled={nextDayWouldBeFuture}
+                        >
                             <i className="pi pi-chevron-right" aria-hidden="true" />
                         </button>
                     </div>
