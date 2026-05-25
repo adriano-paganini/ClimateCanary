@@ -16,6 +16,8 @@ public interface EmployeeProfileRepository extends AbstractRepository<EmployeePr
 
     List<EmployeeProfile> findByDepartment_Id(Long departmentId);
 
+    List<EmployeeProfile> findByRoom_Id(Long roomId);
+
     long countByDepartment_Id(Long departmentId);
 
     long countByRoom_Id(Long roomId);

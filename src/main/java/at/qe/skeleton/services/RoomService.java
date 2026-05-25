@@ -104,6 +104,14 @@ public class RoomService {
         return updatedRoom;
     }
 
+    public Room updatePrivacyModeInternal(Long id, boolean privacyMode) {
+        Room room = getById(id);
+        room.setPrivacyMode(privacyMode);
+        Room updatedRoom = roomRepository.save(room);
+        log.info("Updated privacy mode for room id={} to {}", id, privacyMode);
+        return updatedRoom;
+    }
+
     /**
      * Soft delete policy
      * @param id the id of the room to delete

@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -26,17 +27,20 @@ public class EmployeeProfileService {
     private final DepartmentService departmentService;
     private final RoomService roomService;
     private final AuthenticatedUserService authentication;
+    private final RoomPrivacyModeService roomPrivacyModeService;
 
     public EmployeeProfileService(EmployeeProfileRepository employeeProfileRepository,
                                   UserxRepository userxRepository,
                                   DepartmentService departmentService,
                                   RoomService roomService,
-                                  AuthenticatedUserService authentication) {
+                                  AuthenticatedUserService authentication,
+                                  RoomPrivacyModeService roomPrivacyModeService) {
         this.employeeProfileRepository = employeeProfileRepository;
         this.userxRepository = userxRepository;
         this.departmentService = departmentService;
         this.roomService = roomService;
         this.authentication = authentication;
+        this.roomPrivacyModeService = roomPrivacyModeService;
     }
 
     public List<EmployeeProfile> getAll(Long userId, Long departmentId) {
@@ -51,6 +55,10 @@ public class EmployeeProfileService {
         return employeeProfileRepository.findAll();
     }
 
+    public List<EmployeeProfile> getAllByRoomId(Long roomId) {
+        return employeeProfileRepository.findByRoom_Id(roomId);
+    }
+
     public Optional<EmployeeProfile> getMyProfile() {
         Long id = authentication.getAuthenticatedUser().getId();
         return employeeProfileRepository.getByUser_Id(id);
@@ -61,6 +69,7 @@ public class EmployeeProfileService {
                 .orElseThrow(() -> new NotFoundException("Employee profile with id " + id + " not found"));
     }
 
+    @Transactional
     public EmployeeProfile create(EmployeeProfile employeeProfile) {
         Optional<EmployeeProfile> profile = employeeProfileRepository.findByUser(employeeProfile.getUser());
         EmployeeProfile p = profile.orElse(null);
@@ -71,9 +80,13 @@ public class EmployeeProfileService {
 
         EmployeeProfile savedProfile = employeeProfileRepository.save(employeeProfile);
 
+        Long roomId = savedProfile.getRoom() != null ? savedProfile.getRoom().getId() : null;
+        roomPrivacyModeService.updatePrivacyModeForRoom(roomId);
+
         log.info("Created employee profile with id={} for userId={}",
                 savedProfile.getId(),
                 savedProfile.getUser() != null ? savedProfile.getUser().getId() : null);
+
         log.debug("Created employee profile details: id={}, userId={}, departmentId={}, roomId={}",
                 savedProfile.getId(),
                 savedProfile.getUser() != null ? savedProfile.getUser().getId() : null,
@@ -83,8 +96,11 @@ public class EmployeeProfileService {
         return savedProfile;
     }
 
+    @Transactional
     public EmployeeProfile update(Long id, EmployeeProfileUpdateDTO dto) {
         EmployeeProfile existing = getById(id);
+
+        Long oldRoomId = existing.getRoom() != null ? existing.getRoom().getId() : null;
 
         StringBuilder debugInfo = new StringBuilder("Updated employee profile details:")
                 .append(" id=").append(id);
@@ -107,6 +123,14 @@ public class EmployeeProfileService {
 
         EmployeeProfile updatedProfile = employeeProfileRepository.save(existing);
 
+        Long newRoomId = updatedProfile.getRoom() != null ? updatedProfile.getRoom().getId() : null;
+
+        roomPrivacyModeService.updatePrivacyModeForRoom(oldRoomId);
+
+        if (!Objects.equals(oldRoomId, newRoomId)) {
+            roomPrivacyModeService.updatePrivacyModeForRoom(newRoomId);
+        }
+
         log.info("Updated employee profile with id={}", id);
         log.debug(debugInfo.toString());
 
@@ -116,6 +140,8 @@ public class EmployeeProfileService {
     @Transactional
     public void delete(Long id) {
         EmployeeProfile ep = getById(id);
+
+        Long oldRoomId = ep.getRoom() != null ? ep.getRoom().getId() : null;
 
         if (ep.getUser() != null) {
             Userx user = ep.getUser();
@@ -135,6 +161,8 @@ public class EmployeeProfileService {
         }
 
         employeeProfileRepository.deleteById(id);
+
+        roomPrivacyModeService.updatePrivacyModeForRoom(oldRoomId);
 
         log.info("Deleted employee profile with id={}", id);
     }
