@@ -134,6 +134,12 @@ const DeviceManagementView: React.FC = () => {
         return () => clearInterval(id);
     }, [fetchPis]);
 
+    useEffect(() => {
+        if (expandedRows == null) return;
+        const id = setInterval(() => void fetchSensorStations(expandedRows), 10_000);
+        return () => clearInterval(id);
+    }, [expandedRows]);
+
     const fetchSensorStations = async (piId: number) => {
         try {
             const data = await RaspberryPiService.getSensorStations(piId);
@@ -194,6 +200,17 @@ const DeviceManagementView: React.FC = () => {
         const id = setTimeout(() => setScanCountdown(c => (c ?? 1) - 1), 1_000);
         return () => clearTimeout(id);
     }, [scanCountdown]);
+
+    useEffect(() => {
+        if (scanCountdown !== 0 || !scanTriggered || availableStations.length > 0) return;
+        setScanTriggered(false);
+        toast.current?.show({
+            severity: 'error',
+            summary: 'No Devices Found',
+            detail: 'The scan completed but no Arduino devices were discovered. Make sure the Arduino is in setup mode and nearby.',
+            life: 6000,
+        });
+    }, [scanCountdown, scanTriggered, availableStations.length]);
 
     useEffect(() => {
         if (!scanTriggered || scanPiId == null) return;
