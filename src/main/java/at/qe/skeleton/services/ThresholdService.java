@@ -21,8 +21,6 @@ import at.qe.skeleton.repositories.ThresholdViolationRepository;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -38,7 +36,6 @@ public class ThresholdService {
     private final ThresholdViolationRepository thresholdViolationRepository;
     private final RoomService roomService;
     private final ClimateHintRepository climateHintRepository;
-    private final RaspberryPiServerService raspberryPiServerService;
     private final ThresholdPiSyncService thresholdPiSyncService;
     private final ThresholdMapper thresholdMapper;
     private final ClimateHintMapper climateHintMapper;
@@ -47,7 +44,6 @@ public class ThresholdService {
                             ThresholdViolationRepository thresholdViolationRepository,
                             RoomService roomService,
                             ClimateHintRepository climateHintRepository,
-                            RaspberryPiServerService raspberryPiServerService,
                             ThresholdPiSyncService thresholdPiSyncService,
                             ThresholdMapper thresholdMapper,
                             ClimateHintMapper climateHintMapper) {
@@ -55,7 +51,6 @@ public class ThresholdService {
         this.thresholdViolationRepository = thresholdViolationRepository;
         this.roomService = roomService;
         this.climateHintRepository = climateHintRepository;
-        this.raspberryPiServerService = raspberryPiServerService;
         this.thresholdPiSyncService = thresholdPiSyncService;
         this.thresholdMapper = thresholdMapper;
         this.climateHintMapper = climateHintMapper;
@@ -189,20 +184,9 @@ public class ThresholdService {
                 ? List.of()
                 : disableActiveViolations(thresholdId, updatedThreshold);
 
-        Runnable syncTask = () -> thresholdPiSyncService.synchronize(
+        thresholdPiSyncService.synchronize(
                 thresholdId, oldPiId, oldThresholdDTO, newPiId, updatedThresholdDTO,
                 climateHints, updatedThreshold.isEnabled(), resolvedViolations);
-
-        if (TransactionSynchronizationManager.isActualTransactionActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    syncTask.run();
-                }
-            });
-        } else {
-            syncTask.run();
-        }
     }
 
     private List<ViolationResolvedDTO> disableActiveViolations(Long thresholdId, Threshold threshold) {
@@ -273,25 +257,13 @@ public class ThresholdService {
         Long piId = getRaspberryPiIdOrNull(entity);
         ThresholdDTO thresholdDTO = thresholdMapper.mapTo(entity);
 
-        if (piId != null) {
-            PiRequestResult deletionResult = raspberryPiServerService.deleteThresholds(
-                    piId,
-                    List.of(thresholdDTO)
-            );
-
-            if (deletionResult != PiRequestResult.SUCCESS) {
-                log.warn("Failed to delete threshold with id={} on Raspberry Pi {}: result={}",
-                        id, piId, deletionResult);
-                throw new IllegalStateException("Threshold could not be deleted on Raspberry Pi");
-            }
-
-            log.info("Deleted threshold with id={} on Raspberry Pi {}", id, piId);
-        } else {
+        if (piId == null) {
             log.warn("Deleting threshold with id={} from database, but no Raspberry Pi is assigned to its room", id);
         }
 
         clearClimateHints(entity);
         thresholdRepository.delete(entity);
+        thresholdPiSyncService.synchronize(id, piId, thresholdDTO, null, null, List.of(), false, List.of());
 
         log.info("Deleted threshold with id={}", id);
         log.debug("Cleared climate hint associations before deleting threshold id={}", id);

@@ -2,7 +2,9 @@ package at.qe.skeleton.tests.services;
 
 import at.qe.skeleton.common.exceptions.ConflictException;
 import at.qe.skeleton.common.exceptions.NotFoundException;
+import at.qe.skeleton.dtos.ClimateHintDTO;
 import at.qe.skeleton.dtos.ThresholdCreateDTO;
+import at.qe.skeleton.dtos.ThresholdDTO;
 import at.qe.skeleton.dtos.ThresholdUpdateDTO;
 import at.qe.skeleton.mappers.ClimateHintMapper;
 import at.qe.skeleton.mappers.ThresholdMapper;
@@ -62,11 +64,17 @@ class ThresholdServiceTest {
     private Room room;
     private Threshold threshold;
     private ClimateHint climateHint;
+    private RaspberryPi raspberryPi;
 
     @BeforeEach
     void setUp() {
         room = new Room();
         ReflectionTestUtils.setField(room, "id", 1L);
+
+        raspberryPi = new RaspberryPi();
+        ReflectionTestUtils.setField(raspberryPi, "id", 5L);
+        raspberryPi.setRoom(room);
+        room.setRaspberryPi(raspberryPi);
 
         climateHint = new ClimateHint();
         ReflectionTestUtils.setField(climateHint, "id", 10L);
@@ -202,6 +210,39 @@ class ThresholdServiceTest {
     }
 
     @Test
+    @DisplayName("create dispatches async sync with DTO for Raspberry Pi threshold insertion")
+    void create_dispatchesThresholdSync() {
+        ThresholdCreateDTO createDTO = new ThresholdCreateDTO(
+                1L, Metric.TEMPERATURE, 25.0F, ThresholdType.UPPER, List.of(10L));
+        ThresholdDTO thresholdDTO = new ThresholdDTO(
+                100L, 1L, Metric.TEMPERATURE, 25.0F, ThresholdType.UPPER, List.of(10L), true);
+        ClimateHintDTO hintDTO = new ClimateHintDTO(10L, Metric.TEMPERATURE, "Open a window");
+
+        Mockito.when(roomService.getById(1L)).thenReturn(room);
+        Mockito.when(climateHintRepository.findAllById(List.of(10L))).thenReturn(List.of(climateHint));
+        Mockito.when(thresholdRepository.save(Mockito.any())).thenAnswer(inv -> {
+            Threshold saved = inv.getArgument(0);
+            ReflectionTestUtils.setField(saved, "id", 100L);
+            return saved;
+        });
+        Mockito.when(thresholdMapper.mapTo(Mockito.any(Threshold.class))).thenReturn(thresholdDTO);
+        Mockito.when(climateHintMapper.mapTo(climateHint)).thenReturn(hintDTO);
+
+        thresholdService.create(createDTO);
+
+        Mockito.verify(thresholdPiSyncService).synchronize(
+                100L,
+                null,
+                null,
+                5L,
+                thresholdDTO,
+                List.of(hintDTO),
+                true,
+                List.of()
+        );
+    }
+
+    @Test
     @DisplayName("update modifies all fields when provided")
     void update_allFields() {
         Room newRoom = new Room();
@@ -318,6 +359,40 @@ class ThresholdServiceTest {
     }
 
     @Test
+    @DisplayName("update dispatches async sync with old delete DTO and updated insert DTO")
+    void update_dispatchesThresholdSync() {
+        ThresholdUpdateDTO updateDTO = new ThresholdUpdateDTO(
+                null,
+                Metric.HUMIDITY,
+                50.0F,
+                ThresholdType.LOWER,
+                null,
+                true
+        );
+        ThresholdDTO oldThresholdDTO = new ThresholdDTO(
+                100L, 1L, Metric.TEMPERATURE, 25.0F, ThresholdType.UPPER, List.of(), true);
+        ThresholdDTO updatedThresholdDTO = new ThresholdDTO(
+                100L, 1L, Metric.HUMIDITY, 50.0F, ThresholdType.LOWER, List.of(), true);
+
+        Mockito.when(thresholdRepository.findById(100L)).thenReturn(Optional.of(threshold));
+        Mockito.when(thresholdRepository.save(threshold)).thenReturn(threshold);
+        Mockito.when(thresholdMapper.mapTo(threshold)).thenReturn(oldThresholdDTO, updatedThresholdDTO);
+
+        thresholdService.update(100L, updateDTO);
+
+        Mockito.verify(thresholdPiSyncService).synchronize(
+                100L,
+                5L,
+                oldThresholdDTO,
+                5L,
+                updatedThresholdDTO,
+                List.of(),
+                true,
+                List.of()
+        );
+    }
+
+    @Test
     @DisplayName("delete removes threshold and clears climate hints")
     void delete_success() {
         threshold.getClimateHints().add(climateHint);
@@ -331,6 +406,30 @@ class ThresholdServiceTest {
         Assertions.assertThat(threshold.getClimateHints()).isEmpty();
         Assertions.assertThat(climateHint.getThresholds()).doesNotContain(threshold);
         Mockito.verify(thresholdRepository).delete(threshold);
+    }
+
+    @Test
+    @DisplayName("delete dispatches async sync with old DTO for Raspberry Pi threshold deletion")
+    void delete_dispatchesThresholdSync() {
+        ThresholdDTO thresholdDTO = new ThresholdDTO(
+                100L, 1L, Metric.TEMPERATURE, 25.0F, ThresholdType.UPPER, List.of(), true);
+
+        Mockito.when(thresholdRepository.findById(100L))
+                .thenReturn(Optional.of(threshold));
+        Mockito.when(thresholdMapper.mapTo(threshold)).thenReturn(thresholdDTO);
+
+        thresholdService.delete(100L);
+
+        Mockito.verify(thresholdPiSyncService).synchronize(
+                100L,
+                5L,
+                thresholdDTO,
+                null,
+                null,
+                List.of(),
+                false,
+                List.of()
+        );
     }
 
     @Test
