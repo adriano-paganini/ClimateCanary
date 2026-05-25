@@ -57,6 +57,7 @@ const DeviceManagementView: React.FC = () => {
     const toast = useRef<Toast>(null);
 
     const [pis, setPis] = useState<RaspberryPiDTO[]>([]);
+    const [decommissionedPis, setDecommissionedPis] = useState<RaspberryPiDTO[]>([]);
     const [rooms, setRooms] = useState<RoomDTO[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -96,6 +97,14 @@ const DeviceManagementView: React.FC = () => {
         }
     }, []);
 
+    const fetchDecommissionedPis = useCallback(async () => {
+        try {
+            setDecommissionedPis(await RaspberryPiService.getAllDecommissioned());
+        } catch {
+            // non-critical
+        }
+    }, []);
+
     const fetchRooms = useCallback(async () => {
         try {
             setRooms(await RoomService.getAll());
@@ -106,8 +115,9 @@ const DeviceManagementView: React.FC = () => {
 
     useEffect(() => {
         void fetchPis();
+        void fetchDecommissionedPis();
         void fetchRooms();
-    }, [fetchPis, fetchRooms]);
+    }, [fetchPis, fetchDecommissionedPis, fetchRooms]);
 
     useEffect(() => {
         const id = setInterval(() => void fetchPis(), 30_000);
@@ -297,6 +307,7 @@ const DeviceManagementView: React.FC = () => {
         try {
             await RaspberryPiService.delete(pi.id);
             setPis(await RaspberryPiService.getAll());
+            void fetchDecommissionedPis();
             toast.current?.show({ severity: 'success', summary: 'Deleted', detail: `Raspberry Pi "${pi.hostName}" deleted`, life: 3000 });
         } catch {
             toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to delete Raspberry Pi', life: 3000 });
@@ -419,9 +430,9 @@ const DeviceManagementView: React.FC = () => {
 
         return (
             <div style={{ padding: '1rem' }}>
-                <Card 
+                <Card
                     title={`Sensor Stations — ${pi.hostName}`}
-                    style={{ 
+                    style={{
                         boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                         border: '1px solid var(--surface-border)',
                         borderRadius: '6px'
@@ -435,7 +446,6 @@ const DeviceManagementView: React.FC = () => {
                             outlined
                             onClick={() => openScanDialog(piId)}
                         />
-
                     </div>
 
                     {stations == null ? (
@@ -559,98 +569,119 @@ const DeviceManagementView: React.FC = () => {
                     onClick={openCreateRpi}
                 />
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    {pis.length === 0 ? (
-                        <Message severity="info" text="No Raspberry Pis registered. Click 'Add Raspberry Pi' to get started." />
-                    ) : (
-                        pis.map((pi) => (
-                            <Card
-                                key={pi.id}
-                                style={{
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                                    border: '1px solid var(--surface-border)',
-                                    borderRadius: '6px'
-                                }}
-                            >
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr auto auto', gap: '1.5rem', alignItems: 'center', marginBottom: '0' }}>
-                                    <div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-color-secondary)', fontWeight: 600, marginBottom: '0.25rem' }}>ID</div>
-                                        <div style={{ fontSize: '1rem', fontWeight: 600 }}>{pi.id}</div>
-                                    </div>
-                                    <div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-color-secondary)', fontWeight: 600, marginBottom: '0.25rem' }}>Host Name</div>
-                                        <div style={{ fontSize: '1rem' }}>{pi.hostName}</div>
-                                    </div>
-                                    <div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-color-secondary)', fontWeight: 600, marginBottom: '0.25rem' }}>IP Address</div>
-                                        <div style={{ fontSize: '1rem' }}>{pi.ipAddress || '—'}</div>
-                                    </div>
-                                    <div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-color-secondary)', fontWeight: 600, marginBottom: '0.25rem' }}>Status</div>
-                                        {statusTag(pi.deviceStatus)}
-                                    </div>
-                                    <div style={{ display: 'flex', gap: '0.25rem' }}>
+                <section style={{ marginTop: '1rem' }}>
+                    <h2 style={{ fontSize: '1.15rem', margin: '0 0 0.75rem' }}>Raspberry Pis</h2>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        {pis.length === 0 ? (
+                            <Message severity="info" text="No Raspberry Pis registered. Click 'Add Raspberry Pi' to get started." />
+                        ) : (
+                            pis.map((pi) => (
+                                <Card
+                                    key={pi.id}
+                                    style={{
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                                        border: '1px solid var(--surface-border)',
+                                        borderRadius: '6px'
+                                    }}
+                                >
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr auto auto', gap: '1.5rem', alignItems: 'center', marginBottom: '0' }}>
+                                        <div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-color-secondary)', fontWeight: 600, marginBottom: '0.25rem' }}>ID</div>
+                                            <div style={{ fontSize: '1rem', fontWeight: 600 }}>{pi.id}</div>
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-color-secondary)', fontWeight: 600, marginBottom: '0.25rem' }}>Host Name</div>
+                                            <div style={{ fontSize: '1rem' }}>{pi.hostName}</div>
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-color-secondary)', fontWeight: 600, marginBottom: '0.25rem' }}>IP Address</div>
+                                            <div style={{ fontSize: '1rem' }}>{pi.ipAddress || '—'}</div>
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-color-secondary)', fontWeight: 600, marginBottom: '0.25rem' }}>Status</div>
+                                            {statusTag(pi.deviceStatus)}
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '0.25rem' }}>
+                                            <Button
+                                                icon="pi pi-pencil"
+                                                text
+                                                size="small"
+                                                onClick={() => openEditRpi(pi)}
+                                                tooltip="Edit"
+                                                tooltipOptions={{ position: 'top' }}
+                                            />
+                                            <Button
+                                                icon="pi pi-trash"
+                                                text
+                                                size="small"
+                                                severity="danger"
+                                                onClick={() => confirmDeleteRpi(pi)}
+                                                tooltip="Delete"
+                                                tooltipOptions={{ position: 'top' }}
+                                            />
+                                        </div>
                                         <Button
-                                            icon="pi pi-pencil"
+                                            icon={expandedRows === pi.id ? 'pi pi-chevron-down' : 'pi pi-chevron-right'}
                                             text
-                                            size="small"
-                                            onClick={() => openEditRpi(pi)}
-                                            tooltip="Edit"
-                                            tooltipOptions={{ position: 'top' }}
-                                        />
-                                        <Button
-                                            icon="pi pi-trash"
-                                            text
-                                            size="small"
-                                            severity="danger"
-                                            onClick={() => confirmDeleteRpi(pi)}
-                                            tooltip="Delete"
-                                            tooltipOptions={{ position: 'top' }}
-                                        />
-                                    </div>
-                                    <Button
-                                        icon={expandedRows === pi.id ? 'pi pi-chevron-down' : 'pi pi-chevron-right'}
-                                        text
-                                        rounded
-                                        onClick={() => {
-                                            if (expandedRows === pi.id) {
-                                                setExpandedRows(null);
-                                            } else {
-                                                if (pi.id != null && stationsMap[pi.id] == null) {
-                                                    void fetchSensorStations(pi.id);
+                                            rounded
+                                            onClick={() => {
+                                                if (expandedRows === pi.id) {
+                                                    setExpandedRows(null);
+                                                } else {
+                                                    if (pi.id != null && stationsMap[pi.id] == null) {
+                                                        void fetchSensorStations(pi.id);
+                                                    }
+                                                    setExpandedRows(pi.id);
                                                 }
-                                                setExpandedRows(pi.id);
-                                            }
-                                        }}
-                                        tooltip={expandedRows === pi.id ? 'Collapse' : 'Expand'}
-                                        tooltipOptions={{ position: 'top' }}
-                                    />
-                                </div>
-
-                                {!pi.ipAddress && (
-                                    <div style={{ marginTop: '0.75rem' }}>
-                                        <Message
-                                            severity="warn"
-                                            text="Setup required: Download conf.yaml, copy it to this Raspberry Pi's SD card, and power it on - the Pi will appear Online once it has booted and connected to the backend"
-                                            style={{ width: '100%' }}
+                                            }}
+                                            tooltip={expandedRows === pi.id ? 'Collapse' : 'Expand'}
+                                            tooltipOptions={{ position: 'top' }}
                                         />
                                     </div>
-                                )}
-                                <div style={{ marginTop: '0.5rem' }}>
-                                    <Button
-                                        icon="pi pi-download"
-                                        label="Download conf.yaml"
-                                        size="small"
-                                        severity={pi.ipAddress ? 'secondary' : 'warning'}
-                                        outlined
-                                        onClick={() => void downloadConfig(pi)}
-                                    />
-                                </div>
-                                {expandedRows === pi.id && rowExpansionTemplate(pi)}
-                            </Card>
-                        ))
-                    )}
-                </div>
+
+                                    {!pi.ipAddress && (
+                                        <div style={{ marginTop: '0.75rem' }}>
+                                            <Message
+                                                severity="warn"
+                                                text="Setup required: Download conf.yaml, copy it to this Raspberry Pi's SD card, and power it on - the Pi will appear Online once it has booted and connected to the backend"
+                                                style={{ width: '100%' }}
+                                            />
+                                        </div>
+                                    )}
+                                    <div style={{ marginTop: '0.5rem' }}>
+                                        <Button
+                                            icon="pi pi-download"
+                                            label="Download conf.yaml"
+                                            size="small"
+                                            severity={pi.ipAddress ? 'secondary' : 'warning'}
+                                            outlined
+                                            onClick={() => void downloadConfig(pi)}
+                                        />
+                                    </div>
+                                    {expandedRows === pi.id && rowExpansionTemplate(pi)}
+                                </Card>
+                            ))
+                        )}
+                    </div>
+                </section>
+
+                <section style={{ marginTop: '2rem' }}>
+                    <h2 style={{ fontSize: '1.15rem', margin: '0 0 0.75rem' }}>Deleted Raspberry Pis</h2>
+                    <DataTable
+                        value={decommissionedPis}
+                        emptyMessage="No deleted Raspberry Pis."
+                        size="small"
+                    >
+                        <Column field="id" header="ID" style={{ width: '4rem' }} />
+                        <Column field="hostName" header="Host Name" />
+                        <Column field="ipAddress" header="IP Address" />
+                        <Column
+                            header="Status"
+                            style={{ width: '9rem' }}
+                            body={(pi: RaspberryPiDTO) => statusTag(pi.deviceStatus)}
+                        />
+                    </DataTable>
+                </section>
             </Card>
 
             {/* Raspberry Pi Create/Edit Dialog */}
