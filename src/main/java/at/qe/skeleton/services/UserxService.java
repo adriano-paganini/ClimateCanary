@@ -1,5 +1,7 @@
 package at.qe.skeleton.services;
 
+import at.qe.skeleton.events.UserCreatedEvent;
+import at.qe.skeleton.events.UserDeletedEvent;
 import at.qe.skeleton.models.Department;
 import at.qe.skeleton.repositories.DepartmentRepository;
 import at.qe.skeleton.common.exceptions.ConflictException;
@@ -13,6 +15,7 @@ import at.qe.skeleton.repositories.EmployeeProfileRepository;
 import at.qe.skeleton.repositories.UserxRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -41,7 +44,7 @@ public class UserxService implements UserDetailsService {
     private final AuthenticatedUserService authenticatedUserService;
     private final DepartmentRepository departmentRepository;
     private final EmployeeProfileRepository employeeProfileRepository;
-    private final EmailService emailService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Autowired
     public UserxService(UserxRepository userRepository,
@@ -49,14 +52,14 @@ public class UserxService implements UserDetailsService {
                         AuthenticatedUserService authenticatedUserService,
                         DepartmentRepository departmentRepository,
                         EmployeeProfileRepository employeeProfileRepository,
-                        EmailService emailService)
+                        ApplicationEventPublisher eventPublisher)
     {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticatedUserService = authenticatedUserService;
         this.departmentRepository = departmentRepository;
         this.employeeProfileRepository = employeeProfileRepository;
-        this.emailService = emailService;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -103,7 +106,8 @@ public class UserxService implements UserDetailsService {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             user.setCreateUser(authenticatedUserService.getAuthenticatedUser());
             Userx savedUser = userRepository.save(user);
-            emailService.sendUserInvitationEmail(user);
+            eventPublisher.publishEvent(new UserCreatedEvent(savedUser));
+
             log.info("Created user with id={} and username={}", savedUser.getId(), savedUser.getUsername());
             log.debug("User details: id={}, username={}, enabled={}, roles={}, createUserId={}",
                     savedUser.getId(),
@@ -157,6 +161,7 @@ public class UserxService implements UserDetailsService {
                 }
                 existingUser.setEnabled(false);
                 userRepository.save(existingUser);
+                eventPublisher.publishEvent(new UserDeletedEvent(user));
                 log.info("Deleted user with id={} and username={}", existingUser.getId(), existingUser.getUsername());
         });
     }

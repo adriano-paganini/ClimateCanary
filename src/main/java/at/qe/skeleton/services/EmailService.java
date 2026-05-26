@@ -4,5 +4,6 @@ import at.qe.skeleton.models.Userx;
 
 public interface EmailService {
 
-    void sendUserInvitationEmail(Userx user);
+    void sendEmail(EmailType type, Userx user);
+
 }
