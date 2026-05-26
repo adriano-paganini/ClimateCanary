@@ -41,19 +41,22 @@ public class UserxService implements UserDetailsService {
     private final AuthenticatedUserService authenticatedUserService;
     private final DepartmentRepository departmentRepository;
     private final EmployeeProfileRepository employeeProfileRepository;
+    private final EmailService emailService;
 
     @Autowired
     public UserxService(UserxRepository userRepository,
                         PasswordEncoder passwordEncoder,
                         AuthenticatedUserService authenticatedUserService,
                         DepartmentRepository departmentRepository,
-                        EmployeeProfileRepository employeeProfileRepository)
+                        EmployeeProfileRepository employeeProfileRepository,
+                        EmailService emailService)
     {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticatedUserService = authenticatedUserService;
         this.departmentRepository = departmentRepository;
         this.employeeProfileRepository = employeeProfileRepository;
+        this.emailService = emailService;
     }
 
     /**
@@ -99,8 +102,8 @@ public class UserxService implements UserDetailsService {
             user.setEnabled(true);
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             user.setCreateUser(authenticatedUserService.getAuthenticatedUser());
-
             Userx savedUser = userRepository.save(user);
+            emailService.sendUserInvitationEmail(user);
             log.info("Created user with id={} and username={}", savedUser.getId(), savedUser.getUsername());
             log.debug("User details: id={}, username={}, enabled={}, roles={}, createUserId={}",
                     savedUser.getId(),
