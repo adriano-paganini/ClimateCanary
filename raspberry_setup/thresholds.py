@@ -15,8 +15,9 @@ class Threshold:
 
 @dataclass
 class MetricConfig:
-    threshold:  Threshold
-    hint_texts: list[str] = field(default_factory=list)
+    threshold:        Threshold
+    upper_hint_texts: list[str] = field(default_factory=list)
+    lower_hint_texts: list[str] = field(default_factory=list)
 
 
 _lock:  asyncio.Lock | None     = None
@@ -24,7 +25,8 @@ _store: dict[str, MetricConfig] = {}
 
 _NO_CONFIG = MetricConfig(
     threshold=Threshold("", upper_bound=None, lower_bound=None),
-    hint_texts=[],
+    upper_hint_texts=[],
+    lower_hint_texts=[],
 )
 
 def _get_lock() -> asyncio.Lock:
@@ -42,8 +44,11 @@ def get_threshold(metric: str) -> Threshold:
     return get_metric_config(metric).threshold
 
 
-def get_hint_texts(metric: str) -> list[str]:
-    return get_metric_config(metric).hint_texts
+def get_hint_texts(metric: str, direction: str) -> list[str]:
+    mc = get_metric_config(metric)
+    if direction == "upper":
+        return mc.upper_hint_texts
+    return mc.lower_hint_texts
 
 
 async def update_thresholds(
@@ -55,16 +60,22 @@ async def update_thresholds(
     """
     async with _get_lock():
         for item in updates:
-            metric      = item["metric"]
-            upper_bound = item.get("upperBound")
-            lower_bound = item.get("lowerBound")
-            hint_texts  = item.get("hintTexts") or []
+            metric           = item["metric"]
+            upper_bound      = item.get("upperBound")
+            lower_bound      = item.get("lowerBound")
+            upper_hint_texts = item.get("upperHintTexts") or []
+            lower_hint_texts = item.get("lowerHintTexts") or []
 
             _store[metric] = MetricConfig(
                 threshold=Threshold(metric, upper_bound, lower_bound),
-                hint_texts=hint_texts,
+                upper_hint_texts=upper_hint_texts,
+                lower_hint_texts=lower_hint_texts,
             )
 
+            hint_json = json.dumps(
+                {"upper": upper_hint_texts, "lower": lower_hint_texts},
+                ensure_ascii=False,
+            )
             await db.execute(
                 """
                 INSERT INTO thresholds (metric, upper_bound, lower_bound, hint_text)
@@ -74,8 +85,7 @@ async def update_thresholds(
                     lower_bound = excluded.lower_bound,
                     hint_text   = excluded.hint_text
                 """,
-                (metric, upper_bound, lower_bound,
-                 json.dumps(hint_texts, ensure_ascii=False)),
+                (metric, upper_bound, lower_bound, hint_json),
             )
 
         await db.commit()
@@ -110,14 +120,17 @@ async def remove_threshold_bounds(
             if current is None:
                 continue
 
-            upper = current.threshold.upper_bound
-            lower = current.threshold.lower_bound
-            hints = current.hint_texts
+            upper       = current.threshold.upper_bound
+            lower       = current.threshold.lower_bound
+            upper_hints = current.upper_hint_texts
+            lower_hints = current.lower_hint_texts
 
             if bound_type == "UPPER":
-                upper = None
+                upper       = None
+                upper_hints = []
             elif bound_type == "LOWER":
-                lower = None
+                lower       = None
+                lower_hints = []
 
             if upper is None and lower is None:
                 _store.pop(metric, None)
@@ -125,7 +138,8 @@ async def remove_threshold_bounds(
             else:
                 _store[metric] = MetricConfig(
                     threshold=Threshold(metric, upper, lower),
-                    hint_texts=hints,
+                    upper_hint_texts=upper_hints,
+                    lower_hint_texts=lower_hints,
                 )
                 await db.execute(
                     """
@@ -136,7 +150,7 @@ async def remove_threshold_bounds(
                         lower_bound = excluded.lower_bound
                     """,
                     (metric, upper, lower,
-                     json.dumps(hints, ensure_ascii=False)),
+                     json.dumps({"upper": upper_hints, "lower": lower_hints}, ensure_ascii=False)),
                 )
 
         await db.commit()
@@ -152,19 +166,23 @@ async def load_thresholds_from_db(db: aiosqlite.Connection) -> None:
 
     count = 0
     for metric, upper_bound, lower_bound, hint_text_raw in rows:
+        upper_hints: list[str] = []
+        lower_hints: list[str] = []
         if hint_text_raw:
             try:
-                hints = json.loads(hint_text_raw)
-                if isinstance(hints, str):
-                    hints = [hints]
+                parsed = json.loads(hint_text_raw)
+                if isinstance(parsed, dict):
+                    upper_hints = parsed.get("upper") or []
+                    lower_hints = parsed.get("lower") or []
+                elif isinstance(parsed, list):
+                    upper_hints = lower_hints = parsed
             except (json.JSONDecodeError, TypeError):
-                hints = [hint_text_raw]
-        else:
-            hints = []
+                pass
 
         _store[metric] = MetricConfig(
             threshold=Threshold(metric, upper_bound, lower_bound),
-            hint_texts=hints,
+            upper_hint_texts=upper_hints,
+            lower_hint_texts=lower_hints,
         )
         count += 1
 

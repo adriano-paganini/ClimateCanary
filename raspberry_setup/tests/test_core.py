@@ -122,7 +122,8 @@ class TestClassify:
         import thresholds
         thresholds._store["temperature"] = thresholds.MetricConfig(
             threshold=thresholds.Threshold("temperature", upper, lower),
-            hint_texts=[],
+            upper_hint_texts=[],
+            lower_hint_texts=[],
         )
 
     def test_above_upper(self):
@@ -157,7 +158,8 @@ class TestClassify:
         import thresholds
         thresholds._store["temperature"] = thresholds.MetricConfig(
             threshold=thresholds.Threshold("temperature", None, None),
-            hint_texts=[],
+            upper_hint_texts=[],
+            lower_hint_texts=[],
         )
         assert _classify(999.0, "temperature") == 0
 
@@ -175,15 +177,17 @@ class TestThresholdUpdate:
         try:
             await update_thresholds(
                 [{"metric": "temperature", "upperBound": 28.0, "lowerBound": 18.0,
-                  "hintTexts": ["Zu warm", "Fenster öffnen"]}],
+                  "upperHintTexts": ["Zu warm", "Fenster öffnen"],
+                  "lowerHintTexts": ["Zu kalt"]}],
                 db,
             )
 
             cfg = get_metric_config("temperature")
             assert cfg.threshold.upper_bound == 28.0
             assert cfg.threshold.lower_bound == 18.0
-            assert "Zu warm"        in cfg.hint_texts
-            assert "Fenster öffnen" in cfg.hint_texts
+            assert "Zu warm"        in cfg.upper_hint_texts
+            assert "Fenster öffnen" in cfg.upper_hint_texts
+            assert "Zu kalt"        in cfg.lower_hint_texts
 
             async with db.execute(
                 "SELECT upper_bound, lower_bound, hint_text "
@@ -194,7 +198,8 @@ class TestThresholdUpdate:
             assert row[0] == 28.0
             assert row[1] == 18.0
             hints = json.loads(row[2])
-            assert "Zu warm" in hints
+            assert "Zu warm" in hints["upper"]
+            assert "Zu kalt" in hints["lower"]
         finally:
             await db.close()
 
@@ -207,7 +212,7 @@ class TestThresholdUpdate:
         try:
             await update_thresholds(
                 [{"metric": "humidity", "upperBound": 65.0, "lowerBound": 35.0,
-                  "hintTexts": ["Lüften bitte"]}],
+                  "upperHintTexts": ["Lüften bitte"], "lowerHintTexts": []}],
                 db,
             )
             thresholds._store.clear()          # simulate fresh process start
@@ -215,7 +220,8 @@ class TestThresholdUpdate:
 
             cfg = get_metric_config("humidity")
             assert cfg.threshold.upper_bound == 65.0
-            assert cfg.hint_texts            == ["Lüften bitte"]
+            assert cfg.upper_hint_texts      == ["Lüften bitte"]
+            assert cfg.lower_hint_texts      == []
         finally:
             await db.close()
 
@@ -243,7 +249,8 @@ class TestViolationStateMachine:
 
         thresholds._store["temperature"] = thresholds.MetricConfig(
             threshold=thresholds.Threshold("temperature", upper_bound=30.0, lower_bound=16.0),
-            hint_texts=["Zu warm!"],
+            upper_hint_texts=["Zu warm!"],
+            lower_hint_texts=[],
         )
 
         db      = await _make_db()

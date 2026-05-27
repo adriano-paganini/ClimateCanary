@@ -133,7 +133,8 @@ async def process_measurement(
             else:
                 log.warning(f"[VIOL:{ble_tag}] CONFIRMED {metric} (avg={avg:.2f}) [privacy — not reported]")
 
-            hint_messages.extend(get_hint_texts(metric))
+            direction = "upper" if avg_status == 4 else "lower"
+            hint_messages.extend(get_hint_texts(metric, direction))
 
         elif is_breaching and state.violation_open:
             if not get_privacy_mode() and now_wall - state.last_alert_time >= ALERT_COOLDOWN_SECONDS:
