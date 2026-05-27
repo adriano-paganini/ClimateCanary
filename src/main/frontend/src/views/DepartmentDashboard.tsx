@@ -15,6 +15,7 @@ import { DepartmentService } from '../services/DepartmentService';
 import { AnalyticsService } from '../services/AnalyticsService';
 import { MeasurementDTO, MeasurementDTOMetricEnum, RoomDTO, ThresholdViolationDTO } from '../generated-skeleton-api';
 import { ROUTES } from '../utilities/routes.paths';
+import { registerDashboardCacheClearHandler } from '../utilities/dashboardCacheInvalidation';
 
 interface RoomDashboardData {
     measurements: MeasurementDTO[];
@@ -31,6 +32,15 @@ const cachedRoomsByDepartment = new Map<number, RoomDTO[]>();
 const cachedRoomRequestsByDepartment = new Map<number, Promise<RoomDTO[]>>();
 const cachedRoomData = new Map<number, RoomDashboardData>();
 const cachedRoomDataRequests = new Map<number, Promise<RoomDashboardData>>();
+
+function clearDepartmentDashboardCaches(): void {
+    cachedRoomsByDepartment.clear();
+    cachedRoomRequestsByDepartment.clear();
+    cachedRoomData.clear();
+    cachedRoomDataRequests.clear();
+}
+
+registerDashboardCacheClearHandler(clearDepartmentDashboardCaches);
 
 function delay(ms: number): Promise<void> {
     return new Promise(resolve => window.setTimeout(resolve, ms));

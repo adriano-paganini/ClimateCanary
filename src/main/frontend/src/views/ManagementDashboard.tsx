@@ -13,6 +13,7 @@ import {
   ViolationBreakdownDTO,
 } from "../services/AnalyticsService";
 import { MeasurementDTOMetricEnum } from "../generated-skeleton-api";
+import { registerDashboardCacheClearHandler } from "../utilities/dashboardCacheInvalidation";
 
 const METRIC_LABELS: Record<string, string> = {
   [MeasurementDTOMetricEnum.TEMPERATURE]: "Temperature",
@@ -54,6 +55,13 @@ const DIRECTION_META: Record<string, { label: string; icon: string; color: strin
 
 let cachedDashboard: ManagementClimateDashboardDTO | null = null;
 let cachedDashboardRequest: Promise<ManagementClimateDashboardDTO> | null = null;
+
+function clearManagementDashboardCache(): void {
+  cachedDashboard = null;
+  cachedDashboardRequest = null;
+}
+
+registerDashboardCacheClearHandler(clearManagementDashboardCache);
 
 async function getDashboardCached(): Promise<ManagementClimateDashboardDTO> {
   if (cachedDashboard !== null) return cachedDashboard;
