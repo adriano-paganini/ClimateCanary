@@ -686,8 +686,17 @@ const DeviceManagementView: React.FC = () => {
                                         <div style={{ marginTop: '0.75rem' }}>
                                             <Message
                                                 severity="warn"
-                                                text="Setup required: Download conf.yaml, copy it to this Raspberry Pi's SD card, and power it on - the Pi will appear Online once it has booted and connected to the backend"
                                                 style={{ width: '100%' }}
+                                                content={
+                                                    <span>
+                                                        Setup required: Download conf.yaml, copy it to this Raspberry Pi's SD card, and power it on — the Pi will appear Online once it has booted and connected to the backend.{' '}
+                                                        See the{' '}
+                                                        <a href="/rpi-setup_tutorial.pdf" target="_blank" rel="noreferrer" style={{ color: 'inherit', fontWeight: 600 }}>
+                                                            Setup Tutorial (PDF)
+                                                        </a>
+                                                        {' '}for step-by-step guidance.
+                                                    </span>
+                                                }
                                             />
                                         </div>
                                     )}
