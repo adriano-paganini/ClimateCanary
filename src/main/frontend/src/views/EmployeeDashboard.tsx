@@ -7,13 +7,15 @@ import NavbarComponent from '../components/NavbarComponent';
 import RoomCard from '../components/RoomCard';
 import { useUser } from '../Contexts/AuthenticatedUserContext';
 import { EmployeeProfileService } from '../services/EmployeeProfileService';
-import { MeasurementService } from '../services/MeasurementService';
 import { RoomService } from '../services/RoomService';
 import { ViolationService, ViolationStatusEnum } from '../services/ViolationService';
 import { DepartmentService } from '../services/DepartmentService';
+import { AnalyticsService } from '../services/AnalyticsService';
+import { registerDashboardCacheClearHandler } from '../utilities/dashboardCacheInvalidation';
 import {
     EmployeeProfileDTO,
     MeasurementDTO,
+    MeasurementDTOMetricEnum,
     RoomDTO,
     RoomType,
     ThresholdViolationDTO,
@@ -34,10 +36,7 @@ const TABS: { id: TabId; label: string; icon: string }[] = [
     { id: 'common', label: 'Common Areas', icon: 'pi pi-building' },
 ];
 
-const cachedRoomsById = new Map<number, RoomDTO>();
 const cachedRoomRequestsById = new Map<number, Promise<RoomDTO>>();
-const cachedLatestMeasurementsByRoom = new Map<number, MeasurementDTO[]>();
-const cachedLatestMeasurementRequestsByRoom = new Map<number, Promise<MeasurementDTO[]>>();
 const cachedCommonRoomsByDepartment = new Map<number, RoomDTO[]>();
 const cachedCommonRoomRequestsByDepartment = new Map<number, Promise<RoomDTO[]>>();
 const cachedActiveViolationsByDepartment = new Map<number, ThresholdViolationDTO[]>();
@@ -45,21 +44,26 @@ const cachedActiveViolationRequestsByDepartment = new Map<number, Promise<Thresh
 const cachedActiveViolationsByRoom = new Map<number, ThresholdViolationDTO[]>();
 const cachedActiveViolationRequestsByRoom = new Map<number, Promise<ThresholdViolationDTO[]>>();
 
+function clearEmployeeDashboardCaches(): void {
+    cachedRoomRequestsById.clear();
+    cachedCommonRoomsByDepartment.clear();
+    cachedCommonRoomRequestsByDepartment.clear();
+    cachedActiveViolationsByDepartment.clear();
+    cachedActiveViolationRequestsByDepartment.clear();
+    cachedActiveViolationsByRoom.clear();
+    cachedActiveViolationRequestsByRoom.clear();
+}
+
+registerDashboardCacheClearHandler(clearEmployeeDashboardCaches);
+
 function delay(ms: number): Promise<void> {
     return new Promise(resolve => window.setTimeout(resolve, ms));
 }
 
-async function getRoomCached(roomId: number): Promise<RoomDTO> {
-    const cached = cachedRoomsById.get(roomId);
-    if (cached) return cached;
-
+async function getRoomFresh(roomId: number): Promise<RoomDTO> {
     let request = cachedRoomRequestsById.get(roomId);
     if (!request) {
         request = RoomService.getById(roomId)
-            .then(room => {
-                cachedRoomsById.set(roomId, room);
-                return room;
-            })
             .finally(() => {
                 cachedRoomRequestsById.delete(roomId);
             });
@@ -68,24 +72,23 @@ async function getRoomCached(roomId: number): Promise<RoomDTO> {
     return request;
 }
 
-async function getLatestMeasurementsCached(roomId: number): Promise<MeasurementDTO[]> {
-    const cached = cachedLatestMeasurementsByRoom.get(roomId);
-    if (cached) return cached;
+async function getLatestMeasurementsFresh(roomId: number): Promise<MeasurementDTO[]> {
+    const summary = await AnalyticsService.getRoomSummary(roomId);
+    const timestamp = summary.generatedAt;
+    const metrics = summary.metrics ?? {};
 
-    let request = cachedLatestMeasurementRequestsByRoom.get(roomId);
-    if (!request) {
-        request = MeasurementService.getLatestPerMetric(roomId)
-            .then(measurements => {
-                const values = Object.values(measurements);
-                cachedLatestMeasurementsByRoom.set(roomId, values);
-                return values;
-            })
-            .finally(() => {
-                cachedLatestMeasurementRequestsByRoom.delete(roomId);
-            });
-        cachedLatestMeasurementRequestsByRoom.set(roomId, request);
-    }
-    return request;
+    return Object.values(MeasurementDTOMetricEnum)
+        .flatMap(metric => {
+            const latest = metrics[metric]?.latest;
+            if (latest === undefined || latest === null) return [];
+
+            return [{
+                timestamp,
+                measurement: latest,
+                metric,
+                roomId,
+            }];
+        });
 }
 
 async function getCommonRoomsCached(departmentId: number): Promise<RoomDTO[]> {
@@ -97,9 +100,6 @@ async function getCommonRoomsCached(departmentId: number): Promise<RoomDTO[]> {
         request = DepartmentService.getRooms(departmentId)
             .then(rooms => {
                 const commonRooms = rooms.filter(room => room.roomType === RoomType.COMMON_AREAS);
-                commonRooms.forEach(room => {
-                    if (room.id !== undefined) cachedRoomsById.set(room.id, room);
-                });
                 cachedCommonRoomsByDepartment.set(departmentId, commonRooms);
                 return commonRooms;
             })
@@ -164,9 +164,7 @@ const EmployeeDashboard: React.FC = () => {
     const [profile, setProfile] = useState<EmployeeProfileDTO | null>(null);
     const [officeRoom, setOfficeRoom] = useState<RoomDTO | null>(null);
     const [commonRooms, setCommonRooms] = useState<RoomDTO[] | null>(null);
-    const [measurementsByRoom, setMeasurementsByRoom] = useState<Record<number, MeasurementDTO[]>>(() =>
-        Object.fromEntries(cachedLatestMeasurementsByRoom.entries()),
-    );
+    const [measurementsByRoom, setMeasurementsByRoom] = useState<Record<number, MeasurementDTO[]>>({});
     const [violationsByRoom, setViolationsByRoom] = useState<Record<number, ThresholdViolationDTO[]>>(() =>
         Object.fromEntries(cachedActiveViolationsByRoom.entries()),
     );
@@ -177,6 +175,7 @@ const EmployeeDashboard: React.FC = () => {
 
         const loadOffice = async () => {
             try {
+                setError(null);
                 const employeeProfile = await EmployeeProfileService.getMe();
                 if (!active) return;
                 setProfile(employeeProfile);
@@ -186,16 +185,28 @@ const EmployeeDashboard: React.FC = () => {
                     return;
                 }
 
-                const [room, latestOffice, officeViolations] = await Promise.all([
-                    getRoomCached(employeeProfile.roomId),
-                    getLatestMeasurementsCached(employeeProfile.roomId),
-                    employeeProfile.departmentId
-                        ? getActiveViolationsForDepartmentCached(employeeProfile.departmentId)
-                        : getActiveViolationsForRoomCached(employeeProfile.roomId),
-                ]);
+                const room = await getRoomFresh(employeeProfile.roomId);
+                if (!active) return;
+                setOfficeRoom(room);
+
+                let latestOffice: MeasurementDTO[] = [];
+                try {
+                    latestOffice = await getLatestMeasurementsFresh(employeeProfile.roomId);
+                } catch (err: unknown) {
+                    const status = (err as { response?: { status?: number } })?.response?.status;
+                    if (status === 403) {
+                        if (active) setError('Klimadaten nicht verfügbar — Datenschutz aktiv (Belegung unter Mindestanzahl).');
+                    } else {
+                        throw err;
+                    }
+                }
                 if (!active) return;
 
-                setOfficeRoom(room);
+                const officeViolations = employeeProfile.departmentId
+                    ? await getActiveViolationsForDepartmentCached(employeeProfile.departmentId)
+                    : await getActiveViolationsForRoomCached(employeeProfile.roomId);
+                if (!active) return;
+
                 setMeasurementsByRoom(prev => ({ ...prev, [employeeProfile.roomId!]: latestOffice }));
                 setViolationsByRoom(prev => ({
                     ...prev,
@@ -204,7 +215,9 @@ const EmployeeDashboard: React.FC = () => {
             } catch (err: unknown) {
                 const msg = err instanceof Error ? err.message : String(err);
                 console.error('Dashboard load error:', err);
-                if (active) setError(`Failed to load office data: ${msg}`);
+                if (active) {
+                    setError(`Failed to load office data: ${msg}`);
+                }
             } finally {
                 if (active) setLoadingOffice(false);
             }
@@ -258,11 +271,9 @@ const EmployeeDashboard: React.FC = () => {
                         total: rooms.length,
                     });
 
-                    if (!cachedLatestMeasurementsByRoom.has(room.id)) {
-                        await delay(850);
-                    }
+                    await delay(850);
 
-                    const measurements = await getLatestMeasurementsCached(room.id);
+                    const measurements = await getLatestMeasurementsFresh(room.id);
                     if (!active) return;
 
                     setMeasurementsByRoom(prev => ({ ...prev, [room.id!]: measurements }));

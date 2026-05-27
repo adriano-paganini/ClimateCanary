@@ -8,6 +8,7 @@ import {jwtDecode, JwtPayload} from "jwt-decode";
 import {LoginRequestDTO, UserxDTO, UserxRole} from '../generated-skeleton-api';
 import {AuthApi} from "../utilities/authApi";
 import {UserService} from "../services/UserService";
+import {invalidateDashboardCaches} from "../utilities/dashboardCacheInvalidation";
 
 
 interface UserContextType {
@@ -42,6 +43,7 @@ export function UserProvider({children}: { children: React.ReactNode }) {
     useEffect(() => {
         const handler = (e: StorageEvent) => {
             if (e.key === BEARER_TOKEN_LOCAL_STORAGE_KEY) {
+                invalidateDashboardCaches();
                 setToken(e.newValue);
             }
         };
@@ -79,12 +81,14 @@ export function UserProvider({children}: { children: React.ReactNode }) {
             return;
         }
 
+        invalidateDashboardCaches();
         localStorage.setItem(BEARER_TOKEN_LOCAL_STORAGE_KEY, bearerToken);
         setToken(bearerToken);
         setError(null);
     };
 
     const logout = async () => {
+        invalidateDashboardCaches();
         localStorage.removeItem(BEARER_TOKEN_LOCAL_STORAGE_KEY);
         setToken(null);
     };
