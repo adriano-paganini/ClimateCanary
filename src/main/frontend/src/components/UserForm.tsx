@@ -316,6 +316,9 @@ const UserForm: React.FC<UserFormProps> =
                                     Disabled roles cannot be changed here.
                                 </small>
                             )}
+                            <small style={{ display: "block", color: "#64748b" }}>
+                                System Admin, Building Admin, and Management are standalone roles. Department Lead is always paired with Employee.
+                            </small>
                             {impliedLockedRoles.includes(UserxRole.EMPLOYEE) && (
                                 <small style={{ display: "flex", alignItems: "center", gap: "0.3rem", color: "#0369a1" }}>
                                     <i className="pi pi-info-circle" style={{ fontSize: "0.75rem" }} />

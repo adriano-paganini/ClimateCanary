@@ -35,15 +35,15 @@ const FORBIDDEN_ROLE_COMBINATIONS: Array<{
 }> = [
   {
     pair: [UserxRole.BUILDING_ADMIN, UserxRole.SYSTEM_ADMIN],
-    reason: "Building Admin and System Admin can not be combined.",
+    reason: "Building Admin and System Admin are standalone roles. Select only one of them.",
   },
   {
     pair: [UserxRole.SYSTEM_ADMIN, UserxRole.EMPLOYEE],
-    reason: "System Admin can not hold the Employee role.",
+    reason: "System Admin is a standalone role and cannot be combined with Employee.",
   },
   {
     pair: [UserxRole.BUILDING_ADMIN, UserxRole.EMPLOYEE],
-    reason: "Building Admin can not hold the Employee role.",
+    reason: "Building Admin is a standalone role and cannot be combined with Employee.",
   },
 ];
 
@@ -60,7 +60,7 @@ export function getRoleCombinationError(roles: UserxRole[]): string | null {
     roles.includes(UserxRole.MANAGEMENT) &&
     roles.some((r) => r !== UserxRole.MANAGEMENT)
   ) {
-    return "Management is a standalone role";
+    return "Management is a standalone role. Select only Management or choose a different role set.";
   }
   return null;
 }
