@@ -333,12 +333,19 @@ const UserTable = () => {
     const syncEmployeeProfile = async (savedUser: UserxDTO, sourceUser: UserxDTO | UserxCreateDTO) => {
         if (!savedUser.id) return;
 
-        if (!hasEmployeeRole(sourceUser)) {
-            const profileId = employeeProfile?.id
-                ?? (await EmployeeProfileService.getAll(savedUser.id)).find(profile => profile.id !== undefined)?.id;
+        const existingProfiles = await EmployeeProfileService.getAll(savedUser.id);
+        const existingProfile = employeeProfile ?? existingProfiles.find(profile => profile.id !== undefined) ?? null;
 
-            if (profileId !== undefined) {
-                await EmployeeProfileService.delete(profileId);
+        if (!hasEmployeeRole(sourceUser)) {
+            for (const profile of existingProfiles) {
+                if (profile.id !== undefined) {
+                    await EmployeeProfileService.delete(profile.id);
+                }
+            }
+            if (existingProfile?.id !== undefined && !existingProfiles.some(profile => profile.id === existingProfile.id)) {
+                await EmployeeProfileService.delete(existingProfile.id);
+            }
+            if (existingProfiles.length > 0 || existingProfile?.id !== undefined) {
                 setEmployeeProfile(null);
                 setEmployeeDepartmentId(undefined);
                 setEmployeeRoomId(undefined);
@@ -349,14 +356,18 @@ const UserTable = () => {
 
         if (employeeDepartmentId === undefined || employeeRoomId === undefined) return;
 
-        if (employeeProfile?.id) {
-            const updatedProfile = await EmployeeProfileService.update(employeeProfile.id, {
-                userxId: savedUser.id,
-                departmentId: employeeDepartmentId,
-                roomId: employeeRoomId,
+        const oldProfiles = existingProfiles.filter(profile => profile.id !== undefined);
+        for (const profile of oldProfiles) {
+            await EmployeeProfileService.delete(profile.id!);
+        }
+        if (oldProfiles.length > 0) {
+            await UserService.updateUser(savedUser.id, {
+                firstName: savedUser.firstName,
+                lastName: savedUser.lastName,
+                email: savedUser.email,
+                phone: savedUser.phone,
+                roles: new Set([...rolesToArray(savedUser.roles), UserxRole.EMPLOYEE]),
             });
-            setEmployeeProfile(updatedProfile);
-            return;
         }
 
         const createdProfile = await EmployeeProfileService.create({
