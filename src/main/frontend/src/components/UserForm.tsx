@@ -10,7 +10,7 @@ import { Dropdown } from "primereact/dropdown";
 import { Message } from "primereact/message";
 import { DepartmentDTO, RoomDTO, UserxCreateDTO, UserxDTO, UserxRole } from "../generated-skeleton-api";
 import "../styles/UserForm.css";
-import {hasUserRole, rolesToArray} from "../utilities/userxUtilities";
+import {getRoleCombinationError, hasUserRole, rolesToArray} from "../utilities/userxUtilities";
 
 export const COUNTRY_CODE_OPTIONS: Array<{ label: string; value: string; search: string }> = [
     { label: "+93 Afghanistan", value: "+93", search: "Afghanistan +93" },
@@ -165,6 +165,7 @@ const UserForm: React.FC<UserFormProps> =
             UserxRole.EMPLOYEE,
         ];
         const existingRoles = rolesToArray(user.roles);
+        const combinationError = getRoleCombinationError(existingRoles);
         const nonEditableRoles = !isNewUser && existingRoles.includes(UserxRole.DEPARTMENT_LEAD)
             ? [UserxRole.DEPARTMENT_LEAD]
             : [];
@@ -312,7 +313,13 @@ const UserForm: React.FC<UserFormProps> =
                                     Disabled roles cannot be changed here.
                                 </small>
                             )}
-                            {fieldErrors?.roles && <small className="p-error">{fieldErrors.roles}</small>}
+                            {combinationError && (
+                                <small className="p-error" style={{ display: "flex", alignItems: "center", gap: "0.3rem", marginTop: "0.25rem" }}>
+                                    <i className="pi pi-exclamation-triangle" style={{ fontSize: "0.75rem" }} />
+                                    {combinationError}
+                                </small>
+                            )}
+                            {!combinationError && fieldErrors?.roles && <small className="p-error">{fieldErrors.roles}</small>}
                         </div>
 
                         {isEmployee && (

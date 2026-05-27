@@ -16,7 +16,7 @@ import UserListComponent from "./UserListComponent";
 import UserDialog from "./UserDialog";
 
 
-import {createUserxRoleArrayFromStrings, hasUserRole, rolesToArray, UserxValidationResult} from '../utilities/userxUtilities';
+import {createUserxRoleArrayFromStrings, getRoleCombinationError, hasUserRole, rolesToArray, UserxValidationResult} from '../utilities/userxUtilities';
 import {
     AdminControllerApi,
     DepartmentDTO,
@@ -219,8 +219,14 @@ const UserTable = () => {
         if (requirePassword && !pwd.trim()) fieldErrors.password = 'Required';
 
         // at least one role required (see also UserxCreateDTO in backend
-        if (rolesToArray(user.roles).length === 0) {
+        const selectedRoles = rolesToArray(user.roles);
+        if (selectedRoles.length === 0) {
             fieldErrors.roles = 'Required';
+        }
+
+        const combinationError = getRoleCombinationError(selectedRoles);
+        if (combinationError) {
+            fieldErrors.roles = combinationError;
         }
 
         if (hasEmployeeRole(user)) {
