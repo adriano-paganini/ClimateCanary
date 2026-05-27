@@ -7,7 +7,7 @@ import aiohttp
 from bleak import BleakClient
 from dataclasses import dataclass
 import config as cfg
-from config import DB_PATH, load_config, load_config_from_string, get_local_ip
+from config import DB_PATH, load_config, get_local_ip
 
 from database import init_db, db_writer, load_stations, remove_station, cleanup_old_rows
 from ble_worker import ble_worker
@@ -62,30 +62,6 @@ async def post_booted() -> None:
         log.warning(f"[CFG] could not post booted: {type(e).__name__}: {e!r}")
 
 
-async def fetch_config_from_backend() -> None:
-    """
-    Fetch config from the backend (GET /api/cpi/{piId}/config).
-    The backend returns a raw YAML string, not JSON.
-    Falls back silently to the local conf.yml if unreachable.
-    """
-    url = f"{cfg.BACKEND_URL}/api/cpi/{cfg.PI_ID}/config"
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                url, timeout=aiohttp.ClientTimeout(total=10),
-            ) as resp:
-                if resp.status == 200:
-                    yaml_text = await resp.text()
-                    saved_url = cfg.BACKEND_URL
-                    load_config_from_string(yaml_text)
-                    cfg.BACKEND_URL = saved_url
-                    from pathlib import Path
-                    Path("conf.yml").write_text(yaml_text)
-                    log.info("[CFG] config loaded from backend.")
-                else:
-                    log.warning(f"[CFG] backend returned {resp.status}, using local conf.yml.")
-    except Exception as e:
-        log.warning(f"[CFG] could not fetch config: {e}")
 
 
 MAX_CONNECT_FAILURES = 5
@@ -134,6 +110,14 @@ async def device_loop(
                 f"[BLE:{station.address}] lost: {e}  – retrying in {delay}s… "
                 f"(failure {fail_count}/{MAX_CONNECT_FAILURES}, uptime={uptime:.0f}s)"
             )
+            try:
+                from setup_flow import patch_station_status
+                async with aiohttp.ClientSession() as http_session:
+                    await patch_station_status(
+                        http_session, station.sensor_station_id, "CONNECTION_FAILED", station.address
+                    )
+            except Exception as patch_err:
+                log.warning(f"[BLE:{station.address}] CONNECTION_FAILED patch failed: {patch_err}")
             if fail_count >= MAX_CONNECT_FAILURES:
                 log.error(
                     f"[BLE:{station.address}] too many consecutive failures – "
@@ -188,9 +172,6 @@ async def _db_cleanup_loop(db: aiosqlite.Connection) -> None:
 async def main() -> None:
     _setup_logging()
     load_config("conf.yml")
-
-    if cfg.BACKEND_URL:
-        await fetch_config_from_backend()
 
     set_privacy_mode(cfg.PRIVACY_MODE)
 
