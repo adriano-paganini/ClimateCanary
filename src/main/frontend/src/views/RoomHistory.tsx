@@ -121,6 +121,7 @@ const RoomHistory: React.FC = () => {
     const { pathname } = useLocation();
     const numId     = roomId ? parseInt(roomId, 10) : NaN;
     const openedFromDepartment = pathname.startsWith('/department/rooms/');
+    const openedFromManagement = pathname.startsWith('/management/rooms/');
 
     const [currentDate, setCurrentDate] = useState(new Date());
     const [room,       setRoom]       = useState<RoomDTO | null>(null);
@@ -258,7 +259,9 @@ const RoomHistory: React.FC = () => {
                         onClick={() => navigate(
                             openedFromDepartment
                                 ? ROUTES.DEPARTMENT_DASHBOARD
-                                : ROUTES.DASHBOARD,
+                                : openedFromManagement
+                                    ? ROUTES.MANAGEMENT_DASHBOARD
+                                    : ROUTES.DASHBOARD,
                         )}
                     />
                     <h2 style={{ margin: 0, color: '#111827' }}>
@@ -279,7 +282,7 @@ const RoomHistory: React.FC = () => {
                     </div>
                 )}
 
-                {openedFromDepartment && reducedGranularity && (
+                {(openedFromDepartment || openedFromManagement) && reducedGranularity && (
                     <div style={{
                         display: 'flex', alignItems: 'center', gap: '0.6rem',
                         padding: '0.65rem 1rem', marginBottom: '1.25rem',

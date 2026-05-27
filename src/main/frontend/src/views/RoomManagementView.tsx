@@ -5,11 +5,16 @@ import "primeicons/primeicons.css";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { addDays, addYears, format } from "date-fns";
 import type { Plugin } from "chart.js";
+import { Button } from "primereact/button";
 import { Card } from "primereact/card";
 import { Chart } from "primereact/chart";
 import { Column } from "primereact/column";
+import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { DataTable } from "primereact/datatable";
+import { Dialog } from "primereact/dialog";
 import { Dropdown } from "primereact/dropdown";
+import { InputNumber } from "primereact/inputnumber";
+import { InputSwitch } from "primereact/inputswitch";
 import { InputText } from "primereact/inputtext";
 import { Message } from "primereact/message";
 import { ProgressSpinner } from "primereact/progressspinner";
@@ -24,8 +29,12 @@ import {
     MeasurementDTOMetricEnum,
     RoomDTO,
     RoomType,
+    ThresholdCreateDTO,
+    ThresholdCreateDTOMetricEnum,
+    ThresholdCreateDTOThresholdTypeEnum,
     ThresholdDTO,
     ThresholdDTOThresholdTypeEnum,
+    ThresholdUpdateDTO,
     ThresholdViolationDTO,
     ThresholdViolationDTOViolationStatusEnum,
 } from "../generated-skeleton-api";
@@ -167,6 +176,14 @@ const RoomManagementView: React.FC = () => {
 
     const toast = useRef<Toast | null>(null);
     const analyticsRequestId = useRef(0);
+
+    // Threshold edit dialog state
+    const [thresholdDialogVisible, setThresholdDialogVisible] = useState(false);
+    const [editingThreshold, setEditingThreshold] = useState<ThresholdDTO | null>(null);
+    const [thresholdForm, setThresholdForm] = useState<Partial<ThresholdCreateDTO> & { enabled: boolean }>({
+        roomId: undefined, metric: undefined, boundValue: undefined, thresholdType: undefined, climateHintIds: [], enabled: true,
+    });
+    const [boundValueError, setBoundValueError] = useState<string | null>(null);
 
     const selectedRoom = useMemo(
         () => rooms.find(room => room.id === selectedRoomId) ?? null,
@@ -355,6 +372,87 @@ const RoomManagementView: React.FC = () => {
     const navigateRange = (direction: -1 | 1) => {
         const nextDate = shiftRangeAnchor(rangeStart(currentDate), timeRange, direction);
         setCurrentDate(clampToToday(nextDate));
+    };
+
+    const THRESHOLD_METRIC_BOUNDS: Record<string, { min: number; max: number; unit: string }> = {
+        TEMPERATURE: { min: -50, max: 100, unit: "°C" },
+        HUMIDITY: { min: 0, max: 100, unit: "%" },
+        PRESSURE: { min: 870, max: 1085, unit: "hPa" },
+        IAQ: { min: 0, max: 500, unit: "" },
+    };
+
+    const openEditThreshold = (threshold: ThresholdDTO) => {
+        setThresholdForm({
+            roomId: threshold.roomId,
+            metric: threshold.metric as ThresholdCreateDTOMetricEnum | undefined,
+            boundValue: threshold.boundValue,
+            thresholdType: threshold.thresholdType as ThresholdCreateDTOThresholdTypeEnum | undefined,
+            climateHintIds: threshold.climateHintIds ?? [],
+            enabled: threshold.enabled ?? true,
+        });
+        setEditingThreshold(threshold);
+        setBoundValueError(null);
+        setThresholdDialogVisible(true);
+    };
+
+    const saveThreshold = async () => {
+        setBoundValueError(null);
+        if (!editingThreshold?.id || !thresholdForm.metric || thresholdForm.boundValue === undefined || !thresholdForm.thresholdType) {
+            toast.current?.show({ severity: "warn", summary: "Validation", detail: "Please fill in all required fields", life: 3000 });
+            return;
+        }
+        const bounds = THRESHOLD_METRIC_BOUNDS[thresholdForm.metric];
+        if (bounds && (thresholdForm.boundValue < bounds.min || thresholdForm.boundValue > bounds.max)) {
+            setBoundValueError(`Value must be between ${bounds.min} and ${bounds.max}${bounds.unit ? " " + bounds.unit : ""}.`);
+            return;
+        }
+        try {
+            const dto: ThresholdUpdateDTO = {
+                roomId: thresholdForm.roomId,
+                metric: thresholdForm.metric,
+                boundValue: thresholdForm.boundValue,
+                thresholdType: thresholdForm.thresholdType,
+                climateHintIds: thresholdForm.climateHintIds,
+                enabled: thresholdForm.enabled,
+            };
+            const updated = await ThresholdService.update(editingThreshold.id, dto);
+            setThresholds(prev => prev.map(t => t.id === updated.id ? updated : t));
+            toast.current?.show({ severity: "success", summary: "Updated", detail: "Threshold updated", life: 3000 });
+            setThresholdDialogVisible(false);
+        } catch {
+            toast.current?.show({ severity: "error", summary: "Error", detail: "Failed to save threshold", life: 3000 });
+        }
+    };
+
+    const confirmDeleteThreshold = (threshold: ThresholdDTO) => {
+        confirmDialog({
+            message: `Delete the ${threshold.metric} ${threshold.thresholdType?.toLowerCase()} threshold (${threshold.boundValue}) for this room?`,
+            header: "Confirm Delete",
+            icon: "pi pi-exclamation-triangle",
+            acceptClassName: "p-button-danger",
+            accept: () => deleteThreshold(threshold),
+        });
+    };
+
+    const deleteThreshold = async (threshold: ThresholdDTO) => {
+        if (!threshold.id) return;
+        try {
+            await ThresholdService.delete(threshold.id);
+            setThresholds(prev => prev.filter(t => t.id !== threshold.id));
+            toast.current?.show({ severity: "success", summary: "Deleted", detail: "Threshold deleted", life: 3000 });
+        } catch {
+            toast.current?.show({ severity: "error", summary: "Error", detail: "Failed to delete threshold", life: 3000 });
+        }
+    };
+
+    const toggleThresholdEnabled = async (threshold: ThresholdDTO) => {
+        if (!threshold.id) return;
+        try {
+            const updated = await ThresholdService.update(threshold.id, { enabled: !threshold.enabled });
+            setThresholds(prev => prev.map(t => t.id === updated.id ? updated : t));
+        } catch {
+            toast.current?.show({ severity: "error", summary: "Error", detail: "Failed to update threshold", life: 3000 });
+        }
     };
 
     const buildGapPlugin = (): Plugin => {
@@ -627,11 +725,164 @@ const RoomManagementView: React.FC = () => {
                                         <Column field="endTime" header="Ended" body={(row: ThresholdViolationDTO) => dateTemplate(row.endTime)} sortable className="room-management-optional-column" />
                                     </DataTable>
                                 </Card>
+
+                                {/* Thresholds card */}
+                                <Card>
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", flexWrap: "wrap", gap: "0.5rem" }}>
+                                        <div>
+                                            <h3 style={{ margin: 0 }}>Thresholds</h3>
+                                            <p style={{ margin: "0.35rem 0 0", color: "#64748b" }}>
+                                                Alert rules configured for this room
+                                            </p>
+                                        </div>
+                                        <Tag
+                                            value={`${thresholds.length} threshold${thresholds.length === 1 ? "" : "s"}`}
+                                            severity="info"
+                                        />
+                                    </div>
+                                    <DataTable
+                                        value={thresholds}
+                                        emptyMessage="No thresholds configured for this room."
+                                        stripedRows
+                                        sortField="metric"
+                                        sortOrder={1}
+                                    >
+                                        <Column
+                                            field="metric"
+                                            header="Metric"
+                                            sortable
+                                            body={(row: ThresholdDTO) => (
+                                                <Tag value={row.metric ?? "-"} severity={
+                                                    row.metric === "TEMPERATURE" ? "danger" :
+                                                    row.metric === "HUMIDITY" ? "info" :
+                                                    row.metric === "PRESSURE" ? "warning" :
+                                                    row.metric === "IAQ" ? "success" : "secondary"
+                                                } />
+                                            )}
+                                            style={{ width: "9rem" }}
+                                        />
+                                        <Column field="thresholdType" header="Type" sortable style={{ width: "7rem" }} />
+                                        <Column
+                                            field="boundValue"
+                                            header="Limit"
+                                            sortable
+                                            body={(row: ThresholdDTO) => formatNumber(row.boundValue)}
+                                            style={{ width: "6rem" }}
+                                        />
+                                        <Column
+                                            field="enabled"
+                                            header="Enabled"
+                                            style={{ width: "6rem" }}
+                                            body={(row: ThresholdDTO) => (
+                                                <InputSwitch
+                                                    checked={row.enabled ?? false}
+                                                    onChange={() => toggleThresholdEnabled(row)}
+                                                />
+                                            )}
+                                        />
+                                        <Column
+                                            header="Actions"
+                                            style={{ width: "8rem" }}
+                                            body={(row: ThresholdDTO) => (
+                                                <div style={{ display: "flex", gap: "0.25rem" }}>
+                                                    <Button
+                                                        icon="pi pi-pencil"
+                                                        rounded
+                                                        text
+                                                        severity="info"
+                                                        aria-label="Edit threshold"
+                                                        onClick={() => openEditThreshold(row)}
+                                                    />
+                                                    <Button
+                                                        icon="pi pi-trash"
+                                                        rounded
+                                                        text
+                                                        severity="danger"
+                                                        aria-label="Delete threshold"
+                                                        onClick={() => confirmDeleteThreshold(row)}
+                                                    />
+                                                </div>
+                                            )}
+                                        />
+                                    </DataTable>
+                                </Card>
                             </>
                         )}
                     </div>
                 </div>
             </div>
+
+            <ConfirmDialog />
+
+            {/* Edit threshold dialog */}
+            <Dialog
+                visible={thresholdDialogVisible}
+                header="Edit Threshold"
+                onHide={() => setThresholdDialogVisible(false)}
+                style={{ width: "460px" }}
+                footer={
+                    <div>
+                        <Button label="Cancel" icon="pi pi-times" text onClick={() => setThresholdDialogVisible(false)} />
+                        <Button label="Save" icon="pi pi-check" onClick={saveThreshold} />
+                    </div>
+                }
+                modal
+                draggable={false}
+            >
+                <div style={{ display: "flex", flexDirection: "column", gap: "1rem", paddingTop: "0.5rem" }}>
+                    <div className="field">
+                        <label htmlFor="rm-t-metric">Metric</label>
+                        <Dropdown
+                            id="rm-t-metric"
+                            value={thresholdForm.metric}
+                            options={Object.values(ThresholdCreateDTOMetricEnum).map(v => ({ label: v, value: v }))}
+                            onChange={e => setThresholdForm(f => ({ ...f, metric: e.value, boundValue: undefined }))}
+                            placeholder="Select metric"
+                            style={{ width: "100%" }}
+                        />
+                    </div>
+                    <div className="field">
+                        <label htmlFor="rm-t-type">Type</label>
+                        <Dropdown
+                            id="rm-t-type"
+                            value={thresholdForm.thresholdType}
+                            options={Object.values(ThresholdCreateDTOThresholdTypeEnum).map(v => ({ label: v, value: v }))}
+                            onChange={e => setThresholdForm(f => ({ ...f, thresholdType: e.value }))}
+                            placeholder="LOWER / UPPER"
+                            style={{ width: "100%" }}
+                        />
+                    </div>
+                    <div className="field">
+                        <label htmlFor="rm-t-value">
+                            Limit Value
+                            {thresholdForm.metric && THRESHOLD_METRIC_BOUNDS[thresholdForm.metric] && (
+                                <span style={{ fontWeight: 400, color: "#6b7280", marginLeft: "0.4rem", fontSize: "0.85rem" }}>
+                                    ({THRESHOLD_METRIC_BOUNDS[thresholdForm.metric].min}–{THRESHOLD_METRIC_BOUNDS[thresholdForm.metric].max}{THRESHOLD_METRIC_BOUNDS[thresholdForm.metric].unit ? " " + THRESHOLD_METRIC_BOUNDS[thresholdForm.metric].unit : ""})
+                                </span>
+                            )}
+                        </label>
+                        <InputNumber
+                            id="rm-t-value"
+                            value={thresholdForm.boundValue ?? null}
+                            onValueChange={e => { setBoundValueError(null); setThresholdForm(f => ({ ...f, boundValue: e.value ?? undefined })); }}
+                            placeholder="Enter limit value"
+                            className={boundValueError ? "p-invalid" : undefined}
+                            style={{ width: "100%" }}
+                            useGrouping={false}
+                            maxFractionDigits={2}
+                        />
+                        {boundValueError && <small className="p-error">{boundValueError}</small>}
+                    </div>
+                    <div className="field" style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                        <label htmlFor="rm-t-enabled">Enabled</label>
+                        <InputSwitch
+                            id="rm-t-enabled"
+                            checked={thresholdForm.enabled ?? true}
+                            onChange={e => setThresholdForm(f => ({ ...f, enabled: e.value }))}
+                        />
+                    </div>
+                </div>
+            </Dialog>
         </div>
     );
 };

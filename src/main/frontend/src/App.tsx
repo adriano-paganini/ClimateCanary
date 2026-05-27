@@ -61,6 +61,7 @@ const App: React.FC = () => {
                         {/* Management only */}
                         <Route element={<PrivateRoute roles={[UserxRole.MANAGEMENT]}/>}>
                             <Route path={ROUTES.MANAGEMENT_DASHBOARD} Component={ManagementDashboard}/>
+                            <Route path={ROUTES.MANAGEMENT_ROOM_HISTORY} Component={RoomHistory}/>
                         </Route>
 
                         {/* Building Admin only */}
