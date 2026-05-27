@@ -55,6 +55,7 @@ const EMPTY_RPI_FORM: RpiForm = { hostName: '', roomId: null };
 
 const DeviceManagementView: React.FC = () => {
     const toast = useRef<Toast>(null);
+    const availableStationsRef = useRef<SensorStationDTO[]>([]);
 
     const [pis, setPis] = useState<RaspberryPiDTO[]>([]);
     const [decommissionedPis, setDecommissionedPis] = useState<RaspberryPiDTO[]>([]);
@@ -201,16 +202,25 @@ const DeviceManagementView: React.FC = () => {
         return () => clearTimeout(id);
     }, [scanCountdown]);
 
+    useEffect(() => { availableStationsRef.current = availableStations; }, [availableStations]);
+
+    // Fire "no devices found" only after 25 s total - gives the RPI (ca 10s BLE scan)
+    // plus backend propagation time before giving up
     useEffect(() => {
-        if (scanCountdown !== 0 || !scanTriggered || availableStations.length > 0) return;
-        setScanTriggered(false);
-        toast.current?.show({
-            severity: 'error',
-            summary: 'No Devices Found',
-            detail: 'The scan completed but no Arduino devices were discovered. Make sure the Arduino is in setup mode and nearby.',
-            life: 6000,
-        });
-    }, [scanCountdown, scanTriggered, availableStations.length]);
+        if (!scanTriggered) return;
+        const id = setTimeout(() => {
+            if (availableStationsRef.current.length === 0) {
+                setScanTriggered(false);
+                toast.current?.show({
+                    severity: 'error',
+                    summary: 'No Devices Found',
+                    detail: 'The scan completed but no Arduino devices were discovered. Make sure the Arduino is in setup mode and nearby.',
+                    life: 6000,
+                });
+            }
+        }, 25_000);
+        return () => clearTimeout(id);
+    }, [scanTriggered]);
 
     useEffect(() => {
         if (!scanTriggered || scanPiId == null) return;

@@ -9,6 +9,8 @@ import at.qe.skeleton.repositories.EmployeeProfileRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,16 +24,16 @@ public class RoomPrivacyModeService {
     private final RoomService roomService;
     private final EmployeeProfileRepository employeeProfileRepository;
     private final AbsenceService absenceService;
-    private final RaspberryPiServerService raspberryPiServerService;
+    private final RoomPrivacyModePiSyncService roomPrivacyModePiSyncService;
 
     public RoomPrivacyModeService(RoomService roomService,
                                   EmployeeProfileRepository employeeProfileRepository,
                                   AbsenceService absenceService,
-                                  RaspberryPiServerService raspberryPiServerService) {
+                                  RoomPrivacyModePiSyncService roomPrivacyModePiSyncService) {
         this.roomService = roomService;
         this.employeeProfileRepository = employeeProfileRepository;
         this.absenceService = absenceService;
-        this.raspberryPiServerService = raspberryPiServerService;
+        this.roomPrivacyModePiSyncService = roomPrivacyModePiSyncService;
     }
 
     @Transactional
@@ -50,23 +52,31 @@ public class RoomPrivacyModeService {
         // Only contact RPi if one exists.
         // If one exists, always send the update, even if the value did not change.
         if (room.getRaspberryPi() != null) {
-            PiRequestResult result = raspberryPiServerService.setOccupancy(
+            syncPiAfterCommit(
                     room.getRaspberryPi().getId(),
                     room.getId(),
                     newPrivacyMode
             );
-
-            if (result != PiRequestResult.SUCCESS) {
-                log.warn("Could not push privacy mode update for room {} to Raspberry Pi {}: {}",
-                        room.getId(), room.getRaspberryPi().getId(), result);
-            }
-
-            log.info("Updated privacy mode for room id={}, privacyMode={}, piResult={}",
-                    room.getId(), newPrivacyMode, result);
+            log.info("Updated privacy mode in DB for room id={}, privacyMode={}, Raspberry Pi sync queued",
+                    room.getId(), newPrivacyMode);
         } else {
             log.info("Updated privacy mode in DB for room id={}, privacyMode={}, no Raspberry Pi assigned",
                     room.getId(), newPrivacyMode);
         }
+    }
+
+    private void syncPiAfterCommit(Long piId, Long roomId, boolean privacyMode) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    roomPrivacyModePiSyncService.synchronize(piId, roomId, privacyMode);
+                }
+            });
+            return;
+        }
+
+        roomPrivacyModePiSyncService.synchronize(piId, roomId, privacyMode);
     }
 
     private boolean calculatePrivacyMode(Room room) {

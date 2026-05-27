@@ -1,6 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { Message } from "primereact/message";
+import { Dialog } from "primereact/dialog";
+import { Button } from "primereact/button";
+import { Tag } from "primereact/tag";
+import { Chart } from "primereact/chart";
 import "primeicons/primeicons.css";
 
 import NavbarComponent from "../components/NavbarComponent";
@@ -10,9 +15,13 @@ import {
   AnalyticsService,
   ManagementClimateDashboardDTO,
   ManagementClimateTrendDTO,
+  ManagementDepartmentClimateDTO,
   ViolationBreakdownDTO,
 } from "../services/AnalyticsService";
-import { MeasurementDTOMetricEnum } from "../generated-skeleton-api";
+import { DepartmentService } from "../services/DepartmentService";
+import { MeasurementDTOMetricEnum, RoomDTO } from "../generated-skeleton-api";
+import { ROUTES } from "../utilities/routes.paths";
+import { registerDashboardCacheClearHandler } from "../utilities/dashboardCacheInvalidation";
 
 const METRIC_LABELS: Record<string, string> = {
   [MeasurementDTOMetricEnum.TEMPERATURE]: "Temperature",
@@ -55,6 +64,13 @@ const DIRECTION_META: Record<string, { label: string; icon: string; color: strin
 let cachedDashboard: ManagementClimateDashboardDTO | null = null;
 let cachedDashboardRequest: Promise<ManagementClimateDashboardDTO> | null = null;
 
+function clearManagementDashboardCache(): void {
+  cachedDashboard = null;
+  cachedDashboardRequest = null;
+}
+
+registerDashboardCacheClearHandler(clearManagementDashboardCache);
+
 async function getDashboardCached(): Promise<ManagementClimateDashboardDTO> {
   if (cachedDashboard !== null) return cachedDashboard;
   if (cachedDashboardRequest === null) {
@@ -96,9 +112,19 @@ function DirectionBadge({ direction }: { direction?: string }) {
   );
 }
 
-function WarningPill({ warning }: { warning: ViolationBreakdownDTO }) {
+function WarningPill({
+  warning,
+  onClick,
+}: {
+  warning: ViolationBreakdownDTO;
+  onClick?: (warning: ViolationBreakdownDTO) => void;
+}) {
   return (
     <span
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onClick={onClick ? () => onClick(warning) : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") onClick(warning); } : undefined}
       style={{
         display: "inline-flex",
         alignItems: "center",
@@ -110,6 +136,9 @@ function WarningPill({ warning }: { warning: ViolationBreakdownDTO }) {
         color: "#9a3412",
         fontSize: "0.8rem",
         fontWeight: 600,
+        cursor: onClick ? "pointer" : "default",
+        userSelect: "none",
+        transition: "background 0.15s",
       }}
     >
       <i className="pi pi-exclamation-triangle" style={{ fontSize: "0.72rem" }} />
@@ -166,9 +195,16 @@ function TrendRow({ trend }: { trend: ManagementClimateTrendDTO }) {
 
 const ManagementDashboard: React.FC = () => {
   const { currentUser } = useUser();
+  const navigate = useNavigate();
   const [dashboard, setDashboard] = useState<ManagementClimateDashboardDTO | null>(cachedDashboard);
   const [loading, setLoading] = useState(cachedDashboard === null);
   const [error, setError] = useState<string | null>(null);
+  const [filterWarningsOnly, setFilterWarningsOnly] = useState(false);
+  const [detailDept, setDetailDept] = useState<ManagementDepartmentClimateDTO | null>(null);
+  const [detailRooms, setDetailRooms] = useState<RoomDTO[]>([]);
+  const [detailRoomsLoading, setDetailRoomsLoading] = useState(false);
+  const [detailRoomsError, setDetailRoomsError] = useState<string | null>(null);
+  const deptGridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let active = true;
@@ -197,6 +233,81 @@ const ManagementDashboard: React.FC = () => {
     () => departments.filter((department) => (department.activeWarnings ?? 0) > 0).length,
     [departments],
   );
+  const visibleDepartments = filterWarningsOnly
+    ? departments.filter((d) => (d.activeWarnings ?? 0) > 0)
+    : departments;
+
+  const METRIC_COLORS: Record<string, string> = {
+    [MeasurementDTOMetricEnum.TEMPERATURE]: "#f97316",
+    [MeasurementDTOMetricEnum.HUMIDITY]: "#3b82f6",
+    [MeasurementDTOMetricEnum.IAQ]: "#22c55e",
+    [MeasurementDTOMetricEnum.PRESSURE]: "#8b5cf6",
+  };
+
+  const violationsChartData = useMemo(() => {
+    if (departments.length === 0 || (dashboard?.totalActiveWarnings ?? 0) === 0) return null;
+    const labels = departments.map((d) => d.departmentName ?? `Dept ${d.departmentId}`);
+    const datasets = Object.entries(METRIC_LABELS)
+      .map(([metric, label]) => ({
+        label,
+        data: departments.map((dept) => dept.warningsByMetric?.find((w) => w.label === metric)?.count ?? 0),
+        backgroundColor: METRIC_COLORS[metric] ?? "#9ca3af",
+      }))
+      .filter((ds) => ds.data.some((v) => v > 0));
+    return datasets.length > 0 ? { labels, datasets } : null;
+  }, [departments, dashboard?.totalActiveWarnings]);
+
+  const violationsChartOptions = useMemo(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: false as const,
+    plugins: {
+      legend: { position: "top" as const, labels: { boxWidth: 12, font: { size: 11 } } },
+      tooltip: { mode: "index" as const, intersect: false },
+    },
+    scales: {
+      x: { stacked: true, ticks: { font: { size: 10 } } },
+      y: { stacked: true, ticks: { stepSize: 1, font: { size: 10 } }, min: 0 },
+    },
+  }), []);
+
+  function scrollToDepts() {
+    deptGridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function handleDeptStatClick() {
+    setFilterWarningsOnly(false);
+    setTimeout(scrollToDepts, 50);
+  }
+
+  function handleViolationsStatClick() {
+    setFilterWarningsOnly(true);
+    setTimeout(scrollToDepts, 50);
+  }
+
+  function handleAffectedStatClick() {
+    setFilterWarningsOnly((prev) => !prev);
+    setTimeout(scrollToDepts, 50);
+  }
+
+  function openDeptDetail(dept: ManagementDepartmentClimateDTO) {
+    setDetailDept(dept);
+    setDetailRooms([]);
+    setDetailRoomsError(null);
+    if (dept.departmentId !== undefined) {
+      setDetailRoomsLoading(true);
+      DepartmentService.getRooms(dept.departmentId)
+        .then((rooms) => setDetailRooms(rooms))
+        .catch(() => setDetailRoomsError("Could not load rooms for this department."))
+        .finally(() => setDetailRoomsLoading(false));
+    }
+  }
+
+  function closeDeptDetail() {
+    setDetailDept(null);
+    setDetailRooms([]);
+    setDetailRoomsError(null);
+  }
 
   if (loading) {
     return (
@@ -225,22 +336,100 @@ const ManagementDashboard: React.FC = () => {
             </p>
           </div>
           <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", justifyContent: "flex-end" }}>
-            <SummaryStat icon="pi-sitemap" label="Departments" value={departments.length} color="#0369a1" />
-            <SummaryStat icon="pi-exclamation-triangle" label="Warnings" value={dashboard?.totalActiveWarnings ?? 0} color={(dashboard?.totalActiveWarnings ?? 0) > 0 ? "#dc2626" : "#16a34a"} />
-            <SummaryStat icon="pi-building" label="Departments affected" value={warningDepartments} color={warningDepartments > 0 ? "#f59e0b" : "#16a34a"} />
+            <SummaryStat
+              icon="pi-sitemap"
+              label="Departments"
+              value={departments.length}
+              color="#0369a1"
+              onClick={handleDeptStatClick}
+              tooltip="Show all departments"
+            />
+            <SummaryStat
+              icon="pi-exclamation-triangle"
+              label="Active Violations"
+              value={dashboard?.totalActiveWarnings ?? 0}
+              color={(dashboard?.totalActiveWarnings ?? 0) > 0 ? "#dc2626" : "#16a34a"}
+              onClick={handleViolationsStatClick}
+              active={filterWarningsOnly}
+              tooltip="Filter departments with active violations"
+            />
+            <SummaryStat
+              icon="pi-building"
+              label="Departments affected"
+              value={warningDepartments}
+              color={warningDepartments > 0 ? "#f59e0b" : "#16a34a"}
+              onClick={handleAffectedStatClick}
+              active={filterWarningsOnly}
+              tooltip="Toggle filter: departments with warnings"
+            />
           </div>
         </div>
+
+        {violationsChartData && (
+          <div
+            style={{
+              background: "#fff",
+              border: "1px solid #e5e7eb",
+              borderRadius: "8px",
+              padding: "1.25rem",
+              marginBottom: "1rem",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+              <h3 style={{ margin: 0, color: "#374151", fontSize: "0.95rem", fontWeight: 600 }}>
+                <i className="pi pi-chart-bar" style={{ marginRight: "0.5rem", color: "#0369a1" }} />
+                Active Violations by Department
+              </h3>
+              <span style={{ fontSize: "0.78rem", color: "#6b7280", display: "flex", alignItems: "center", gap: "0.3rem" }}>
+                <i className="pi pi-shield" />
+                Aggregated company data — no individual measurements
+              </span>
+            </div>
+            <div style={{ height: "180px" }}>
+              <Chart type="bar" data={violationsChartData} options={violationsChartOptions} />
+            </div>
+          </div>
+        )}
+
+        {filterWarningsOnly && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.75rem",
+              marginBottom: "1rem",
+              padding: "0.5rem 0.75rem",
+              background: "#fff7ed",
+              border: "1px solid #fed7aa",
+              borderRadius: "8px",
+            }}
+          >
+            <i className="pi pi-filter" style={{ color: "#ea580c" }} />
+            <span style={{ fontSize: "0.9rem", color: "#9a3412", flex: 1 }}>
+              Showing only departments with active violations ({visibleDepartments.length} of {departments.length})
+            </span>
+            <Button
+              icon="pi pi-times"
+              label="Show all"
+              className="p-button-text p-button-sm"
+              style={{ color: "#9a3412", padding: "0.25rem 0.5rem" }}
+              onClick={() => setFilterWarningsOnly(false)}
+            />
+          </div>
+        )}
 
         {error && <Message severity="error" text={error} style={{ marginBottom: "1rem" }} />}
 
         <div
+          ref={deptGridRef}
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fill, minmax(420px, 1fr))",
             gap: "1.25rem",
+            scrollMarginTop: "1.5rem",
           }}
         >
-          {departments.map((department) => (
+          {visibleDepartments.map((department) => (
             <section
               key={department.departmentId}
               style={{
@@ -266,7 +455,13 @@ const ManagementDashboard: React.FC = () => {
 
                 <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", minHeight: "2rem", marginBottom: "1rem" }}>
                   {(department.warningsByMetric ?? []).length > 0 ? (
-                    department.warningsByMetric?.map((warning) => <WarningPill key={warning.label} warning={warning} />)
+                    department.warningsByMetric?.map((warning) => (
+                      <WarningPill
+                        key={warning.label}
+                        warning={warning}
+                        onClick={() => openDeptDetail(department)}
+                      />
+                    ))
                   ) : (
                     <span style={{ color: "#166534", fontSize: "0.85rem", fontWeight: 600 }}>
                       <i className="pi pi-check-circle" style={{ marginRight: "0.35rem" }} />
@@ -295,32 +490,161 @@ const ManagementDashboard: React.FC = () => {
                 </div>
 
                 {(department.trends ?? []).map((trend) => <TrendRow key={trend.metric} trend={trend} />)}
+
+                <div style={{ marginTop: "1rem", display: "flex", justifyContent: "flex-end" }}>
+                  <Button
+                    label="View Department"
+                    icon="pi pi-arrow-right"
+                    iconPos="right"
+                    className="p-button-outlined"
+                    style={{ borderColor: "#0369a1", color: "#0369a1" }}
+                    onClick={() => openDeptDetail(department)}
+                  />
+                </div>
               </div>
             </section>
           ))}
 
-          {departments.length === 0 && (
+          {visibleDepartments.length === 0 && (
             <div style={{ gridColumn: "1 / -1" }}>
-              <NoDataOverlay height="220px" message="No department climate overview available" icon="pi pi-inbox" />
+              <NoDataOverlay
+                height="220px"
+                message={
+                  filterWarningsOnly
+                    ? "No departments with active violations"
+                    : "No department climate overview available"
+                }
+                icon={filterWarningsOnly ? "pi pi-check-circle" : "pi pi-inbox"}
+              />
             </div>
           )}
         </div>
       </main>
+
+      {/* Department detail dialog */}
+      <Dialog
+        header={
+          <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+            <i className="pi pi-sitemap" style={{ color: "#0369a1" }} />
+            <span>{detailDept?.departmentName ?? "Department"}</span>
+          </div>
+        }
+        visible={detailDept !== null}
+        onHide={closeDeptDetail}
+        style={{ width: "520px", maxWidth: "95vw" }}
+        modal
+        draggable={false}
+      >
+        {detailDept && (
+          <div>
+            <div style={{ marginBottom: "1.25rem" }}>
+              <div style={{ fontSize: "0.8rem", color: "#6b7280", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "0.5rem" }}>
+                Active Violations
+              </div>
+              {(detailDept.warningsByMetric ?? []).length > 0 ? (
+                <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                  {detailDept.warningsByMetric?.map((warning) => (
+                    <WarningPill key={warning.label} warning={warning} />
+                  ))}
+                </div>
+              ) : (
+                <span style={{ color: "#166534", fontSize: "0.9rem", fontWeight: 600 }}>
+                  <i className="pi pi-check-circle" style={{ marginRight: "0.4rem" }} />
+                  No active violations
+                </span>
+              )}
+            </div>
+
+            <div>
+              <div style={{ fontSize: "0.8rem", color: "#6b7280", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "0.5rem" }}>
+                Rooms
+              </div>
+              {detailRoomsLoading ? (
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "#6b7280" }}>
+                  <ProgressSpinner style={{ width: "20px", height: "20px" }} />
+                  <span style={{ fontSize: "0.9rem" }}>Loading rooms…</span>
+                </div>
+              ) : detailRoomsError ? (
+                <Message severity="warn" text={detailRoomsError} />
+              ) : detailRooms.length === 0 ? (
+                <span style={{ color: "#6b7280", fontSize: "0.9rem" }}>No rooms found.</span>
+              ) : (
+                <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                  {detailRooms.map((room) => (
+                    <li
+                      key={room.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => room.id !== undefined && navigate(ROUTES.MANAGEMENT_ROOM_HISTORY.replace(":roomId", String(room.id)))}
+                      onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && room.id !== undefined) navigate(ROUTES.MANAGEMENT_ROOM_HISTORY.replace(":roomId", String(room.id))); }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                        padding: "0.4rem 0.6rem",
+                        background: "#f9fafb",
+                        borderRadius: "6px",
+                        border: "1px solid #e5e7eb",
+                        fontSize: "0.9rem",
+                        color: "#374151",
+                        cursor: "pointer",
+                        userSelect: "none",
+                      }}
+                    >
+                      <i className="pi pi-building" style={{ color: "#6b7280", fontSize: "0.85rem" }} />
+                      <span style={{ flex: 1 }}>{room.name ?? `Room ${room.id}`}</span>
+                      <i className="pi pi-chart-line" style={{ color: "#9ca3af", fontSize: "0.8rem" }} />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        )}
+      </Dialog>
     </div>
   );
 };
 
-function SummaryStat({ icon, label, value, color }: { icon: string; label: string; value: number; color: string }) {
+function SummaryStat({
+  icon,
+  label,
+  value,
+  color,
+  onClick,
+  active,
+  tooltip,
+}: {
+  icon: string;
+  label: string;
+  value: number;
+  color: string;
+  onClick?: () => void;
+  active?: boolean;
+  tooltip?: string;
+}) {
+  const [hovered, setHovered] = useState(false);
+
   return (
     <div
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      title={tooltip}
+      onClick={onClick}
+      onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") onClick(); } : undefined}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
         display: "flex",
         alignItems: "center",
         gap: "0.6rem",
-        background: "#f9fafb",
-        border: "1px solid #e5e7eb",
+        background: active ? "#eff6ff" : hovered && onClick ? "#f3f4f6" : "#f9fafb",
+        border: `1px solid ${active ? "#bfdbfe" : hovered && onClick ? "#d1d5db" : "#e5e7eb"}`,
         borderRadius: "8px",
         padding: "0.5rem 1rem",
+        cursor: onClick ? "pointer" : undefined,
+        transition: "background 0.15s, border-color 0.15s",
+        userSelect: "none",
       }}
     >
       <i className={`pi ${icon}`} style={{ color, fontSize: "1.1rem" }} />
