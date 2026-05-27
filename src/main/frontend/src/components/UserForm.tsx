@@ -169,8 +169,11 @@ const UserForm: React.FC<UserFormProps> =
         const nonEditableRoles = !isNewUser && existingRoles.includes(UserxRole.DEPARTMENT_LEAD)
             ? [UserxRole.DEPARTMENT_LEAD]
             : [];
+        const impliedLockedRoles = existingRoles.includes(UserxRole.DEPARTMENT_LEAD)
+            ? [UserxRole.EMPLOYEE]
+            : [];
         const roleOptions = Array.from(new Set([...allowedRoles, ...nonEditableRoles]));
-        const protectedRoles = Array.from(new Set([...lockedRoles, ...nonEditableRoles]));
+        const protectedRoles = Array.from(new Set([...lockedRoles, ...nonEditableRoles, ...impliedLockedRoles]));
         const userRoles = roleOptions.map(role => ({
             label: role,
             value: role,
@@ -311,6 +314,12 @@ const UserForm: React.FC<UserFormProps> =
                             {protectedRoles.length > 0 && (
                                 <small style={{ display: "block", color: "#64748b" }}>
                                     Disabled roles cannot be changed here.
+                                </small>
+                            )}
+                            {impliedLockedRoles.includes(UserxRole.EMPLOYEE) && (
+                                <small style={{ display: "flex", alignItems: "center", gap: "0.3rem", color: "#0369a1" }}>
+                                    <i className="pi pi-info-circle" style={{ fontSize: "0.75rem" }} />
+                                    Employee is required because this user is a Department Lead.
                                 </small>
                             )}
                             {combinationError && (

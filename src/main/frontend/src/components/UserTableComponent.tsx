@@ -16,7 +16,7 @@ import UserListComponent from "./UserListComponent";
 import UserDialog from "./UserDialog";
 
 
-import {createUserxRoleArrayFromStrings, getRoleCombinationError, hasUserRole, rolesToArray, UserxValidationResult} from '../utilities/userxUtilities';
+import {createUserxRoleArrayFromStrings, getImpliedRoles, getRoleCombinationError, hasUserRole, rolesToArray, UserxValidationResult} from '../utilities/userxUtilities';
 import {
     AdminControllerApi,
     DepartmentDTO,
@@ -227,6 +227,10 @@ const UserTable = () => {
         const combinationError = getRoleCombinationError(selectedRoles);
         if (combinationError) {
             fieldErrors.roles = combinationError;
+        }
+
+        if (selectedRoles.includes(UserxRole.DEPARTMENT_LEAD) && !selectedRoles.includes(UserxRole.EMPLOYEE)) {
+            fieldErrors.roles = 'Department Lead must also have the Employee role.';
         }
 
         if (hasEmployeeRole(user)) {
@@ -530,12 +534,13 @@ const UserTable = () => {
         if (!selectedUser) return;
 
         const roles = createUserxRoleArrayFromStrings(event.value);
+        const allRoles = Array.from(new Set([...roles, ...getImpliedRoles(roles)]));
 
-        setSelectedUser({...selectedUser, roles: new Set(roles)});
-        if (roles.includes(UserxRole.EMPLOYEE)) {
+        setSelectedUser({...selectedUser, roles: new Set(allRoles)});
+        if (allRoles.includes(UserxRole.EMPLOYEE)) {
             void ensureDepartmentsLoaded();
         }
-        if (!roles.includes(UserxRole.EMPLOYEE)) {
+        if (!allRoles.includes(UserxRole.EMPLOYEE)) {
             resetEmployeeAssignment();
         }
     }
