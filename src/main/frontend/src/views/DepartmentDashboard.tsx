@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { addDays, format } from 'date-fns';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Message } from 'primereact/message';
 import { Button } from 'primereact/button';
@@ -22,15 +23,22 @@ interface RoomDashboardData {
     violations: ThresholdViolationDTO[];
 }
 
+interface CachedRoomDashboardData {
+    data: RoomDashboardData;
+    fetchedAt: number;
+}
+
 interface HydrationStatus {
     label: string;
     done: number;
     total: number;
 }
 
+const ROOM_DATA_CACHE_TTL_MS = 15_000;
+
 const cachedRoomsByDepartment = new Map<number, RoomDTO[]>();
 const cachedRoomRequestsByDepartment = new Map<number, Promise<RoomDTO[]>>();
-const cachedRoomData = new Map<number, RoomDashboardData>();
+const cachedRoomData = new Map<number, CachedRoomDashboardData>();
 const cachedRoomDataRequests = new Map<number, Promise<RoomDashboardData>>();
 
 function clearDepartmentDashboardCaches(): void {
@@ -44,6 +52,17 @@ registerDashboardCacheClearHandler(clearDepartmentDashboardCaches);
 
 function delay(ms: number): Promise<void> {
     return new Promise(resolve => window.setTimeout(resolve, ms));
+}
+
+const toLocalDateTimeParam = (date: Date): string => format(date, "yyyy-MM-dd'T'HH:mm:ss");
+
+function todayWindow(): { from: string; to: string } {
+    const now = new Date();
+    const from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return {
+        from: toLocalDateTimeParam(from),
+        to: toLocalDateTimeParam(addDays(from, 1)),
+    };
 }
 
 async function getRoomsCached(departmentId: number): Promise<RoomDTO[]> {
@@ -75,16 +94,19 @@ async function loadRoomDashboardData(roomId: number): Promise<RoomDashboardData>
         }),
     ]);
 
-    const measurements: MeasurementDTO[] = Object.entries(summary.metrics ?? {})
-        .filter((entry): entry is [MeasurementDTOMetricEnum, NonNullable<typeof summary.metrics>[MeasurementDTOMetricEnum]] =>
-            entry[1]?.latest !== undefined && entry[1]?.latest !== null,
-        )
-        .map(([metric, stats]) => ({
-            roomId,
-            metric,
-            measurement: stats.latest,
-            timestamp: summary.generatedAt,
-        }));
+    const metrics = summary.metrics ?? {};
+    const measurements: MeasurementDTO[] = Object.values(MeasurementDTOMetricEnum)
+        .flatMap(metric => {
+            const latest = metrics[metric]?.latest;
+            if (latest === undefined || latest === null) return [];
+
+            return [{
+                roomId,
+                metric,
+                measurement: latest,
+                timestamp: summary.generatedAt,
+            }];
+        });
 
     return {
         measurements,
@@ -92,15 +114,59 @@ async function loadRoomDashboardData(roomId: number): Promise<RoomDashboardData>
     };
 }
 
-async function getRoomDashboardDataCached(roomId: number): Promise<RoomDashboardData> {
+async function loadRoomDashboardDataWithTrendFallback(roomId: number): Promise<RoomDashboardData> {
+    const data = await loadRoomDashboardData(roomId);
+    if (data.measurements.length > 0) return data;
+
+    const window = todayWindow();
+    const trendMeasurements: MeasurementDTO[] = [];
+
+    await Promise.all(Object.values(MeasurementDTOMetricEnum).map(async metric => {
+        const trend = await AnalyticsService.getRoomTrend(roomId, metric, window.from, window.to);
+        const latestPoint = [...(trend.points ?? [])]
+            .filter(point => point.timestamp && point.value !== undefined && point.value !== null)
+            .sort((a, b) => new Date(b.timestamp!).getTime() - new Date(a.timestamp!).getTime())[0];
+
+        if (!latestPoint) return;
+
+        trendMeasurements.push({
+            roomId,
+            metric,
+            measurement: latestPoint.value,
+            timestamp: latestPoint.timestamp,
+        });
+    }));
+
+    return {
+        measurements: trendMeasurements,
+        violations: data.violations,
+    };
+}
+
+function getFreshCachedRoomData(roomId: number): RoomDashboardData | null {
     const cached = cachedRoomData.get(roomId);
+    if (!cached) return null;
+
+    const isFresh = Date.now() - cached.fetchedAt < ROOM_DATA_CACHE_TTL_MS;
+    return isFresh ? cached.data : null;
+}
+
+async function getRoomDashboardDataCached(roomId: number): Promise<RoomDashboardData> {
+    const cached = getFreshCachedRoomData(roomId);
     if (cached) return cached;
 
     let request = cachedRoomDataRequests.get(roomId);
     if (!request) {
-        request = loadRoomDashboardData(roomId)
+        request = loadRoomDashboardDataWithTrendFallback(roomId)
             .then(data => {
-                cachedRoomData.set(roomId, data);
+                if (data.measurements.length > 0) {
+                    cachedRoomData.set(roomId, {
+                        data,
+                        fetchedAt: Date.now(),
+                    });
+                } else {
+                    cachedRoomData.delete(roomId);
+                }
                 return data;
             })
             .finally(() => {
@@ -170,7 +236,7 @@ const DepartmentDashboard: React.FC = () => {
                     });
                     setLoadingRoomIds(prev => new Set(prev).add(room.id));
 
-                    if (!cachedRoomData.has(room.id)) {
+                    if (!getFreshCachedRoomData(room.id)) {
                         await delay(250);
                     }
 
