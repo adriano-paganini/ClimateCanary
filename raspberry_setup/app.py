@@ -31,8 +31,6 @@ class OccupancyDTO(BaseModel):
     roomName:    str
     privacyMode: bool
 
-# Matches the Java record toString() key sent by the backend:
-# ThresholdDTO[id=X, roomId=Y, metric=METRIC, boundValue=Z, thresholdType=TYPE, ...]
 _THRESHOLD_KEY_RE = re.compile(
     r'metric=(\w+), boundValue=([^,]+), thresholdType=(\w+),.*?enabled=(\w+)\]'
 )
@@ -63,8 +61,8 @@ def _parse_threshold_key(key: str) -> dict | None:
 class ViolationResolvedDTO(BaseModel):
     metric:   str
     roomId:   int
-    endTime:  str            # ISO string e.g. "2026-05-04T14:30:00.123"
-    status:   Optional[str] = None  # computed method on Java record, may not be serialised
+    endTime:  str  # ISO string "2026-05-04T14:30:00.123"
+    status:   Optional[str] = None  
 
 
 def _check_pi_id(piId: int) -> None:
@@ -192,17 +190,23 @@ async def receive_thresholds(piId: int, request: Request):
             continue
 
         if metric not in metric_data:
-            metric_data[metric] = {"upperBound": None, "lowerBound": None, "hintTexts": []}
+            metric_data[metric] = {
+                "upperBound": None, "lowerBound": None,
+                "upperHintTexts": [], "lowerHintTexts": [],
+            }
 
         if entry["thresholdType"] == "UPPER":
             metric_data[metric]["upperBound"] = entry["boundValue"]
+            for hint in hint_list:
+                text = hint.get("hintText")
+                if text and text not in metric_data[metric]["upperHintTexts"]:
+                    metric_data[metric]["upperHintTexts"].append(text)
         elif entry["thresholdType"] == "LOWER":
             metric_data[metric]["lowerBound"] = entry["boundValue"]
-
-        for hint in hint_list:
-            text = hint.get("hintText")
-            if text and text not in metric_data[metric]["hintTexts"]:
-                metric_data[metric]["hintTexts"].append(text)
+            for hint in hint_list:
+                text = hint.get("hintText")
+                if text and text not in metric_data[metric]["lowerHintTexts"]:
+                    metric_data[metric]["lowerHintTexts"].append(text)
 
     updates = [{"metric": m, **data} for m, data in metric_data.items()]
 
