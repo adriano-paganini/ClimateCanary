@@ -12,6 +12,7 @@ export const ROUTES = {
     DEPARTMENT_ABSENCES: '/department/absences',
     DEPARTMENT_ALERTS: '/department/alerts',
     MANAGEMENT_DASHBOARD: '/management',
+    MANAGEMENT_ROOM_HISTORY: '/management/rooms/:roomId/history',
     ROOMS: '/rooms',
     THRESHOLDS: '/thresholds',
     DEVICES: '/devices',
