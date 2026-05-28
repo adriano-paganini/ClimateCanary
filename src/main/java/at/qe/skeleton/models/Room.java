@@ -26,11 +26,11 @@ public class Room {
 
     private Boolean privacyMode;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "department_id")
     private Department department;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "building_id")
     private Building building;
 
@@ -48,7 +48,7 @@ public class Room {
     @OneToMany(mappedBy = "room")
     private List<SensorStation> sensorStations = new ArrayList<>();
 
-    @OneToOne(mappedBy = "room")
+    @OneToOne(mappedBy = "room", fetch = FetchType.LAZY)
     private RaspberryPi raspberryPi;
 
     @OneToMany(mappedBy = "room")

@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { addDays, format } from 'date-fns';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Message } from 'primereact/message';
 import 'primeicons/primeicons.css';
@@ -7,115 +8,364 @@ import NavbarComponent from '../components/NavbarComponent';
 import RoomCard from '../components/RoomCard';
 import { useUser } from '../Contexts/AuthenticatedUserContext';
 import { EmployeeProfileService } from '../services/EmployeeProfileService';
-import { MeasurementService } from '../services/MeasurementService';
 import { RoomService } from '../services/RoomService';
 import { ViolationService, ViolationStatusEnum } from '../services/ViolationService';
 import { DepartmentService } from '../services/DepartmentService';
+import { AnalyticsService } from '../services/AnalyticsService';
+import { registerDashboardCacheClearHandler } from '../utilities/dashboardCacheInvalidation';
 import {
+    EmployeeProfileDTO,
     MeasurementDTO,
+    MeasurementDTOMetricEnum,
     RoomDTO,
     RoomType,
     ThresholdViolationDTO,
 } from '../generated-skeleton-api';
 
 type TabId = 'office' | 'common';
+type HydrationPhase = 'commonRooms' | 'commonMeasurements' | 'complete';
+
+interface HydrationStatus {
+    phase: HydrationPhase;
+    label: string;
+    done: number;
+    total: number;
+}
 
 const TABS: { id: TabId; label: string; icon: string }[] = [
-    { id: 'office', label: 'My Office',   icon: 'pi pi-briefcase' },
+    { id: 'office', label: 'My Office', icon: 'pi pi-briefcase' },
     { id: 'common', label: 'Common Areas', icon: 'pi pi-building' },
 ];
+
+const cachedRoomRequestsById = new Map<number, Promise<RoomDTO>>();
+const cachedCommonRoomsByDepartment = new Map<number, RoomDTO[]>();
+const cachedCommonRoomRequestsByDepartment = new Map<number, Promise<RoomDTO[]>>();
+const cachedActiveViolationsByDepartment = new Map<number, ThresholdViolationDTO[]>();
+const cachedActiveViolationRequestsByDepartment = new Map<number, Promise<ThresholdViolationDTO[]>>();
+const cachedActiveViolationsByRoom = new Map<number, ThresholdViolationDTO[]>();
+const cachedActiveViolationRequestsByRoom = new Map<number, Promise<ThresholdViolationDTO[]>>();
+
+function clearEmployeeDashboardCaches(): void {
+    cachedRoomRequestsById.clear();
+    cachedCommonRoomsByDepartment.clear();
+    cachedCommonRoomRequestsByDepartment.clear();
+    cachedActiveViolationsByDepartment.clear();
+    cachedActiveViolationRequestsByDepartment.clear();
+    cachedActiveViolationsByRoom.clear();
+    cachedActiveViolationRequestsByRoom.clear();
+}
+
+registerDashboardCacheClearHandler(clearEmployeeDashboardCaches);
+
+function delay(ms: number): Promise<void> {
+    return new Promise(resolve => window.setTimeout(resolve, ms));
+}
+
+const toLocalDateTimeParam = (date: Date): string => format(date, "yyyy-MM-dd'T'HH:mm:ss");
+
+function todayWindow(): { from: string; to: string } {
+    const now = new Date();
+    const from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return {
+        from: toLocalDateTimeParam(from),
+        to: toLocalDateTimeParam(addDays(from, 1)),
+    };
+}
+
+async function getRoomFresh(roomId: number): Promise<RoomDTO> {
+    let request = cachedRoomRequestsById.get(roomId);
+    if (!request) {
+        request = RoomService.getById(roomId)
+            .finally(() => {
+                cachedRoomRequestsById.delete(roomId);
+            });
+        cachedRoomRequestsById.set(roomId, request);
+    }
+    return request;
+}
+
+async function getLatestMeasurementsFresh(roomId: number): Promise<MeasurementDTO[]> {
+    const summary = await AnalyticsService.getRoomSummary(roomId);
+    const timestamp = summary.generatedAt;
+    const metrics = summary.metrics ?? {};
+
+    const measurements = Object.values(MeasurementDTOMetricEnum)
+        .flatMap(metric => {
+            const latest = metrics[metric]?.latest;
+            if (latest === undefined || latest === null) return [];
+
+            return [{
+                timestamp,
+                measurement: latest,
+                metric,
+                roomId,
+            }];
+        });
+
+    if (measurements.length > 0) return measurements;
+
+    const window = todayWindow();
+    const trendMeasurements: MeasurementDTO[] = [];
+
+    await Promise.all(Object.values(MeasurementDTOMetricEnum).map(async metric => {
+        const trend = await AnalyticsService.getRoomTrend(roomId, metric, window.from, window.to);
+        const latestPoint = [...(trend.points ?? [])]
+            .filter(point => point.timestamp && point.value !== undefined && point.value !== null)
+            .sort((a, b) => new Date(b.timestamp!).getTime() - new Date(a.timestamp!).getTime())[0];
+
+        if (!latestPoint) return;
+
+        trendMeasurements.push({
+            timestamp: latestPoint.timestamp,
+            measurement: latestPoint.value,
+            metric,
+            roomId,
+        });
+    }));
+
+    return trendMeasurements;
+}
+
+async function getCommonRoomsCached(departmentId: number): Promise<RoomDTO[]> {
+    const cached = cachedCommonRoomsByDepartment.get(departmentId);
+    if (cached) return cached;
+
+    let request = cachedCommonRoomRequestsByDepartment.get(departmentId);
+    if (!request) {
+        request = DepartmentService.getRooms(departmentId)
+            .then(rooms => {
+                const commonRooms = rooms.filter(room => room.roomType === RoomType.COMMON_AREAS);
+                cachedCommonRoomsByDepartment.set(departmentId, commonRooms);
+                return commonRooms;
+            })
+            .finally(() => {
+                cachedCommonRoomRequestsByDepartment.delete(departmentId);
+            });
+        cachedCommonRoomRequestsByDepartment.set(departmentId, request);
+    }
+    return request;
+}
+
+async function getActiveViolationsForDepartmentCached(departmentId: number): Promise<ThresholdViolationDTO[]> {
+    const cached = cachedActiveViolationsByDepartment.get(departmentId);
+    if (cached) return cached;
+
+    let request = cachedActiveViolationRequestsByDepartment.get(departmentId);
+    if (!request) {
+        request = ViolationService.getAll({
+            violationStatus: ViolationStatusEnum.ACTIVE,
+            departmentId,
+        })
+            .then(violations => {
+                cachedActiveViolationsByDepartment.set(departmentId, violations);
+                return violations;
+            })
+            .finally(() => {
+                cachedActiveViolationRequestsByDepartment.delete(departmentId);
+            });
+        cachedActiveViolationRequestsByDepartment.set(departmentId, request);
+    }
+    return request;
+}
+
+async function getActiveViolationsForRoomCached(roomId: number): Promise<ThresholdViolationDTO[]> {
+    const cached = cachedActiveViolationsByRoom.get(roomId);
+    if (cached) return cached;
+
+    let request = cachedActiveViolationRequestsByRoom.get(roomId);
+    if (!request) {
+        request = ViolationService.getAll({
+            violationStatus: ViolationStatusEnum.ACTIVE,
+            roomId,
+        })
+            .then(violations => {
+                cachedActiveViolationsByRoom.set(roomId, violations);
+                return violations;
+            })
+            .finally(() => {
+                cachedActiveViolationRequestsByRoom.delete(roomId);
+            });
+        cachedActiveViolationRequestsByRoom.set(roomId, request);
+    }
+    return request;
+}
 
 const EmployeeDashboard: React.FC = () => {
     const { currentUser } = useUser();
 
-    const [loading, setLoading] = useState(true);
+    const [loadingOffice, setLoadingOffice] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<TabId>('office');
+    const [profile, setProfile] = useState<EmployeeProfileDTO | null>(null);
     const [officeRoom, setOfficeRoom] = useState<RoomDTO | null>(null);
-    const [commonRooms, setCommonRooms] = useState<RoomDTO[]>([]);
+    const [commonRooms, setCommonRooms] = useState<RoomDTO[] | null>(null);
     const [measurementsByRoom, setMeasurementsByRoom] = useState<Record<number, MeasurementDTO[]>>({});
-    const [violationsByRoom, setViolationsByRoom] = useState<Record<number, ThresholdViolationDTO[]>>({});
+    const [violationsByRoom, setViolationsByRoom] = useState<Record<number, ThresholdViolationDTO[]>>(() =>
+        Object.fromEntries(cachedActiveViolationsByRoom.entries()),
+    );
+    const [hydrationStatus, setHydrationStatus] = useState<HydrationStatus | null>(null);
 
     useEffect(() => {
-        const load = async () => {
+        let active = true;
+
+        const loadOffice = async () => {
             try {
-                const profile = await EmployeeProfileService.getMe();
-                if (!profile?.roomId) {
+                setError(null);
+                const employeeProfile = await EmployeeProfileService.getMe();
+                if (!active) return;
+                setProfile(employeeProfile);
+
+                if (!employeeProfile?.roomId) {
                     setError('No employee profile with an assigned room found.');
                     return;
                 }
 
-                const [room, latestOffice, allViolations] = await Promise.all([
-                    RoomService.getById(profile.roomId),
-                    MeasurementService.getLatestPerMetric(profile.roomId),
-                    ViolationService.getAll({
-                        violationStatus: ViolationStatusEnum.ACTIVE,
-                        ...(profile.departmentId ? { departmentId: profile.departmentId } : {}),
-                    }),
-                ]);
-
+                const room = await getRoomFresh(employeeProfile.roomId);
+                if (!active) return;
                 setOfficeRoom(room);
 
-                const activeForRoom = (roomId: number): ThresholdViolationDTO[] =>
-                    allViolations.filter(v => v.roomId === roomId);
-
-                setMeasurementsByRoom({ [profile.roomId]: Object.values(latestOffice) });
-                setViolationsByRoom({ [profile.roomId]: activeForRoom(profile.roomId) });
-
-                if (profile.departmentId) {
-                    const deptRooms = await DepartmentService.getRooms(profile.departmentId);
-                    const common = deptRooms.filter(r => r.roomType === RoomType.COMMON_AREAS);
-                    setCommonRooms(common);
-
-                    if (common.length > 0) {
-                        const commonMeasurements = await Promise.all(
-                            common.map(r =>
-                                r.id
-                                    ? MeasurementService.getLatestPerMetric(r.id).then(m => Object.values(m))
-                                    : Promise.resolve([]),
-                            ),
-                        );
-                        const measMap: Record<number, MeasurementDTO[]> = {};
-                        const violMap: Record<number, ThresholdViolationDTO[]> = {};
-                        common.forEach((r, i) => {
-                            if (r.id !== undefined) {
-                                measMap[r.id] = commonMeasurements[i];
-                                violMap[r.id] = activeForRoom(r.id);
-                            }
-                        });
-                        setMeasurementsByRoom(prev => ({ ...prev, ...measMap }));
-                        setViolationsByRoom(prev => ({ ...prev, ...violMap }));
+                let latestOffice: MeasurementDTO[] = [];
+                try {
+                    latestOffice = await getLatestMeasurementsFresh(employeeProfile.roomId);
+                } catch (err: unknown) {
+                    const status = (err as { response?: { status?: number } })?.response?.status;
+                    if (status === 403) {
+                        if (active) setError('Klimadaten nicht verfügbar — Datenschutz aktiv (Belegung unter Mindestanzahl).');
+                    } else {
+                        throw err;
                     }
                 }
+                if (!active) return;
+
+                const officeViolations = employeeProfile.departmentId
+                    ? await getActiveViolationsForDepartmentCached(employeeProfile.departmentId)
+                    : await getActiveViolationsForRoomCached(employeeProfile.roomId);
+                if (!active) return;
+
+                setMeasurementsByRoom(prev => ({ ...prev, [employeeProfile.roomId!]: latestOffice }));
+                setViolationsByRoom(prev => ({
+                    ...prev,
+                    [employeeProfile.roomId!]: officeViolations.filter(violation => violation.roomId === employeeProfile.roomId),
+                }));
             } catch (err: unknown) {
                 const msg = err instanceof Error ? err.message : String(err);
                 console.error('Dashboard load error:', err);
-                setError(`Failed to load room data: ${msg}`);
+                if (active) {
+                    setError(`Failed to load office data: ${msg}`);
+                }
             } finally {
-                setLoading(false);
+                if (active) setLoadingOffice(false);
             }
         };
-        void load();
+
+        void loadOffice();
+        return () => {
+            active = false;
+        };
     }, []);
+
+    useEffect(() => {
+        if (!profile?.departmentId) return;
+        let active = true;
+
+        const hydrateCommonAreas = async () => {
+            try {
+                setHydrationStatus({
+                    phase: 'commonRooms',
+                    label: 'Loading common areas for your department',
+                    done: 0,
+                    total: 1,
+                });
+
+                if (!cachedCommonRoomsByDepartment.has(profile.departmentId!)) {
+                    await delay(650);
+                }
+
+                const rooms = await getCommonRoomsCached(profile.departmentId!);
+                if (!active) return;
+
+                setCommonRooms(rooms);
+                setHydrationStatus({
+                    phase: 'commonRooms',
+                    label: 'Loaded common areas',
+                    done: 1,
+                    total: 1,
+                });
+
+                const departmentViolations = await getActiveViolationsForDepartmentCached(profile.departmentId!);
+                if (!active) return;
+
+                for (let i = 0; i < rooms.length; i++) {
+                    const room = rooms[i];
+                    if (room.id === undefined) continue;
+
+                    setHydrationStatus({
+                        phase: 'commonMeasurements',
+                        label: `Loading data for ${room.name ?? `Room ${room.id}`}`,
+                        done: i,
+                        total: rooms.length,
+                    });
+
+                    await delay(850);
+
+                    const measurements = await getLatestMeasurementsFresh(room.id);
+                    if (!active) return;
+
+                    setMeasurementsByRoom(prev => ({ ...prev, [room.id!]: measurements }));
+                    setViolationsByRoom(prev => ({
+                        ...prev,
+                        [room.id!]: departmentViolations.filter(violation => violation.roomId === room.id),
+                    }));
+                    setHydrationStatus({
+                        phase: 'commonMeasurements',
+                        label: `Loaded ${room.name ?? `Room ${room.id}`}`,
+                        done: i + 1,
+                        total: rooms.length,
+                    });
+                }
+
+                if (active) {
+                    setHydrationStatus({
+                        phase: 'complete',
+                        label: 'Background loading complete',
+                        done: rooms.length,
+                        total: rooms.length,
+                    });
+                }
+            } catch (err: unknown) {
+                const msg = err instanceof Error ? err.message : String(err);
+                console.error('Common area hydration error:', err);
+                if (active) setError(`Failed to load common areas: ${msg}`);
+            }
+        };
+
+        void hydrateCommonAreas();
+        return () => {
+            active = false;
+        };
+    }, [profile?.departmentId]);
 
     const handleTabClick = (tab: TabId) => {
         setActiveTab(tab);
     };
 
-    const totalActiveViolations = Object.values(violationsByRoom).flat().length;
+    const totalActiveViolations = useMemo(
+        () => Object.values(violationsByRoom).flat().length,
+        [violationsByRoom],
+    );
 
-    if (loading) {
+    if (loadingOffice) {
         return (
             <div>
                 <NavbarComponent />
-                <div className="flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
                     <ProgressSpinner />
                 </div>
             </div>
         );
     }
 
-    if (error) {
+    if (error && !officeRoom) {
         return (
             <div>
                 <NavbarComponent />
@@ -135,21 +385,52 @@ const EmployeeDashboard: React.FC = () => {
                     Welcome{currentUser?.firstName ? `, ${currentUser.firstName}` : ''}
                 </h2>
 
+                {error && (
+                    <div style={{ marginBottom: '1rem' }}>
+                        <Message severity="error" text={error} />
+                    </div>
+                )}
+
+                {hydrationStatus && (
+                    <div
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '1rem',
+                            background: hydrationStatus.phase === 'complete' ? '#f0fdf4' : '#eff6ff',
+                            border: `1px solid ${hydrationStatus.phase === 'complete' ? '#bbf7d0' : '#bfdbfe'}`,
+                            color: hydrationStatus.phase === 'complete' ? '#166534' : '#1e3a8a',
+                            borderRadius: '8px',
+                            padding: '0.65rem 0.9rem',
+                            marginBottom: '1rem',
+                            fontSize: '0.9rem',
+                        }}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                            {hydrationStatus.phase === 'complete' ? (
+                                <i className="pi pi-check-circle" />
+                            ) : (
+                                <ProgressSpinner style={{ width: '1rem', height: '1rem' }} strokeWidth="8" />
+                            )}
+                            <span>{hydrationStatus.label}</span>
+                        </div>
+                        <span style={{ fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+                            {hydrationStatus.total > 0 ? `${hydrationStatus.done}/${hydrationStatus.total}` : ''}
+                        </span>
+                    </div>
+                )}
+
                 {totalActiveViolations > 0 && (
                     <div style={{ marginBottom: '1rem' }}>
                         <Message
                             severity="warn"
-                            text={`${totalActiveViolations} active threshold violation${totalActiveViolations > 1 ? 's' : ''} in your rooms.`}
+                            text={`${totalActiveViolations} active threshold violation${totalActiveViolations > 1 ? 's' : ''} in your loaded rooms.`}
                         />
                     </div>
                 )}
 
-                {/* Horizontal tab bar */}
-                <div style={{
-                    display: 'flex',
-                    borderBottom: '2px solid #e5e7eb',
-                    gap: '0.25rem',
-                }}>
+                <div style={{ display: 'flex', borderBottom: '2px solid #e5e7eb', gap: '0.25rem' }}>
                     {TABS.map(tab => (
                         <button
                             key={tab.id}
@@ -176,7 +457,6 @@ const EmployeeDashboard: React.FC = () => {
                 </div>
             </div>
 
-            {/* Content */}
             <div style={{ padding: '2rem' }}>
                 {activeTab === 'office' && (
                     <section>
@@ -196,7 +476,12 @@ const EmployeeDashboard: React.FC = () => {
                 {activeTab === 'common' && (
                     <section>
                         <h3 style={{ marginTop: 0, marginBottom: '1rem', color: '#374151' }}>Common Areas</h3>
-                        {commonRooms.length === 0 ? (
+                        {commonRooms === null ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#6b7280' }}>
+                                <ProgressSpinner style={{ width: '1.5rem', height: '1.5rem' }} />
+                                <span>Loading common areas...</span>
+                            </div>
+                        ) : commonRooms.length === 0 ? (
                             <p style={{ color: '#6b7280' }}>No common areas in your department.</p>
                         ) : (
                             <div className="flex flex-wrap gap-3">

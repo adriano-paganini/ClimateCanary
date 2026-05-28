@@ -1,6 +1,10 @@
 import asyncio
+import logging
+from datetime import datetime, timedelta
 import aiosqlite
 from bleak import BleakClient
+
+log = logging.getLogger(__name__)
 
 async def init_db(db: aiosqlite.Connection) -> None:
     await db.executescript(
@@ -9,8 +13,6 @@ async def init_db(db: aiosqlite.Connection) -> None:
             id                INTEGER PRIMARY KEY AUTOINCREMENT,
             sensor_station_id INTEGER NOT NULL,
             room_id           INTEGER NOT NULL,
-            -- ISO 8601 local datetime string (e.g. '2026-05-04T14:30:00.123').
-            -- Derived in ble_worker: datetime.fromtimestamp(anchor_pi_time + (pkt_millis - anchor_millis) / 1000.0)
             timestamp         TEXT    NOT NULL,
             temperature       REAL    NOT NULL,
             humidity          REAL    NOT NULL,
@@ -58,7 +60,7 @@ async def init_db(db: aiosqlite.Connection) -> None:
         """
     )
     await db.commit()
-    print("[DB] schema initialised.")
+    log.info("[DB] schema initialised.")
 
 async def db_writer(
     queue: asyncio.Queue,
@@ -86,19 +88,14 @@ async def db_writer(
                 ),
             )
             await db.commit()
-            print(f"[DB] saved row timestamp={pkt['timestamp']} "
-                  f"station={pkt['sensor_station_id']} room={pkt['room_id']}")
+            log.info(f"[DB] saved row timestamp={pkt['timestamp']} "
+                     f"station={pkt['sensor_station_id']} room={pkt['room_id']}")
         except Exception as e:
-            print(f"[DB] write error: {e}")
+            log.error(f"[DB] write error: {e}")
         finally:
             queue.task_done()
 
 async def save_station(db: aiosqlite.Connection, station: dict) -> None:
-    """
-    Upserts a single station by BLE address.
-    Called whenever POST /api/spi/{piId}/stations delivers an assignment.
-    Existing stations are preserved, only the upserted address is updated.
-    """
     await db.execute(
         """
         INSERT INTO stations
@@ -121,15 +118,47 @@ async def save_station(db: aiosqlite.Connection, station: dict) -> None:
         ),
     )
     await db.commit()
-    print(f"[DB] upserted station address={station['bleMac']} id={station['id']}")
+    log.info(f"[DB] upserted station address={station['bleMac']} id={station['id']}")
+
+
+async def remove_station(db: aiosqlite.Connection, address: str) -> None:
+    await db.execute("DELETE FROM stations WHERE address = ?", (address,))
+    await db.commit()
+    log.info(f"[DB] removed station address={address}")
+
+
+async def cleanup_old_rows(db: aiosqlite.Connection, retention_hours: int = 48) -> None:
+    cutoff = (datetime.now() - timedelta(hours=retention_hours)).strftime("%Y-%m-%dT%H:%M:%S.000")
+
+    cursor = await db.execute(
+        "DELETE FROM sensor_data WHERE timestamp < ? AND sent = 1", (cutoff,)
+    )
+    sent_deleted = cursor.rowcount
+
+    async with db.execute(
+        "SELECT COUNT(*) FROM sensor_data WHERE timestamp < ? AND sent = 0", (cutoff,)
+    ) as cursor:
+        (unsent_count,) = await cursor.fetchone()
+
+    if unsent_count:
+        log.warning(f"[DB] cleanup: deleting {unsent_count} unsent row(s) older than "
+                    f"{retention_hours}h — backend was unreachable too long, data lost")
+        await db.execute(
+            "DELETE FROM sensor_data WHERE timestamp < ? AND sent = 0", (cutoff,)
+        )
+
+    cursor = await db.execute(
+        "DELETE FROM threshold_violations WHERE start_time < ?", (cutoff,)
+    )
+    violations_deleted = cursor.rowcount
+
+    await db.commit()
+    log.info(f"[DB] cleanup: removed {sent_deleted} sent measurement(s), "
+             f"{unsent_count} unsent measurement(s), "
+             f"{violations_deleted} violation(s) older than {retention_hours}h")
 
 
 async def load_stations(db: aiosqlite.Connection) -> list[dict]:
-    """
-    Reads all known station assignments from SQLite.
-    Returns snake_case keys matching the Station dataclass in main.py.
-    Used on boot and whenever station_manager wakes up.
-    """
     async with db.execute(
         """SELECT address, sensor_station_id, room_id,
                   name, device_status, measurement_interval

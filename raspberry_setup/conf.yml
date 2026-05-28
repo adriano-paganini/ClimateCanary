@@ -1,7 +1,7 @@
 pi:
-  id: 2
-  room_id: 2
-  room_name: "Room 2"
-  host_name: "rpi-common1"
+  id: 15
+  room_id: 15
+  room_name: "Common Area 2"
+  host_name: "rpi-test"
   backend_url: "http://192.168.0.110:8080"
   privacy_mode: false

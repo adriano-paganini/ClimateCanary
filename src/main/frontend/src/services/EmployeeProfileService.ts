@@ -12,8 +12,8 @@ export const EmployeeProfileService = {
     getMe: (): Promise<EmployeeProfileDTO> =>
         api.getMyProfile().then(r => r.data),
 
-    getAll: (): Promise<EmployeeProfileDTO[]> =>
-        api.getAll4().then(r => r.data),
+    getAll: (userxId?: number, departmentId?: number): Promise<EmployeeProfileDTO[]> =>
+        api.getProfiles({ userxId, departmentId }).then(r => r.data),
 
     getById: (id: number): Promise<EmployeeProfileDTO> =>
         api.getById4({ id }).then(r => r.data),

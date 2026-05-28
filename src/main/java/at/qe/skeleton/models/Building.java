@@ -24,7 +24,7 @@ public class Building {
     @OneToMany(mappedBy = "building")
     private List<Room> rooms = new ArrayList<>();
 
-    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(name = "address_id")
     private Address address;
 

@@ -28,11 +28,11 @@ public class SensorStation {
 
     private String bleMac;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "raspberry_pi_id")
     private RaspberryPi raspberryPi;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id", nullable = false)
     private Room room;
 

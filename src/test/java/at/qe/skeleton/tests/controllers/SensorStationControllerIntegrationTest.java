@@ -8,6 +8,8 @@ import at.qe.skeleton.mappers.SensorStationCreateMapper;
 import at.qe.skeleton.mappers.SensorStationMapper;
 import at.qe.skeleton.models.DeviceStatus;
 import at.qe.skeleton.models.SensorStation;
+import at.qe.skeleton.services.PiRequestResult;
+import at.qe.skeleton.services.RaspberryPiServerService;
 import at.qe.skeleton.services.SensorStationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,12 +28,13 @@ import java.util.List;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
-@WithMockUser(roles = "EMPLOYEE")
+@WithMockUser(authorities = "EMPLOYEE")
 public class SensorStationControllerIntegrationTest {
 
     @Autowired
@@ -45,6 +48,9 @@ public class SensorStationControllerIntegrationTest {
 
     @MockitoBean
     private SensorStationCreateMapper sensorStationCreateMapper;
+
+    @MockitoBean
+    private RaspberryPiServerService raspberryPiServerService;
 
     private ObjectMapper objectMapper;
 
@@ -132,18 +138,19 @@ public class SensorStationControllerIntegrationTest {
                 1L
         );
 
-        when(sensorStationCreateMapper.mapFrom(any())).thenReturn(station1);
+        when(sensorStationCreateMapper.mapFrom(org.mockito.Mockito.any())).thenReturn(station1);
         when(sensorStationService.create(station1)).thenReturn(station1);
         when(sensorStationMapper.mapTo(station1)).thenReturn(dto1);
 
         mockMvc.perform(post("/api/sensorstation")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createDTO)))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", containsString("/api/sensorstation/1")))
                 .andExpect(jsonPath("$.id", is(1)));
 
-        verify(sensorStationService).create(any());
+        verify(sensorStationService).create(org.mockito.Mockito.any());
     }
 
     @Test
@@ -155,24 +162,62 @@ public class SensorStationControllerIntegrationTest {
                 DeviceStatus.AVAILABLE
         );
 
-        when(sensorStationService.update(eq(1L), any())).thenReturn(station1);
+        when(sensorStationService.update(eq(1L), org.mockito.Mockito.any())).thenReturn(station1);
         when(sensorStationMapper.mapTo(station1)).thenReturn(dto1);
 
         mockMvc.perform(patch("/api/sensorstation/1")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateDTO)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id", is(1)));
 
-        verify(sensorStationService).update(eq(1L), any());
+        verify(sensorStationService).update(eq(1L), org.mockito.Mockito.any());
+    }
+
+    @Test
+    void initialUpdate_validPayload_returns200() throws Exception {
+        SensorStationUpdateDTO updateDTO = new SensorStationUpdateDTO(
+                1L,
+                1L,
+                "Updated",
+                DeviceStatus.AVAILABLE
+        );
+
+        when(sensorStationService.update(eq(1L), org.mockito.Mockito.any(SensorStationUpdateDTO.class), eq(30)))
+                .thenReturn(station1);
+        when(sensorStationMapper.mapTo(station1)).thenReturn(dto1);
+
+        mockMvc.perform(patch("/api/sensorstation/1/30")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDTO)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(1)));
+
+        verify(sensorStationService).update(eq(1L), org.mockito.Mockito.any(SensorStationUpdateDTO.class), eq(30));
+    }
+
+    @Test
+    void initialUpdate_notFound_returns404() throws Exception {
+        when(sensorStationService.update(eq(99L), org.mockito.Mockito.any(SensorStationUpdateDTO.class), eq(30)))
+                .thenThrow(new NotFoundException("SensorStation not found"));
+
+        mockMvc.perform(patch("/api/sensorstation/99/30")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new SensorStationUpdateDTO(null, null, null, null))))
+                .andExpect(status().isNotFound());
     }
 
     @Test
     void update_notFound_returns404() throws Exception {
-        when(sensorStationService.update(eq(99L), any()))
+        when(sensorStationService.update(eq(99L), org.mockito.Mockito.any()))
                 .thenThrow(new NotFoundException("SensorStation not found"));
 
         mockMvc.perform(patch("/api/sensorstation/99")
+                        .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new SensorStationUpdateDTO(null, null, null, null))))
@@ -183,7 +228,8 @@ public class SensorStationControllerIntegrationTest {
     void delete_exists_returns204() throws Exception {
         doNothing().when(sensorStationService).delete(1L);
 
-        mockMvc.perform(delete("/api/sensorstation/1"))
+        mockMvc.perform(delete("/api/sensorstation/1")
+                        .with(csrf()))
                 .andExpect(status().isNoContent());
 
         verify(sensorStationService).delete(1L);
@@ -194,7 +240,32 @@ public class SensorStationControllerIntegrationTest {
         doThrow(new NotFoundException("SensorStation not found"))
                 .when(sensorStationService).delete(99L);
 
-        mockMvc.perform(delete("/api/sensorstation/99"))
+        mockMvc.perform(delete("/api/sensorstation/99")
+                        .with(csrf()))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void find_scanStarts_returns202() throws Exception {
+        when(raspberryPiServerService.startScanForAvailableSensorStations(1L))
+                .thenReturn(PiRequestResult.SUCCESS);
+
+        mockMvc.perform(post("/api/sensorstation/find/1")
+                        .with(csrf()))
+                .andExpect(status().isAccepted());
+
+        verify(raspberryPiServerService).startScanForAvailableSensorStations(1L);
+    }
+
+    @Test
+    void find_scanFails_returns400() throws Exception {
+        when(raspberryPiServerService.startScanForAvailableSensorStations(1L))
+                .thenReturn(PiRequestResult.CLIENT_ERROR);
+
+        mockMvc.perform(post("/api/sensorstation/find/1")
+                        .with(csrf()))
+                .andExpect(status().isBadRequest());
+
+        verify(raspberryPiServerService).startScanForAvailableSensorStations(1L);
     }
 }

@@ -8,6 +8,7 @@ services:
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./docker-DB.sql:/docker-entrypoint-initdb.d/10-docker-DB.sql:ro
     restart: unless-stopped
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
@@ -24,11 +25,22 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
       APP_JWT_SECRET: "${APP_JWT_SECRET}"
+      APP_BACKEND_URL: "${APP_BACKEND_URL:-http://localhost:8080}"
       SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres:5432/${POSTGRES_DB}"
       SPRING_DATASOURCE_USERNAME: "${POSTGRES_USER}"
       SPRING_DATASOURCE_PASSWORD: "${POSTGRES_PASSWORD}"
     volumes:
       - app_logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  adminer:
+    image: adminer:latest
+    container_name: "${TEAM_NAME:-local}-adminer"
+    ports:
+      - "${ADMINER_PORT:-8081}:8080"
     depends_on:
       postgres:
         condition: service_healthy

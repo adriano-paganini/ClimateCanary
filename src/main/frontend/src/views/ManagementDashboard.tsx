@@ -1,296 +1,284 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { Message } from "primereact/message";
-import { Badge } from "primereact/badge";
+import { Dialog } from "primereact/dialog";
+import { Button } from "primereact/button";
 import "primeicons/primeicons.css";
 
 import NavbarComponent from "../components/NavbarComponent";
+import NoDataOverlay from "../components/NoDataOverlay";
 import { useUser } from "../Contexts/AuthenticatedUserContext";
+import {
+  AnalyticsService,
+  ManagementClimateDashboardDTO,
+  ManagementClimateTrendDTO,
+  ManagementDepartmentClimateDTO,
+  ViolationBreakdownDTO,
+} from "../services/AnalyticsService";
 import { DepartmentService } from "../services/DepartmentService";
-import { MeasurementService } from "../services/MeasurementService";
-import {
-  ViolationService,
-  ViolationStatusEnum,
-} from "../services/ViolationService";
-import {
-  DepartmentDTO,
-  MeasurementDTO,
-  MeasurementDTOMetricEnum,
-  RoomDTO,
-  ThresholdViolationDTO,
-} from "../generated-skeleton-api";
+import { MeasurementDTOMetricEnum, RoomDTO } from "../generated-skeleton-api";
 import { ROUTES } from "../utilities/routes.paths";
+import { registerDashboardCacheClearHandler } from "../utilities/dashboardCacheInvalidation";
 
-type Period = "week" | "month";
+const METRIC_LABELS: Record<string, string> = {
+  [MeasurementDTOMetricEnum.TEMPERATURE]: "Temperature",
+  [MeasurementDTOMetricEnum.HUMIDITY]: "Humidity",
+  [MeasurementDTOMetricEnum.IAQ]: "Air Quality",
+  [MeasurementDTOMetricEnum.PRESSURE]: "Pressure",
+};
 
-interface TrendPoint {
-  label: string;
-  value: number;
+const DIRECTION_META: Record<string, { label: string; icon: string; color: string; background: string; border: string }> = {
+  IMPROVED: {
+    label: "Improved",
+    icon: "pi-arrow-up-right",
+    color: "#166534",
+    background: "#f0fdf4",
+    border: "#bbf7d0",
+  },
+  WORSENED: {
+    label: "Worsened",
+    icon: "pi-arrow-down-right",
+    color: "#991b1b",
+    background: "#fef2f2",
+    border: "#fecaca",
+  },
+  UNCHANGED: {
+    label: "Unchanged",
+    icon: "pi-minus",
+    color: "#374151",
+    background: "#f9fafb",
+    border: "#e5e7eb",
+  },
+  NO_DATA: {
+    label: "No data",
+    icon: "pi-ban",
+    color: "#6b7280",
+    background: "#f9fafb",
+    border: "#e5e7eb",
+  },
+};
+
+let cachedDashboard: ManagementClimateDashboardDTO | null = null;
+let cachedDashboardRequest: Promise<ManagementClimateDashboardDTO> | null = null;
+
+function clearManagementDashboardCache(): void {
+  cachedDashboard = null;
+  cachedDashboardRequest = null;
 }
 
-interface DeptData {
-  dept: DepartmentDTO;
-  rooms: RoomDTO[];
-  violations: ThresholdViolationDTO[];
-  trends: Partial<Record<MeasurementDTOMetricEnum, TrendPoint[]>>;
-}
+registerDashboardCacheClearHandler(clearManagementDashboardCache);
 
-const METRICS: {
-  key: MeasurementDTOMetricEnum;
-  label: string;
-  unit: string;
-  color: string;
-}[] = [
-  {
-    key: MeasurementDTOMetricEnum.TEMPERATURE,
-    label: "Temperature",
-    unit: "°C",
-    color: "#f59e0b",
-  },
-  {
-    key: MeasurementDTOMetricEnum.HUMIDITY,
-    label: "Humidity",
-    unit: "%",
-    color: "#0ea5e9",
-  },
-  {
-    key: MeasurementDTOMetricEnum.IAQ,
-    label: "Air Quality",
-    unit: "IAQ",
-    color: "#8b5cf6",
-  },
-];
-
-function violationColor(count: number): string {
-  if (count === 0) return "#22c55e";
-  if (count <= 2) return "#f59e0b";
-  return "#ef4444";
-}
-
-//measures grouped in daily -> average
-function bucketByDay(
-  measurements: MeasurementDTO[],
-  days: number,
-): TrendPoint[] {
-  const now = Date.now();
-  const buckets: Record<string, number[]> = {};
-
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(now - i * 86_400_000);
-    const key = d.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-    });
-    buckets[key] = [];
+async function getDashboardCached(): Promise<ManagementClimateDashboardDTO> {
+  if (cachedDashboard !== null) return cachedDashboard;
+  if (cachedDashboardRequest === null) {
+    cachedDashboardRequest = AnalyticsService.getManagementClimateDashboard()
+      .then((dashboard) => {
+        cachedDashboard = dashboard;
+        return dashboard;
+      })
+      .finally(() => {
+        cachedDashboardRequest = null;
+      });
   }
-
-  measurements.forEach((m) => {
-    if (m.measurement === undefined || !m.timestamp) return;
-    const ts = new Date(m.timestamp).getTime();
-    if (ts < now - days * 86_400_000) return;
-    const key = new Date(m.timestamp).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-    });
-    if (buckets[key] !== undefined) buckets[key].push(m.measurement);
-  });
-
-  return Object.entries(buckets)
-    .map(([label, vals]) => ({
-      label,
-      value:
-        vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : NaN,
-    }))
-    .filter((p) => !isNaN(p.value));
+  return cachedDashboardRequest;
 }
 
-//sparkline
-interface SparklineProps {
-  uid: string;
-  data: TrendPoint[];
-  color: string;
-  label: string;
-  unit: string;
-}
-
-const Sparkline: React.FC<SparklineProps> = ({
-  uid,
-  data,
-  color,
-  label,
-  unit,
-}) => {
-  const W = 110;
-  const H = 38;
-  const PAD = 3;
-
-  const values = data.map((d) => d.value);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const range = max - min || 1;
-  const latest = values[values.length - 1];
-
-  const toX = (i: number) =>
-    PAD + (i / Math.max(values.length - 1, 1)) * (W - 2 * PAD);
-  const toY = (v: number) => H - PAD - ((v - min) / range) * (H - 2 * PAD);
-
-  const linePoints = values
-    .map((v, i) => `${toX(i).toFixed(1)},${toY(v).toFixed(1)}`)
-    .join(" ");
-  const areaPoints = [
-    ...values.map((v, i) => `${toX(i).toFixed(1)},${toY(v).toFixed(1)}`),
-    `${toX(values.length - 1).toFixed(1)},${H}`,
-    `${PAD},${H}`,
-  ].join(" ");
-
-  const gradId = `spark-${uid}-${label.replace(/\s/g, "")}`;
+function DirectionBadge({ direction }: { direction?: string }) {
+  const meta = DIRECTION_META[direction ?? "NO_DATA"] ?? DIRECTION_META.NO_DATA;
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-      <div>
-        <div
-          style={{ fontSize: "0.7rem", color: "#9ca3af", marginBottom: "2px" }}
-        >
-          {label}
-        </div>
-        <svg width={W} height={H}>
-          <defs>
-            <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={color} stopOpacity={0.2} />
-              <stop offset="100%" stopColor={color} stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          {values.length > 1 && (
-            <>
-              <polygon points={areaPoints} fill={`url(#${gradId})`} />
-              <polyline
-                points={linePoints}
-                fill="none"
-                stroke={color}
-                strokeWidth="1.5"
-                strokeLinejoin="round"
-                strokeLinecap="round"
-              />
-            </>
-          )}
-          {values.length === 1 && (
-            <circle cx={W / 2} cy={H / 2} r={3} fill={color} />
-          )}
-        </svg>
-      </div>
-      <div style={{ minWidth: "42px" }}>
-        <div
-          style={{
-            fontWeight: 700,
-            fontSize: "0.95rem",
-            color: "#111827",
-            lineHeight: 1,
-          }}
-        >
-          {latest.toFixed(1)}
-        </div>
-        <div style={{ fontSize: "0.7rem", color: "#9ca3af" }}>{unit}</div>
-      </div>
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "0.35rem",
+        minWidth: "7rem",
+        justifyContent: "center",
+        padding: "0.35rem 0.55rem",
+        borderRadius: "6px",
+        border: `1px solid ${meta.border}`,
+        background: meta.background,
+        color: meta.color,
+        fontSize: "0.82rem",
+        fontWeight: 650,
+      }}
+    >
+      <i className={`pi ${meta.icon}`} style={{ fontSize: "0.78rem" }} />
+      {meta.label}
+    </span>
+  );
+}
+
+function WarningPill({
+  warning,
+  onClick,
+}: {
+  warning: ViolationBreakdownDTO;
+  onClick?: (warning: ViolationBreakdownDTO) => void;
+}) {
+  return (
+    <span
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onClick={onClick ? () => onClick(warning) : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") onClick(warning); } : undefined}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "0.35rem",
+        padding: "0.25rem 0.55rem",
+        borderRadius: "6px",
+        background: "#fff7ed",
+        border: "1px solid #fed7aa",
+        color: "#9a3412",
+        fontSize: "0.8rem",
+        fontWeight: 600,
+        cursor: onClick ? "pointer" : "default",
+        userSelect: "none",
+        transition: "background 0.15s",
+      }}
+    >
+      <i className="pi pi-exclamation-triangle" style={{ fontSize: "0.72rem" }} />
+      {METRIC_LABELS[warning.label ?? ""] ?? warning.label}: {warning.count ?? 0}
+    </span>
+  );
+}
+
+function WarningCountBadge({ count }: { count: number }) {
+  const hasWarnings = count > 0;
+
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "0.35rem",
+        padding: "0.35rem 0.6rem",
+        borderRadius: "6px",
+        border: `1px solid ${hasWarnings ? "#fed7aa" : "#bbf7d0"}`,
+        background: hasWarnings ? "#fff7ed" : "#f0fdf4",
+        color: hasWarnings ? "#9a3412" : "#166534",
+        fontSize: "0.82rem",
+        fontWeight: 650,
+        whiteSpace: "nowrap",
+      }}
+    >
+      <i className={`pi ${hasWarnings ? "pi-exclamation-triangle" : "pi-check-circle"}`} style={{ fontSize: "0.76rem" }} />
+      {count} warning{count === 1 ? "" : "s"}
+    </span>
+  );
+}
+
+function TrendRow({ trend }: { trend: ManagementClimateTrendDTO }) {
+  const label = METRIC_LABELS[trend.metric ?? ""] ?? trend.metric ?? "Unknown";
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "minmax(7rem, 1fr) auto auto",
+        alignItems: "center",
+        gap: "0.6rem",
+        padding: "0.55rem 0",
+        borderBottom: "1px solid #f3f4f6",
+      }}
+    >
+      <span style={{ color: "#374151", fontWeight: 600, fontSize: "0.9rem" }}>{label}</span>
+      <DirectionBadge direction={trend.weeklyDirection} />
+      <DirectionBadge direction={trend.monthlyDirection} />
     </div>
   );
-};
+}
 
 const ManagementDashboard: React.FC = () => {
   const { currentUser } = useUser();
   const navigate = useNavigate();
-
-  const [loading, setLoading] = useState(true);
+  const [dashboard, setDashboard] = useState<ManagementClimateDashboardDTO | null>(cachedDashboard);
+  const [loading, setLoading] = useState(cachedDashboard === null);
   const [error, setError] = useState<string | null>(null);
-  const [deptData, setDeptData] = useState<DeptData[]>([]);
-  const [period, setPeriod] = useState<Period>("week");
+  const [filterWarningsOnly, setFilterWarningsOnly] = useState(false);
+  const [detailDept, setDetailDept] = useState<ManagementDepartmentClimateDTO | null>(null);
+  const [detailRooms, setDetailRooms] = useState<RoomDTO[]>([]);
+  const [detailRoomsLoading, setDetailRoomsLoading] = useState(false);
+  const [detailRoomsError, setDetailRoomsError] = useState<string | null>(null);
+  const deptGridRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setLoading(true);
+    let active = true;
+    setLoading(cachedDashboard === null);
     setError(null);
 
-    const load = async () => {
-      try {
-        const days = period === "week" ? 7 : 30;
-        const from = new Date(Date.now() - days * 86_400_000).toISOString();
-
-        const [allDepts, allViolations] = await Promise.all([
-          DepartmentService.getAll(),
-          ViolationService.getAll({
-            violationStatus: ViolationStatusEnum.ACTIVE,
-          }),
-        ]);
-
-        const results = await Promise.all(
-          allDepts.map(async (dept): Promise<DeptData> => {
-            if (!dept.id)
-              return { dept, rooms: [], violations: [], trends: {} };
-
-            const rooms = await DepartmentService.getRooms(dept.id);
-            const violations = allViolations.filter((v) =>
-              rooms.some((r) => r.id === v.roomId),
-            );
-
-            const allMeasurements: MeasurementDTO[] = [];
-            await Promise.all(
-              rooms.map((r) =>
-                r.id
-                  ? MeasurementService.getAll({ roomId: r.id, from }).then(
-                      (ms) => allMeasurements.push(...ms),
-                    )
-                  : Promise.resolve(),
-              ),
-            );
-
-            const trends: Partial<
-              Record<MeasurementDTOMetricEnum, TrendPoint[]>
-            > = {};
-            METRICS.forEach(({ key }) => {
-              const filtered = allMeasurements.filter((m) => m.metric === key);
-              const bucketed = bucketByDay(filtered, days);
-              if (bucketed.length > 0) trends[key] = bucketed;
-            });
-
-            return { dept, rooms, violations, trends };
-          }),
-        );
-
-        setDeptData(results);
-      } catch (err: unknown) {
+    getDashboardCached()
+      .then((data) => {
+        if (active) setDashboard(data);
+      })
+      .catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : String(err);
-        console.error("Management dashboard load error:", err);
-        setError(`Failed to load data: ${msg}`);
-      } finally {
-        setLoading(false);
-      }
+        if (active) setError(`Failed to load management climate overview: ${msg}`);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
     };
+  }, []);
 
-    void load();
-  }, [period]);
+  const departments = dashboard?.departments ?? [];
+  const warningDepartments = useMemo(
+    () => departments.filter((department) => (department.activeWarnings ?? 0) > 0).length,
+    [departments],
+  );
+  const visibleDepartments = filterWarningsOnly
+    ? departments.filter((d) => (d.activeWarnings ?? 0) > 0)
+    : departments;
 
-  const totalViolations = deptData.reduce((s, d) => s + d.violations.length, 0);
-  const totalRooms = deptData.reduce((s, d) => s + d.rooms.length, 0);
+  function scrollToDepts() {
+    deptGridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function handleDeptStatClick() {
+    setFilterWarningsOnly(false);
+    setTimeout(scrollToDepts, 50);
+  }
+
+  function handleViolationsStatClick() {
+    setFilterWarningsOnly(true);
+    setTimeout(scrollToDepts, 50);
+  }
+
+  function handleAffectedStatClick() {
+    setFilterWarningsOnly((prev) => !prev);
+    setTimeout(scrollToDepts, 50);
+  }
+
+  function openDeptDetail(dept: ManagementDepartmentClimateDTO) {
+    setDetailDept(dept);
+    setDetailRooms([]);
+    setDetailRoomsError(null);
+    if (dept.departmentId !== undefined) {
+      setDetailRoomsLoading(true);
+      DepartmentService.getRooms(dept.departmentId)
+        .then((rooms) => setDetailRooms(rooms))
+        .catch(() => setDetailRoomsError("Could not load rooms for this department."))
+        .finally(() => setDetailRoomsLoading(false));
+    }
+  }
+
+  function closeDeptDetail() {
+    setDetailDept(null);
+    setDetailRooms([]);
+    setDetailRoomsError(null);
+  }
 
   if (loading) {
     return (
       <div>
         <NavbarComponent />
-        <div
-          className="flex justify-content-center align-items-center"
-          style={{ minHeight: "60vh" }}
-        >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh" }}>
           <ProgressSpinner />
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div>
-        <NavbarComponent />
-        <div className="m-4">
-          <Message severity="error" text={error} />
         </div>
       </div>
     );
@@ -300,482 +288,310 @@ const ManagementDashboard: React.FC = () => {
     <div>
       <NavbarComponent />
 
-      <div style={{ padding: "1.5rem 2rem 0" }}>
-        {/*Header row*/}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            marginBottom: "1rem",
-          }}
-        >
+      <main style={{ padding: "1.5rem 2rem 2rem" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "flex-start", marginBottom: "1rem" }}>
           <div>
             <h2 style={{ margin: "0 0 0.25rem", color: "#111827" }}>
-              Welcome
-              {currentUser?.firstName ? `, ${currentUser.firstName}` : ""}
+              Welcome{currentUser?.firstName ? `, ${currentUser.firstName}` : ""}
             </h2>
             <p style={{ margin: 0, color: "#6b7280", fontSize: "0.95rem" }}>
-              <i
-                className="pi pi-chart-bar"
-                style={{ marginRight: "0.4rem" }}
-              />
-              Management Overview
+              <i className="pi pi-chart-bar" style={{ marginRight: "0.4rem" }} />
+              Department climate changes and warnings
             </p>
           </div>
-
-          {/*Period toggle*/}
-          <div style={{ display: "flex", gap: "0.4rem" }}>
-            {(["week", "month"] as Period[]).map((p) => (
-              <button
-                key={p}
-                onClick={() => setPeriod(p)}
-                style={{
-                  padding: "0.4rem 1rem",
-                  border: "1px solid",
-                  borderColor: period === p ? "#0369a1" : "#d1d5db",
-                  borderRadius: "6px",
-                  background: period === p ? "#0369a1" : "#fff",
-                  color: period === p ? "#fff" : "#374151",
-                  fontWeight: period === p ? 600 : 400,
-                  cursor: "pointer",
-                  fontSize: "0.85rem",
-                  transition: "all 0.15s",
-                }}
-              >
-                {p === "week" ? "Week" : "Month"}
-              </button>
-            ))}
+          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", justifyContent: "flex-end" }}>
+            <SummaryStat
+              icon="pi-sitemap"
+              label="Departments"
+              value={departments.length}
+              color="#0369a1"
+              onClick={handleDeptStatClick}
+              tooltip="Show all departments"
+            />
+            <SummaryStat
+              icon="pi-exclamation-triangle"
+              label="Active Violations"
+              value={dashboard?.totalActiveWarnings ?? 0}
+              color={(dashboard?.totalActiveWarnings ?? 0) > 0 ? "#dc2626" : "#16a34a"}
+              onClick={handleViolationsStatClick}
+              active={filterWarningsOnly}
+              tooltip="Filter departments with active violations"
+            />
+            <SummaryStat
+              icon="pi-building"
+              label="Departments affected"
+              value={warningDepartments}
+              color={warningDepartments > 0 ? "#f59e0b" : "#16a34a"}
+              onClick={handleAffectedStatClick}
+              active={filterWarningsOnly}
+              tooltip="Toggle filter: departments with warnings"
+            />
           </div>
         </div>
 
-        {/* Global violation banner */}
-        {totalViolations > 0 && (
-          <div style={{ marginBottom: "1rem" }}>
-            <Message
-              severity="warn"
-              text={`${totalViolations} active threshold violation${totalViolations > 1 ? "s" : ""} across all departments.`}
+        {filterWarningsOnly && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "0.75rem",
+              marginBottom: "1rem",
+              padding: "0.5rem 0.75rem",
+              background: "#fff7ed",
+              border: "1px solid #fed7aa",
+              borderRadius: "8px",
+            }}
+          >
+            <i className="pi pi-filter" style={{ color: "#ea580c" }} />
+            <span style={{ fontSize: "0.9rem", color: "#9a3412", flex: 1 }}>
+              Showing only departments with active violations ({visibleDepartments.length} of {departments.length})
+            </span>
+            <Button
+              icon="pi pi-times"
+              label="Show all"
+              className="p-button-text p-button-sm"
+              style={{ color: "#9a3412", padding: "0.25rem 0.5rem" }}
+              onClick={() => setFilterWarningsOnly(false)}
             />
           </div>
         )}
 
-        {/* Summary chips */}
+        {error && <Message severity="error" text={error} style={{ marginBottom: "1rem" }} />}
+
         <div
+          ref={deptGridRef}
           style={{
-            display: "flex",
-            gap: "1rem",
-            marginBottom: "1.5rem",
-            flexWrap: "wrap",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(420px, 1fr))",
+            gap: "1.25rem",
+            scrollMarginTop: "1.5rem",
           }}
         >
-          {[
-            {
-              icon: "pi-sitemap",
-              label: "Departments",
-              value: deptData.length,
-              color: "#0369a1",
-            },
-            {
-              icon: "pi-building",
-              label: "Rooms",
-              value: totalRooms,
-              color: "#374151",
-            },
-            {
-              icon: "pi-exclamation-triangle",
-              label: "Active Violations",
-              value: totalViolations,
-              color: totalViolations > 0 ? "#ef4444" : "#22c55e",
-            },
-          ].map((s) => (
-            <div
-              key={s.label}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.6rem",
-                background: "#f9fafb",
-                border: "1px solid #e5e7eb",
-                borderRadius: "8px",
-                padding: "0.5rem 1.1rem",
-              }}
-            >
-              <i
-                className={`pi ${s.icon}`}
-                style={{ color: s.color, fontSize: "1.15rem" }}
-              />
-              <div>
-                <div
-                  style={{
-                    fontWeight: 700,
-                    fontSize: "1.15rem",
-                    color: "#111827",
-                    lineHeight: 1,
-                  }}
-                >
-                  {s.value}
-                </div>
-                <div style={{ fontSize: "0.75rem", color: "#6b7280" }}>
-                  {s.label}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Tab strip */}
-        <div style={{ borderBottom: "2px solid #e5e7eb" }}>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "0.4rem",
-              padding: "0.6rem 1.25rem",
-              borderBottom: "2px solid #0369a1",
-              marginBottom: "-2px",
-              fontWeight: 600,
-              color: "#0369a1",
-              fontSize: "0.95rem",
-            }}
-          >
-            <i className="pi pi-sitemap" style={{ fontSize: "0.9rem" }} />
-            All Departments
-            <span
-              style={{
-                fontSize: "0.8rem",
-                fontWeight: 400,
-                color: "#9ca3af",
-                marginLeft: "0.3rem",
-              }}
-            >
-              ({deptData.length})
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Department card */}
-      <div
-        style={{
-          padding: "2rem",
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(400px, 1fr))",
-          gap: "1.5rem",
-        }}
-      >
-        {deptData.map(({ dept, rooms, violations, trends }) => {
-          const violCount = violations.length;
-          const statusColor = violationColor(violCount);
-
-          return (
-            <div
-              key={dept.id}
-              onClick={() => navigate(ROUTES.DEPARTMENT_DASHBOARD)}
+          {visibleDepartments.map((department) => (
+            <section
+              key={department.departmentId}
               style={{
                 background: "#fff",
                 border: "1px solid #e5e7eb",
-                borderRadius: "12px",
+                borderRadius: "8px",
                 overflow: "hidden",
                 boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-                cursor: "pointer",
-                transition: "box-shadow 0.2s, transform 0.2s",
-              }}
-              onMouseEnter={(e) => {
-                const el = e.currentTarget as HTMLElement;
-                el.style.boxShadow = "0 8px 24px rgba(0,0,0,0.1)";
-                el.style.transform = "translateY(-2px)";
-              }}
-              onMouseLeave={(e) => {
-                const el = e.currentTarget as HTMLElement;
-                el.style.boxShadow = "0 1px 3px rgba(0,0,0,0.05)";
-                el.style.transform = "translateY(0)";
               }}
             >
-              {/* Coloured status strip on top */}
-              <div style={{ height: "4px", background: statusColor }} />
-
-              <div style={{ padding: "1.25rem" }}>
-                {/* Department header */}
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: "0.85rem",
-                    paddingBottom: "0.75rem",
-                    borderBottom: "1px solid #f3f4f6",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.6rem",
-                    }}
-                  >
-                    <i
-                      className="pi pi-sitemap"
-                      style={{ color: "#0369a1", fontSize: "1.05rem" }}
-                    />
-                    <span
-                      style={{
-                        fontWeight: 700,
-                        fontSize: "1.05rem",
-                        color: "#111827",
-                      }}
-                    >
-                      {dept.name ?? "—"}
-                    </span>
+              <div style={{ height: "4px", background: (department.activeWarnings ?? 0) > 0 ? "#f59e0b" : "#16a34a" }} />
+              <div style={{ padding: "1.15rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem", marginBottom: "1rem" }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.55rem", marginBottom: "0.2rem" }}>
+                      <i className="pi pi-sitemap" style={{ color: "#0369a1" }} />
+                      <h3 style={{ margin: 0, color: "#111827", fontSize: "1.05rem" }}>{department.departmentName ?? "Department"}</h3>
+                    </div>
+                    <span style={{ color: "#6b7280", fontSize: "0.82rem" }}>Week and month compared with previous equal period</span>
                   </div>
-                  {violCount > 0 ? (
-                    <span
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "5px",
-                        color: statusColor,
-                      }}
-                    >
-                      <i
-                        className="pi pi-exclamation-triangle"
-                        style={{ fontSize: "1rem" }}
+                  <WarningCountBadge count={department.activeWarnings ?? 0} />
+                </div>
+
+                <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", minHeight: "2rem", marginBottom: "1rem" }}>
+                  {(department.warningsByMetric ?? []).length > 0 ? (
+                    department.warningsByMetric?.map((warning) => (
+                      <WarningPill
+                        key={warning.label}
+                        warning={warning}
+                        onClick={() => openDeptDetail(department)}
                       />
-                      <Badge value={violCount} severity="danger" />
-                    </span>
+                    ))
                   ) : (
-                    <i
-                      className="pi pi-check-circle"
-                      style={{ color: "#22c55e", fontSize: "1.15rem" }}
-                    />
+                    <span style={{ color: "#166534", fontSize: "0.85rem", fontWeight: 600 }}>
+                      <i className="pi pi-check-circle" style={{ marginRight: "0.35rem" }} />
+                      No active department warnings
+                    </span>
                   )}
                 </div>
 
-                {/* Status pills */}
                 <div
                   style={{
-                    display: "flex",
-                    gap: "0.5rem",
-                    marginBottom: "1rem",
-                    flexWrap: "wrap",
+                    display: "grid",
+                    gridTemplateColumns: "minmax(7rem, 1fr) auto auto",
+                    gap: "0.6rem",
+                    color: "#6b7280",
+                    fontSize: "0.74rem",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                    paddingBottom: "0.4rem",
+                    borderBottom: "1px solid #e5e7eb",
                   }}
                 >
-                  <span
-                    style={{
-                      background: "#f3f4f6",
-                      borderRadius: "20px",
-                      padding: "0.2rem 0.7rem",
-                      fontSize: "0.8rem",
-                      color: "#374151",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "4px",
-                    }}
-                  >
-                    <i
-                      className="pi pi-building"
-                      style={{ fontSize: "0.75rem" }}
-                    />
-                    {rooms.length} room{rooms.length !== 1 ? "s" : ""}
-                  </span>
-                  <span
-                    style={{
-                      background: violCount === 0 ? "#f0fdf4" : "#fef2f2",
-                      borderRadius: "20px",
-                      padding: "0.2rem 0.7rem",
-                      fontSize: "0.8rem",
-                      color: statusColor,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "4px",
-                    }}
-                  >
-                    <i
-                      className="pi pi-circle-fill"
-                      style={{ fontSize: "0.45rem" }}
-                    />
-                    {violCount === 0
-                      ? "All clear"
-                      : `${violCount} violation${violCount > 1 ? "s" : ""}`}
-                  </span>
+                  <span>Statistic</span>
+                  <span style={{ textAlign: "center" }}>Last week</span>
+                  <span style={{ textAlign: "center" }}>Last month</span>
                 </div>
 
-                {/* Room list with traffic-light dots */}
-                {rooms.length > 0 && (
-                  <div style={{ marginBottom: "1.25rem" }}>
-                    <div
-                      style={{
-                        fontSize: "0.72rem",
-                        fontWeight: 600,
-                        color: "#9ca3af",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.5px",
-                        marginBottom: "0.4rem",
-                      }}
-                    >
-                      Rooms
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "0.3rem",
-                      }}
-                    >
-                      {rooms.map((r) => {
-                        const rViol = violations.filter(
-                          (v) => v.roomId === r.id,
-                        ).length;
-                        return (
-                          <div
-                            key={r.id}
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              padding: "0.3rem 0.6rem",
-                              borderRadius: "6px",
-                              background: "#f9fafb",
-                            }}
-                          >
-                            <span
-                              style={{ fontSize: "0.85rem", color: "#374151" }}
-                            >
-                              {r.name ?? "—"}
-                            </span>
-                            <div
-                              title={
-                                rViol === 0
-                                  ? "No violations"
-                                  : `${rViol} violation(s)`
-                              }
-                              style={{
-                                width: "10px",
-                                height: "10px",
-                                borderRadius: "50%",
-                                background: violationColor(rViol),
-                                flexShrink: 0,
-                              }}
-                            />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+                {(department.trends ?? []).map((trend) => <TrendRow key={trend.metric} trend={trend} />)}
 
-                {/* Trend sparklines */}
-                <div
-                  style={{
-                    borderTop: "1px solid #f3f4f6",
-                    paddingTop: "1rem",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "0.65rem",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "0.72rem",
-                      fontWeight: 600,
-                      color: "#9ca3af",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    {period === "week" ? "Last 7 Days" : "Last 30 Days"} — Avg.
-                    per Day
-                  </div>
-                  {METRICS.map(({ key, label, unit, color }) =>
-                    trends[key] && trends[key]!.length > 0 ? (
-                      <Sparkline
-                        key={key}
-                        uid={String(dept.id)}
-                        data={trends[key]!}
-                        color={color}
-                        label={label}
-                        unit={unit}
-                      />
-                    ) : (
-                      <div
-                        key={key}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.5rem",
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: "0.7rem",
-                            color: "#9ca3af",
-                            width: "80px",
-                          }}
-                        >
-                          {label}
-                        </span>
-                        <span
-                          style={{
-                            fontSize: "0.8rem",
-                            color: "#d1d5db",
-                            fontStyle: "italic",
-                          }}
-                        >
-                          No data
-                        </span>
-                      </div>
-                    ),
-                  )}
-                </div>
-
-                {/* Footer link hint */}
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    marginTop: "0.75rem",
-                    color: "#9ca3af",
-                    fontSize: "0.8rem",
-                    gap: "0.4rem",
-                    alignItems: "center",
-                  }}
-                >
-                  <span>View department</span>
-                  <i
-                    className="pi pi-arrow-circle-right"
-                    style={{ fontSize: "0.8rem" }}
+                <div style={{ marginTop: "1rem", display: "flex", justifyContent: "flex-end" }}>
+                  <Button
+                    label="View Department"
+                    icon="pi pi-arrow-right"
+                    iconPos="right"
+                    className="p-button-outlined"
+                    style={{ borderColor: "#0369a1", color: "#0369a1" }}
+                    onClick={() => openDeptDetail(department)}
                   />
                 </div>
               </div>
-            </div>
-          );
-        })}
+            </section>
+          ))}
 
-        {deptData.length === 0 && (
-          <div
-            style={{
-              gridColumn: "1 / -1",
-              padding: "3rem",
-              textAlign: "center",
-              background: "#f9fafb",
-              borderRadius: "8px",
-              border: "1px dashed #d1d5db",
-            }}
-          >
-            <i
-              className="pi pi-inbox"
-              style={{
-                fontSize: "2rem",
-                color: "#d1d5db",
-                display: "block",
-                marginBottom: "0.5rem",
-              }}
-            />
-            <p style={{ color: "#6b7280", margin: 0 }}>No departments found.</p>
+          {visibleDepartments.length === 0 && (
+            <div style={{ gridColumn: "1 / -1" }}>
+              <NoDataOverlay
+                height="220px"
+                message={
+                  filterWarningsOnly
+                    ? "No departments with active violations"
+                    : "No department climate overview available"
+                }
+                icon={filterWarningsOnly ? "pi pi-check-circle" : "pi pi-inbox"}
+              />
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* Department detail dialog */}
+      <Dialog
+        header={
+          <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+            <i className="pi pi-sitemap" style={{ color: "#0369a1" }} />
+            <span>{detailDept?.departmentName ?? "Department"}</span>
+          </div>
+        }
+        visible={detailDept !== null}
+        onHide={closeDeptDetail}
+        style={{ width: "520px", maxWidth: "95vw" }}
+        modal
+        draggable={false}
+      >
+        {detailDept && (
+          <div>
+            <div style={{ marginBottom: "1.25rem" }}>
+              <div style={{ fontSize: "0.8rem", color: "#6b7280", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "0.5rem" }}>
+                Active Violations
+              </div>
+              {(detailDept.warningsByMetric ?? []).length > 0 ? (
+                <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+                  {detailDept.warningsByMetric?.map((warning) => (
+                    <WarningPill key={warning.label} warning={warning} />
+                  ))}
+                </div>
+              ) : (
+                <span style={{ color: "#166534", fontSize: "0.9rem", fontWeight: 600 }}>
+                  <i className="pi pi-check-circle" style={{ marginRight: "0.4rem" }} />
+                  No active violations
+                </span>
+              )}
+            </div>
+
+            <div>
+              <div style={{ fontSize: "0.8rem", color: "#6b7280", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "0.5rem" }}>
+                Rooms
+              </div>
+              {detailRoomsLoading ? (
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "#6b7280" }}>
+                  <ProgressSpinner style={{ width: "20px", height: "20px" }} />
+                  <span style={{ fontSize: "0.9rem" }}>Loading rooms…</span>
+                </div>
+              ) : detailRoomsError ? (
+                <Message severity="warn" text={detailRoomsError} />
+              ) : detailRooms.length === 0 ? (
+                <span style={{ color: "#6b7280", fontSize: "0.9rem" }}>No rooms found.</span>
+              ) : (
+                <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                  {detailRooms.map((room) => (
+                    <li
+                      key={room.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => room.id !== undefined && navigate(ROUTES.MANAGEMENT_ROOM_HISTORY.replace(":roomId", String(room.id)))}
+                      onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && room.id !== undefined) navigate(ROUTES.MANAGEMENT_ROOM_HISTORY.replace(":roomId", String(room.id))); }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.5rem",
+                        padding: "0.4rem 0.6rem",
+                        background: "#f9fafb",
+                        borderRadius: "6px",
+                        border: "1px solid #e5e7eb",
+                        fontSize: "0.9rem",
+                        color: "#374151",
+                        cursor: "pointer",
+                        userSelect: "none",
+                      }}
+                    >
+                      <i className="pi pi-building" style={{ color: "#6b7280", fontSize: "0.85rem" }} />
+                      <span style={{ flex: 1 }}>{room.name ?? `Room ${room.id}`}</span>
+                      <i className="pi pi-chart-line" style={{ color: "#9ca3af", fontSize: "0.8rem" }} />
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
         )}
-      </div>
+      </Dialog>
     </div>
   );
 };
+
+function SummaryStat({
+  icon,
+  label,
+  value,
+  color,
+  onClick,
+  active,
+  tooltip,
+}: {
+  icon: string;
+  label: string;
+  value: number;
+  color: string;
+  onClick?: () => void;
+  active?: boolean;
+  tooltip?: string;
+}) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <div
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      title={tooltip}
+      onClick={onClick}
+      onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") onClick(); } : undefined}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "0.6rem",
+        background: active ? "#eff6ff" : hovered && onClick ? "#f3f4f6" : "#f9fafb",
+        border: `1px solid ${active ? "#bfdbfe" : hovered && onClick ? "#d1d5db" : "#e5e7eb"}`,
+        borderRadius: "8px",
+        padding: "0.5rem 1rem",
+        cursor: onClick ? "pointer" : undefined,
+        transition: "background 0.15s, border-color 0.15s",
+        userSelect: "none",
+      }}
+    >
+      <i className={`pi ${icon}`} style={{ color, fontSize: "1.1rem" }} />
+      <div>
+        <div style={{ fontWeight: 750, fontSize: "1.1rem", color: "#111827", lineHeight: 1 }}>{value}</div>
+        <div style={{ fontSize: "0.75rem", color: "#6b7280", whiteSpace: "nowrap" }}>{label}</div>
+      </div>
+    </div>
+  );
+}
 
 export default ManagementDashboard;

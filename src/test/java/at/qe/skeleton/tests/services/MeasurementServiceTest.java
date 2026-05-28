@@ -175,15 +175,15 @@ class MeasurementServiceTest {
     @DisplayName("getLatestPerMetric returns populated map")
     void getLatestPerMetric_populated() {
 
-        Mockito.when(repository.findLatestByRoomIdAndMetric(room.getId(), Metric.TEMPERATURE))
+        Mockito.when(repository.findTopByRoomIdAndMetricOrderByTimestampDesc(room.getId(), Metric.TEMPERATURE))
                 .thenReturn(Optional.of(tempMeasurement));
 
-        Mockito.when(repository.findLatestByRoomIdAndMetric(room.getId(), Metric.HUMIDITY))
+        Mockito.when(repository.findTopByRoomIdAndMetricOrderByTimestampDesc(room.getId(), Metric.HUMIDITY))
                 .thenReturn(Optional.of(humMeasurement));
 
         for (Metric m : Metric.values()) {
             if (m != Metric.TEMPERATURE && m != Metric.HUMIDITY) {
-                Mockito.when(repository.findLatestByRoomIdAndMetric(room.getId(), m))
+                Mockito.when(repository.findTopByRoomIdAndMetricOrderByTimestampDesc(room.getId(), m))
                         .thenReturn(Optional.empty());
             }
         }
@@ -199,7 +199,7 @@ class MeasurementServiceTest {
     @DisplayName("getLatestPerMetric returns empty map")
     void getLatestPerMetric_empty() {
         for (Metric m : Metric.values()) {
-            Mockito.when(repository.findLatestByRoomIdAndMetric(room.getId(), m))
+            Mockito.when(repository.findTopByRoomIdAndMetricOrderByTimestampDesc(room.getId(), m))
                     .thenReturn(Optional.empty());
         }
 
@@ -212,14 +212,14 @@ class MeasurementServiceTest {
     @DisplayName("getLatestPerMetric queries all metrics")
     void getLatestPerMetric_queriesAllMetrics() {
         for (Metric m : Metric.values()) {
-            Mockito.when(repository.findLatestByRoomIdAndMetric(room.getId(), m))
+            Mockito.when(repository.findTopByRoomIdAndMetricOrderByTimestampDesc(room.getId(), m))
                     .thenReturn(Optional.empty());
         }
 
         service.getLatestPerMetric(room.getId());
 
         for (Metric m : Metric.values()) {
-            Mockito.verify(repository).findLatestByRoomIdAndMetric(room.getId(), m);
+            Mockito.verify(repository).findTopByRoomIdAndMetricOrderByTimestampDesc(room.getId(), m);
         }
     }
 }

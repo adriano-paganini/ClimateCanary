@@ -1,11 +1,9 @@
 package at.qe.skeleton.services;
 
+import at.qe.skeleton.common.exceptions.ConflictException;
 import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.DepartmentUpdateDTO;
-import at.qe.skeleton.models.Department;
-import at.qe.skeleton.models.EmployeeProfile;
-import at.qe.skeleton.models.Room;
-import at.qe.skeleton.models.Userx;
+import at.qe.skeleton.models.*;
 import at.qe.skeleton.repositories.DepartmentRepository;
 import at.qe.skeleton.repositories.EmployeeProfileRepository;
 import at.qe.skeleton.repositories.RoomRepository;
@@ -13,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
 
 @Slf4j
@@ -51,7 +50,7 @@ public class DepartmentService {
                 savedDepartment.getId(),
                 savedDepartment.getName(),
                 savedDepartment.getDepartmentLeader() != null ? savedDepartment.getDepartmentLeader().getId() : null);
-
+        ensureDepartmentLeadRole(savedDepartment.getDepartmentLeader());
         return savedDepartment;
     }
 
@@ -79,9 +78,12 @@ public class DepartmentService {
         }
 
         if (dto.departmentLeadId() != null) {
+            Userx previousLeader = existing.getDepartmentLeader();
             Userx leader = userxService.loadUser(dto.departmentLeadId())
                     .orElseThrow(() -> new NotFoundException("User with id " + dto.departmentLeadId() + " not found"));
             existing.setDepartmentLeader(leader);
+            ensureDepartmentLeadRole(leader);
+            removeDepartmentLeadRoleIfNoLongerLeading(previousLeader, existing);
             debugInfo.append(", departmentLeadId=").append(dto.departmentLeadId());
         }
 
@@ -92,10 +94,35 @@ public class DepartmentService {
 
         return updatedDepartment;
     }
+    private void removeDepartmentLeadRoleIfNoLongerLeadingAnyDepartment(Userx leader) {
+        if (leader == null) {
+            return;
+        }
+
+        if (leader.getRoles() == null || !leader.getRoles().contains(UserxRole.DEPARTMENT_LEAD)) {
+            return;
+        }
+
+        boolean stillLeadsAnyDepartment = !departmentRepository.findByDepartmentLeader(leader).isEmpty();
+
+        if (!stillLeadsAnyDepartment) {
+            leader.getRoles().remove(UserxRole.DEPARTMENT_LEAD);
+            userxService.saveUser(leader);
+
+            log.info("Removed department lead role from user with id={} after department deletion", leader.getId());
+            log.debug("Removed department lead role from user with id={} and roles={}", leader.getId(), leader.getRoles());
+        }
+    }
 
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public void delete(Long id) {
         Department department = getDepartmentById(id);
+        long assignedEmployeeCount = employeeProfileRepository.countByDepartment_Id(id);
+        if (assignedEmployeeCount > 0) {
+            throw new ConflictException("Department with id " + id + " has " + assignedEmployeeCount + " assigned employees");
+        }
+
+        Userx previousLeader = department.getDepartmentLeader();
 
         for (Room room : department.getRooms()) {
             room.setDepartment(null);
@@ -111,7 +138,47 @@ public class DepartmentService {
 
         departmentRepository.deleteById(id);
 
+        removeDepartmentLeadRoleIfNoLongerLeadingAnyDepartment(previousLeader);
+
         log.info("Deleted department with id={}", id);
         log.debug("Cleared room and employee profile associations before deleting department id={}", id);
+    }
+
+    private void ensureDepartmentLeadRole(Userx leader) {
+        if (leader == null) {
+            return;
+        }
+
+        if (leader.getRoles() == null) {
+            leader.setRoles(new HashSet<>());
+        }
+
+        if (!leader.getRoles().contains(UserxRole.DEPARTMENT_LEAD)) {
+            leader.getRoles().add(UserxRole.DEPARTMENT_LEAD);
+            userxService.saveUser(leader);
+            log.info("Added department lead role to user with id={}", leader.getId());
+            log.debug("Added department lead role to user with id={} and roles={}", leader.getId(), leader.getRoles());
+        }
+    }
+
+    private void removeDepartmentLeadRoleIfNoLongerLeading(Userx previousLeader, Department updatedDepartment) {
+        if (previousLeader == null || previousLeader.equals(updatedDepartment.getDepartmentLeader())) {
+            return;
+        }
+
+        if (previousLeader.getRoles() == null || !previousLeader.getRoles().contains(UserxRole.DEPARTMENT_LEAD)) {
+            return;
+        }
+
+        boolean leadsAnotherDepartment = departmentRepository.findByDepartmentLeader(previousLeader)
+                .stream()
+                .anyMatch(department -> !department.equals(updatedDepartment));
+
+        if (!leadsAnotherDepartment) {
+            previousLeader.getRoles().remove(UserxRole.DEPARTMENT_LEAD);
+            userxService.saveUser(previousLeader);
+            log.info("Removed department lead role from user with id={}", previousLeader.getId());
+            log.debug("Removed department lead role from user with id={} and roles={}", previousLeader.getId(), previousLeader.getRoles());
+        }
     }
 }

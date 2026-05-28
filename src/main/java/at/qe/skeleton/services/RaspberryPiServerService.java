@@ -34,7 +34,7 @@ public class RaspberryPiServerService {
     }
 
     public PiRequestResult sendConfig(Long piId, String config) {
-        RaspberryPi pi = raspberryPiService.getById(piId);
+        RaspberryPi pi = raspberryPiService.getByIdInternal(piId);
         String url = buildPiUrl(pi, piId + "/config");
 
         try {
@@ -75,7 +75,7 @@ public class RaspberryPiServerService {
     }
 
     public boolean verifyPiIdInConfig(Long piId) {
-        RaspberryPi pi = raspberryPiService.getById(piId);
+        RaspberryPi pi = raspberryPiService.getByIdInternal(piId);
         String url = buildPiUrl(pi, "setup/verify/" + piId);
 
         try {
@@ -109,7 +109,7 @@ public class RaspberryPiServerService {
     }
 
     public PiRequestResult setOccupancy(Long piId, Long roomId, boolean privacyMode) {
-        Room room = roomService.getById(roomId);
+        Room room = roomService.getByIdInternal(roomId);
         OccupancyDTO dto = new OccupancyDTO(room.getName(), privacyMode);
         RaspberryPi pi = raspberryPiService.getByIdInternal(piId);
         String url = buildPiUrl(pi, piId + "/occupancy");
@@ -186,7 +186,7 @@ public class RaspberryPiServerService {
     }
 
     public PiRequestResult startScanForAvailableSensorStations(Long piId) {
-        RaspberryPi pi = raspberryPiService.getById(piId);
+        RaspberryPi pi = raspberryPiService.getByIdInternal(piId);
         String url = buildPiUrl(pi, piId + "/scan");
         log.debug("SENDING TO ADDRESS: {}", url);
 
@@ -227,7 +227,7 @@ public class RaspberryPiServerService {
     }
 
     public PiRequestResult connectToStation(Long piId, SensorStationDTO station) {
-        RaspberryPi pi = raspberryPiService.getById(piId);
+        RaspberryPi pi = raspberryPiService.getByIdInternal(piId);
         String url = buildPiUrl(pi, piId + "/station");
 
         try {
@@ -268,7 +268,7 @@ public class RaspberryPiServerService {
     }
 
     public PiRequestResult setupStation(Long piId, SensorStationDTO station) {
-        RaspberryPi pi = raspberryPiService.getById(piId);
+        RaspberryPi pi = raspberryPiService.getByIdInternal(piId);
         String url = buildPiUrl(pi, piId + "/setup");
 
         try {
@@ -309,7 +309,7 @@ public class RaspberryPiServerService {
     }
 
     public PiRequestResult informAboutNewThresholds(Long piId, Map<ThresholdDTO, List<ClimateHintDTO>> completeThresholdInfo) {
-        RaspberryPi pi = raspberryPiService.getById(piId);
+        RaspberryPi pi = raspberryPiService.getByIdInternal(piId);
         String url = buildPiUrl(pi, piId + "/config/thresholds");
 
         try {
@@ -350,7 +350,7 @@ public class RaspberryPiServerService {
     }
 
     public PiRequestResult deleteThresholds(Long piId, List<ThresholdDTO> thresholdDTOS) {
-        RaspberryPi pi = raspberryPiService.getById(piId);
+        RaspberryPi pi = raspberryPiService.getByIdInternal(piId);
         String url = buildPiUrl(pi, piId + "/config/thresholds/remove");
 
         try {
@@ -391,7 +391,7 @@ public class RaspberryPiServerService {
     }
 
     public PiRequestResult resolveActiveViolation(Long piId, ViolationResolvedDTO dto) {
-        RaspberryPi pi = raspberryPiService.getById(piId);
+        RaspberryPi pi = raspberryPiService.getByIdInternal(piId);
         String url = buildPiUrl(pi, piId + "/violation/resolve");
 
         try {

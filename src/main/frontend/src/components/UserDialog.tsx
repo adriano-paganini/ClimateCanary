@@ -7,11 +7,9 @@ import {Dialog} from 'primereact/dialog';
 import {Button} from "primereact/button";
 
 import UserForm from './UserForm';
-import {InputMaskChangeEvent} from "primereact/inputmask";
-import {CheckboxChangeEvent} from "primereact/checkbox";
 import {UserxValidationResult} from "../utilities/userxUtilities";
 import {Message} from "primereact/message";
-import {UserxCreateDTO, UserxDTO} from "../generated-skeleton-api";
+import {DepartmentDTO, RoomDTO, UserxCreateDTO, UserxDTO, UserxRole} from "../generated-skeleton-api";
 
 interface UserDialogProps {
     visible: boolean;
@@ -20,9 +18,19 @@ interface UserDialogProps {
     validation: UserxValidationResult;
     onHide: () => void;
     onSubmit: () => void;
-    onInputChange: (event: React.ChangeEvent<HTMLInputElement> | InputMaskChangeEvent) => void;
+    onInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
     onRolesChange: (event: { value: string[] }) => void;
-    onUserEnabledChange: (event: CheckboxChangeEvent) => void;
+    onPhoneChange: (phone: string) => void;
+    disableUsername?: boolean;
+    departments?: DepartmentDTO[];
+    rooms?: RoomDTO[];
+    selectedDepartmentId?: number;
+    selectedRoomId?: number;
+    onDepartmentChange?: (departmentId?: number) => void;
+    onRoomChange?: (roomId?: number) => void;
+    departmentsLoading?: boolean;
+    roomsLoading?: boolean;
+    lockedRoles?: UserxRole[];
 }
 
 /**
@@ -35,7 +43,7 @@ interface UserDialogProps {
  * @param onSubmit callback when the user is submitted
  * @param onInputChange callback when the input changes
  * @param onRolesChange callback when the roles change
- * @param onUserEnabledChange callback when the user is enabled or disabled
+ * @param onPhoneChange callback when the phone number changes
  */
 const UserDialog: React.FC<UserDialogProps> = ({
                                                    visible,
@@ -46,7 +54,17 @@ const UserDialog: React.FC<UserDialogProps> = ({
                                                    onSubmit,
                                                    onInputChange,
                                                    onRolesChange,
-                                                   onUserEnabledChange
+                                                   onPhoneChange,
+                                                   disableUsername = false,
+                                                   departments = [],
+                                                   rooms = [],
+                                                   selectedDepartmentId,
+                                                   selectedRoomId,
+                                                   onDepartmentChange,
+                                                   onRoomChange,
+                                                   departmentsLoading = false,
+                                                   roomsLoading = false,
+                                                   lockedRoles = []
                                                }) => {
 
     /**
@@ -65,20 +83,33 @@ const UserDialog: React.FC<UserDialogProps> = ({
             header={isNewUser ? "Create New User" : "Edit User"}
             visible={visible}
             style={{width: '50vw'}}
+            contentClassName="user-dialog-content"
             onHide={onHide}
             footer={renderFooter}
         >
-            {validation.message && (<Message severity="error" text={validation.message} className="mb-3"/>)}
-            {user && (
-                <UserForm
-                    user={user}
-                    isNewUser={isNewUser}
-                    fieldErrors={validation.fieldErrors}
-                    onInputChange={onInputChange}
-                    onRolesChange={onRolesChange}
-                    onUserEnabledChange={onUserEnabledChange}
-                />
-            )}
+            <div onWheelCapture={(event) => event.stopPropagation()}>
+                {validation.message && (<Message severity="error" text={validation.message} className="mb-3"/>)}
+                {user && (
+                    <UserForm
+                        user={user}
+                        isNewUser={isNewUser}
+                        fieldErrors={validation.fieldErrors}
+                        onInputChange={onInputChange}
+                        onRolesChange={onRolesChange}
+                        onPhoneChange={onPhoneChange}
+                        disableUsername={disableUsername}
+                        departments={departments}
+                        rooms={rooms}
+                        selectedDepartmentId={selectedDepartmentId}
+                        selectedRoomId={selectedRoomId}
+                        onDepartmentChange={onDepartmentChange}
+                        onRoomChange={onRoomChange}
+                        departmentsLoading={departmentsLoading}
+                        roomsLoading={roomsLoading}
+                        lockedRoles={lockedRoles}
+                    />
+                )}
+            </div>
         </Dialog>
     );
 };

@@ -8,6 +8,7 @@ import {jwtDecode, JwtPayload} from "jwt-decode";
 import {LoginRequestDTO, UserxDTO, UserxRole} from '../generated-skeleton-api';
 import {AuthApi} from "../utilities/authApi";
 import {UserService} from "../services/UserService";
+import {invalidateDashboardCaches} from "../utilities/dashboardCacheInvalidation";
 
 
 interface UserContextType {
@@ -42,6 +43,7 @@ export function UserProvider({children}: { children: React.ReactNode }) {
     useEffect(() => {
         const handler = (e: StorageEvent) => {
             if (e.key === BEARER_TOKEN_LOCAL_STORAGE_KEY) {
+                invalidateDashboardCaches();
                 setToken(e.newValue);
             }
         };
@@ -50,10 +52,15 @@ export function UserProvider({children}: { children: React.ReactNode }) {
         return () => window.removeEventListener("storage", handler);
     }, []);
 
+    const normalizeUser = (user: UserxDTO): UserxDTO => ({
+        ...user,
+        roles: new Set([...(Array.isArray(user.roles) ? user.roles : user.roles ?? [])] as UserxRole[]),
+    });
+
     const refreshCurrentUser = useCallback(async () => {
         try {
             const user = await UserService.getCurrentUser();
-            setFullUser(user);
+            setFullUser(normalizeUser(user));
         } catch {
             setFullUser(null);
         }
@@ -74,17 +81,19 @@ export function UserProvider({children}: { children: React.ReactNode }) {
             return;
         }
 
+        invalidateDashboardCaches();
         localStorage.setItem(BEARER_TOKEN_LOCAL_STORAGE_KEY, bearerToken);
         setToken(bearerToken);
         setError(null);
     };
 
     const logout = async () => {
+        invalidateDashboardCaches();
         localStorage.removeItem(BEARER_TOKEN_LOCAL_STORAGE_KEY);
         setToken(null);
     };
 
-    const currentUser = useMemo<UserxDTO | null>(() => {
+    const tokenUser = useMemo<UserxDTO | null>(() => {
         if (!token) {
             return null;
         }
@@ -108,6 +117,8 @@ export function UserProvider({children}: { children: React.ReactNode }) {
             return null;
         }
     }, [token]);
+
+    const currentUser = fullUser ?? tokenUser;
 
     // JWT is signed by the backend — if valid and not expired, the user is authenticated.
     // Actual API calls will be rejected by the backend if the token is invalid.

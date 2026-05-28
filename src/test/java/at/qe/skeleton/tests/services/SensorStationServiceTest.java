@@ -284,24 +284,95 @@ class SensorStationServiceTest {
     }
 
     @Test
-    @WithMockUser(authorities = "SYSTEM_ADMIN")
-    @DisplayName("Should delete sensor station by ID")
-    void delete_success() {
-        Mockito.doNothing().when(repo).deleteById(1L);
+    @DisplayName("Should update status for station assigned to requesting Raspberry Pi")
+    void updateFromPi_matchingPi_updatesStatus() {
+        Mockito.when(repo.findById(1L)).thenReturn(Optional.of(station));
+        Mockito.when(repo.save(Mockito.any())).thenAnswer(inv -> inv.getArgument(0));
 
-        service.delete(1L);
+        SensorStation result = service.update(1L, 1L, DeviceStatus.CONNECTED);
 
-        Mockito.verify(repo).deleteById(1L);
+        Assertions.assertThat(result.getDeviceStatus()).isEqualTo(DeviceStatus.CONNECTED);
+        Mockito.verify(repo).save(station);
+    }
+
+    @Test
+    @DisplayName("Should throw not found when Raspberry Pi does not own station")
+    void updateFromPi_differentPi_throwsNotFound() {
+        Mockito.when(repo.findById(1L)).thenReturn(Optional.of(station));
+
+        Assertions.assertThatThrownBy(() -> service.update(99L, 1L, DeviceStatus.CONNECTED))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessageContaining("1");
+
+        Mockito.verify(repo, Mockito.never()).save(Mockito.any());
     }
 
     @Test
     @WithMockUser(authorities = "SYSTEM_ADMIN")
-    @DisplayName("Should propagate exception when repository delete fails")
+    @DisplayName("Should apply DTO fields and measurement interval in initial update")
+    void initialUpdate_appliesDtoAndMeasurementInterval() {
+        SensorStationUpdateDTO dto = new SensorStationUpdateDTO(
+                null,
+                null,
+                "Updated Station",
+                DeviceStatus.DECOMMISSIONED
+        );
+
+        Mockito.when(repo.findById(1L)).thenReturn(Optional.of(station));
+        Mockito.when(repo.save(Mockito.any())).thenAnswer(inv -> inv.getArgument(0));
+
+        SensorStation result = service.update(1L, dto, 45);
+
+        Assertions.assertThat(result.getName()).isEqualTo("Updated Station");
+        Assertions.assertThat(result.getDeviceStatus()).isEqualTo(DeviceStatus.DECOMMISSIONED);
+        Assertions.assertThat(result.getMeasurementInterval()).isEqualTo(45);
+        Mockito.verify(repo).save(station);
+    }
+
+    @Test
+    @WithMockUser(authorities = "SYSTEM_ADMIN")
+    @DisplayName("Should decommission sensor station by ID")
+    void delete_success() {
+        SensorStation sensorStation = new SensorStation();
+        ReflectionTestUtils.setField(sensorStation, "id", 1L);
+        sensorStation.setDeviceStatus(DeviceStatus.AVAILABLE);
+
+        Mockito.when(repo.findById(1L)).thenReturn(Optional.of(sensorStation));
+        Mockito.when(repo.save(Mockito.any(SensorStation.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.delete(1L);
+
+        Assertions.assertThat(sensorStation.getDeviceStatus())
+                .isEqualTo(DeviceStatus.DECOMMISSIONED);
+
+        Mockito.verify(repo).findById(1L);
+        Mockito.verify(repo).save(sensorStation);
+        Mockito.verify(repo, Mockito.never()).deleteById(Mockito.anyLong());
+    }
+
+
+    @Test
+    @WithMockUser(authorities = "SYSTEM_ADMIN")
+    @DisplayName("Should propagate exception when repository save fails during decommission")
     void delete_exception() {
-        Mockito.doThrow(new RuntimeException("DB error")).when(repo).deleteById(1L);
+        SensorStation sensorStation = new SensorStation();
+        ReflectionTestUtils.setField(sensorStation, "id", 1L);
+        sensorStation.setDeviceStatus(DeviceStatus.AVAILABLE);
+
+        Mockito.when(repo.findById(1L)).thenReturn(Optional.of(sensorStation));
+        Mockito.when(repo.save(Mockito.any(SensorStation.class)))
+                .thenThrow(new RuntimeException("DB error"));
 
         Assertions.assertThatThrownBy(() -> service.delete(1L))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("DB error");
+
+        Assertions.assertThat(sensorStation.getDeviceStatus())
+                .isEqualTo(DeviceStatus.DECOMMISSIONED);
+
+        Mockito.verify(repo).findById(1L);
+        Mockito.verify(repo).save(sensorStation);
+        Mockito.verify(repo, Mockito.never()).deleteById(Mockito.anyLong());
     }
 }

@@ -18,6 +18,7 @@ interface RoomCardProps {
     room: RoomDTO;
     measurements: MeasurementDTO[];
     violations: ThresholdViolationDTO[];
+    historyRoute?: string;
 }
 
 function latestMeasurement(measurements: MeasurementDTO[], metric: MeasurementDTOMetricEnum): MeasurementDTO | undefined {
@@ -40,7 +41,7 @@ function airQualityColor(
     return iaqViolation ? '#ef4444' : '#22c55e';
 }
 
-const RoomCard: React.FC<RoomCardProps> = ({ room, measurements, violations }) => {
+const RoomCard: React.FC<RoomCardProps> = ({ room, measurements, violations, historyRoute = ROUTES.DASHBOARD_HISTORY }) => {
     const navigate = useNavigate();
 
     const noData = measurements.length === 0;
@@ -53,7 +54,7 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, measurements, violations }) =
 
     const handleClick = () => {
         if (room.id !== undefined) {
-            navigate(ROUTES.DASHBOARD_HISTORY.replace(':roomId', String(room.id)));
+            navigate(historyRoute.replace(':roomId', String(room.id)));
         }
     };
 
@@ -108,7 +109,7 @@ const RoomCard: React.FC<RoomCardProps> = ({ room, measurements, violations }) =
                         Temperature
                     </span>
                     <span style={{ fontWeight: 600, color: '#111827' }}>
-                        {latestTemp?.measurement !== undefined ? `${latestTemp.measurement} °C` : '—'}
+                        {latestTemp?.measurement !== undefined ? `${latestTemp.measurement.toFixed(1)} °C` : '—'}
                     </span>
                 </div>
 

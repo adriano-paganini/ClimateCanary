@@ -70,7 +70,7 @@ public class MeasurementService {
 
     public Map<Metric, Measurement> getLatestPerMetric(Long roomId) {
         Map<Metric, Measurement> latestMeasurements = Arrays.stream(Metric.values())
-                .map(metric -> measurementRepository.findLatestByRoomIdAndMetric(roomId, metric))
+                .map(metric -> measurementRepository.findTopByRoomIdAndMetricOrderByTimestampDesc(roomId, metric))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toMap(Measurement::getMetric, m -> m));
@@ -85,15 +85,13 @@ public class MeasurementService {
     public void saveMeasurementsFromRaspberryPi(Long piId, RPMeasurementDTO dto){
          List<Measurement> measurements = rPmeasurementMapper.mapFrom(dto);
 
-         RaspberryPi pi = raspberryPiService.getById(piId);
-         SensorStation station = sensorStationService.getById(dto.sensorStationId());
+         RaspberryPi pi = raspberryPiService.getByIdInternal(piId);
+         SensorStation station = sensorStationService.getByIdInternal(dto.sensorStationId());
 
         if (!(pi.getSensorStations().contains(station))){
             throw new NotFoundException("Sensor station not found for Raspberry Pi");
         }
-        if (null != (roomService.getById(dto.roomId()))){
-            throw new NotFoundException("Room not found");
-        }
+        roomService.getById(dto.roomId());
 
         for (Measurement measurement : measurements) {
             measurementRepository.save(measurement);

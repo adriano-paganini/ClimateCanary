@@ -7,8 +7,8 @@ import React from "react";
 import {Button} from "primereact/button";
 import {Column} from "primereact/column";
 import {DataTable} from "primereact/datatable";
+import {Tag} from "primereact/tag";
 
-import {Checkbox} from "primereact/checkbox";
 import {rolesBodyTemplate} from "./rolesBodyTemplate";
 import {UserxDTO} from "../generated-skeleton-api";
 
@@ -17,6 +17,11 @@ interface UserListProps {
     loading: boolean;
     onEditUser: (user: UserxDTO) => void;
     onDeleteUser: (user: UserxDTO) => void;
+    showDeleteAction?: boolean;
+    onRestoreUser?: (user: UserxDTO) => void;
+    currentUsername?: string;
+    currentUserId?: number;
+    emptyMessage?: string;
 }
 
 
@@ -27,14 +32,35 @@ interface UserListProps {
  * @param onEditUser callback when a user is edited
  * @param onDeleteUser callback when a user is deleted
  */
-const UserListComponent: React.FC<UserListProps> = ({users, loading, onEditUser, onDeleteUser}) => {
+const UserListComponent: React.FC<UserListProps> = ({
+    users,
+    loading,
+    onEditUser,
+    onDeleteUser,
+    showDeleteAction = true,
+    onRestoreUser,
+    currentUsername,
+    currentUserId,
+    emptyMessage = "No users found",
+}) => {
+
+    const isCurrentUser = (user: UserxDTO) =>
+        (currentUserId !== undefined && user.id === currentUserId) ||
+        (currentUsername !== undefined && user.username === currentUsername);
+
+    const usernameTemplate = (rowData: UserxDTO) => (
+        <div style={{display: "flex", alignItems: "center", gap: "0.5rem"}}>
+            <span>{rowData.username}</span>
+            {isCurrentUser(rowData) && <Tag value="You" severity="success"/>}
+        </div>
+    );
 
     const editButtonTemplate = (rowData: UserxDTO) => (
         <Button
-            label="Details"
+            label="Edit"
             icon="pi pi-external-link"
             onClick={() => onEditUser(rowData)}
-            aria-label={`Details for ${rowData.username}`}
+            aria-label={`Edit ${rowData.username}`}
         />
     );
 
@@ -48,20 +74,25 @@ const UserListComponent: React.FC<UserListProps> = ({users, loading, onEditUser,
         />
     );
 
-    const enableButtonTemplate = (rowData: UserxDTO) => (
-        <Checkbox checked={rowData.enabled ?? false} disabled={true} className="p-mr-2"/>
+    const restoreButtonTemplate = (rowData: UserxDTO) => (
+        <Button
+            label="Restore"
+            icon="pi pi-refresh"
+            severity="success"
+            onClick={() => onRestoreUser?.(rowData)}
+            aria-label={`Restore ${rowData.username}`}
+        />
     );
 
-
     return (
-        <DataTable value={users} loading={loading}>
-            <Column field="username" header="Username" sortable/>
+        <DataTable value={users} loading={loading} emptyMessage={emptyMessage}>
+            <Column field="username" header="Username" body={usernameTemplate} sortable/>
             <Column field="firstName" header="First Name" sortable/>
             <Column field="lastName" header="Last Name" sortable/>
             <Column field="roles" header="Roles" body={rolesBodyTemplate}/>
-            <Column field="enabled" header="Enabled" body={enableButtonTemplate}/>
             <Column body={editButtonTemplate} exportable={false} style={{minWidth: '8rem'}}/>
-            <Column body={deleteButtonTemplate} exportable={false} style={{minWidth: '8rem'}}/>
+            {showDeleteAction && <Column body={deleteButtonTemplate} exportable={false} style={{minWidth: '8rem'}}/>}
+            {onRestoreUser && <Column body={restoreButtonTemplate} exportable={false} style={{minWidth: '8rem'}}/>}
         </DataTable>
     );
 };

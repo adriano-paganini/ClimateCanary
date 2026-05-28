@@ -4,6 +4,7 @@ import at.qe.skeleton.dtos.ClimateHintDTO;
 import at.qe.skeleton.dtos.ThresholdCreateDTO;
 import at.qe.skeleton.dtos.ThresholdDTO;
 import at.qe.skeleton.dtos.ThresholdUpdateDTO;
+import at.qe.skeleton.dtos.ViolationResolvedDTO;
 import at.qe.skeleton.common.exceptions.ConflictException;
 import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.mappers.ClimateHintMapper;
@@ -11,34 +12,46 @@ import at.qe.skeleton.mappers.ThresholdMapper;
 import at.qe.skeleton.models.ClimateHint;
 import at.qe.skeleton.models.Metric;
 import at.qe.skeleton.models.Threshold;
+import at.qe.skeleton.models.ThresholdViolation;
+import at.qe.skeleton.models.ThresholdType;
+import at.qe.skeleton.models.ViolationStatus;
 import at.qe.skeleton.repositories.ClimateHintRepository;
 import at.qe.skeleton.repositories.ThresholdRepository;
+import at.qe.skeleton.repositories.ThresholdViolationRepository;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 
 @Slf4j
 @Service
 public class ThresholdService {
 
     private final ThresholdRepository thresholdRepository;
+    private final ThresholdViolationRepository thresholdViolationRepository;
     private final RoomService roomService;
     private final ClimateHintRepository climateHintRepository;
-    private final RaspberryPiServerService raspberryPiServerService;
+    private final ThresholdPiSyncService thresholdPiSyncService;
     private final ThresholdMapper thresholdMapper;
     private final ClimateHintMapper climateHintMapper;
 
     public ThresholdService(ThresholdRepository thresholdRepository,
+                            ThresholdViolationRepository thresholdViolationRepository,
                             RoomService roomService,
-                            ClimateHintRepository climateHintRepository, RaspberryPiServerService raspberryPiServerService, ThresholdMapper thresholdMapper, ClimateHintMapper climateHintMapper) {
+                            ClimateHintRepository climateHintRepository,
+                            ThresholdPiSyncService thresholdPiSyncService,
+                            ThresholdMapper thresholdMapper,
+                            ClimateHintMapper climateHintMapper) {
         this.thresholdRepository = thresholdRepository;
+        this.thresholdViolationRepository = thresholdViolationRepository;
         this.roomService = roomService;
         this.climateHintRepository = climateHintRepository;
-        this.raspberryPiServerService = raspberryPiServerService;
+        this.thresholdPiSyncService = thresholdPiSyncService;
         this.thresholdMapper = thresholdMapper;
         this.climateHintMapper = climateHintMapper;
     }
@@ -60,7 +73,16 @@ public class ThresholdService {
                 .orElseThrow(() -> new NotFoundException("Threshold with id " + id + " not found"));
     }
 
+    @Transactional
     public Threshold create(ThresholdCreateDTO dto) {
+        if (thresholdRepository.existsByRoomIdAndMetricAndThresholdType(
+                dto.roomId(),
+                dto.metric(),
+                dto.thresholdType()
+        )) {
+            throw duplicateThresholdException(dto.roomId(), dto.metric(), dto.thresholdType());
+        }
+
         Threshold entity = new Threshold();
         entity.setMetric(dto.metric());
         entity.setBoundValue(dto.boundValue());
@@ -70,7 +92,7 @@ public class ThresholdService {
 
         if (dto.climateHintIds() != null) {
             List<ClimateHint> hints = climateHintRepository.findAllById(dto.climateHintIds());
-            entity.setClimateHints(new HashSet<>(hints));
+            replaceClimateHints(entity, hints);
         }
 
         Threshold savedThreshold = thresholdRepository.save(entity);
@@ -78,8 +100,7 @@ public class ThresholdService {
         log.info("Created threshold with id={}", savedThreshold.getId());
         log.debug("Created threshold details: id={}, metric={}, boundValue={}, thresholdType={}, enabled={}, roomId={}, climateHintIds={}", savedThreshold.getId(), savedThreshold.getMetric(), savedThreshold.getBoundValue(), savedThreshold.getThresholdType(), savedThreshold.isEnabled(), savedThreshold.getRoom() != null ? savedThreshold.getRoom().getId() : null, dto.climateHintIds());
 
-        synchronizeThresholdWithRaspberryPi(savedThreshold.getId(), null, null, savedThreshold);
-        log.info("Sent threshold with id={} to Raspberry Pi {}", savedThreshold.getId(), getRaspberryPiIdOrNull(savedThreshold));
+        enqueueThresholdSync(savedThreshold.getId(), null, null, savedThreshold);
 
         return savedThreshold;
     }
@@ -87,6 +108,19 @@ public class ThresholdService {
     @Transactional
     public Threshold update(Long id, ThresholdUpdateDTO dto) {
         Threshold entity = getThresholdById(id);
+
+        Long effectiveRoomId = dto.roomId() != null ? dto.roomId() : entity.getRoom().getId();
+        Metric effectiveMetric = dto.metric() != null ? dto.metric() : entity.getMetric();
+        var effectiveThresholdType = dto.thresholdType() != null ? dto.thresholdType() : entity.getThresholdType();
+
+        if (thresholdRepository.existsByRoomIdAndMetricAndThresholdTypeAndIdNot(
+                effectiveRoomId,
+                effectiveMetric,
+                effectiveThresholdType,
+                id
+        )) {
+            throw duplicateThresholdException(effectiveRoomId, effectiveMetric, effectiveThresholdType);
+        }
 
         ThresholdDTO oldThresholdDTO = thresholdMapper.mapTo(entity);
         Long oldPiId = getRaspberryPiIdOrNull(entity);
@@ -121,14 +155,13 @@ public class ThresholdService {
 
         if (dto.climateHintIds() != null) {
             List<ClimateHint> hints = climateHintRepository.findAllById(dto.climateHintIds());
-            entity.getClimateHints().clear();
-            entity.getClimateHints().addAll(hints);
+            replaceClimateHints(entity, hints);
             debugInfo.append(", climateHintIds=").append(dto.climateHintIds());
         }
 
         Threshold updatedThreshold = thresholdRepository.save(entity);
 
-        synchronizeThresholdWithRaspberryPi(id, oldPiId, oldThresholdDTO, updatedThreshold);
+        enqueueThresholdSync(id, oldPiId, oldThresholdDTO, updatedThreshold);
 
         log.info("Updated threshold with id={}", id);
         log.debug(debugInfo.toString());
@@ -136,60 +169,51 @@ public class ThresholdService {
         return updatedThreshold;
     }
 
-    private void synchronizeThresholdWithRaspberryPi(
+    private void enqueueThresholdSync(
             Long thresholdId,
             Long oldPiId,
             ThresholdDTO oldThresholdDTO,
             Threshold updatedThreshold
     ) {
         Long newPiId = getRaspberryPiIdOrNull(updatedThreshold);
-
-        if (oldPiId == null && newPiId == null) {
-            log.warn("Could not synchronize threshold with id={} because neither old nor new Raspberry Pi exists", thresholdId);
-            return;
-        }
-
-        if (oldPiId != null) {
-            PiRequestResult deletionResult = raspberryPiServerService.deleteThresholds(
-                    oldPiId,
-                    List.of(oldThresholdDTO)
-            );
-
-            if (deletionResult != PiRequestResult.SUCCESS) {
-                log.warn("Failed to delete old threshold with id={} on Raspberry Pi {}: result={}",
-                        thresholdId, oldPiId, deletionResult);
-                return;
-            }
-
-            log.info("Deleted old threshold with id={} on Raspberry Pi {}", thresholdId, oldPiId);
-        }
-
-        if (!updatedThreshold.isEnabled()) {
-            log.info("Threshold with id={} is disabled, so it will not be sent as active configuration to Raspberry Pi", thresholdId);
-            return;
-        }
-
-        if (newPiId == null) {
-            log.warn("Could not send updated threshold with id={} because the updated room has no Raspberry Pi", thresholdId);
-            return;
-        }
-
         ThresholdDTO updatedThresholdDTO = thresholdMapper.mapTo(updatedThreshold);
+        List<ClimateHintDTO> climateHints = updatedThreshold.getClimateHints().stream()
+                .map(climateHintMapper::mapTo)
+                .toList();
+        List<ViolationResolvedDTO> resolvedViolations = updatedThreshold.isEnabled()
+                ? List.of()
+                : disableActiveViolations(thresholdId, updatedThreshold);
 
-        Map<ThresholdDTO, List<ClimateHintDTO>> completeThresholdInfo = Map.of(updatedThresholdDTO,
-                updatedThreshold.getClimateHints().stream().map(climateHintMapper::mapTo).toList());
+        thresholdPiSyncService.synchronize(
+                thresholdId, oldPiId, oldThresholdDTO, newPiId, updatedThresholdDTO,
+                climateHints, updatedThreshold.isEnabled(), resolvedViolations);
+    }
 
-        PiRequestResult insertionResult = raspberryPiServerService.informAboutNewThresholds(
-                newPiId,
-                completeThresholdInfo
-        );
+    private List<ViolationResolvedDTO> disableActiveViolations(Long thresholdId, Threshold threshold) {
+        List<ThresholdViolation> active = thresholdViolationRepository
+                .findByThreshold_IdAndViolationStatus(thresholdId, ViolationStatus.ACTIVE);
 
-        if (insertionResult == PiRequestResult.SUCCESS) {
-            log.info("Sent updated threshold with id={} to Raspberry Pi {}", thresholdId, newPiId);
-        } else {
-            log.warn("Failed to send updated threshold with id={} to Raspberry Pi {}: result={}",
-                    thresholdId, newPiId, insertionResult);
+        if (active.isEmpty()) {
+            return List.of();
         }
+
+        LocalDateTime now = LocalDateTime.now();
+        String endTimestamp = now.format(DateTimeFormatter.ISO_DATE_TIME);
+        java.util.ArrayList<ViolationResolvedDTO> resolvedViolations = new java.util.ArrayList<>();
+
+        for (ThresholdViolation v : active) {
+            v.setViolationStatus(ViolationStatus.DISABLED);
+            v.setEndTime(now);
+            thresholdViolationRepository.save(v);
+            log.info("Set threshold violation id={} to DISABLED (threshold id={} disabled)", v.getId(), thresholdId);
+
+            if (v.getRoom() != null) {
+                resolvedViolations.add(new ViolationResolvedDTO(v.getMetric(), v.getRoom().getId(), endTimestamp));
+            }
+        }
+
+        log.info("Disabled {} active violation(s) for threshold id={}", active.size(), thresholdId);
+        return resolvedViolations;
     }
 
     private Long getRaspberryPiIdOrNull(Threshold threshold) {
@@ -199,41 +223,58 @@ public class ThresholdService {
         return threshold.getRoom().getRaspberryPi().getId();
     }
 
+    private void replaceClimateHints(Threshold threshold, Collection<ClimateHint> newHints) {
+        clearClimateHints(threshold);
+        for (ClimateHint hint : newHints) {
+            threshold.getClimateHints().add(hint);
+            hint.getThresholds().add(threshold);
+        }
+    }
+
+    private void clearClimateHints(Threshold threshold) {
+        for (ClimateHint hint : new HashSet<>(threshold.getClimateHints())) {
+            hint.getThresholds().remove(threshold);
+        }
+        threshold.getClimateHints().clear();
+    }
+
+    private ConflictException duplicateThresholdException(Long roomId, Metric metric, ThresholdType thresholdType) {
+        return new ConflictException(
+                "Threshold already exists for room " + roomId
+                        + " and metric " + metric
+                        + " and threshold type " + thresholdType
+        );
+    }
+
     @Transactional
     public void delete(Long id) {
         Threshold entity = getThresholdById(id);
 
-        if (!entity.getViolations().isEmpty()) {
-            throw new ConflictException("Threshold cannot be deleted because it has violations");
-        }
-
         Long piId = getRaspberryPiIdOrNull(entity);
         ThresholdDTO thresholdDTO = thresholdMapper.mapTo(entity);
 
-        if (piId != null) {
-            Map<ThresholdDTO, List<ClimateHintDTO>> completeThresholdInfo = Map.of(thresholdDTO,
-                    entity.getClimateHints().stream().map(climateHintMapper::mapTo).toList());
-
-            PiRequestResult deletionResult = raspberryPiServerService.informAboutNewThresholds(
-                    piId,
-                    completeThresholdInfo
-            );
-
-            if (deletionResult != PiRequestResult.SUCCESS) {
-                log.warn("Failed to delete threshold with id={} on Raspberry Pi {}: result={}",
-                        id, piId, deletionResult);
-                throw new IllegalStateException("Threshold could not be deleted on Raspberry Pi");
-            }
-
-            log.info("Deleted threshold with id={} on Raspberry Pi {}", id, piId);
-        } else {
+        if (piId == null) {
             log.warn("Deleting threshold with id={} from database, but no Raspberry Pi is assigned to its room", id);
         }
 
-        entity.getClimateHints().clear();
+        clearClimateHints(entity);
+        detachViolations(id, entity);
         thresholdRepository.delete(entity);
+        thresholdPiSyncService.synchronize(id, piId, thresholdDTO, null, null, List.of(), false, List.of());
 
         log.info("Deleted threshold with id={}", id);
         log.debug("Cleared climate hint associations before deleting threshold id={}", id);
+    }
+
+    private void detachViolations(Long thresholdId, Threshold threshold) {
+        List<ThresholdViolation> violations = thresholdViolationRepository.findByThreshold_Id(thresholdId);
+
+        for (ThresholdViolation violation : violations) {
+            violation.setThreshold(null);
+            thresholdViolationRepository.save(violation);
+        }
+
+        threshold.getViolations().clear();
+        log.debug("Detached {} threshold violation(s) before deleting threshold id={}", violations.size(), thresholdId);
     }
 }

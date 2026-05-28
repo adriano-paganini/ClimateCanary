@@ -92,8 +92,8 @@ class ThresholdViolationControllerIntegrationTest {
         when(thresholdViolationService.findAll(null, null, null))
                 .thenReturn(List.of(v1, v2));
 
-        when(thresholdViolationMapper.mapTo(v1)).thenReturn(dto1);
-        when(thresholdViolationMapper.mapTo(v2)).thenReturn(dto2);
+        when(thresholdViolationMapper.mapToListItem(v1)).thenReturn(dto1);
+        when(thresholdViolationMapper.mapToListItem(v2)).thenReturn(dto2);
 
         mockMvc.perform(get("/api/thresholdviolation")
                         .accept(MediaType.APPLICATION_JSON))
@@ -110,7 +110,7 @@ class ThresholdViolationControllerIntegrationTest {
         when(thresholdViolationService.findAll(ViolationStatus.ACTIVE, null, null))
                 .thenReturn(List.of(v1));
 
-        when(thresholdViolationMapper.mapTo(v1)).thenReturn(dto1);
+        when(thresholdViolationMapper.mapToListItem(v1)).thenReturn(dto1);
 
         mockMvc.perform(get("/api/thresholdviolation")
                         .param("violationStatus", "ACTIVE"))

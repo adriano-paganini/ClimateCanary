@@ -1,11 +1,13 @@
 package at.qe.skeleton.tests.services;
 
+import at.qe.skeleton.common.exceptions.ConflictException;
 import at.qe.skeleton.common.exceptions.NotFoundException;
 import at.qe.skeleton.dtos.DepartmentUpdateDTO;
 import at.qe.skeleton.models.Department;
 import at.qe.skeleton.models.EmployeeProfile;
 import at.qe.skeleton.models.Room;
 import at.qe.skeleton.models.Userx;
+import at.qe.skeleton.models.UserxRole;
 import at.qe.skeleton.repositories.DepartmentRepository;
 import at.qe.skeleton.repositories.EmployeeProfileRepository;
 import at.qe.skeleton.repositories.RoomRepository;
@@ -23,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -166,16 +169,51 @@ class DepartmentServiceTest {
     void update_departmentLeadId_updatesLeader() {
         Userx newLeader = new Userx();
         ReflectionTestUtils.setField(newLeader, "id", 5L);
+        ReflectionTestUtils.setField(department, "id", 1L);
+        leader.setRoles(new HashSet<>(List.of(UserxRole.DEPARTMENT_LEAD)));
 
         DepartmentUpdateDTO dto = new DepartmentUpdateDTO(null, null, 5L);
 
         Mockito.when(departmentRepository.findById(1L)).thenReturn(Optional.of(department));
         Mockito.when(userxService.loadUser(5L)).thenReturn(Optional.of(newLeader));
+        Mockito.when(departmentRepository.findByDepartmentLeader(leader)).thenReturn(List.of(department));
         Mockito.when(departmentRepository.save(department)).thenReturn(department);
 
         departmentService.update(1L, dto);
 
         Assertions.assertThat(department.getDepartmentLeader()).isEqualTo(newLeader);
+        Assertions.assertThat(newLeader.getRoles()).contains(UserxRole.DEPARTMENT_LEAD);
+        Assertions.assertThat(leader.getRoles()).doesNotContain(UserxRole.DEPARTMENT_LEAD);
+        Mockito.verify(userxService).saveUser(newLeader);
+        Mockito.verify(userxService).saveUser(leader);
+    }
+
+    @Test
+    @DisplayName("Update department keeps role on previous leader when they lead another department")
+    void update_departmentLeadId_keepsRoleOnPreviousLeaderWhenLeadingAnotherDepartment() {
+        Userx newLeader = new Userx();
+        ReflectionTestUtils.setField(newLeader, "id", 5L);
+        ReflectionTestUtils.setField(department, "id", 1L);
+        leader.setRoles(new HashSet<>(List.of(UserxRole.DEPARTMENT_LEAD)));
+
+        Department otherDepartment = new Department();
+        ReflectionTestUtils.setField(otherDepartment, "id", 2L);
+        otherDepartment.setDepartmentLeader(leader);
+
+        DepartmentUpdateDTO dto = new DepartmentUpdateDTO(null, null, 5L);
+
+        Mockito.when(departmentRepository.findById(1L)).thenReturn(Optional.of(department));
+        Mockito.when(userxService.loadUser(5L)).thenReturn(Optional.of(newLeader));
+        Mockito.when(departmentRepository.findByDepartmentLeader(leader)).thenReturn(List.of(department, otherDepartment));
+        Mockito.when(departmentRepository.save(department)).thenReturn(department);
+
+        departmentService.update(1L, dto);
+
+        Assertions.assertThat(department.getDepartmentLeader()).isEqualTo(newLeader);
+        Assertions.assertThat(newLeader.getRoles()).contains(UserxRole.DEPARTMENT_LEAD);
+        Assertions.assertThat(leader.getRoles()).contains(UserxRole.DEPARTMENT_LEAD);
+        Mockito.verify(userxService).saveUser(newLeader);
+        Mockito.verify(userxService, Mockito.never()).saveUser(leader);
     }
 
     @Test
@@ -246,10 +284,10 @@ class DepartmentServiceTest {
     }
 
     @Test
-    @DisplayName("Delete department clears rooms and employees and deletes")
-    void delete_existingDepartment_clearsRoomsAndEmployeesAndDeletes() {
+    @DisplayName("Delete department clears rooms and deletes when no employees are assigned")
+    void delete_existingDepartment_clearsRoomsAndDeletesWhenNoEmployeesAssigned() {
         room1.setDepartment(department);
-        employeeProfile.setDepartment(department);
+        department.getEmployeeProfiles().clear();
 
         Mockito.when(departmentRepository.findById(1L)).thenReturn(Optional.of(department));
 
@@ -258,13 +296,27 @@ class DepartmentServiceTest {
         Assertions.assertThat(room1.getDepartment()).isNull();
         Mockito.verify(roomRepository).save(room1);
 
-        Assertions.assertThat(employeeProfile.getDepartment()).isNull();
-        Mockito.verify(employeeProfileRepository).save(employeeProfile);
-
         Assertions.assertThat(department.getRooms()).isEmpty();
         Assertions.assertThat(department.getEmployeeProfiles()).isEmpty();
 
         Mockito.verify(departmentRepository).deleteById(1L);
+    }
+
+    @Test
+    @DisplayName("Delete department throws ConflictException when employees are assigned")
+    void delete_throwsConflictException_whenEmployeesAreAssigned() {
+        employeeProfile.setDepartment(department);
+
+        Mockito.when(departmentRepository.findById(1L)).thenReturn(Optional.of(department));
+        Mockito.when(employeeProfileRepository.countByDepartment_Id(1L)).thenReturn(1L);
+
+        Assertions.assertThatThrownBy(() -> departmentService.delete(1L))
+                .isInstanceOf(ConflictException.class)
+                .hasMessageContaining("1 assigned employees");
+
+        Assertions.assertThat(employeeProfile.getDepartment()).isEqualTo(department);
+        Mockito.verify(departmentRepository, Mockito.never()).deleteById(Mockito.any());
+        Mockito.verify(employeeProfileRepository, Mockito.never()).save(Mockito.any());
     }
 
     @Test

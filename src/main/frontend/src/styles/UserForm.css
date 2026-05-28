@@ -1,0 +1,26 @@
+.user-form-overlay-panel {
+    z-index: 1201;
+}
+
+.p-dialog .p-multiselect,
+.p-dialog .p-dropdown {
+    position: relative;
+}
+
+.p-dialog .p-multiselect-panel.user-form-overlay-panel,
+.p-dialog .p-dropdown-panel.user-form-overlay-panel {
+    max-width: min(24rem, calc(100vw - 2rem));
+}
+
+.user-form-overlay-panel,
+.user-form-overlay-panel .p-dropdown-items-wrapper,
+.user-form-overlay-panel .p-multiselect-items-wrapper {
+    overscroll-behavior: contain;
+}
+
+.user-dialog-content {
+    max-height: calc(90vh - 10rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 0.25rem;
+}

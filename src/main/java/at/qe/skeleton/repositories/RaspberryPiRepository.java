@@ -13,4 +13,7 @@ public interface RaspberryPiRepository extends AbstractRepository<RaspberryPi, L
 
     @Query("SELECT r FROM RaspberryPi r WHERE r.room.active = true")
     List<RaspberryPi> findAllActive();
+
+    @Query("SELECT r FROM RaspberryPi r WHERE r.deviceStatus='DECOMMISSIONED'")
+    List<RaspberryPi> findAllByDecomissionedTrue();
 }

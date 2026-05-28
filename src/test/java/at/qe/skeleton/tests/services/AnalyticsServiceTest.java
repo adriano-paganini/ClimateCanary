@@ -3,6 +3,8 @@ package at.qe.skeleton.tests.services;
 import at.qe.skeleton.common.exceptions.BadRequestException;
 import at.qe.skeleton.dtos.*;
 import at.qe.skeleton.models.*;
+import at.qe.skeleton.repositories.MeasurementRepository;
+import at.qe.skeleton.repositories.ThresholdViolationRepository;
 import at.qe.skeleton.services.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -48,6 +50,12 @@ public class AnalyticsServiceTest {
     @Mock
     private AuthenticatedUserService  authenticatedUserService;
 
+    @Mock
+    private MeasurementRepository measurementRepository;
+
+    @Mock
+    private ThresholdViolationRepository thresholdViolationRepository;
+
     @InjectMocks
     private AnalyticsService analyticsService;
 
@@ -56,8 +64,10 @@ public class AnalyticsServiceTest {
     private Room commonRoom;
     private Userx buildingAdmin;
     private Userx departmentLead;
+    private Userx departmentLeadEmployee;
     private Userx employee;
     private EmployeeProfile employeeProfile;
+    private EmployeeProfile departmentLeadEmployeeProfile;
 
     // Because we don't expose setters for some classes and for testing purposes
     // we brute force change fields via reflection...
@@ -104,6 +114,10 @@ public class AnalyticsServiceTest {
         departmentLead.setRoles(Set.of(UserxRole.DEPARTMENT_LEAD));
         department.setDepartmentLeader(departmentLead);
 
+        departmentLeadEmployee = new Userx();
+        setId(departmentLeadEmployee, 4L);
+        departmentLeadEmployee.setRoles(Set.of(UserxRole.DEPARTMENT_LEAD, UserxRole.EMPLOYEE));
+
         employee = new Userx();
         setId(employee, 3L);
         employee.setRoles(Set.of(UserxRole.EMPLOYEE));
@@ -112,6 +126,11 @@ public class AnalyticsServiceTest {
         setId(employeeProfile, 3L);
         employeeProfile.setDepartment(department);
         employeeProfile.setRoom(officeRoom);
+
+        departmentLeadEmployeeProfile = new EmployeeProfile();
+        setId(departmentLeadEmployeeProfile, 4L);
+        departmentLeadEmployeeProfile.setDepartment(department);
+        departmentLeadEmployeeProfile.setRoom(officeRoom);
     }
 
     private Measurement measurement(Long roomId, Metric metric, float value, LocalDateTime ts) {
@@ -347,6 +366,105 @@ public class AnalyticsServiceTest {
     }
 
     @Test
+    @DisplayName("getRoomTrend – DEPARTMENT_LEAD viewing own assigned office uses employee granularity")
+    void getRoomTrend_departmentLeadOwnAssignedOffice_usesEmployeeGranularity() {
+        department.setDepartmentLeader(departmentLeadEmployee);
+
+        Mockito.when(roomService.getById(10L)).thenReturn(officeRoom);
+        Mockito.when(authenticatedUserService.getAuthenticatedUser()).thenReturn(departmentLeadEmployee);
+        Mockito.when(employeeProfileService.getMyProfile()).thenReturn(Optional.of(departmentLeadEmployeeProfile));
+        List<Measurement> measurements = List.of(
+                measurement(10L, Metric.TEMPERATURE, 21.5f, T0),
+                measurement(10L, Metric.TEMPERATURE, 22.0f, T1)
+        );
+        Mockito.when(measurementService.getFiltered(eq(10L), eq(Metric.TEMPERATURE), any(), any()))
+                .thenReturn(measurements);
+
+        RoomTrendDTO result = analyticsService.getRoomTrend(10L, Metric.TEMPERATURE, FROM, TO);
+
+        assertThat(result.granularityReduced()).isFalse();
+        assertThat(result.bucketSize()).isEqualTo("raw");
+        assertThat(result.points()).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("getRoomSummary – DEPARTMENT_LEAD with assigned office outside led department can view own room")
+    void getRoomSummary_departmentLeadOwnAssignedOfficeOutsideLedDepartment_returnsSummary() {
+        Department otherDepartment = new Department();
+        setId(otherDepartment, 99L);
+        department.setDepartmentLeader(departmentLead);
+        officeRoom.setDepartment(otherDepartment);
+
+        employeeProfile.setRoom(officeRoom);
+        employeeProfile.setDepartment(otherDepartment);
+
+        Mockito.when(roomService.getById(10L)).thenReturn(officeRoom);
+        Mockito.when(authenticatedUserService.getAuthenticatedUser()).thenReturn(departmentLead);
+        Mockito.when(employeeProfileService.getMyProfile()).thenReturn(Optional.of(employeeProfile));
+        Mockito.when(measurementService.getFiltered(eq(10L), isNull(), any(), any()))
+                .thenReturn(List.of());
+
+        RoomSummaryDTO result = analyticsService.getRoomSummary(10L, FROM, TO);
+
+        assertThat(result).isNotNull();
+        assertThat(result.roomId()).isEqualTo(10L);
+    }
+
+    @Test
+    @DisplayName("getRoomSummary – DEPARTMENT_LEAD employee can view common area of employee department")
+    void getRoomSummary_departmentLeadEmployeeCommonAreaOutsideLedDepartment_returnsSummary() {
+        Department employeeDepartment = new Department();
+        setId(employeeDepartment, 99L);
+        department.setDepartmentLeader(departmentLeadEmployee);
+
+        Room employeeDepartmentCommonRoom = new Room();
+        setId(employeeDepartmentCommonRoom, 77L);
+        employeeDepartmentCommonRoom.setName("Employee Common Area");
+        employeeDepartmentCommonRoom.setRoomType(RoomType.COMMON_AREAS);
+        employeeDepartmentCommonRoom.setActive(true);
+        employeeDepartmentCommonRoom.setPrivacyMode(false);
+        employeeDepartmentCommonRoom.setDepartment(employeeDepartment);
+
+        departmentLeadEmployeeProfile.setDepartment(employeeDepartment);
+        departmentLeadEmployeeProfile.setRoom(officeRoom);
+
+        Mockito.when(roomService.getById(77L)).thenReturn(employeeDepartmentCommonRoom);
+        Mockito.when(authenticatedUserService.getAuthenticatedUser()).thenReturn(departmentLeadEmployee);
+        Mockito.when(employeeProfileService.getMyProfile()).thenReturn(Optional.of(departmentLeadEmployeeProfile));
+        Mockito.when(measurementService.getFiltered(eq(77L), isNull(), any(), any()))
+                .thenReturn(List.of());
+
+        RoomSummaryDTO result = analyticsService.getRoomSummary(77L, FROM, TO);
+
+        assertThat(result).isNotNull();
+        assertThat(result.roomId()).isEqualTo(77L);
+    }
+
+    @Test
+    @DisplayName("getRoomTrend – DEPARTMENT_LEAD with employee profile still gets reduced granularity for other offices")
+    void getRoomTrend_departmentLeadOtherOffice_forcesReducedGranularity() {
+        Room otherOffice = new Room();
+        setId(otherOffice, 11L);
+        otherOffice.setName("Office B");
+        otherOffice.setRoomType(RoomType.OFFICE);
+        otherOffice.setActive(true);
+        otherOffice.setPrivacyMode(false);
+        otherOffice.setDepartment(department);
+        department.setDepartmentLeader(departmentLeadEmployee);
+
+        Mockito.when(roomService.getById(11L)).thenReturn(otherOffice);
+        Mockito.when(authenticatedUserService.getAuthenticatedUser()).thenReturn(departmentLeadEmployee);
+        Mockito.when(employeeProfileService.getMyProfile()).thenReturn(Optional.of(departmentLeadEmployeeProfile));
+        Mockito.when(measurementService.getFiltered(eq(11L), eq(Metric.TEMPERATURE), any(), any()))
+                .thenReturn(List.of());
+
+        RoomTrendDTO result = analyticsService.getRoomTrend(11L, Metric.TEMPERATURE, FROM, TO);
+
+        assertThat(result.granularityReduced()).isTrue();
+        assertThat(result.bucketSize()).isEqualTo("1d");
+    }
+
+    @Test
     @DisplayName("getRoomTrend – DEPARTMENT_LEAD on common area gets full granularity")
     void getRoomTrend_departmentLeadCommonArea_fullGranularity() {
         Mockito.when(roomService.getById(20L)).thenReturn(commonRoom);
@@ -360,8 +478,8 @@ public class AnalyticsServiceTest {
     }
 
     @Test
-    @DisplayName("getRoomTrend – DEPARTMENT_LEAD on office with privacy mode ON does not force reduced granularity")
-    void getRoomTrend_departmentLeadOfficePrivacyModeOn_notForceReduced() {
+    @DisplayName("getRoomTrend – DEPARTMENT_LEAD on office with privacy mode ON still forces reduced granularity")
+    void getRoomTrend_departmentLeadOfficePrivacyModeOn_forcesReducedGranularity() {
         officeRoom.setPrivacyMode(true);
 
         Mockito.when(roomService.getById(10L)).thenReturn(officeRoom);
@@ -371,7 +489,8 @@ public class AnalyticsServiceTest {
 
         RoomTrendDTO result = analyticsService.getRoomTrend(10L, Metric.TEMPERATURE, FROM, TO);
 
-        assertThat(result.granularityReduced()).isFalse();
+        assertThat(result.granularityReduced()).isTrue();
+        assertThat(result.bucketSize()).isEqualTo("1d");
     }
 
     @Test

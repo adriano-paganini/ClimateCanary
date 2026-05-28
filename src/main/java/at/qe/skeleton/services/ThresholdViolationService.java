@@ -91,7 +91,7 @@ public class ThresholdViolationService {
                 dto.metric()
         );
 
-        RaspberryPi raspberryPi = raspberryPiService.getById(piId);
+        RaspberryPi raspberryPi = raspberryPiService.getByIdInternal(piId);
         Long roomId = raspberryPi.getRoom().getId();
 
         if (!Objects.equals(roomId, dto.roomId())) {
@@ -260,7 +260,7 @@ public class ThresholdViolationService {
                 dto.metric()
         );
 
-        RaspberryPi raspberryPi = raspberryPiService.getById(piId);
+        RaspberryPi raspberryPi = raspberryPiService.getByIdInternal(piId);
         Long roomId = raspberryPi.getRoom().getId();
 
         if (!Objects.equals(roomId, dto.roomId())) {

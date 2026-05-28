@@ -2,13 +2,19 @@ package at.qe.skeleton.tests.services;
 
 import at.qe.skeleton.common.exceptions.ConflictException;
 import at.qe.skeleton.common.exceptions.NotFoundException;
+import at.qe.skeleton.dtos.ClimateHintDTO;
 import at.qe.skeleton.dtos.ThresholdCreateDTO;
+import at.qe.skeleton.dtos.ThresholdDTO;
 import at.qe.skeleton.dtos.ThresholdUpdateDTO;
+import at.qe.skeleton.mappers.ClimateHintMapper;
 import at.qe.skeleton.mappers.ThresholdMapper;
 import at.qe.skeleton.models.*;
 import at.qe.skeleton.repositories.ClimateHintRepository;
 import at.qe.skeleton.repositories.ThresholdRepository;
+import at.qe.skeleton.repositories.ThresholdViolationRepository;
+import at.qe.skeleton.services.RaspberryPiServerService;
 import at.qe.skeleton.services.RoomService;
+import at.qe.skeleton.services.ThresholdPiSyncService;
 import at.qe.skeleton.services.ThresholdService;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +25,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.HashSet;
 import java.util.List;
@@ -31,6 +38,9 @@ class ThresholdServiceTest {
     private ThresholdRepository thresholdRepository;
 
     @Mock
+    private ThresholdViolationRepository thresholdViolationRepository;
+
+    @Mock
     private RoomService roomService;
 
     @Mock
@@ -39,20 +49,39 @@ class ThresholdServiceTest {
     @Mock
     private ThresholdMapper thresholdMapper;
 
+    @Mock
+    private RaspberryPiServerService raspberryPiServerService;
+
+    @Mock
+    private ThresholdPiSyncService thresholdPiSyncService;
+
+    @Mock
+    private ClimateHintMapper climateHintMapper;
+
     @InjectMocks
     private ThresholdService thresholdService;
 
     private Room room;
     private Threshold threshold;
     private ClimateHint climateHint;
+    private RaspberryPi raspberryPi;
 
     @BeforeEach
     void setUp() {
         room = new Room();
+        ReflectionTestUtils.setField(room, "id", 1L);
+
+        raspberryPi = new RaspberryPi();
+        ReflectionTestUtils.setField(raspberryPi, "id", 5L);
+        raspberryPi.setRoom(room);
+        room.setRaspberryPi(raspberryPi);
 
         climateHint = new ClimateHint();
+        ReflectionTestUtils.setField(climateHint, "id", 10L);
+        climateHint.setMetric(Metric.TEMPERATURE);
 
         threshold = new Threshold();
+        ReflectionTestUtils.setField(threshold, "id", 100L);
         threshold.setMetric(Metric.TEMPERATURE);
         threshold.setBoundValue(25.0F);
         threshold.setThresholdType(ThresholdType.UPPER);
@@ -145,7 +174,24 @@ class ThresholdServiceTest {
         Assertions.assertThat(result.getBoundValue()).isEqualTo(25.0F);
         Assertions.assertThat(result.getThresholdType()).isEqualTo(ThresholdType.UPPER);
         Assertions.assertThat(result.getClimateHints()).containsExactly(climateHint);
+        Assertions.assertThat(climateHint.getThresholds()).containsExactly(result);
         Assertions.assertThat(result.isEnabled()).isTrue();
+    }
+
+    @Test
+    @DisplayName("create rejects duplicate threshold for same room, metric and type")
+    void create_duplicateRoomMetricAndType_throwsConflictException() {
+        ThresholdCreateDTO dto = new ThresholdCreateDTO(
+                1L, Metric.TEMPERATURE, 25.0F, ThresholdType.UPPER, null);
+
+        Mockito.when(thresholdRepository.existsByRoomIdAndMetricAndThresholdType(1L, Metric.TEMPERATURE, ThresholdType.UPPER))
+                .thenReturn(true);
+
+        Assertions.assertThatThrownBy(() -> thresholdService.create(dto))
+                .isInstanceOf(ConflictException.class)
+                .hasMessage("Threshold already exists for room 1 and metric TEMPERATURE and threshold type UPPER");
+
+        Mockito.verify(thresholdRepository, Mockito.never()).save(Mockito.any());
     }
 
     @Test
@@ -164,9 +210,44 @@ class ThresholdServiceTest {
     }
 
     @Test
+    @DisplayName("create dispatches async sync with DTO for Raspberry Pi threshold insertion")
+    void create_dispatchesThresholdSync() {
+        ThresholdCreateDTO createDTO = new ThresholdCreateDTO(
+                1L, Metric.TEMPERATURE, 25.0F, ThresholdType.UPPER, List.of(10L));
+        ThresholdDTO thresholdDTO = new ThresholdDTO(
+                100L, 1L, Metric.TEMPERATURE, 25.0F, ThresholdType.UPPER, List.of(10L), true);
+        ClimateHintDTO hintDTO = new ClimateHintDTO(10L, Metric.TEMPERATURE, "Open a window");
+
+        Mockito.when(roomService.getById(1L)).thenReturn(room);
+        Mockito.when(climateHintRepository.findAllById(List.of(10L))).thenReturn(List.of(climateHint));
+        Mockito.when(thresholdRepository.save(Mockito.any())).thenAnswer(inv -> {
+            Threshold saved = inv.getArgument(0);
+            ReflectionTestUtils.setField(saved, "id", 100L);
+            return saved;
+        });
+        Mockito.when(thresholdMapper.mapTo(Mockito.any(Threshold.class))).thenReturn(thresholdDTO);
+        Mockito.when(climateHintMapper.mapTo(climateHint)).thenReturn(hintDTO);
+
+        thresholdService.create(createDTO);
+
+        Mockito.verify(thresholdPiSyncService).synchronize(
+                100L,
+                null,
+                null,
+                5L,
+                thresholdDTO,
+                List.of(hintDTO),
+                true,
+                List.of()
+        );
+    }
+
+    @Test
     @DisplayName("update modifies all fields when provided")
     void update_allFields() {
         Room newRoom = new Room();
+        ReflectionTestUtils.setField(newRoom, "id", 2L);
+        climateHint.setMetric(Metric.HUMIDITY);
 
         List<Long> hintIds = List.of(10L);
 
@@ -190,6 +271,8 @@ class ThresholdServiceTest {
 
         Mockito.when(thresholdRepository.save(threshold))
                 .thenReturn(threshold);
+        Mockito.when(thresholdViolationRepository.findByThreshold_IdAndViolationStatus(100L, ViolationStatus.ACTIVE))
+                .thenReturn(List.of());
 
         Threshold result = thresholdService.update(100L, dto);
 
@@ -199,6 +282,63 @@ class ThresholdServiceTest {
         Assertions.assertThat(result.getRoom()).isEqualTo(newRoom);
         Assertions.assertThat(result.isEnabled()).isFalse();
         Assertions.assertThat(result.getClimateHints()).containsExactly(climateHint);
+        Assertions.assertThat(climateHint.getThresholds()).containsExactly(result);
+    }
+
+    @Test
+    @DisplayName("update removes old climate hint owning-side association")
+    void update_replacesClimateHints_bidirectionally() {
+        ClimateHint oldHint = new ClimateHint();
+        ReflectionTestUtils.setField(oldHint, "id", 9L);
+        oldHint.setMetric(Metric.TEMPERATURE);
+        oldHint.getThresholds().add(threshold);
+        threshold.getClimateHints().add(oldHint);
+
+        ThresholdUpdateDTO dto = new ThresholdUpdateDTO(
+                null,
+                null,
+                null,
+                null,
+                List.of(10L),
+                null
+        );
+
+        Mockito.when(thresholdRepository.findById(100L))
+                .thenReturn(Optional.of(threshold));
+        Mockito.when(climateHintRepository.findAllById(List.of(10L)))
+                .thenReturn(List.of(climateHint));
+        Mockito.when(thresholdRepository.save(threshold))
+                .thenReturn(threshold);
+
+        Threshold result = thresholdService.update(100L, dto);
+
+        Assertions.assertThat(result.getClimateHints()).containsExactly(climateHint);
+        Assertions.assertThat(climateHint.getThresholds()).containsExactly(result);
+        Assertions.assertThat(oldHint.getThresholds()).doesNotContain(result);
+    }
+
+    @Test
+    @DisplayName("update rejects duplicate threshold for effective room, metric and type")
+    void update_duplicateRoomMetricAndType_throwsConflictException() {
+        ThresholdUpdateDTO dto = new ThresholdUpdateDTO(
+                null,
+                Metric.HUMIDITY,
+                50.0F,
+                ThresholdType.LOWER,
+                null,
+                null
+        );
+
+        Mockito.when(thresholdRepository.findById(100L))
+                .thenReturn(Optional.of(threshold));
+        Mockito.when(thresholdRepository.existsByRoomIdAndMetricAndThresholdTypeAndIdNot(1L, Metric.HUMIDITY, ThresholdType.LOWER, 100L))
+                .thenReturn(true);
+
+        Assertions.assertThatThrownBy(() -> thresholdService.update(100L, dto))
+                .isInstanceOf(ConflictException.class)
+                .hasMessage("Threshold already exists for room 1 and metric HUMIDITY and threshold type LOWER");
+
+        Mockito.verify(thresholdRepository, Mockito.never()).save(Mockito.any());
     }
 
     @Test
@@ -219,29 +359,101 @@ class ThresholdServiceTest {
     }
 
     @Test
+    @DisplayName("update dispatches async sync with old delete DTO and updated insert DTO")
+    void update_dispatchesThresholdSync() {
+        ThresholdUpdateDTO updateDTO = new ThresholdUpdateDTO(
+                null,
+                Metric.HUMIDITY,
+                50.0F,
+                ThresholdType.LOWER,
+                null,
+                true
+        );
+        ThresholdDTO oldThresholdDTO = new ThresholdDTO(
+                100L, 1L, Metric.TEMPERATURE, 25.0F, ThresholdType.UPPER, List.of(), true);
+        ThresholdDTO updatedThresholdDTO = new ThresholdDTO(
+                100L, 1L, Metric.HUMIDITY, 50.0F, ThresholdType.LOWER, List.of(), true);
+
+        Mockito.when(thresholdRepository.findById(100L)).thenReturn(Optional.of(threshold));
+        Mockito.when(thresholdRepository.save(threshold)).thenReturn(threshold);
+        Mockito.when(thresholdMapper.mapTo(threshold)).thenReturn(oldThresholdDTO, updatedThresholdDTO);
+
+        thresholdService.update(100L, updateDTO);
+
+        Mockito.verify(thresholdPiSyncService).synchronize(
+                100L,
+                5L,
+                oldThresholdDTO,
+                5L,
+                updatedThresholdDTO,
+                List.of(),
+                true,
+                List.of()
+        );
+    }
+
+    @Test
     @DisplayName("delete removes threshold and clears climate hints")
     void delete_success() {
         threshold.getClimateHints().add(climateHint);
+        climateHint.getThresholds().add(threshold);
 
         Mockito.when(thresholdRepository.findById(100L))
                 .thenReturn(Optional.of(threshold));
+        Mockito.when(thresholdViolationRepository.findByThreshold_Id(100L))
+                .thenReturn(List.of());
 
         thresholdService.delete(100L);
 
         Assertions.assertThat(threshold.getClimateHints()).isEmpty();
+        Assertions.assertThat(climateHint.getThresholds()).doesNotContain(threshold);
         Mockito.verify(thresholdRepository).delete(threshold);
     }
 
     @Test
-    @DisplayName("delete throws ConflictException when violations exist")
-    void delete_withViolations() {
-        threshold.getViolations().add(new ThresholdViolation());
+    @DisplayName("delete dispatches async sync with old DTO for Raspberry Pi threshold deletion")
+    void delete_dispatchesThresholdSync() {
+        ThresholdDTO thresholdDTO = new ThresholdDTO(
+                100L, 1L, Metric.TEMPERATURE, 25.0F, ThresholdType.UPPER, List.of(), true);
 
         Mockito.when(thresholdRepository.findById(100L))
                 .thenReturn(Optional.of(threshold));
+        Mockito.when(thresholdMapper.mapTo(threshold)).thenReturn(thresholdDTO);
+        Mockito.when(thresholdViolationRepository.findByThreshold_Id(100L))
+                .thenReturn(List.of());
 
-        Assertions.assertThatThrownBy(() -> thresholdService.delete(100L))
-                .isInstanceOf(ConflictException.class);
+        thresholdService.delete(100L);
+
+        Mockito.verify(thresholdPiSyncService).synchronize(
+                100L,
+                5L,
+                thresholdDTO,
+                null,
+                null,
+                List.of(),
+                false,
+                List.of()
+        );
+    }
+
+    @Test
+    @DisplayName("delete detaches existing violations before deleting threshold")
+    void delete_withViolations_detachesReferences() {
+        ThresholdViolation violation = new ThresholdViolation();
+        violation.setThreshold(threshold);
+        threshold.getViolations().add(violation);
+
+        Mockito.when(thresholdRepository.findById(100L))
+                .thenReturn(Optional.of(threshold));
+        Mockito.when(thresholdViolationRepository.findByThreshold_Id(100L))
+                .thenReturn(List.of(violation));
+
+        thresholdService.delete(100L);
+
+        Assertions.assertThat(violation.getThreshold()).isNull();
+        Assertions.assertThat(threshold.getViolations()).isEmpty();
+        Mockito.verify(thresholdViolationRepository).save(violation);
+        Mockito.verify(thresholdRepository).delete(threshold);
     }
 
     @Test

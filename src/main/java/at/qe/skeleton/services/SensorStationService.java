@@ -24,6 +24,7 @@ public class SensorStationService {
     private final RoomService roomService;
     private final SensorStationMapper sensorStationMapper;
     private final RaspberryPiServerService raspberryPiServerService;
+    private static final String SENSOR_STATION_WITH_ID = "SensorStation with id: ";
 
     public SensorStationService(SensorStationRepository repo,
                                 RaspberryPiService raspberryPiService,
@@ -42,7 +43,7 @@ public class SensorStationService {
 
     @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public SensorStation getById(Long id) {
-        return repo.findById(id).orElseThrow(() -> new NotFoundException("SensorStation with id " + id + " not found"));
+        return repo.findById(id).orElseThrow(() -> new NotFoundException(SENSOR_STATION_WITH_ID + id + " not found"));
     }
 
 
@@ -65,7 +66,7 @@ public class SensorStationService {
 
     public SensorStation update(Long piId,Long id, DeviceStatus status){
         SensorStation station = getByIdInternal(id);
-        if (!Objects.equals(station.getRaspberryPi().getId(), piId)) throw new NotFoundException("SensorStation with id " + id + " not found");
+        if (!Objects.equals(station.getRaspberryPi().getId(), piId)) throw new NotFoundException(SENSOR_STATION_WITH_ID + id + " not found");
         station.setDeviceStatus(status);
         return repo.save(station);
     }
@@ -73,7 +74,6 @@ public class SensorStationService {
     @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public SensorStation update(Long id, SensorStationUpdateDTO dto) {
         SensorStation updated = internalUpdate(id, dto);
-
         SensorStation updatedStation = repo.save(updated);
 
         log.info("Updated sensor station with id={}", id);
@@ -107,38 +107,18 @@ public class SensorStationService {
             debugInfo.append(", roomId=").append(dto.roomId());
         }
 
-        SensorStation updatedStation = repo.save(existing);
         log.debug(debugInfo.toString());
-        return updatedStation;
+        return existing;
     }
 
     @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public SensorStation update(Long id, SensorStationUpdateDTO dto, Integer measurementInterval) {
-        SensorStation existing = getById(id);
+        SensorStation existing = internalUpdate(id, dto);
         existing.setMeasurementInterval(measurementInterval);
 
         StringBuilder debugInfo = new StringBuilder("Updated sensor station details:")
-                .append(" id=").append(id);
-
-        if (dto.name() != null) {
-            existing.setName(dto.name());
-            debugInfo.append(", name=").append(dto.name());
-        }
-
-        if (dto.deviceStatus() != null) {
-            existing.setDeviceStatus(dto.deviceStatus());
-            debugInfo.append(", deviceStatus=").append(dto.deviceStatus());
-        }
-
-        if (dto.raspberryPiId() != null) {
-            existing.setRaspberryPi(raspberryPiService.getById(dto.raspberryPiId()));
-            debugInfo.append(", raspberryPiId=").append(dto.raspberryPiId());
-        }
-
-        if (dto.roomId() != null) {
-            existing.setRoom(roomService.getById(dto.roomId()));
-            debugInfo.append(", roomId=").append(dto.roomId());
-        }
+                .append(" id=").append(id)
+                .append(", measurementInterval=").append(measurementInterval);
 
         SensorStation updatedStation = repo.save(existing);
 
@@ -166,11 +146,13 @@ public class SensorStationService {
     }
 
     public SensorStation getByIdInternal(Long id) {
-        return repo.findById(id).orElseThrow(()-> new NotFoundException("SensorStation with id " + id + "not found"));
+        return repo.findById(id).orElseThrow(()-> new NotFoundException(SENSOR_STATION_WITH_ID + id + "not found"));
     }
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public void delete(Long id) {
-        repo.deleteById(id);
+        SensorStation station = getByIdInternal(id);
+        station.setDeviceStatus(DeviceStatus.DECOMMISSIONED);
+        repo.save(station);
         log.info("Deleted sensor station with id={}", id);
     }
 }

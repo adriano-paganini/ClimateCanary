@@ -28,7 +28,7 @@ public class RaspberryPi {
     @OneToMany(mappedBy = "raspberryPi")
     private List<SensorStation> sensorStations = new ArrayList<>();
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id", unique = true)
     private Room room;
 
@@ -39,4 +39,3 @@ public class RaspberryPi {
 
 
 }
-

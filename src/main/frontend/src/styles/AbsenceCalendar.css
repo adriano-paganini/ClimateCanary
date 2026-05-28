@@ -1,0 +1,250 @@
+.absence-calendar {
+    width: 100%;
+}
+
+.absence-calendar-header {
+    display: grid;
+    grid-template-columns: auto auto 1fr auto;
+    align-items: center;
+    gap: 0.85rem;
+    margin-bottom: 1rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid #dbe4ea;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+.absence-view-tabs,
+.absence-calendar-navigation {
+    display: inline-flex;
+    align-items: center;
+    overflow: hidden;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #f8fafc;
+}
+
+.absence-view-tabs button,
+.absence-calendar-navigation button {
+    min-height: 2.35rem;
+    border: 0;
+    border-right: 1px solid #cbd5e1;
+    background: transparent;
+    color: #334155;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.86rem;
+    font-weight: 700;
+    padding: 0.45rem 0.75rem;
+}
+
+.absence-view-tabs button:last-child,
+.absence-calendar-navigation button:last-child {
+    border-right: 0;
+}
+
+.absence-view-tabs button.active {
+    background: #0369a1;
+    color: #ffffff;
+}
+
+.absence-calendar-navigation button:hover,
+.absence-view-tabs button:not(.active):hover {
+    background: #e0f2fe;
+}
+
+.absence-calendar-navigation button:disabled {
+    background: #f8fafc;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.absence-calendar-range {
+    min-width: 0;
+    color: #0f172a;
+    font-size: 1.05rem;
+    font-weight: 800;
+    text-align: center;
+}
+
+.absence-date-jump {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.absence-date-jump label {
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.absence-date-jump input {
+    width: 9.5rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #0f172a;
+    font: inherit;
+    padding: 0.5rem 0.65rem;
+}
+
+.absence-calendar-legend {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.absence-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #374151;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.absence-legend-item span {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+}
+
+.absence-agenda-controls {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    margin-bottom: 1rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid #dbe4ea;
+    border-radius: 8px;
+    background: #f8fbfc;
+}
+
+.absence-agenda-control {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.absence-agenda-control label {
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.absence-agenda-control input,
+.absence-agenda-control select {
+    min-width: 9.5rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #0f172a;
+    font: inherit;
+    padding: 0.5rem 0.65rem;
+}
+
+.absence-agenda-range {
+    margin-left: auto;
+    color: #334155;
+    font-size: 0.9rem;
+    font-weight: 700;
+    padding: 0.55rem 0;
+}
+
+.absence-calendar .rbc-agenda-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 14rem;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.absence-calendar .rbc-calendar {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #ffffff;
+    padding: 0.5rem;
+}
+
+.absence-calendar .rbc-header {
+    padding: 0.55rem 0.35rem;
+    color: #334155;
+    font-size: 0.8rem;
+    font-weight: 800;
+}
+
+.absence-calendar .rbc-month-view,
+.absence-calendar .rbc-time-view,
+.absence-calendar .rbc-agenda-view {
+    border-color: #e2e8f0;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.absence-calendar .rbc-off-range-bg {
+    background: #f8fafc;
+}
+
+.absence-calendar .rbc-today {
+    background: #eef9ff;
+}
+
+@media (max-width: 720px) {
+    .absence-calendar-header {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+    }
+
+    .absence-view-tabs,
+    .absence-calendar-navigation {
+        width: 100%;
+    }
+
+    .absence-view-tabs button,
+    .absence-calendar-navigation button {
+        flex: 1;
+    }
+
+    .absence-calendar-range {
+        text-align: left;
+    }
+
+    .absence-date-jump {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .absence-date-jump input {
+        width: 100%;
+    }
+
+    .absence-agenda-controls {
+        align-items: stretch;
+    }
+
+    .absence-agenda-control,
+    .absence-agenda-control input,
+    .absence-agenda-control select,
+    .absence-agenda-range {
+        width: 100%;
+    }
+
+    .absence-agenda-range {
+        margin-left: 0;
+    }
+}

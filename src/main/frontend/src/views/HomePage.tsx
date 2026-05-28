@@ -1,45 +1,13 @@
-/**
- * This code is part of the skeleton project provided for students of the course "Software
- * Engineering" offered by Innsbruck University.
- */
-import logo from '../logo.svg';
-import '../styles/App.css';
-import "primereact/resources/themes/lara-light-cyan/theme.css";
-import {Message} from 'primereact/message';
-import React from "react";
-import NavbarComponent from "../components/NavbarComponent";
-import {FooterComponent} from "../components/FooterComponent";
+import {Navigate} from "react-router-dom";
+import {ROUTES} from "../utilities/routes.paths";
 
 /**
- * The home page of the application.
+ * The logo/home route should stay cheap. Send all authenticated users to the
+ * shared profile view instead of role-specific dashboards that may load
+ * large analytics data sets.
  */
-class HomePage extends React.Component {
-    render() {
-        return (
-            <div>
-                <NavbarComponent/>
-                <div className="App">
-                    <header className="App-header">
-                        <img src={logo} className="App-logo" alt="logo"/>
-                        <p>
-                            Welcome to the SWA Skeleton Project!
-                        </p>
-                        <a
-                            className="App-link"
-                            href="https://reactjs.org"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            Learn React
-                        </a>
-                        <span style={{paddingTop: '20px'}}/>
-                        <Message severity={"success"} text={"PrimeReact is installed!"}/>
-                    </header>
-                </div>
-                <FooterComponent/>
-            </div>
-        );
-    }
-}
+const HomePage = () => {
+    return <Navigate to={ROUTES.PROFILE} replace/>;
+};
 
 export default HomePage;

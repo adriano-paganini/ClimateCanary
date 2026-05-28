@@ -31,4 +31,7 @@ export const RaspberryPiService = {
 
     delete: (id: number): Promise<void> =>
         api.delete8({ id }).then(() => undefined),
+
+    getAllDecommissioned: (): Promise<RaspberryPiDTO[]> =>
+        globalAxios.get<RaspberryPiDTO[]>('/api/bpi/decomissioned').then(r => r.data),
 };

@@ -51,6 +51,15 @@ public class RaspberryPiController {
         return ResponseEntity.ok(pis);
     }
 
+    @GetMapping("/decomissioned")
+    public ResponseEntity<List<RaspberryPiDTO>> getAllDecomissioned() {
+        List<RaspberryPiDTO> pis = raspberryPiService.getAllDecomissioned()
+                .stream()
+                .map(raspberryPiMapper::mapTo)
+                .toList();
+        return ResponseEntity.ok(pis);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<RaspberryPiDTO> getById(@PathVariable Long id) {
         return ResponseEntity.ok(raspberryPiMapper.mapTo(raspberryPiService.getById(id)));
@@ -87,6 +96,15 @@ public class RaspberryPiController {
     @GetMapping("/{id}/sensorstations")
     public ResponseEntity<List<SensorStationDTO>> getSensorStations(@PathVariable Long id) {
         List<SensorStationDTO> stations = raspberryPiService.getSensorStations(id)
+                .stream()
+                .map(sensorStationMapper::mapTo)
+                .toList();
+        return ResponseEntity.ok(stations);
+    }
+
+    @GetMapping("/{id}/availablesensorstations")
+    public ResponseEntity<List<SensorStationDTO>> getAvailableSensorStations(@PathVariable Long id) {
+        List<SensorStationDTO> stations = raspberryPiService.getAvailableSensorStations(id)
                 .stream()
                 .map(sensorStationMapper::mapTo)
                 .toList();

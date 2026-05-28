@@ -105,6 +105,31 @@ class RaspberryPiControllerIntegrationTest {
     }
 
     @Test
+    void getAllDecomissioned_returns200() throws Exception {
+        when(raspberryPiService.getAllDecomissioned()).thenReturn(List.of(pi2));
+        when(raspberryPiMapper.mapTo(pi2)).thenReturn(dto2);
+
+        mockMvc.perform(get("/api/bpi/decomissioned"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].id", is(2)));
+
+        verify(raspberryPiService).getAllDecomissioned();
+        verify(raspberryPiMapper).mapTo(pi2);
+    }
+
+    @Test
+    void getAllDecomissioned_whenNoneExist_returnsEmptyArray() throws Exception {
+        when(raspberryPiService.getAllDecomissioned()).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/bpi/decomissioned"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+
+        verify(raspberryPiService).getAllDecomissioned();
+    }
+
+    @Test
     void getById_exists_returns200() throws Exception {
         when(raspberryPiService.getById(1L)).thenReturn(pi1);
         when(raspberryPiMapper.mapTo(pi1)).thenReturn(dto1);
@@ -242,6 +267,27 @@ class RaspberryPiControllerIntegrationTest {
                 .thenThrow(new NotFoundException("Pi not found"));
 
         mockMvc.perform(get("/api/bpi/99/sensorstations"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void getAvailableSensorStations_returns200() throws Exception {
+        when(raspberryPiService.getAvailableSensorStations(1L))
+                .thenReturn(List.of(station));
+
+        when(sensorStationMapper.mapTo(station)).thenReturn(stationDTO);
+
+        mockMvc.perform(get("/api/bpi/1/availablesensorstations"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id", is(100)));
+    }
+
+    @Test
+    void getAvailableSensorStations_notFound_returns404() throws Exception {
+        when(raspberryPiService.getAvailableSensorStations(99L))
+                .thenThrow(new NotFoundException("Pi not found"));
+
+        mockMvc.perform(get("/api/bpi/99/availablesensorstations"))
                 .andExpect(status().isNotFound());
     }
 }

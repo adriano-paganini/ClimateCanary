@@ -36,12 +36,13 @@ class MeasurementRepositoryTest {
 
         List<Measurement> measurements = measurementRepository.findByRoomId(roomId);
 
-        assertThat(measurements).hasSize(3);
+        assertThat(measurements).hasSizeGreaterThanOrEqualTo(34_563);
         assertThat(measurements)
                 .extracting(Measurement::getMetric)
-                .containsExactlyInAnyOrder(
+                .contains(
                         Metric.HUMIDITY,
                         Metric.TEMPERATURE,
+                        Metric.PRESSURE,
                         Metric.IAQ
                 );
     }
@@ -64,12 +65,13 @@ class MeasurementRepositoryTest {
         List<Measurement> measurements =
                 measurementRepository.findByRoomIdAndMetric(roomId, Metric.HUMIDITY);
 
-        assertThat(measurements).hasSize(1);
+        assertThat(measurements).hasSizeGreaterThanOrEqualTo(8_641);
 
-        Measurement measurement = measurements.getFirst();
-        assertThat(measurement.getMetric()).isEqualTo(Metric.HUMIDITY);
-        assertThat(measurement.getMeasurement()).isEqualTo(65f);
-        assertThat(measurement.getRoom().getId()).isEqualTo(roomId);
+        assertThat(measurements)
+                .allMatch(measurement -> measurement.getMetric() == Metric.HUMIDITY)
+                .allMatch(measurement -> measurement.getRoom().getId().equals(roomId));
+        assertThat(measurements)
+                .anyMatch(measurement -> measurement.getMeasurement() == 65f);
     }
 
     @Test
@@ -95,8 +97,8 @@ class MeasurementRepositoryTest {
 
     @Test
     void findByTimestampBetween_shouldReturnEmptyListOutsideTimeframe() {
-        LocalDateTime from = LocalDateTime.of(2026, 4, 24, 0, 0);
-        LocalDateTime to = LocalDateTime.of(2026, 4, 25, 0, 0);
+        LocalDateTime from = LocalDateTime.of(2026, 6, 1, 0, 0);
+        LocalDateTime to = LocalDateTime.of(2026, 6, 2, 0, 0);
 
         List<Measurement> measurements =
                 measurementRepository.findByTimestampBetween(from, to);

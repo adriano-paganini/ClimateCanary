@@ -1,46 +1,30 @@
 package at.qe.skeleton.tests.scheduled;
 
 import at.qe.skeleton.dtos.RaspberryPiUpdateDTO;
-import at.qe.skeleton.dtos.RoomUpdateDTO;
-import at.qe.skeleton.models.Absence;
 import at.qe.skeleton.models.DeviceStatus;
-import at.qe.skeleton.models.EmployeeProfile;
 import at.qe.skeleton.models.RaspberryPi;
 import at.qe.skeleton.models.Room;
-import at.qe.skeleton.models.RoomType;
-import at.qe.skeleton.models.Userx;
 import at.qe.skeleton.scheduled.ScheduledMethods;
-import at.qe.skeleton.services.AbsenceService;
-import at.qe.skeleton.services.EmployeeProfileService;
-import at.qe.skeleton.services.PiRequestResult;
 import at.qe.skeleton.services.RaspberryPiServerService;
 import at.qe.skeleton.services.RaspberryPiService;
+import at.qe.skeleton.services.RoomPrivacyModeService;
 import at.qe.skeleton.services.RoomService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.LocalDateTime;
 import java.util.List;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class ScheduledMethodsTest {
 
     @Mock
-    private AbsenceService absenceService;
-
-    @Mock
     private RoomService roomService;
-
-    @Mock
-    private EmployeeProfileService employeeProfileService;
 
     @Mock
     private RaspberryPiServerService raspberryPiServerService;
@@ -48,144 +32,157 @@ class ScheduledMethodsTest {
     @Mock
     private RaspberryPiService raspberryPiService;
 
-    @InjectMocks
+    @Mock
+    private RoomPrivacyModeService roomPrivacyModeService;
+
     private ScheduledMethods scheduledMethods;
 
-    @Test
-    void updatePrivacyModeForAllRaspberryPis_enablesPrivacyModeWhenOccupancyDropsBelowFive() {
-        Room room = room(10L, RoomType.COMMON_AREAS, false);
-        RaspberryPi raspberryPi = raspberryPi(5L, DeviceStatus.ONLINE);
-        room.setRaspberryPi(raspberryPi);
+    @BeforeEach
+    void setUp() {
+        scheduledMethods = new ScheduledMethods(
+                roomService,
+                raspberryPiServerService,
+                raspberryPiService,
+                roomPrivacyModeService
+        );
+    }
 
-        Mockito.when(absenceService.getByTimeframe(Mockito.any(LocalDateTime.class), Mockito.any(LocalDateTime.class)))
-                .thenReturn(List.of(absence(1L)));
-        Mockito.when(roomService.getAll()).thenReturn(List.of(room));
-        Mockito.when(employeeProfileService.getAll(10L, null))
-                .thenReturn(List.of(
-                        employeeProfile(1L),
-                        employeeProfile(2L),
-                        employeeProfile(3L),
-                        employeeProfile(4L),
-                        employeeProfile(5L)
-                ));
-        Mockito.when(raspberryPiServerService.setOccupancy(5L, 10L, true))
-                .thenReturn(PiRequestResult.SUCCESS);
+    @Test
+    @DisplayName("updates privacy mode for all rooms")
+    void updatePrivacyModeForAllRaspberryPis_updatesEveryRoom() {
+        Room room1 = new Room();
+        ReflectionTestUtils.setField(room1, "id", 1L);
+
+        Room room2 = new Room();
+        ReflectionTestUtils.setField(room2, "id", 2L);
+
+        Mockito.when(roomService.getAll()).thenReturn(List.of(room1, room2));
 
         scheduledMethods.updatePrivacyModeForAllRaspberryPis();
 
-        ArgumentCaptor<RoomUpdateDTO> captor = ArgumentCaptor.forClass(RoomUpdateDTO.class);
-        Mockito.verify(raspberryPiServerService).setOccupancy(5L, 10L, true);
-        Mockito.verify(roomService).update(Mockito.eq(10L), captor.capture());
-        assertThat(captor.getValue().privacyMode()).isTrue();
+        Mockito.verify(roomPrivacyModeService).updatePrivacyModeForRoom(1L);
+        Mockito.verify(roomPrivacyModeService).updatePrivacyModeForRoom(2L);
+        Mockito.verifyNoMoreInteractions(roomPrivacyModeService);
     }
 
     @Test
-    void updatePrivacyModeForAllRaspberryPis_doesNotPersistWhenPiUpdateFails() {
-        Room room = room(10L, RoomType.COMMON_AREAS, false);
-        RaspberryPi raspberryPi = raspberryPi(5L, DeviceStatus.ONLINE);
-        room.setRaspberryPi(raspberryPi);
-
-        Mockito.when(absenceService.getByTimeframe(Mockito.any(LocalDateTime.class), Mockito.any(LocalDateTime.class)))
-                .thenReturn(List.of(absence(1L)));
-        Mockito.when(roomService.getAll()).thenReturn(List.of(room));
-        Mockito.when(employeeProfileService.getAll(10L, null))
-                .thenReturn(List.of(
-                        employeeProfile(1L),
-                        employeeProfile(2L),
-                        employeeProfile(3L),
-                        employeeProfile(4L),
-                        employeeProfile(5L)
-                ));
-        Mockito.when(raspberryPiServerService.setOccupancy(5L, 10L, true))
-                .thenReturn(PiRequestResult.SERVER_ERROR);
-
-        scheduledMethods.updatePrivacyModeForAllRaspberryPis();
-
-        Mockito.verify(raspberryPiServerService).setOccupancy(5L, 10L, true);
-        Mockito.verify(roomService, Mockito.never()).update(Mockito.anyLong(), Mockito.any(RoomUpdateDTO.class));
-    }
-
-    @Test
-    void updatePrivacyModeForAllRaspberryPis_ignoresRoomsWithoutCommonAreaPi() {
-        Room office = room(10L, RoomType.OFFICE, false);
-        office.setRaspberryPi(raspberryPi(5L, DeviceStatus.ONLINE));
-
-        Room commonAreaWithoutPi = room(11L, RoomType.COMMON_AREAS, false);
-
-        Mockito.when(absenceService.getByTimeframe(Mockito.any(LocalDateTime.class), Mockito.any(LocalDateTime.class)))
-                .thenReturn(List.of());
-        Mockito.when(roomService.getAll()).thenReturn(List.of(office, commonAreaWithoutPi));
-
-        scheduledMethods.updatePrivacyModeForAllRaspberryPis();
-
-        Mockito.verifyNoInteractions(employeeProfileService, raspberryPiServerService);
-        Mockito.verify(roomService, Mockito.never()).update(Mockito.anyLong(), Mockito.any(RoomUpdateDTO.class));
-    }
-
-    @Test
-    void checkHeartbeat_updatesStatusWhenHeartbeatStateChanges() {
-        RaspberryPi offlinePi = raspberryPi(5L, DeviceStatus.OFFLINE);
-        RaspberryPi onlinePi = raspberryPi(6L, DeviceStatus.ONLINE);
-
-        Mockito.when(raspberryPiService.getAllInternal()).thenReturn(List.of(offlinePi, onlinePi));
-        Mockito.when(raspberryPiServerService.getHeartbeat(5L)).thenReturn(true);
-        Mockito.when(raspberryPiServerService.getHeartbeat(6L)).thenReturn(false);
-
-        scheduledMethods.checkHeartbeat();
-
-        ArgumentCaptor<RaspberryPiUpdateDTO> captor = ArgumentCaptor.forClass(RaspberryPiUpdateDTO.class);
-        Mockito.verify(raspberryPiService).updateInternal(Mockito.eq(5L), captor.capture());
-        assertThat(captor.getValue().deviceStatus()).isEqualTo(DeviceStatus.ONLINE);
-
-        Mockito.verify(raspberryPiService).updateInternal(Mockito.eq(6L), captor.capture());
-        assertThat(captor.getAllValues().get(1).deviceStatus()).isEqualTo(DeviceStatus.OFFLINE);
-    }
-
-    @Test
-    void checkHeartbeat_doesNotUpdateWhenStatusIsUnchanged() {
-        RaspberryPi onlinePi = raspberryPi(5L, DeviceStatus.ONLINE);
-        RaspberryPi offlinePi = raspberryPi(6L, DeviceStatus.OFFLINE);
-
-        Mockito.when(raspberryPiService.getAllInternal()).thenReturn(List.of(onlinePi, offlinePi));
-        Mockito.when(raspberryPiServerService.getHeartbeat(5L)).thenReturn(true);
-        Mockito.when(raspberryPiServerService.getHeartbeat(6L)).thenReturn(false);
-
-        scheduledMethods.checkHeartbeat();
-
-        Mockito.verify(raspberryPiService, Mockito.never())
-                .updateInternal(Mockito.anyLong(), Mockito.any(RaspberryPiUpdateDTO.class));
-    }
-
-    private Room room(Long id, RoomType roomType, Boolean privacyMode) {
+    @DisplayName("updates privacy mode even for rooms without Raspberry Pi")
+    void updatePrivacyModeForAllRaspberryPis_updatesRoomsWithoutRaspberryPi() {
         Room room = new Room();
-        ReflectionTestUtils.setField(room, "id", id);
-        room.setRoomType(roomType);
-        room.setPrivacyMode(privacyMode);
-        return room;
+        ReflectionTestUtils.setField(room, "id", 1L);
+        room.setRaspberryPi(null);
+
+        Mockito.when(roomService.getAll()).thenReturn(List.of(room));
+
+        scheduledMethods.updatePrivacyModeForAllRaspberryPis();
+
+        Mockito.verify(roomPrivacyModeService).updatePrivacyModeForRoom(1L);
     }
 
-    private RaspberryPi raspberryPi(Long id, DeviceStatus deviceStatus) {
-        RaspberryPi raspberryPi = new RaspberryPi();
-        ReflectionTestUtils.setField(raspberryPi, "id", id);
-        raspberryPi.setDeviceStatus(deviceStatus);
-        return raspberryPi;
+    @Test
+    @DisplayName("does nothing when there are no rooms")
+    void updatePrivacyModeForAllRaspberryPis_noRooms_doesNothing() {
+        Mockito.when(roomService.getAll()).thenReturn(List.of());
+
+        scheduledMethods.updatePrivacyModeForAllRaspberryPis();
+
+        Mockito.verifyNoInteractions(roomPrivacyModeService);
     }
 
-    private EmployeeProfile employeeProfile(Long userId) {
-        EmployeeProfile employeeProfile = new EmployeeProfile();
-        employeeProfile.setUser(user(userId));
-        return employeeProfile;
+    @Test
+    @DisplayName("sets Raspberry Pi online when heartbeat succeeds")
+    void checkHeartbeat_online_updatesStatus() {
+        RaspberryPi pi = new RaspberryPi();
+        ReflectionTestUtils.setField(pi, "id", 1L);
+        pi.setDeviceStatus(DeviceStatus.OFFLINE);
+
+        Mockito.when(raspberryPiService.getAllInternal()).thenReturn(List.of(pi));
+        Mockito.when(raspberryPiServerService.getHeartbeat(1L)).thenReturn(true);
+
+        scheduledMethods.checkHeartbeat();
+
+        Mockito.verify(raspberryPiService).updateInternal(
+                Mockito.eq(1L),
+                Mockito.any(RaspberryPiUpdateDTO.class)
+        );
     }
 
-    private Absence absence(Long userId) {
-        Absence absence = new Absence();
-        absence.setUser(user(userId));
-        return absence;
+    @Test
+    @DisplayName("sets Raspberry Pi offline when heartbeat fails")
+    void checkHeartbeat_offline_updatesStatus() {
+        RaspberryPi pi = new RaspberryPi();
+        ReflectionTestUtils.setField(pi, "id", 1L);
+        pi.setDeviceStatus(DeviceStatus.ONLINE);
+
+        Mockito.when(raspberryPiService.getAllInternal()).thenReturn(List.of(pi));
+        Mockito.when(raspberryPiServerService.getHeartbeat(1L)).thenReturn(false);
+
+        scheduledMethods.checkHeartbeat();
+
+        Mockito.verify(raspberryPiService).updateInternal(
+                Mockito.eq(1L),
+                Mockito.any(RaspberryPiUpdateDTO.class)
+        );
     }
 
-    private Userx user(Long id) {
-        Userx user = new Userx();
-        ReflectionTestUtils.setField(user, "id", id);
-        return user;
+    @Test
+    @DisplayName("does not update Raspberry Pi status when heartbeat status is unchanged online")
+    void checkHeartbeat_onlineUnchanged_doesNotUpdate() {
+        RaspberryPi pi = new RaspberryPi();
+        ReflectionTestUtils.setField(pi, "id", 1L);
+        pi.setDeviceStatus(DeviceStatus.ONLINE);
+
+        Mockito.when(raspberryPiService.getAllInternal()).thenReturn(List.of(pi));
+        Mockito.when(raspberryPiServerService.getHeartbeat(1L)).thenReturn(true);
+
+        scheduledMethods.checkHeartbeat();
+
+        Mockito.verify(raspberryPiService, Mockito.never()).updateInternal(
+                Mockito.anyLong(),
+                Mockito.any(RaspberryPiUpdateDTO.class)
+        );
+    }
+
+    @Test
+    @DisplayName("does not update Raspberry Pi status when heartbeat status is unchanged offline")
+    void checkHeartbeat_offlineUnchanged_doesNotUpdate() {
+        RaspberryPi pi = new RaspberryPi();
+        ReflectionTestUtils.setField(pi, "id", 1L);
+        pi.setDeviceStatus(DeviceStatus.OFFLINE);
+
+        Mockito.when(raspberryPiService.getAllInternal()).thenReturn(List.of(pi));
+        Mockito.when(raspberryPiServerService.getHeartbeat(1L)).thenReturn(false);
+
+        scheduledMethods.checkHeartbeat();
+
+        Mockito.verify(raspberryPiService, Mockito.never()).updateInternal(
+                Mockito.anyLong(),
+                Mockito.any(RaspberryPiUpdateDTO.class)
+        );
+    }
+
+    @Test
+    @DisplayName("checks heartbeat for all Raspberry Pis")
+    void checkHeartbeat_multiplePis_checksAll() {
+        RaspberryPi pi1 = new RaspberryPi();
+        ReflectionTestUtils.setField(pi1, "id", 1L);
+        pi1.setDeviceStatus(DeviceStatus.ONLINE);
+
+        RaspberryPi pi2 = new RaspberryPi();
+        ReflectionTestUtils.setField(pi2, "id", 2L);
+        pi2.setDeviceStatus(DeviceStatus.OFFLINE);
+
+        Mockito.when(raspberryPiService.getAllInternal()).thenReturn(List.of(pi1, pi2));
+        Mockito.when(raspberryPiServerService.getHeartbeat(1L)).thenReturn(true);
+        Mockito.when(raspberryPiServerService.getHeartbeat(2L)).thenReturn(false);
+
+        scheduledMethods.checkHeartbeat();
+
+        Mockito.verify(raspberryPiServerService).getHeartbeat(1L);
+        Mockito.verify(raspberryPiServerService).getHeartbeat(2L);
+        Mockito.verify(raspberryPiService, Mockito.never()).updateInternal(
+                Mockito.anyLong(),
+                Mockito.any(RaspberryPiUpdateDTO.class)
+        );
     }
 }

@@ -15,7 +15,6 @@ import { ProgressSpinner } from 'primereact/progressspinner';
 import { Tag } from 'primereact/tag';
 import { Toast } from 'primereact/toast';
 import NavbarComponent from '../components/NavbarComponent';
-import { FooterComponent } from '../components/FooterComponent';
 import { RaspberryPiService } from '../services/RaspberryPiService';
 import { SensorStationService } from '../services/SensorStationService';
 import { RoomService } from '../services/RoomService';
@@ -23,10 +22,7 @@ import {
     RaspberryPiCreateDTO,
     RaspberryPiDTO,
     RaspberryPiUpdateDTO,
-    RaspberryPiUpdateDTODeviceStatusEnum,
     RoomDTO,
-    SensorStationCreateDTO,
-    SensorStationCreateDTODeviceStatusEnum,
     SensorStationDTO,
     SensorStationUpdateDTO,
     SensorStationUpdateDTODeviceStatusEnum,
@@ -35,24 +31,16 @@ import {
 type TagSeverity = 'success' | 'warning' | 'danger' | 'secondary' | 'info' | 'contrast' | undefined;
 
 function statusSeverity(status?: string): TagSeverity {
-    if (status === 'ONLINE') return 'success';
-    if (status === 'DEGRADED') return 'warning';
-    if (status === 'OFFLINE' || status === 'MAINTENANCE') return 'danger';
+    if (status === 'ONLINE' || status === 'CONNECTED') return 'success';
+    if (status === 'DEGRADED' || status === 'AVAILABLE') return 'warning';
+    if (status === 'OFFLINE' || status === 'MAINTENANCE' || status === 'CONNECTION_FAILED') return 'danger';
     return 'secondary';
 }
 
-const DEVICE_STATUS_OPTIONS = [
-    { label: 'Online',      value: RaspberryPiUpdateDTODeviceStatusEnum.ONLINE },
-    { label: 'Offline',     value: RaspberryPiUpdateDTODeviceStatusEnum.OFFLINE },
-    { label: 'Maintenance', value: RaspberryPiUpdateDTODeviceStatusEnum.MAINTENANCE },
-    { label: 'Degraded',    value: RaspberryPiUpdateDTODeviceStatusEnum.DEGRADED },
-];
 
 interface RpiForm {
     hostName: string;
     roomId: number | null;
-    ipAddress: string;
-    deviceStatus: string;
 }
 
 interface StationForm {
@@ -63,16 +51,15 @@ interface StationForm {
     deviceStatus: string;
 }
 
-const EMPTY_RPI_FORM: RpiForm = { hostName: '', roomId: null, ipAddress: '', deviceStatus: '' };
-const EMPTY_STATION_FORM: StationForm = {
-    name: '', bleMac: '', measurementInterval: null, roomId: null,
-    deviceStatus: SensorStationCreateDTODeviceStatusEnum.AVAILABLE,
-};
+const EMPTY_RPI_FORM: RpiForm = { hostName: '', roomId: null };
 
 const DeviceManagementView: React.FC = () => {
     const toast = useRef<Toast>(null);
+    const availableStationsRef = useRef<SensorStationDTO[]>([]);
 
     const [pis, setPis] = useState<RaspberryPiDTO[]>([]);
+    const [decommissionedPis, setDecommissionedPis] = useState<RaspberryPiDTO[]>([]);
+    const [allStations, setAllStations] = useState<SensorStationDTO[]>([]);
     const [rooms, setRooms] = useState<RoomDTO[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -91,7 +78,7 @@ const DeviceManagementView: React.FC = () => {
     const [stationIsNew, setStationIsNew] = useState(true);
     const [selectedStation, setSelectedStation] = useState<SensorStationDTO | null>(null);
     const [stationPiId, setStationPiId] = useState<number | null>(null);
-    const [stationForm, setStationForm] = useState<StationForm>(EMPTY_STATION_FORM);
+    const [stationForm, setStationForm] = useState<StationForm>({ name: '', bleMac: '', measurementInterval: null, roomId: null, deviceStatus: '' });
     const [stationError, setStationError] = useState<string | null>(null);
 
     // ble scan dialog state
@@ -99,7 +86,7 @@ const DeviceManagementView: React.FC = () => {
     const [scanPiId, setScanPiId] = useState<number | null>(null);
     const [scanning, setScanning] = useState(false);
     const [scanTriggered, setScanTriggered] = useState(false);
-    const [checkingDevices, setCheckingDevices] = useState(false);
+    const [scanCountdown, setScanCountdown] = useState<number | null>(null);
     const [availableStations, setAvailableStations] = useState<SensorStationDTO[]>([]);
 
     const fetchPis = useCallback(async () => {
@@ -109,6 +96,22 @@ const DeviceManagementView: React.FC = () => {
             setError('Failed to load Raspberry Pis. Is the backend running?');
         } finally {
             setLoading(false);
+        }
+    }, []);
+
+    const fetchDecommissionedPis = useCallback(async () => {
+        try {
+            setDecommissionedPis(await RaspberryPiService.getAllDecommissioned());
+        } catch {
+            // non-critical
+        }
+    }, []);
+
+    const fetchAllStations = useCallback(async () => {
+        try {
+            setAllStations(await SensorStationService.getAll());
+        } catch {
+            // non-critical
         }
     }, []);
 
@@ -122,8 +125,21 @@ const DeviceManagementView: React.FC = () => {
 
     useEffect(() => {
         void fetchPis();
+        void fetchDecommissionedPis();
+        void fetchAllStations();
         void fetchRooms();
-    }, [fetchPis, fetchRooms]);
+    }, [fetchPis, fetchDecommissionedPis, fetchAllStations, fetchRooms]);
+
+    useEffect(() => {
+        const id = setInterval(() => void fetchPis(), 30_000);
+        return () => clearInterval(id);
+    }, [fetchPis]);
+
+    useEffect(() => {
+        if (expandedRows == null) return;
+        const id = setInterval(() => void fetchSensorStations(expandedRows), 10_000);
+        return () => clearInterval(id);
+    }, [expandedRows]);
 
     const fetchSensorStations = async (piId: number) => {
         try {
@@ -159,45 +175,87 @@ const DeviceManagementView: React.FC = () => {
         setAvailableStations([]);
         setScanning(false);
         setScanTriggered(false);
-        setCheckingDevices(false);
+        setScanCountdown(null);
         setScanDialogVisible(true);
     };
 
     const startScan = async () => {
         if (scanPiId == null) return;
         setScanning(true);
+        setScanTriggered(true);
+        setScanCountdown(10);
+        setAvailableStations([]);
         try {
             await SensorStationService.triggerScan(scanPiId);
-            setScanTriggered(true);
-            setAvailableStations([]);
         } catch {
+            setScanTriggered(false);
+            setScanCountdown(null);
             toast.current?.show({ severity: 'error', summary: 'Scan Failed', detail: 'BLE scan failed. Make sure the Raspberry Pi is online.', life: 4000 });
         } finally {
             setScanning(false);
         }
     };
 
-    const checkForDevices = async () => {
-        if (scanPiId == null) return;
-        setCheckingDevices(true);
-        try {
-            const found = await SensorStationService.getAvailableForPi(scanPiId);
-            setAvailableStations(found);
-            if (found.length === 0) {
-                toast.current?.show({ severity: 'info', summary: 'No Devices Found', detail: 'No Arduino devices in setup mode found yet. Try again in a moment.', life: 4000 });
+    useEffect(() => {
+        if (scanCountdown == null || scanCountdown <= 0) return;
+        const id = setTimeout(() => setScanCountdown(c => (c ?? 1) - 1), 1_000);
+        return () => clearTimeout(id);
+    }, [scanCountdown]);
+
+    useEffect(() => { availableStationsRef.current = availableStations; }, [availableStations]);
+
+    // Fire "no devices found" only after 25 s total - gives the RPI (ca 10s BLE scan)
+    // plus backend propagation time before giving up
+    useEffect(() => {
+        if (!scanTriggered) return;
+        const id = setTimeout(() => {
+            if (availableStationsRef.current.length === 0) {
+                setScanTriggered(false);
+                toast.current?.show({
+                    severity: 'error',
+                    summary: 'No Devices Found',
+                    detail: 'The scan completed but no Arduino devices were discovered. Make sure the Arduino is in setup mode and nearby.',
+                    life: 6000,
+                });
             }
-        } catch {
-            toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Could not fetch available devices.', life: 4000 });
-        } finally {
-            setCheckingDevices(false);
-        }
-    };
+        }, 25_000);
+        return () => clearTimeout(id);
+    }, [scanTriggered]);
+
+    useEffect(() => {
+        if (!scanTriggered || scanPiId == null) return;
+        const id = setInterval(async () => {
+            try {
+                const found = await SensorStationService.getAvailableForPi(scanPiId);
+                if (found.length > 0) {
+                    setAvailableStations(found);
+                    clearInterval(id);
+                    toast.current?.show({
+                        severity: 'success',
+                        summary: 'Devices Found',
+                        detail: `${found.length} Arduino device(s) discovered. Select one to set it up.`,
+                        life: 6000,
+                    });
+                }
+            } catch { /* ignore polling errors */ }
+        }, 5_000);
+        return () => clearInterval(id);
+    }, [scanTriggered, scanPiId]);
 
     const selectAvailableStation = (station: SensorStationDTO) => {
         setScanDialogVisible(false);
-        if (scanPiId != null) {
-            openCreateStation(scanPiId, station.bleMac ?? '');
-        }
+        setStationIsNew(false);
+        setSelectedStation(station);
+        setStationPiId(station.raspberryPiId ?? scanPiId);
+        setStationForm({
+            name: station.name ?? '',
+            bleMac: station.bleMac ?? '',
+            measurementInterval: station.measurementInterval ?? null,
+            roomId: station.roomId ?? null,
+            deviceStatus: station.deviceStatus ?? SensorStationUpdateDTODeviceStatusEnum.AVAILABLE,
+        });
+        setStationError(null);
+        setStationDialogVisible(true);
     };
 
 
@@ -216,8 +274,6 @@ const DeviceManagementView: React.FC = () => {
         setRpiForm({
             hostName: pi.hostName ?? '',
             roomId: pi.roomId ?? null,
-            ipAddress: pi.ipAddress ?? '',
-            deviceStatus: pi.deviceStatus ?? '',
         });
         setRpiError(null);
         setRpiDialogVisible(true);
@@ -229,12 +285,30 @@ const DeviceManagementView: React.FC = () => {
             if (!rpiForm.roomId) { setRpiError('Room is required'); return; }
             try {
                 const dto: RaspberryPiCreateDTO = { hostName: rpiForm.hostName.trim(), roomId: rpiForm.roomId };
-                const created = await RaspberryPiService.create(dto);
-                setPis(prev => [...prev, created]);
+                await RaspberryPiService.create(dto);
+                setPis(await RaspberryPiService.getAll());
                 setRpiDialogVisible(false);
-                toast.current?.show({ severity: 'success', summary: 'Created', detail: `Raspberry Pi "${created.hostName}" created`, life: 3000 });
-            } catch {
-                toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to create Raspberry Pi', life: 3000 });
+                toast.current?.show({ severity: 'success', summary: 'Created', detail: `Raspberry Pi "${rpiForm.hostName.trim()}" created`, life: 3000 });
+            } catch (e: any) {
+                const status = e?.response?.status;
+                const data = e?.response?.data;
+                let detail: string;
+                if (status === 400) {
+                    if (data?.message?.includes('already has a RaspberryPi')) {
+                        detail = 'This room already has a Raspberry Pi assigned. Choose a different room.';
+                    } else if (data && typeof data === 'object' && !data.message) {
+                        detail = Object.entries(data).map(([f, m]) => `${f}: ${m}`).join(', ');
+                    } else {
+                        detail = data?.message ?? 'Invalid input.';
+                    }
+                } else if (status === 404) {
+                    detail = 'Selected room not found. Please refresh and try again.';
+                } else if (status === 403) {
+                    detail = 'You don\'t have permission to create Raspberry Pis.';
+                } else {
+                    detail = 'Server error. Please try again later.';
+                }
+                toast.current?.show({ severity: 'error', summary: 'Creation Failed', detail, life: 5000 });
             }
         } else {
             if (!selectedPi?.id) {
@@ -243,12 +317,10 @@ const DeviceManagementView: React.FC = () => {
             }
             const dto: RaspberryPiUpdateDTO = {};
             if (rpiForm.hostName.trim()) dto.hostName = rpiForm.hostName.trim();
-            if (rpiForm.ipAddress.trim()) dto.ipAddress = rpiForm.ipAddress.trim();
             if (rpiForm.roomId) dto.roomId = rpiForm.roomId;
-            if (rpiForm.deviceStatus) dto.deviceStatus = rpiForm.deviceStatus as RaspberryPiUpdateDTODeviceStatusEnum;
             try {
                 const updated = await RaspberryPiService.update(selectedPi.id, dto);
-                setPis(prev => prev.map(p => p.id === updated.id ? updated : p));
+                setPis(await RaspberryPiService.getAll());
                 setRpiDialogVisible(false);
                 toast.current?.show({ severity: 'success', summary: 'Updated', detail: `Raspberry Pi "${updated.hostName}" updated`, life: 3000 });
             } catch {
@@ -271,7 +343,9 @@ const DeviceManagementView: React.FC = () => {
         if (pi.id == null) return;
         try {
             await RaspberryPiService.delete(pi.id);
-            setPis(prev => prev.filter(p => p.id !== pi.id));
+            setPis(await RaspberryPiService.getAll());
+            void fetchDecommissionedPis();
+            void fetchAllStations();
             toast.current?.show({ severity: 'success', summary: 'Deleted', detail: `Raspberry Pi "${pi.hostName}" deleted`, life: 3000 });
         } catch {
             toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to delete Raspberry Pi', life: 3000 });
@@ -279,15 +353,6 @@ const DeviceManagementView: React.FC = () => {
     };
 
 
-
-    const openCreateStation = (piId: number, preFillBleMac = '') => {
-        setStationIsNew(true);
-        setSelectedStation(null);
-        setStationPiId(piId);
-        setStationForm({ ...EMPTY_STATION_FORM, bleMac: preFillBleMac });
-        setStationError(null);
-        setStationDialogVisible(true);
-    };
 
     const openEditStation = (station: SensorStationDTO) => {
         setStationIsNew(false);
@@ -305,74 +370,47 @@ const DeviceManagementView: React.FC = () => {
     };
 
     const saveStation = async () => {
-        if (stationIsNew) {
+        if (!selectedStation?.id) return;
+        const isSetup = selectedStation.deviceStatus === SensorStationUpdateDTODeviceStatusEnum.AVAILABLE;
+        if (isSetup) {
             if (!stationForm.name.trim()) { setStationError('Name is required'); return; }
-            if (!stationForm.bleMac.trim()) { setStationError('BLE MAC Address is required'); return; }
             if (stationForm.measurementInterval == null) { setStationError('Measurement Interval is required'); return; }
             if (stationForm.measurementInterval < 3 || stationForm.measurementInterval > 60) { setStationError('Measurement Interval must be between 3 and 60 seconds'); return; }
-            if (!stationForm.roomId) { setStationError('Room is required'); return; }
-            if (stationPiId == null) { setStationError('No Raspberry Pi context'); return; }
             try {
-                const dto: SensorStationCreateDTO = {
+                const dto: SensorStationUpdateDTO = {
                     name: stationForm.name.trim(),
-                    bleMac: stationForm.bleMac.trim(),
-                    measurementInterval: stationForm.measurementInterval,
-                    roomId: stationForm.roomId,
-                    raspberryPiId: stationPiId,
-                    deviceStatus: (stationForm.deviceStatus as SensorStationCreateDTODeviceStatusEnum)
-                        || SensorStationCreateDTODeviceStatusEnum.AVAILABLE,
+                    deviceStatus: SensorStationUpdateDTODeviceStatusEnum.AVAILABLE,
                 };
-                const created = await SensorStationService.create(dto);
-                setStationsMap(prev => ({
-                    ...prev,
-                    [stationPiId]: [...(prev[stationPiId] ?? []), created],
-                }));
+                const updated = await SensorStationService.updateSetup(selectedStation.id, stationForm.measurementInterval, dto);
+                if (stationPiId != null) {
+                    setStationsMap(prev => ({
+                        ...prev,
+                        [stationPiId]: (prev[stationPiId] ?? []).some(s => s.id === updated.id)
+                            ? (prev[stationPiId] ?? []).map(s => s.id === updated.id ? updated : s)
+                            : [...(prev[stationPiId] ?? []), updated],
+                    }));
+                }
                 setStationDialogVisible(false);
-                toast.current?.show({ severity: 'success', summary: 'Created', detail: `Sensor station "${created.name}" created`, life: 3000 });
+                toast.current?.show({ severity: 'success', summary: 'Updated', detail: `Sensor station "${updated.name}" updated`, life: 3000 });
             } catch {
-                toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to create sensor station', life: 3000 });
+                toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to update sensor station', life: 3000 });
             }
         } else {
-            if (!selectedStation?.id) return;
-            const isSetup = selectedStation.deviceStatus === SensorStationUpdateDTODeviceStatusEnum.AVAILABLE;
-            if (isSetup) {
-                if (!stationForm.name.trim()) { setStationError('Name is required'); return; }
-                if (stationForm.measurementInterval == null) { setStationError('Measurement Interval is required'); return; }
-                if (stationForm.measurementInterval < 3 || stationForm.measurementInterval > 60) { setStationError('Measurement Interval must be between 3 and 60 seconds'); return; }
-                try {
-                    const dto: SensorStationUpdateDTO = {
-                        name: stationForm.name.trim(),
-                        deviceStatus: SensorStationUpdateDTODeviceStatusEnum.AVAILABLE,
-                    };
-                    const updated = await SensorStationService.updateSetup(selectedStation.id, stationForm.measurementInterval, dto);
-                    if (stationPiId != null) {
-                        setStationsMap(prev => ({
-                            ...prev,
-                            [stationPiId]: (prev[stationPiId] ?? []).map(s => s.id === updated.id ? updated : s),
-                        }));
-                    }
-                    setStationDialogVisible(false);
-                    toast.current?.show({ severity: 'success', summary: 'Updated', detail: `Sensor station "${updated.name}" updated`, life: 3000 });
-                } catch {
-                    toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to update sensor station', life: 3000 });
+            const dto: SensorStationUpdateDTO = {};
+            if (stationForm.name.trim()) dto.name = stationForm.name.trim();
+            if (stationForm.deviceStatus) dto.deviceStatus = stationForm.deviceStatus as SensorStationUpdateDTODeviceStatusEnum;
+            try {
+                const updated = await SensorStationService.update(selectedStation.id, dto);
+                if (stationPiId != null) {
+                    setStationsMap(prev => ({
+                        ...prev,
+                        [stationPiId]: (prev[stationPiId] ?? []).map(s => s.id === updated.id ? updated : s),
+                    }));
                 }
-            } else {
-                const dto: SensorStationUpdateDTO = {};
-                if (stationForm.name.trim()) dto.name = stationForm.name.trim();
-                if (stationForm.deviceStatus) dto.deviceStatus = stationForm.deviceStatus as SensorStationUpdateDTODeviceStatusEnum;
-                try {
-                    const updated = await SensorStationService.update(selectedStation.id, dto);
-                    if (stationPiId != null) {
-                        setStationsMap(prev => ({
-                            ...prev,
-                            [stationPiId]: (prev[stationPiId] ?? []).map(s => s.id === updated.id ? updated : s),
-                        }));
-                    }
-                    setStationDialogVisible(false);
-                    toast.current?.show({ severity: 'success', summary: 'Updated', detail: `Sensor station "${updated.name}" updated`, life: 3000 });
-                } catch {
-                    toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to update sensor station', life: 3000 });
-                }
+                setStationDialogVisible(false);
+                toast.current?.show({ severity: 'success', summary: 'Updated', detail: `Sensor station "${updated.name}" updated`, life: 3000 });
+            } catch {
+                toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to update sensor station', life: 3000 });
             }
         }
     };
@@ -395,6 +433,11 @@ const DeviceManagementView: React.FC = () => {
                 ...prev,
                 [piId]: (prev[piId] ?? []).filter(s => s.id !== station.id),
             }));
+            setAllStations(prev =>
+                prev.some(s => s.id === station.id)
+                    ? prev.map(s => s.id === station.id ? { ...s, deviceStatus: 'DECOMMISSIONED' } : s)
+                    : [...prev, { ...station, deviceStatus: 'DECOMMISSIONED' }]
+            );
             toast.current?.show({ severity: 'success', summary: 'Deleted', detail: `Sensor station "${station.name}" deleted`, life: 3000 });
         } catch {
             toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Failed to delete sensor station', life: 3000 });
@@ -402,6 +445,23 @@ const DeviceManagementView: React.FC = () => {
     };
 
     const roomOptions = rooms.map(r => ({ label: r.name ?? `Room ${r.id}`, value: r.id }));
+
+    const takenRoomIds = new Set(
+        pis
+            .filter(p => rpiIsNew || p.id !== selectedPi?.id)
+            .map(p => p.roomId)
+            .filter((id): id is number => id != null)
+    );
+
+    const roomItemTemplate = (option: { label: string; value: number }) => {
+        const taken = takenRoomIds.has(option.value);
+        return (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>{option.label}</span>
+                {taken && <Tag value="Taken" severity="danger" style={{ fontSize: '0.7rem', marginLeft: '0.5rem' }} />}
+            </div>
+        );
+    };
 
     const statusTag = (status?: string) => (
         <Tag value={status ?? '—'} severity={statusSeverity(status)} />
@@ -413,9 +473,9 @@ const DeviceManagementView: React.FC = () => {
 
         return (
             <div style={{ padding: '1rem' }}>
-                <Card 
+                <Card
                     title={`Sensor Stations — ${pi.hostName}`}
-                    style={{ 
+                    style={{
                         boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
                         border: '1px solid var(--surface-border)',
                         borderRadius: '6px'
@@ -428,20 +488,6 @@ const DeviceManagementView: React.FC = () => {
                             size="small"
                             outlined
                             onClick={() => openScanDialog(piId)}
-                        />
-                        <Button
-                            label="Download conf.yaml"
-                            icon="pi pi-download"
-                            size="small"
-                            outlined
-                            severity="secondary"
-                            onClick={() => void downloadConfig(pi)}
-                        />
-                        <Button
-                            label="Add Station"
-                            icon="pi pi-plus"
-                            size="small"
-                            onClick={() => openCreateStation(piId)}
                         />
                     </div>
 
@@ -476,7 +522,7 @@ const DeviceManagementView: React.FC = () => {
                             <Column
                                 header="Status"
                                 style={{ width: '9rem' }}
-                                body={(s: SensorStationDTO) => statusTag(s.deviceStatus)}
+                                body={(s: SensorStationDTO) => statusTag(s.deviceStatus === 'ONLINE' ? undefined : s.deviceStatus)}
                             />
                             <Column
                                 header="Actions"
@@ -535,10 +581,9 @@ const DeviceManagementView: React.FC = () => {
     if (loading) return (
         <div>
             <NavbarComponent />
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '4rem' }}>
+            <div className="loading-screen">
                 <ProgressSpinner />
             </div>
-            <FooterComponent />
         </div>
     );
 
@@ -548,7 +593,6 @@ const DeviceManagementView: React.FC = () => {
             <div style={{ padding: '2rem' }}>
                 <Message severity="error" text={error} />
             </div>
-            <FooterComponent />
         </div>
     );
 
@@ -568,98 +612,147 @@ const DeviceManagementView: React.FC = () => {
                     onClick={openCreateRpi}
                 />
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    {pis.length === 0 ? (
-                        <Message severity="info" text="No Raspberry Pis registered. Click 'Add Raspberry Pi' to get started." />
-                    ) : (
-                        pis.map((pi) => (
-                            <Card
-                                key={pi.id}
-                                style={{
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                                    border: '1px solid var(--surface-border)',
-                                    borderRadius: '6px'
-                                }}
-                            >
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr auto auto', gap: '1.5rem', alignItems: 'center', marginBottom: '0' }}>
-                                    <div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-color-secondary)', fontWeight: 600, marginBottom: '0.25rem' }}>ID</div>
-                                        <div style={{ fontSize: '1rem', fontWeight: 600 }}>{pi.id}</div>
-                                    </div>
-                                    <div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-color-secondary)', fontWeight: 600, marginBottom: '0.25rem' }}>Host Name</div>
-                                        <div style={{ fontSize: '1rem' }}>{pi.hostName}</div>
-                                    </div>
-                                    <div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-color-secondary)', fontWeight: 600, marginBottom: '0.25rem' }}>IP Address</div>
-                                        <div style={{ fontSize: '1rem' }}>{pi.ipAddress || '—'}</div>
-                                    </div>
-                                    <div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-color-secondary)', fontWeight: 600, marginBottom: '0.25rem' }}>Status</div>
-                                        {statusTag(pi.deviceStatus)}
-                                    </div>
-                                    <div style={{ display: 'flex', gap: '0.25rem' }}>
-                                        <Button
-                                            icon="pi pi-pencil"
-                                            text
-                                            size="small"
-                                            onClick={() => openEditRpi(pi)}
-                                            tooltip="Edit"
-                                            tooltipOptions={{ position: 'top' }}
-                                        />
-                                        <Button
-                                            icon="pi pi-trash"
-                                            text
-                                            size="small"
-                                            severity="danger"
-                                            onClick={() => confirmDeleteRpi(pi)}
-                                            tooltip="Delete"
-                                            tooltipOptions={{ position: 'top' }}
-                                        />
-                                    </div>
-                                    <Button
-                                        icon={expandedRows === pi.id ? 'pi pi-chevron-down' : 'pi pi-chevron-right'}
-                                        text
-                                        rounded
-                                        onClick={() => {
-                                            if (expandedRows === pi.id) {
-                                                setExpandedRows(null);
-                                            } else {
-                                                if (pi.id != null && stationsMap[pi.id] == null) {
-                                                    void fetchSensorStations(pi.id);
-                                                }
-                                                setExpandedRows(pi.id);
-                                            }
-                                        }}
-                                        tooltip={expandedRows === pi.id ? 'Collapse' : 'Expand'}
-                                        tooltipOptions={{ position: 'top' }}
-                                    />
-                                </div>
-
-                                {!pi.ipAddress && (
-                                    <div style={{ marginTop: '0.75rem' }}>
-                                        <Message
-                                            severity="warn"
-                                            text="Setup required: Download conf.yaml, copy it to this Raspberry Pi's SD card, and power it on - the Pi will appear Online once it has booted and connected to the backend"
-                                            style={{ width: '100%' }}
-                                        />
-                                        <div style={{ marginTop: '0.5rem' }}>
+                <section style={{ marginTop: '1rem' }}>
+                    <h2 style={{ fontSize: '1.15rem', margin: '0 0 0.75rem' }}>Raspberry Pis</h2>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        {pis.length === 0 ? (
+                            <Message severity="info" text="No Raspberry Pis registered. Click 'Add Raspberry Pi' to get started." />
+                        ) : (
+                            pis.map((pi) => (
+                                <Card
+                                    key={pi.id}
+                                    style={{
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                                        border: '1px solid var(--surface-border)',
+                                        borderRadius: '6px'
+                                    }}
+                                >
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr auto auto', gap: '1.5rem', alignItems: 'center', marginBottom: '0' }}>
+                                        <div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-color-secondary)', fontWeight: 600, marginBottom: '0.25rem' }}>ID</div>
+                                            <div style={{ fontSize: '1rem', fontWeight: 600 }}>{pi.id}</div>
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-color-secondary)', fontWeight: 600, marginBottom: '0.25rem' }}>Host Name</div>
+                                            <div style={{ fontSize: '1rem' }}>{pi.hostName}</div>
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-color-secondary)', fontWeight: 600, marginBottom: '0.25rem' }}>IP Address</div>
+                                            <div style={{ fontSize: '1rem' }}>{pi.ipAddress || '—'}</div>
+                                        </div>
+                                        <div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-color-secondary)', fontWeight: 600, marginBottom: '0.25rem' }}>Status</div>
+                                            {statusTag(pi.deviceStatus)}
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '0.25rem' }}>
                                             <Button
-                                                icon="pi pi-download"
-                                                label="Download conf.yaml"
+                                                icon="pi pi-pencil"
+                                                text
                                                 size="small"
-                                                severity="warning"
-                                                outlined
-                                                onClick={() => void downloadConfig(pi)}
+                                                onClick={() => openEditRpi(pi)}
+                                                tooltip="Edit"
+                                                tooltipOptions={{ position: 'top' }}
+                                            />
+                                            <Button
+                                                icon="pi pi-trash"
+                                                text
+                                                size="small"
+                                                severity="danger"
+                                                onClick={() => confirmDeleteRpi(pi)}
+                                                tooltip="Delete"
+                                                tooltipOptions={{ position: 'top' }}
                                             />
                                         </div>
+                                        <Button
+                                            icon={expandedRows === pi.id ? 'pi pi-chevron-down' : 'pi pi-chevron-right'}
+                                            text
+                                            rounded
+                                            onClick={() => {
+                                                if (expandedRows === pi.id) {
+                                                    setExpandedRows(null);
+                                                } else {
+                                                    if (pi.id != null && stationsMap[pi.id] == null) {
+                                                        void fetchSensorStations(pi.id);
+                                                    }
+                                                    setExpandedRows(pi.id);
+                                                }
+                                            }}
+                                            tooltip={expandedRows === pi.id ? 'Collapse' : 'Expand'}
+                                            tooltipOptions={{ position: 'top' }}
+                                        />
                                     </div>
-                                )}
-                                {expandedRows === pi.id && rowExpansionTemplate(pi)}
-                            </Card>
-                        ))
-                    )}
-                </div>
+
+                                    {!pi.ipAddress && (
+                                        <div style={{ marginTop: '0.75rem' }}>
+                                            <Message
+                                                severity="warn"
+                                                style={{ width: '100%' }}
+                                                content={
+                                                    <span>
+                                                        Setup required: Download conf.yaml, copy it to this Raspberry Pi's SD card, and power it on — the Pi will appear Online once it has booted and connected to the backend.{' '}
+                                                        See the{' '}
+                                                        <a href="/rpi-setup_tutorial.pdf" target="_blank" rel="noreferrer" style={{ color: 'inherit', fontWeight: 600 }}>
+                                                            Setup Tutorial (PDF)
+                                                        </a>
+                                                        {' '}for step-by-step guidance.
+                                                    </span>
+                                                }
+                                            />
+                                        </div>
+                                    )}
+                                    <div style={{ marginTop: '0.5rem' }}>
+                                        <Button
+                                            icon="pi pi-download"
+                                            label="Download conf.yaml"
+                                            size="small"
+                                            severity={pi.ipAddress ? 'secondary' : 'warning'}
+                                            outlined
+                                            onClick={() => void downloadConfig(pi)}
+                                        />
+                                    </div>
+                                    {expandedRows === pi.id && rowExpansionTemplate(pi)}
+                                </Card>
+                            ))
+                        )}
+                    </div>
+                </section>
+
+                <section style={{ marginTop: '2rem' }}>
+                    <h2 style={{ fontSize: '1.15rem', margin: '0 0 0.75rem' }}>Deleted Raspberry Pis</h2>
+                    <DataTable
+                        value={decommissionedPis}
+                        emptyMessage="No deleted Raspberry Pis."
+                        size="small"
+                    >
+                        <Column field="id" header="ID" style={{ width: '4rem' }} />
+                        <Column field="hostName" header="Host Name" />
+                        <Column field="ipAddress" header="IP Address" />
+                        <Column
+                            header="Status"
+                            style={{ width: '9rem' }}
+                            body={(pi: RaspberryPiDTO) => statusTag(pi.deviceStatus)}
+                        />
+                    </DataTable>
+                </section>
+
+                <section style={{ marginTop: '2rem' }}>
+                    <h2 style={{ fontSize: '1.15rem', margin: '0 0 0.75rem' }}>Deleted Sensor Stations</h2>
+                    <DataTable
+                        value={allStations.filter(s => s.deviceStatus === 'DECOMMISSIONED')}
+                        emptyMessage="No deleted sensor stations."
+                        size="small"
+                    >
+                        <Column field="id" header="ID" style={{ width: '4rem' }} />
+                        <Column field="name" header="Name" />
+                        <Column field="bleMac" header="BLE MAC" />
+                        <Column field="measurementInterval" header="Interval (s)" style={{ width: '8rem' }} />
+                        <Column
+                            header="Status"
+                            style={{ width: '9rem' }}
+                            body={(s: SensorStationDTO) => statusTag(s.deviceStatus)}
+                        />
+                    </DataTable>
+                </section>
             </Card>
 
             {/* Raspberry Pi Create/Edit Dialog */}
@@ -692,34 +785,18 @@ const DeviceManagementView: React.FC = () => {
                         <Dropdown
                             value={rpiForm.roomId}
                             options={roomOptions}
-                            onChange={e => setRpiForm(f => ({ ...f, roomId: e.value }))}
+                            itemTemplate={roomItemTemplate}
+                            onChange={e => {
+                                if (takenRoomIds.has(e.value)) {
+                                    toast.current?.show({ severity: 'error', summary: 'Room already assigned', detail: 'This room already has a Raspberry Pi. Choose a different room.', life: 4000 });
+                                    return;
+                                }
+                                setRpiForm(f => ({ ...f, roomId: e.value }));
+                            }}
                             placeholder="Select a room"
                             style={{ width: '100%' }}
                         />
                     </div>
-                    {!rpiIsNew && (
-                        <>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: 600 }}>IP Address</label>
-                                <InputText
-                                    value={rpiForm.ipAddress}
-                                    onChange={e => setRpiForm(f => ({ ...f, ipAddress: e.target.value }))}
-                                    style={{ width: '100%' }}
-                                    placeholder="e.g. 192.168.1.42"
-                                />
-                            </div>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: 600 }}>Status</label>
-                                <Dropdown
-                                    value={rpiForm.deviceStatus}
-                                    options={DEVICE_STATUS_OPTIONS}
-                                    onChange={e => setRpiForm(f => ({ ...f, deviceStatus: e.value }))}
-                                    placeholder="Select status"
-                                    style={{ width: '100%' }}
-                                />
-                            </div>
-                        </>
-                    )}
                 </div>
             </Dialog>
 
@@ -806,18 +883,7 @@ const DeviceManagementView: React.FC = () => {
                         </div>
                     )}
 
-                    {!stationIsNew && selectedStation?.deviceStatus !== SensorStationUpdateDTODeviceStatusEnum.AVAILABLE && (
-                        <div>
-                            <label style={{ display: 'block', marginBottom: '0.25rem', fontWeight: 600 }}>Status</label>
-                            <Dropdown
-                                value={stationForm.deviceStatus}
-                                options={DEVICE_STATUS_OPTIONS}
-                                onChange={e => setStationForm(f => ({ ...f, deviceStatus: e.value }))}
-                                placeholder="Select status"
-                                style={{ width: '100%' }}
-                            />
-                        </div>
-                    )}
+
                 </div>
             </Dialog>
 
@@ -838,24 +904,19 @@ const DeviceManagementView: React.FC = () => {
                     <Button
                         label={scanning ? 'Scanning…' : 'Start Scan'}
                         icon={scanning ? 'pi pi-spin pi-spinner' : 'pi pi-wifi'}
-                        disabled={scanning || checkingDevices}
+                        disabled={scanning}
                         onClick={() => void startScan()}
                     />
-                    {scanTriggered && (
-                        <Button
-                            label={checkingDevices ? 'Checking…' : 'Check for Devices'}
-                            icon={checkingDevices ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'}
-                            outlined
-                            disabled={scanning || checkingDevices}
-                            onClick={() => void checkForDevices()}
-                        />
-                    )}
                 </div>
 
-                {scanTriggered && availableStations.length === 0 && !checkingDevices && (
+                {scanTriggered && availableStations.length === 0 && (
                     <Message
                         severity="info"
-                        text="Scan started. The Raspberry Pi is now scanning (~10 seconds). Click 'Check for Devices' once the scan is done."
+                        text={
+                            scanCountdown != null && scanCountdown > 0
+                                ? `Scanning… ${scanCountdown}s remaining`
+                                : 'Scan complete — watching for nearby Arduino devices every 5 seconds. You\'ll be notified when one is found.'
+                        }
                         style={{ width: '100%', marginBottom: '1rem' }}
                     />
                 )}
@@ -885,8 +946,6 @@ const DeviceManagementView: React.FC = () => {
                     </DataTable>
                 )}
             </Dialog>
-
-            <FooterComponent />
         </div>
     );
 };

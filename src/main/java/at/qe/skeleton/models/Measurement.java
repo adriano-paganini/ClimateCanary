@@ -12,6 +12,16 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
+@Table(indexes = {
+        @Index(
+                name = "idx_measurement_room_metric_timestamp_desc",
+                columnList = "room_id, metric, timestamp DESC"
+        ),
+        @Index(
+                name = "idx_measurement_room_metric_timestamp_asc",
+                columnList = "room_id, metric, timestamp"
+        )
+})
 public class Measurement {
 
     @Id
@@ -26,11 +36,11 @@ public class Measurement {
     @Enumerated(EnumType.STRING)
     private Metric metric;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id", nullable = false)
     private Room room;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sensorstation_id", nullable = false)
     private SensorStation sensorStation;
 

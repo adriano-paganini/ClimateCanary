@@ -33,6 +33,12 @@ public class RaspberryPiService {
     public List<RaspberryPi> getAll() {
         return repo.findAllActive();
     }
+
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
+    public List<RaspberryPi> getAllDecomissioned(){
+        return repo.findAllByDecomissionedTrue();
+    }
+
     public List<RaspberryPi> getAllInternal(){
         return repo.findAll();
     }
@@ -151,24 +157,28 @@ public class RaspberryPiService {
         return pi.getSensorStations();
     }
 
+    @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
+    public List<SensorStation> getAvailableSensorStations(Long raspberryPiId) {
+        RaspberryPi pi = getById(raspberryPiId);
+        return pi.getSensorStations()
+                .stream()
+                .filter(station -> station.getDeviceStatus() == DeviceStatus.AVAILABLE)
+                .toList();
+    }
+
     @Transactional
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public void delete(Long id) {
         RaspberryPi pi = getById(id);
 
-        Room room = pi.getRoom();
-        if (room != null) {
-            room.setRaspberryPi(null);
+        if (pi.getRoom() != null) {
+            pi.getRoom().setRaspberryPi(null);
             pi.setRoom(null);
         }
 
-        for (SensorStation station : List.copyOf(pi.getSensorStations())) {
-            station.setRaspberryPi(null);
-            pi.getSensorStations().remove(station);
-        }
-
-        repo.delete(pi);
-
+        pi.getSensorStations().forEach(station -> station.setDeviceStatus(DeviceStatus.DECOMMISSIONED));
+        pi.setDeviceStatus(DeviceStatus.DECOMMISSIONED);
+        repo.save(pi);
         log.info("Deleted raspberry pi with id={}", id);
     }
 
