@@ -28,4 +28,10 @@ public class EmailEventListener {
         emailService.sendEmail(EmailType.USER_DELETED, event.user());
         log.info("Handled UserDeletedEvent for {}", event.user().getEmail());
     }
+
+    @Async
+    @EventListener
+    public void onReportEmailRequested(ReportEmailRequestedEvent event) {
+        emailService.sendReportEmail(event.recipientEmail(), event.pdfBytes(), event.filename());
+    }
 }
