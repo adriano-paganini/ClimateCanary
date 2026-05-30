@@ -20,6 +20,10 @@ import { Message } from "primereact/message";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { Tag } from "primereact/tag";
 import { Toast } from "primereact/toast";
+import RoomClimateReportPanel from "../utilities/ReportClimateReportPanel";
+import { useUser } from "../Contexts/AuthenticatedUserContext";
+import { ReportService } from "../services/ReportService";
+
 
 import NavbarComponent from "../components/NavbarComponent";
 import {
@@ -155,6 +159,7 @@ const metricLabel = (metric?: string): string =>
     METRICS.find(m => m.key === metric)?.label ?? metric?.replace("_", " ") ?? "-";
 
 const RoomManagementView: React.FC = () => {
+    const { currentUser } = useUser();
     const [rooms, setRooms] = useState<RoomDTO[]>([]);
     const [departments, setDepartments] = useState<DepartmentDTO[]>([]);
     const [buildings, setBuildings] = useState<BuildingDTO[]>([]);
@@ -564,7 +569,6 @@ const RoomManagementView: React.FC = () => {
                             </DataTable>
                         </div>
                     </Card>
-
                     <div className="room-management-detail-stack">
                         {!selectedRoomId ? (
                             <Message severity="info" text="Select a room to view climate data." />
@@ -578,14 +582,41 @@ const RoomManagementView: React.FC = () => {
                                                 {getBuildingName(selectedRoom?.buildingId)} - {getDepartmentName(selectedRoom?.departmentId)}
                                             </p>
                                         </div>
-                                        <div className="room-management-actions">
+
+                                        <div
+                                            className="room-management-actions"
+                                            style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: "0.5rem"
+                                            }}
+                                        >
                                             <Dropdown
                                                 value={selectedMetric}
-                                                options={METRICS.map(metric => ({ label: metric.label, value: metric.key }))}
+                                                options={METRICS.map(metric => ({
+                                                    label: metric.label,
+                                                    value: metric.key
+                                                }))}
                                                 onChange={event => setSelectedMetric(event.value)}
                                                 className="room-management-metric-dropdown"
+                                                style={{ height: "2.5rem" }}
                                             />
+
+                                            <div
+                                                style={{
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    height: "2.5rem"
+                                                }}
+                                            >
+                                                <RoomClimateReportPanel
+                                                    rooms={rooms}
+                                                    currentUser={currentUser}
+                                                    onSendReport={ReportService.sendReportEmail}
+                                                />
+                                            </div>
                                         </div>
+
                                     </div>
 
                                     <div className="absence-calendar-header">
@@ -754,9 +785,9 @@ const RoomManagementView: React.FC = () => {
                                             body={(row: ThresholdDTO) => (
                                                 <Tag value={row.metric ?? "-"} severity={
                                                     row.metric === "TEMPERATURE" ? "danger" :
-                                                    row.metric === "HUMIDITY" ? "info" :
-                                                    row.metric === "PRESSURE" ? "warning" :
-                                                    row.metric === "IAQ" ? "success" : "secondary"
+                                                        row.metric === "HUMIDITY" ? "info" :
+                                                            row.metric === "PRESSURE" ? "warning" :
+                                                                row.metric === "IAQ" ? "success" : "secondary"
                                                 } />
                                             )}
                                             style={{ width: "9rem" }}

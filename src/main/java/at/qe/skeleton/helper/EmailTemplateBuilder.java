@@ -1,6 +1,7 @@
-package at.qe.skeleton.services;
+package at.qe.skeleton.helper;
 
 import at.qe.skeleton.models.Userx;
+import at.qe.skeleton.services.EmailType;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -10,6 +11,7 @@ public class EmailTemplateBuilder {
         return switch (type) {
             case USER_INVITATION -> buildInvitationEmail(user);
             case USER_DELETED -> buildAccountDeletedEmail(user);
+            case REPORT_PDF -> buildReportEmail();
         };
     }
 
@@ -41,6 +43,18 @@ public class EmailTemplateBuilder {
                 access to the platform and its services.</p>
                 """.formatted(user.getUsername());
 
+        return wrap(body);
+    }
+
+    public String buildReportEmail() {
+        String body = """
+            <h2>Room Climate Report</h2>
+
+            <p>Please find the requested room climate report attached to this email.</p>
+
+            <p>The report contains sensor measurements, metric summaries, and threshold
+            violation data for the selected rooms and time period.</p>
+            """;
         return wrap(body);
     }
 
