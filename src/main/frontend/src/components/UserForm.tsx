@@ -10,7 +10,7 @@ import { Dropdown } from "primereact/dropdown";
 import { Message } from "primereact/message";
 import { DepartmentDTO, RoomDTO, UserxCreateDTO, UserxDTO, UserxRole } from "../generated-skeleton-api";
 import "../styles/UserForm.css";
-import {hasUserRole, rolesToArray} from "../utilities/userxUtilities";
+import {getRoleCombinationError, hasUserRole, rolesToArray} from "../utilities/userxUtilities";
 
 export const COUNTRY_CODE_OPTIONS: Array<{ label: string; value: string; search: string }> = [
     { label: "+93 Afghanistan", value: "+93", search: "Afghanistan +93" },
@@ -165,11 +165,15 @@ const UserForm: React.FC<UserFormProps> =
             UserxRole.EMPLOYEE,
         ];
         const existingRoles = rolesToArray(user.roles);
+        const combinationError = getRoleCombinationError(existingRoles);
         const nonEditableRoles = !isNewUser && existingRoles.includes(UserxRole.DEPARTMENT_LEAD)
             ? [UserxRole.DEPARTMENT_LEAD]
             : [];
+        const impliedLockedRoles = existingRoles.includes(UserxRole.DEPARTMENT_LEAD)
+            ? [UserxRole.EMPLOYEE]
+            : [];
         const roleOptions = Array.from(new Set([...allowedRoles, ...nonEditableRoles]));
-        const protectedRoles = Array.from(new Set([...lockedRoles, ...nonEditableRoles]));
+        const protectedRoles = Array.from(new Set([...lockedRoles, ...nonEditableRoles, ...impliedLockedRoles]));
         const userRoles = roleOptions.map(role => ({
             label: role,
             value: role,
@@ -312,7 +316,22 @@ const UserForm: React.FC<UserFormProps> =
                                     Disabled roles cannot be changed here.
                                 </small>
                             )}
-                            {fieldErrors?.roles && <small className="p-error">{fieldErrors.roles}</small>}
+                            <small style={{ display: "block", color: "#64748b" }}>
+                                System Admin, Building Admin, and Management are standalone roles. Department Lead is always paired with Employee.
+                            </small>
+                            {impliedLockedRoles.includes(UserxRole.EMPLOYEE) && (
+                                <small style={{ display: "flex", alignItems: "center", gap: "0.3rem", color: "#0369a1" }}>
+                                    <i className="pi pi-info-circle" style={{ fontSize: "0.75rem" }} />
+                                    Employee is required because this user is a Department Lead.
+                                </small>
+                            )}
+                            {combinationError && (
+                                <small className="p-error" style={{ display: "flex", alignItems: "center", gap: "0.3rem", marginTop: "0.25rem" }}>
+                                    <i className="pi pi-exclamation-triangle" style={{ fontSize: "0.75rem" }} />
+                                    {combinationError}
+                                </small>
+                            )}
+                            {!combinationError && fieldErrors?.roles && <small className="p-error">{fieldErrors.roles}</small>}
                         </div>
 
                         {isEmployee && (

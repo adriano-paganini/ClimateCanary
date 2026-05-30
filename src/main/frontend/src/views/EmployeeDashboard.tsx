@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { addDays, format } from 'date-fns';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Message } from 'primereact/message';
 import 'primeicons/primeicons.css';
@@ -60,6 +61,17 @@ function delay(ms: number): Promise<void> {
     return new Promise(resolve => window.setTimeout(resolve, ms));
 }
 
+const toLocalDateTimeParam = (date: Date): string => format(date, "yyyy-MM-dd'T'HH:mm:ss");
+
+function todayWindow(): { from: string; to: string } {
+    const now = new Date();
+    const from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return {
+        from: toLocalDateTimeParam(from),
+        to: toLocalDateTimeParam(addDays(from, 1)),
+    };
+}
+
 async function getRoomFresh(roomId: number): Promise<RoomDTO> {
     let request = cachedRoomRequestsById.get(roomId);
     if (!request) {
@@ -77,7 +89,7 @@ async function getLatestMeasurementsFresh(roomId: number): Promise<MeasurementDT
     const timestamp = summary.generatedAt;
     const metrics = summary.metrics ?? {};
 
-    return Object.values(MeasurementDTOMetricEnum)
+    const measurements = Object.values(MeasurementDTOMetricEnum)
         .flatMap(metric => {
             const latest = metrics[metric]?.latest;
             if (latest === undefined || latest === null) return [];
@@ -89,6 +101,29 @@ async function getLatestMeasurementsFresh(roomId: number): Promise<MeasurementDT
                 roomId,
             }];
         });
+
+    if (measurements.length > 0) return measurements;
+
+    const window = todayWindow();
+    const trendMeasurements: MeasurementDTO[] = [];
+
+    await Promise.all(Object.values(MeasurementDTOMetricEnum).map(async metric => {
+        const trend = await AnalyticsService.getRoomTrend(roomId, metric, window.from, window.to);
+        const latestPoint = [...(trend.points ?? [])]
+            .filter(point => point.timestamp && point.value !== undefined && point.value !== null)
+            .sort((a, b) => new Date(b.timestamp!).getTime() - new Date(a.timestamp!).getTime())[0];
+
+        if (!latestPoint) return;
+
+        trendMeasurements.push({
+            timestamp: latestPoint.timestamp,
+            measurement: latestPoint.value,
+            metric,
+            roomId,
+        });
+    }));
+
+    return trendMeasurements;
 }
 
 async function getCommonRoomsCached(departmentId: number): Promise<RoomDTO[]> {

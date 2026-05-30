@@ -1,8 +1,7 @@
 [Unit]
 Description=Pi Gateway
 After=network-online.target docker.service
-Wants=network-online.target
-Requires=docker.service
+Requires=network-online.target docker.service
 
 [Service]
 Type=simple

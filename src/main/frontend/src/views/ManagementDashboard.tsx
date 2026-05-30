@@ -4,8 +4,6 @@ import { ProgressSpinner } from "primereact/progressspinner";
 import { Message } from "primereact/message";
 import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
-import { Tag } from "primereact/tag";
-import { Chart } from "primereact/chart";
 import "primeicons/primeicons.css";
 
 import NavbarComponent from "../components/NavbarComponent";
@@ -237,40 +235,6 @@ const ManagementDashboard: React.FC = () => {
     ? departments.filter((d) => (d.activeWarnings ?? 0) > 0)
     : departments;
 
-  const METRIC_COLORS: Record<string, string> = {
-    [MeasurementDTOMetricEnum.TEMPERATURE]: "#f97316",
-    [MeasurementDTOMetricEnum.HUMIDITY]: "#3b82f6",
-    [MeasurementDTOMetricEnum.IAQ]: "#22c55e",
-    [MeasurementDTOMetricEnum.PRESSURE]: "#8b5cf6",
-  };
-
-  const violationsChartData = useMemo(() => {
-    if (departments.length === 0 || (dashboard?.totalActiveWarnings ?? 0) === 0) return null;
-    const labels = departments.map((d) => d.departmentName ?? `Dept ${d.departmentId}`);
-    const datasets = Object.entries(METRIC_LABELS)
-      .map(([metric, label]) => ({
-        label,
-        data: departments.map((dept) => dept.warningsByMetric?.find((w) => w.label === metric)?.count ?? 0),
-        backgroundColor: METRIC_COLORS[metric] ?? "#9ca3af",
-      }))
-      .filter((ds) => ds.data.some((v) => v > 0));
-    return datasets.length > 0 ? { labels, datasets } : null;
-  }, [departments, dashboard?.totalActiveWarnings]);
-
-  const violationsChartOptions = useMemo(() => ({
-    responsive: true,
-    maintainAspectRatio: false,
-    animation: false as const,
-    plugins: {
-      legend: { position: "top" as const, labels: { boxWidth: 12, font: { size: 11 } } },
-      tooltip: { mode: "index" as const, intersect: false },
-    },
-    scales: {
-      x: { stacked: true, ticks: { font: { size: 10 } } },
-      y: { stacked: true, ticks: { stepSize: 1, font: { size: 10 } }, min: 0 },
-    },
-  }), []);
-
   function scrollToDepts() {
     deptGridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -364,32 +328,6 @@ const ManagementDashboard: React.FC = () => {
             />
           </div>
         </div>
-
-        {violationsChartData && (
-          <div
-            style={{
-              background: "#fff",
-              border: "1px solid #e5e7eb",
-              borderRadius: "8px",
-              padding: "1.25rem",
-              marginBottom: "1rem",
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-              <h3 style={{ margin: 0, color: "#374151", fontSize: "0.95rem", fontWeight: 600 }}>
-                <i className="pi pi-chart-bar" style={{ marginRight: "0.5rem", color: "#0369a1" }} />
-                Active Violations by Department
-              </h3>
-              <span style={{ fontSize: "0.78rem", color: "#6b7280", display: "flex", alignItems: "center", gap: "0.3rem" }}>
-                <i className="pi pi-shield" />
-                Aggregated company data — no individual measurements
-              </span>
-            </div>
-            <div style={{ height: "180px" }}>
-              <Chart type="bar" data={violationsChartData} options={violationsChartOptions} />
-            </div>
-          </div>
-        )}
 
         {filterWarningsOnly && (
           <div
