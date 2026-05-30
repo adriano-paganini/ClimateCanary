@@ -10,6 +10,7 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -51,6 +52,7 @@ public class EmailServiceImpl implements EmailService {
 
     @Async
     @Override
+    @PreAuthorize("hasAuthority('BUILDING_ADMIN')")
     public void sendReportEmail(String recipientEmail, byte[] pdfBytes, String filename) {
         if (!emailServiceEnabled) {
             log.info("EmailService disabled - skipping report email to {}", recipientEmail);
