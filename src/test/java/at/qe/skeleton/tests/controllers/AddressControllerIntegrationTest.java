@@ -8,6 +8,7 @@ import at.qe.skeleton.mappers.AddressCreateMapper;
 import at.qe.skeleton.mappers.AddressMapper;
 import at.qe.skeleton.models.Address;
 import at.qe.skeleton.services.AddressService;
+import at.qe.skeleton.services.EmailServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,6 +47,9 @@ class AddressControllerIntegrationTest {
 
     @MockitoBean
     private AddressCreateMapper addressCreateMapper;
+
+    @MockitoBean
+    private EmailServiceImpl emailService;
 
     private ObjectMapper objectMapper;
 

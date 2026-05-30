@@ -9,6 +9,7 @@ import at.qe.skeleton.models.EmployeeProfile;
 import at.qe.skeleton.models.Userx;
 import at.qe.skeleton.models.UserxRole;
 import at.qe.skeleton.repositories.DepartmentRepository;
+import at.qe.skeleton.services.EmailServiceImpl;
 import at.qe.skeleton.services.UserxService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.web.WebAppConfiguration;
 
 import java.util.HashSet;
@@ -42,6 +44,9 @@ class UserxServiceTest {
 
     @Autowired
     DepartmentRepository departmentRepository;
+
+    @MockitoBean
+    private EmailServiceImpl emailService;
 
     @Test
     @WithMockUser(username = "admin", authorities = {"SYSTEM_ADMIN"})

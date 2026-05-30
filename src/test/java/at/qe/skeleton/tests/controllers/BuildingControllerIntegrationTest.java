@@ -5,6 +5,7 @@ import at.qe.skeleton.dtos.*;
 import at.qe.skeleton.mappers.*;
 import at.qe.skeleton.models.*;
 import at.qe.skeleton.services.BuildingService;
+import at.qe.skeleton.services.EmailServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,6 +47,9 @@ public class BuildingControllerIntegrationTest {
 
     @MockitoBean
     private RoomMapper roomMapper;
+
+    @MockitoBean
+    private EmailServiceImpl emailService;
 
     private ObjectMapper objectMapper;
 

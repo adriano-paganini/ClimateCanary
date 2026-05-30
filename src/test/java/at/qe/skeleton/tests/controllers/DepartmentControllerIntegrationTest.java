@@ -5,6 +5,7 @@ import at.qe.skeleton.dtos.*;
 import at.qe.skeleton.mappers.*;
 import at.qe.skeleton.models.*;
 import at.qe.skeleton.services.DepartmentService;
+import at.qe.skeleton.services.EmailServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +48,9 @@ public class DepartmentControllerIntegrationTest {
 
     @MockitoBean
     private UserxMapper userxMapper;
+
+    @MockitoBean
+    private EmailServiceImpl emailService;
 
     @MockitoBean
     private RoomMapper roomMapper;
