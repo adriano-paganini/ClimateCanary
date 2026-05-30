@@ -7,6 +7,7 @@ import at.qe.skeleton.mappers.ThresholdViolationMapper;
 import at.qe.skeleton.models.Metric;
 import at.qe.skeleton.models.ThresholdViolation;
 import at.qe.skeleton.models.ViolationStatus;
+import at.qe.skeleton.services.EmailServiceImpl;
 import at.qe.skeleton.services.ThresholdViolationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -44,6 +45,9 @@ class ThresholdViolationControllerIntegrationTest {
 
     @MockitoBean
     private ThresholdViolationMapper thresholdViolationMapper;
+
+    @MockitoBean
+    private EmailServiceImpl emailService;
 
     private ObjectMapper objectMapper;
 

@@ -5,6 +5,7 @@ import at.qe.skeleton.dtos.MeasurementDTO;
 import at.qe.skeleton.mappers.MeasurementMapper;
 import at.qe.skeleton.models.Measurement;
 import at.qe.skeleton.models.Metric;
+import at.qe.skeleton.services.EmailServiceImpl;
 import at.qe.skeleton.services.MeasurementService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,9 @@ public class MeasurementControllerIntegrationTest {
 
     @MockitoBean
     private MeasurementMapper measurementMapper;
+
+    @MockitoBean
+    private EmailServiceImpl emailService;
 
     private Measurement m1;
     private Measurement m2;

@@ -4,6 +4,7 @@ import at.qe.skeleton.dtos.EmployeeProfileDTO;
 import at.qe.skeleton.mappers.EmployeeProfileCreateMapper;
 import at.qe.skeleton.mappers.EmployeeProfileMapper;
 import at.qe.skeleton.models.EmployeeProfile;
+import at.qe.skeleton.services.EmailServiceImpl;
 import at.qe.skeleton.services.EmployeeProfileService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,6 +39,9 @@ public class EmployeeProfileControllerIntegrationTest {
 
     @MockitoBean
     private EmployeeProfileCreateMapper createMapper;
+
+    @MockitoBean
+    private EmailServiceImpl emailService;
 
     private EmployeeProfile profile;
     private EmployeeProfileDTO dto;
