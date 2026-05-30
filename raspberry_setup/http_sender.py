@@ -9,17 +9,17 @@ from config import SEND_INTERVAL
 log = logging.getLogger(__name__)
 
 async def http_sender(db: aiosqlite.Connection) -> None:
-    async with aiohttp.ClientSession() as session:
-        while True:
-            await asyncio.sleep(SEND_INTERVAL)
-            try:
-                async with db.execute(
-                    """SELECT id, timestamp, temperature, humidity,
-                              pressure, air_quality, sensor_station_id, room_id
-                       FROM sensor_data WHERE sent = 0 ORDER BY id LIMIT 50"""
-                ) as cursor:
-                    rows = await cursor.fetchall()
+    while True:
+        await asyncio.sleep(SEND_INTERVAL)
+        try:
+            async with db.execute(
+                """SELECT id, timestamp, temperature, humidity,
+                          pressure, air_quality, sensor_station_id, room_id
+                   FROM sensor_data WHERE sent = 0 ORDER BY id LIMIT 50"""
+            ) as cursor:
+                rows = await cursor.fetchall()
 
+            async with aiohttp.ClientSession() as session:
                 for row in rows:
                     row_id, timestamp, temp, hum, press, gas, station_id, room_id = row
                     payload = {
@@ -56,7 +56,7 @@ async def http_sender(db: aiosqlite.Connection) -> None:
                     except Exception as e:
                         log.warning(f"[HTTP] failed for row {row_id}: {e}")
 
-                await db.commit()
+            await db.commit()
 
-            except Exception as e:
-                log.error(f"[HTTP] sender error: {e}")
+        except Exception as e:
+            log.error(f"[HTTP] sender error: {e}")

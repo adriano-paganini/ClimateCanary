@@ -60,44 +60,51 @@ def _build_warning_stream(messages: list[str]) -> bytes:
 async def _send_warning(client: BleakClient, messages: list[str], tag: str) -> bool:
     """Returns True if the transfer completed successfully, False on timeout."""
     stream = _build_warning_stream(messages)
-    log.info(f"[BLE:{tag}] warning transfer start ({len(stream)}B): {messages}")
+    total_len = len(stream)
+    log.info(f"[BLE:{tag}] warning transfer start ({total_len}B): {messages}")
 
-    await client.write_gatt_char(
-        WARNING_TOTAL_LEN_UUID,
-        struct.pack("<H", len(stream)),
-        response=True,
-    )
-    await client.write_gatt_char(
-        WARNING_CHAR_PACK_UUID,
-        struct.pack("<Hc", 0, stream[0:1]),
-        response=True,
-    )
+    ack_queue: asyncio.Queue[int] = asyncio.Queue()
 
-    if len(stream) == 1:
-        log.info(f"[BLE:{tag}] warning transfer complete.")
-        return True
-
-    done = asyncio.Event()
-
-    async def on_ack(sender, data: bytearray) -> None:
+    def on_ack(sender, data: bytearray) -> None:
         (seq,) = struct.unpack("<H", bytes(data))
-        if seq >= len(stream):
-            log.info(f"[BLE:{tag}] warning transfer complete.")
-            done.set()
-            return
-        await client.write_gatt_char(
-            WARNING_CHAR_PACK_UUID,
-            struct.pack("<Hc", seq, stream[seq : seq + 1]),
-            response=True,
-        )
+        ack_queue.put_nowait(seq)
 
     await client.start_notify(WARNING_ACK_REQUEST_UUID, on_ack)
     try:
-        await asyncio.wait_for(done.wait(), timeout=60.0)
-        return True
-    except asyncio.TimeoutError:
-        log.error(f"[BLE:{tag}] warning transfer timeout — will retry on next measurement")
-        return False
+        await client.write_gatt_char(
+            WARNING_TOTAL_LEN_UUID,
+            struct.pack("<H", total_len),
+            response=True,
+        )
+        await client.write_gatt_char(
+            WARNING_CHAR_PACK_UUID,
+            struct.pack("<Hc", 0, stream[0:1]),
+            response=True,
+        )
+
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + 60.0
+
+        while True:
+            remaining = deadline - loop.time()
+            if remaining <= 0:
+                log.error(f"[BLE:{tag}] warning transfer timeout")
+                return False
+            try:
+                seq = await asyncio.wait_for(ack_queue.get(), timeout=remaining)
+            except asyncio.TimeoutError:
+                log.error(f"[BLE:{tag}] warning transfer timeout")
+                return False
+
+            if seq >= total_len:
+                log.info(f"[BLE:{tag}] warning transfer complete.")
+                return True
+
+            await client.write_gatt_char(
+                WARNING_CHAR_PACK_UUID,
+                struct.pack("<Hc", seq, stream[seq : seq + 1]),
+                response=True,
+            )
     finally:
         await client.stop_notify(WARNING_ACK_REQUEST_UUID)
 

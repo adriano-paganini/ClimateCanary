@@ -16,7 +16,7 @@ import UserListComponent from "./UserListComponent";
 import UserDialog from "./UserDialog";
 
 
-import {createUserxRoleArrayFromStrings, hasUserRole, rolesToArray, UserxValidationResult} from '../utilities/userxUtilities';
+import {createUserxRoleArrayFromStrings, getImpliedRoles, getRoleCombinationError, hasUserRole, rolesToArray, UserxValidationResult} from '../utilities/userxUtilities';
 import {
     AdminControllerApi,
     DepartmentDTO,
@@ -219,8 +219,18 @@ const UserTable = () => {
         if (requirePassword && !pwd.trim()) fieldErrors.password = 'Required';
 
         // at least one role required (see also UserxCreateDTO in backend
-        if (rolesToArray(user.roles).length === 0) {
+        const selectedRoles = rolesToArray(user.roles);
+        if (selectedRoles.length === 0) {
             fieldErrors.roles = 'Required';
+        }
+
+        const combinationError = getRoleCombinationError(selectedRoles);
+        if (combinationError) {
+            fieldErrors.roles = combinationError;
+        }
+
+        if (selectedRoles.includes(UserxRole.DEPARTMENT_LEAD) && !selectedRoles.includes(UserxRole.EMPLOYEE)) {
+            fieldErrors.roles = 'Department Lead must also have the Employee role.';
         }
 
         if (hasEmployeeRole(user)) {
@@ -323,12 +333,19 @@ const UserTable = () => {
     const syncEmployeeProfile = async (savedUser: UserxDTO, sourceUser: UserxDTO | UserxCreateDTO) => {
         if (!savedUser.id) return;
 
-        if (!hasEmployeeRole(sourceUser)) {
-            const profileId = employeeProfile?.id
-                ?? (await EmployeeProfileService.getAll(savedUser.id)).find(profile => profile.id !== undefined)?.id;
+        const existingProfiles = await EmployeeProfileService.getAll(savedUser.id);
+        const existingProfile = employeeProfile ?? existingProfiles.find(profile => profile.id !== undefined) ?? null;
 
-            if (profileId !== undefined) {
-                await EmployeeProfileService.delete(profileId);
+        if (!hasEmployeeRole(sourceUser)) {
+            for (const profile of existingProfiles) {
+                if (profile.id !== undefined) {
+                    await EmployeeProfileService.delete(profile.id);
+                }
+            }
+            if (existingProfile?.id !== undefined && !existingProfiles.some(profile => profile.id === existingProfile.id)) {
+                await EmployeeProfileService.delete(existingProfile.id);
+            }
+            if (existingProfiles.length > 0 || existingProfile?.id !== undefined) {
                 setEmployeeProfile(null);
                 setEmployeeDepartmentId(undefined);
                 setEmployeeRoomId(undefined);
@@ -339,14 +356,18 @@ const UserTable = () => {
 
         if (employeeDepartmentId === undefined || employeeRoomId === undefined) return;
 
-        if (employeeProfile?.id) {
-            const updatedProfile = await EmployeeProfileService.update(employeeProfile.id, {
-                userxId: savedUser.id,
-                departmentId: employeeDepartmentId,
-                roomId: employeeRoomId,
+        const oldProfiles = existingProfiles.filter(profile => profile.id !== undefined);
+        for (const profile of oldProfiles) {
+            await EmployeeProfileService.delete(profile.id!);
+        }
+        if (oldProfiles.length > 0) {
+            await UserService.updateUser(savedUser.id, {
+                firstName: savedUser.firstName,
+                lastName: savedUser.lastName,
+                email: savedUser.email,
+                phone: savedUser.phone,
+                roles: new Set([...rolesToArray(savedUser.roles), UserxRole.EMPLOYEE]),
             });
-            setEmployeeProfile(updatedProfile);
-            return;
         }
 
         const createdProfile = await EmployeeProfileService.create({
@@ -524,12 +545,13 @@ const UserTable = () => {
         if (!selectedUser) return;
 
         const roles = createUserxRoleArrayFromStrings(event.value);
+        const allRoles = Array.from(new Set([...roles, ...getImpliedRoles(roles)]));
 
-        setSelectedUser({...selectedUser, roles: new Set(roles)});
-        if (roles.includes(UserxRole.EMPLOYEE)) {
+        setSelectedUser({...selectedUser, roles: new Set(allRoles)});
+        if (allRoles.includes(UserxRole.EMPLOYEE)) {
             void ensureDepartmentsLoaded();
         }
-        if (!roles.includes(UserxRole.EMPLOYEE)) {
+        if (!allRoles.includes(UserxRole.EMPLOYEE)) {
             resetEmployeeAssignment();
         }
     }

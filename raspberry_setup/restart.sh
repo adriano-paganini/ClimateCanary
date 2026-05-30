@@ -1,7 +1,7 @@
 #!/bin/bash
 # Usage:
-#   ./restart.sh              — database persists across restarts (default)
-#   ./restart.sh --fresh-db   — discard the database on restart
+#   ./restart.sh  ... database persists across restarts (default)
+#   ./restart.sh --fresh-db ... discard the database on restart
 set -e
 cd "$(dirname "$0")"
 

@@ -536,6 +536,13 @@ const OrgStructureView: React.FC = () => {
         }
         setSaving(true);
         try {
+            const oldProfiles = employeeProfiles.filter(profile => profile.userxId === assignUserId);
+            for (const profile of oldProfiles) {
+                if (profile.id !== undefined) {
+                    await EmployeeProfileService.delete(profile.id);
+                }
+            }
+
             const user = users.find(u => u.id === assignUserId);
             if (user) {
                 const roles = new Set([...rolesToArray(user.roles), UserxRole.EMPLOYEE]);
@@ -555,7 +562,10 @@ const OrgStructureView: React.FC = () => {
                 departmentId: targetDepartment.id,
                 roomId: assignRoomId,
             });
-            setEmployeeProfiles(prev => [...prev, createdProfile]);
+            setEmployeeProfiles(prev => [
+                ...prev.filter(profile => profile.userxId !== assignUserId),
+                createdProfile,
+            ]);
             setAssignDialog(false);
             showSuccess('Employee assigned.');
         } catch (err) {
@@ -803,8 +813,14 @@ const OrgStructureView: React.FC = () => {
         );
     };
 
+    const departmentAssignmentExcludedRoles: UserxRole[] = [
+        UserxRole.SYSTEM_ADMIN,
+        UserxRole.BUILDING_ADMIN,
+        UserxRole.MANAGEMENT,
+    ];
     const userOptions = users
         .filter(user => user.enabled !== false)
+        .filter(user => !rolesToArray(user.roles).some(role => departmentAssignmentExcludedRoles.includes(role)))
         .map(u => ({
             label: (`${u.firstName ?? ''} ${u.lastName ?? ''}`).trim() || u.username || `User ${u.id}`,
             value: u.id,
