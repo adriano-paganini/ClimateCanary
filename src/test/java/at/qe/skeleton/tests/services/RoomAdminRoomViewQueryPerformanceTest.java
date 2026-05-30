@@ -7,12 +7,7 @@ import at.qe.skeleton.models.Metric;
 import at.qe.skeleton.models.Threshold;
 import at.qe.skeleton.models.ThresholdViolation;
 import at.qe.skeleton.models.ViolationStatus;
-import at.qe.skeleton.services.AnalyticsService;
-import at.qe.skeleton.services.BuildingService;
-import at.qe.skeleton.services.DepartmentService;
-import at.qe.skeleton.services.RoomService;
-import at.qe.skeleton.services.ThresholdService;
-import at.qe.skeleton.services.ThresholdViolationService;
+import at.qe.skeleton.services.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -20,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.web.WebAppConfiguration;
 
 import java.time.Duration;
@@ -61,6 +57,9 @@ class RoomAdminRoomViewQueryPerformanceTest {
 
     @Autowired
     private ThresholdService thresholdService;
+
+    @MockitoBean
+    private EmailServiceImpl emailService;
 
     @Test
     @DisplayName("room admin reference data queries stay below timing budget")

@@ -12,6 +12,7 @@ import at.qe.skeleton.dtos.ViolationBreakdownDTO;
 import at.qe.skeleton.dtos.ViolationSummaryDTO;
 import at.qe.skeleton.models.Metric;
 import at.qe.skeleton.services.AnalyticsService;
+import at.qe.skeleton.services.EmailServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -44,6 +45,9 @@ class AnalyticsControllerIntegrationTest {
 
     @MockitoBean
     private AnalyticsService analyticsService;
+
+    @MockitoBean
+    private EmailServiceImpl emailService;
 
     @Test
     void getRoomSummary_returns200AndDelegatesWithDateRange() throws Exception {

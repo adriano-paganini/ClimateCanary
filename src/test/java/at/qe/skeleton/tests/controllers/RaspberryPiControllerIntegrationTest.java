@@ -11,6 +11,7 @@ import at.qe.skeleton.mappers.RaspberryPiMapper;
 import at.qe.skeleton.mappers.SensorStationMapper;
 import at.qe.skeleton.models.RaspberryPi;
 import at.qe.skeleton.models.SensorStation;
+import at.qe.skeleton.services.EmailServiceImpl;
 import at.qe.skeleton.services.PiRequestResult;
 import at.qe.skeleton.services.RaspberryPiServerService;
 import at.qe.skeleton.services.RaspberryPiService;
@@ -55,6 +56,9 @@ class RaspberryPiControllerIntegrationTest {
 
     @MockitoBean
     private RaspberryPiCreateMapper raspberryPiCreateMapper;
+
+    @MockitoBean
+    private EmailServiceImpl emailService;
 
     @MockitoBean
     private SensorStationMapper sensorStationMapper;

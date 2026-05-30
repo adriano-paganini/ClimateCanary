@@ -6,6 +6,7 @@ import at.qe.skeleton.mappers.RoomCreateMapper;
 import at.qe.skeleton.mappers.RoomMapper;
 import at.qe.skeleton.models.Room;
 import at.qe.skeleton.models.RoomType;
+import at.qe.skeleton.services.EmailServiceImpl;
 import at.qe.skeleton.services.RoomService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,6 +44,9 @@ public class RoomControllerIntegrationTest {
 
     @MockitoBean
     private RoomCreateMapper roomCreateMapper;
+
+    @MockitoBean
+    private EmailServiceImpl emailService;
 
     private ObjectMapper objectMapper;
 

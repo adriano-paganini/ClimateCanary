@@ -7,6 +7,7 @@ import at.qe.skeleton.mappers.ClimateHintMapper;
 import at.qe.skeleton.models.ClimateHint;
 import at.qe.skeleton.models.Metric;
 import at.qe.skeleton.services.ClimateHintService;
+import at.qe.skeleton.services.EmailServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,6 +46,9 @@ public class ClimateHintControllerIntegrationTest {
 
     @MockitoBean
     private ClimateHintCreateMapper climateHintCreateMapper;
+
+    @MockitoBean
+    private EmailServiceImpl emailService;
 
     private ObjectMapper objectMapper;
 
