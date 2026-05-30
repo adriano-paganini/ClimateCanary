@@ -52,7 +52,6 @@ public class EmailServiceImpl implements EmailService {
 
     @Async
     @Override
-    @PreAuthorize("hasAuthority('BUILDING_ADMIN')")
     public void sendReportEmail(String recipientEmail, byte[] pdfBytes, String filename) {
         if (!emailServiceEnabled) {
             log.info("EmailService disabled - skipping report email to {}", recipientEmail);

@@ -6,7 +6,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -32,6 +36,17 @@ public class ReportController {
     public ResponseEntity<Void> sendReport(
             @RequestParam("to")         String to,
             @RequestParam("attachment") MultipartFile attachment) {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isBuildingAdmin = auth != null &&
+                auth.getAuthorities().stream()
+                        .map(GrantedAuthority::getAuthority)
+                        .anyMatch("BUILDING_ADMIN"::equals);
+
+        if (!isBuildingAdmin) {
+            log.warn("ReportController | Access denied: user lacks BUILDING_ADMIN role");
+            throw new AccessDeniedException("You do not have permission to send reports");
+        }
 
         String recipient = to == null ? "" : to.trim();
         if (!EMAIL_PATTERN.matcher(recipient).matches()) {
