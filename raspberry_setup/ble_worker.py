@@ -144,7 +144,6 @@ async def ble_worker(
     def _timestamp(pkt_millis: int) -> str:
         return _make_iso(anchor_pi_time, anchor_arduino_millis, pkt_millis)
 
-
     log.info(f"[BLE:{tag}] reading cached sensor data…")
     cached_packets: list[tuple[int, float, float, float, float]] = []
     last_ts: int | None = None

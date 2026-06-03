@@ -65,7 +65,7 @@ async def post_booted() -> None:
 
 
 MAX_CONNECT_FAILURES = 5
-MIN_HEALTHY_UPTIME   = 30  # seconds — reset counter only if connection lasted this long
+MIN_HEALTHY_UPTIME   = 30
 
 async def device_loop(
     station: Station,
@@ -120,7 +120,7 @@ async def device_loop(
                 log.warning(f"[BLE:{station.address}] CONNECTION_FAILED patch failed: {patch_err}")
             if fail_count >= MAX_CONNECT_FAILURES:
                 log.error(
-                    f"[BLE:{station.address}] too many consecutive failures – "
+                    f"[BLE:{station.address}] too many consecutive failures. "
                     f"removing from DB, waiting for backend to re-scan"
                 )
                 await remove_station(db, station.address)
