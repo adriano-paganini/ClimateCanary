@@ -63,7 +63,7 @@ async def _do_scan() -> list[str]:
             for addr in addresses:
                 await remove_station(db, addr)
             _app.stations_event.set()
-            await asyncio.sleep(2.0)  # let station_manager cancel device_loop tasks
+            await asyncio.sleep(2.0) 
         await _post_discovered(addresses)
 
     return addresses
