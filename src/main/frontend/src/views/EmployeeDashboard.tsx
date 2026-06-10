@@ -37,6 +37,19 @@ const TABS: { id: TabId; label: string; icon: string }[] = [
     { id: 'common', label: 'Common Areas', icon: 'pi pi-building' },
 ];
 
+const TAB_STYLE = (active: boolean): React.CSSProperties => ({
+    padding: '0.8rem 1.5rem',
+    border: 'none',
+    borderBottom: active ? '3px solid #0369a1' : '3px solid transparent',
+    background: active ? '#f0f9ff' : 'transparent',
+    cursor: 'pointer',
+    fontWeight: active ? 700 : 500,
+    color: active ? '#0369a1' : '#6b7280',
+    fontSize: '0.95rem',
+    transition: 'all 0.2s ease',
+    borderRadius: '8px 8px 0 0',
+});
+
 const cachedRoomRequestsById = new Map<number, Promise<RoomDTO>>();
 const cachedCommonRoomsByDepartment = new Map<number, RoomDTO[]>();
 const cachedCommonRoomRequestsByDepartment = new Map<number, Promise<RoomDTO[]>>();
@@ -380,10 +393,13 @@ const EmployeeDashboard: React.FC = () => {
         <div>
             <NavbarComponent />
 
-            <div style={{ padding: '1.5rem 2rem 0' }}>
-                <h2 style={{ margin: '0 0 1rem', color: '#111827' }}>
-                    Welcome{currentUser?.firstName ? `, ${currentUser.firstName}` : ''}
-                </h2>
+            <div style={{ padding: '1.5rem 2rem', maxWidth: '1400px', margin: '0 auto' }}>
+                {/* Header */}
+                <div style={{ marginBottom: '2rem', padding: '1.5rem 2rem', backgroundColor: '#f8f9fa', borderRadius: '12px', border: '1px solid #e9ecef', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                    <h1 style={{ margin: 0, color: '#111827', fontSize: '2rem', fontWeight: 700 }}>
+                        Welcome{currentUser?.firstName ? `, ${currentUser.firstName}` : ''}
+                    </h1>
+                </div>
 
                 {error && (
                     <div style={{ marginBottom: '1rem' }}>
@@ -430,73 +446,58 @@ const EmployeeDashboard: React.FC = () => {
                     </div>
                 )}
 
-                <div style={{ display: 'flex', borderBottom: '2px solid #e5e7eb', gap: '0.25rem' }}>
+                {/* Tabs */}
+                <div style={{ display: 'flex', borderBottom: '2px solid #e5e7eb', marginBottom: '2rem', backgroundColor: '#ffffff', borderRadius: '12px 12px 0 0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
                     {TABS.map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => handleTabClick(tab.id)}
-                            style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.4rem',
-                                padding: '0.6rem 1.25rem',
-                                border: 'none',
-                                background: 'transparent',
-                                cursor: 'pointer',
-                                fontSize: '0.95rem',
-                                fontWeight: activeTab === tab.id ? 600 : 400,
-                                color: activeTab === tab.id ? '#0369a1' : '#374151',
-                                borderBottom: activeTab === tab.id ? '2px solid #0369a1' : '2px solid transparent',
-                                marginBottom: '-2px',
-                            }}
-                        >
-                            <i className={tab.icon} style={{ fontSize: '0.9rem' }} />
+                        <button key={tab.id} style={TAB_STYLE(activeTab === tab.id)} onClick={() => handleTabClick(tab.id)}>
+                            <i className={tab.icon} style={{ marginRight: '0.5rem' }} />
                             {tab.label}
                         </button>
                     ))}
                 </div>
-            </div>
 
-            <div style={{ padding: '2rem' }}>
-                {activeTab === 'office' && (
-                    <section>
-                        <h3 style={{ marginTop: 0, marginBottom: '1rem', color: '#374151' }}>My Office</h3>
-                        {officeRoom ? (
-                            <RoomCard
-                                room={officeRoom}
-                                measurements={measurementsByRoom[officeRoom.id!] ?? []}
-                                violations={violationsByRoom[officeRoom.id!] ?? []}
-                            />
-                        ) : (
-                            <p style={{ color: '#6b7280' }}>No office assigned.</p>
-                        )}
-                    </section>
-                )}
+                {/* Content */}
+                <div style={{ padding: '2rem', backgroundColor: '#ffffff', borderRadius: '0 12px 12px 12px', border: '1px solid #e5e7eb', borderTop: 'none' }}>
+                    {activeTab === 'office' && (
+                        <section>
+                            <h3 style={{ marginTop: 0, marginBottom: '1rem', color: '#374151' }}>My Office</h3>
+                            {officeRoom ? (
+                                <RoomCard
+                                    room={officeRoom}
+                                    measurements={measurementsByRoom[officeRoom.id!] ?? []}
+                                    violations={violationsByRoom[officeRoom.id!] ?? []}
+                                />
+                            ) : (
+                                <p style={{ color: '#6b7280' }}>No office assigned.</p>
+                            )}
+                        </section>
+                    )}
 
-                {activeTab === 'common' && (
-                    <section>
-                        <h3 style={{ marginTop: 0, marginBottom: '1rem', color: '#374151' }}>Common Areas</h3>
-                        {commonRooms === null ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#6b7280' }}>
-                                <ProgressSpinner style={{ width: '1.5rem', height: '1.5rem' }} />
-                                <span>Loading common areas...</span>
-                            </div>
-                        ) : commonRooms.length === 0 ? (
-                            <p style={{ color: '#6b7280' }}>No common areas in your department.</p>
-                        ) : (
-                            <div className="flex flex-wrap gap-3">
-                                {commonRooms.map(room => (
-                                    <RoomCard
-                                        key={room.id}
-                                        room={room}
-                                        measurements={measurementsByRoom[room.id!] ?? []}
-                                        violations={violationsByRoom[room.id!] ?? []}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                    </section>
-                )}
+                    {activeTab === 'common' && (
+                        <section>
+                            <h3 style={{ marginTop: 0, marginBottom: '1rem', color: '#374151' }}>Common Areas</h3>
+                            {commonRooms === null ? (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#6b7280' }}>
+                                    <ProgressSpinner style={{ width: '1.5rem', height: '1.5rem' }} />
+                                    <span>Loading common areas...</span>
+                                </div>
+                            ) : commonRooms.length === 0 ? (
+                                <p style={{ color: '#6b7280' }}>No common areas in your department.</p>
+                            ) : (
+                                <div className="flex flex-wrap gap-3">
+                                    {commonRooms.map(room => (
+                                        <RoomCard
+                                            key={room.id}
+                                            room={room}
+                                            measurements={measurementsByRoom[room.id!] ?? []}
+                                            violations={violationsByRoom[room.id!] ?? []}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </section>
+                    )}
+                </div>
             </div>
         </div>
     );
