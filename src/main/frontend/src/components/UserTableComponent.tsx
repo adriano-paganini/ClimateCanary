@@ -5,7 +5,6 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 
 import {Button} from "primereact/button";
-import {Card} from 'primereact/card';
 import {Dialog} from "primereact/dialog";
 import {InputText} from "primereact/inputtext";
 import {Toast} from 'primereact/toast';
@@ -593,39 +592,50 @@ const UserTable = () => {
         </div>
     );
 
-    return (<Card title="User Management" className="m-4">
+    return (<>
             <Toast ref={toast}/>
             <ConfirmDialog/>
-            <Button label="Add User" icon="pi pi-plus" className="p-button-raised p-button-rounded"
-                    style={{marginBottom: "10px"}} onClick={openNewUserDialog}/>
 
-            <section style={{marginTop: "1rem"}}>
-                <h2 style={{fontSize: "1.15rem", margin: "0 0 0.75rem"}}>Active Users</h2>
-                <UserListComponent
-                    users={activeUsers}
-                    loading={loading}
-                    onEditUser={openEditDialog}
-                    onDeleteUser={confirmDeleteUser}
-                    currentUserId={currentUserId}
-                    currentUsername={currentUsername}
-                    emptyMessage="No active users found"
-                />
-            </section>
+            <div style={{ padding: '1.5rem 2rem', maxWidth: '1400px', margin: '0 auto' }}>
+                {/* Header */}
+                <div style={{ marginBottom: '2rem', padding: '1.5rem 2rem', backgroundColor: '#f8f9fa', borderRadius: '12px', border: '1px solid #e9ecef', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                    <h1 style={{ margin: 0, color: '#111827', fontSize: '2rem', fontWeight: 700 }}>User Management</h1>
+                </div>
 
-            <section style={{marginTop: "2rem"}}>
-                <h2 style={{fontSize: "1.15rem", margin: "0 0 0.75rem"}}>Deleted Users</h2>
-                <UserListComponent
-                    users={deletedUsers}
-                    loading={loading}
-                    onEditUser={openEditDialog}
-                    onDeleteUser={confirmDeleteUser}
-                    showDeleteAction={false}
-                    onRestoreUser={restoreUser}
-                    currentUserId={currentUserId}
-                    currentUsername={currentUsername}
-                    emptyMessage="No deleted users found"
-                />
-            </section>
+                {/* Content */}
+                <div style={{ padding: '2rem', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb' }}>
+                    <Button label="Add User" icon="pi pi-plus" className="p-button-raised p-button-rounded"
+                            style={{marginBottom: "10px"}} onClick={openNewUserDialog}/>
+
+                    <section style={{marginTop: "1rem"}}>
+                        <h2 style={{fontSize: "1.15rem", margin: "0 0 0.75rem"}}>Active Users</h2>
+                        <UserListComponent
+                            users={activeUsers}
+                            loading={loading}
+                            onEditUser={openEditDialog}
+                            onDeleteUser={confirmDeleteUser}
+                            currentUserId={currentUserId}
+                            currentUsername={currentUsername}
+                            emptyMessage="No active users found"
+                        />
+                    </section>
+
+                    <section style={{marginTop: "2rem"}}>
+                        <h2 style={{fontSize: "1.15rem", margin: "0 0 0.75rem"}}>Deleted Users</h2>
+                        <UserListComponent
+                            users={deletedUsers}
+                            loading={loading}
+                            onEditUser={openEditDialog}
+                            onDeleteUser={confirmDeleteUser}
+                            showDeleteAction={false}
+                            onRestoreUser={restoreUser}
+                            currentUserId={currentUserId}
+                            currentUsername={currentUsername}
+                            emptyMessage="No deleted users found"
+                        />
+                    </section>
+                </div>
+            </div>
 
             <UserDialog visible={dialogVisible} user={selectedUser} isNewUser={isNewUser} validation={validation}
                         onHide={hideDialog} onSubmit={handleSubmit}
@@ -679,7 +689,7 @@ const UserTable = () => {
                     </div>
                 </div>
             </Dialog>
-        </Card>
+        </>
     );
 };
 
