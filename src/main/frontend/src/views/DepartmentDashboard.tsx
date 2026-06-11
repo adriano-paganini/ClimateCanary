@@ -178,6 +178,19 @@ async function getRoomDashboardDataCached(roomId: number): Promise<RoomDashboard
     return request;
 }
 
+const TAB_STYLE = (active: boolean): React.CSSProperties => ({
+    padding: '0.8rem 1.5rem',
+    border: 'none',
+    borderBottom: active ? '3px solid #0369a1' : '3px solid transparent',
+    background: active ? '#f0f9ff' : 'transparent',
+    cursor: 'pointer',
+    fontWeight: active ? 700 : 500,
+    color: active ? '#0369a1' : '#6b7280',
+    fontSize: '0.95rem',
+    transition: 'all 0.2s ease',
+    borderRadius: '8px 8px 0 0',
+});
+
 const DepartmentDashboard: React.FC = () => {
     const { currentUser } = useUser();
     const { departments, selectedDepartmentId, setSelectedDepartmentId, loading, error: deptError } = useDepartment();
@@ -310,38 +323,40 @@ const DepartmentDashboard: React.FC = () => {
         <div>
             <NavbarComponent />
 
-            <div style={{ padding: '1.5rem 2rem 0' }}>
-                {/* Page header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                    <div>
-                        <h2 style={{ margin: '0 0 0.25rem', color: '#111827' }}>
-                            Welcome{currentUser?.firstName ? `, ${currentUser.firstName}` : ''}
-                        </h2>
-                        {departments.length > 1 ? (
-                            <div style={{ marginTop: '0.75rem', maxWidth: '360px' }}>
-                                <Dropdown
-                                    value={selectedDepartmentId}
-                                    options={departmentOptions}
-                                    onChange={e => setSelectedDepartmentId(e.value)}
-                                    placeholder="Select department"
-                                    style={{ width: '100%' }}
-                                />
-                            </div>
-                        ) : department && (
-                            <p style={{ margin: 0, color: '#6b7280', fontSize: '0.95rem' }}>
-                                <i className="pi pi-sitemap" style={{ marginRight: '0.4rem' }} />
-                                {department.name}
-                            </p>
-                        )}
-                    </div>
+            <div style={{ padding: '1.5rem 2rem', maxWidth: '1400px', margin: '0 auto' }}>
+                {/* Header */}
+                <div style={{ marginBottom: '2rem', padding: '1.5rem 2rem', backgroundColor: '#f8f9fa', borderRadius: '12px', border: '1px solid #e9ecef', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
+                        <div>
+                            <h1 style={{ margin: '0 0 0.25rem', color: '#111827', fontSize: '2rem', fontWeight: 700 }}>
+                                Welcome{currentUser?.firstName ? `, ${currentUser.firstName}` : ''}
+                            </h1>
+                            {departments.length > 1 ? (
+                                <div style={{ marginTop: '0.75rem', maxWidth: '360px' }}>
+                                    <Dropdown
+                                        value={selectedDepartmentId}
+                                        options={departmentOptions}
+                                        onChange={e => setSelectedDepartmentId(e.value)}
+                                        placeholder="Select department"
+                                        style={{ width: '100%' }}
+                                    />
+                                </div>
+                            ) : department && (
+                                <p style={{ margin: 0, color: '#6b7280', fontSize: '0.95rem' }}>
+                                    <i className="pi pi-sitemap" style={{ marginRight: '0.4rem' }} />
+                                    {department.name}
+                                </p>
+                            )}
+                        </div>
 
-                    <Button
-                        label="Team Absences"
-                        icon="pi pi-calendar-times"
-                        className="p-button-outlined"
-                        onClick={() => navigate(ROUTES.DEPARTMENT_ABSENCES)}
-                        style={{ borderColor: '#0369a1', color: '#0369a1' }}
-                    />
+                        <Button
+                            label="Team Absences"
+                            icon="pi pi-calendar-times"
+                            className="p-button-outlined"
+                            onClick={() => navigate(ROUTES.DEPARTMENT_ABSENCES)}
+                            style={{ borderColor: '#0369a1', color: '#0369a1' }}
+                        />
+                    </div>
                 </div>
 
                 {/* Global violation banner */}
@@ -378,25 +393,10 @@ const DepartmentDashboard: React.FC = () => {
                     </div>
                 )}
 
-                {/* Section title */}
-                <div style={{
-                    display: 'flex',
-                    borderBottom: '2px solid #e5e7eb',
-                    paddingBottom: '0.6rem',
-                    marginBottom: '0',
-                }}>
-                    <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.4rem',
-                        padding: '0.6rem 1.25rem',
-                        borderBottom: '2px solid #0369a1',
-                        marginBottom: '-2px',
-                        fontWeight: 600,
-                        color: '#0369a1',
-                        fontSize: '0.95rem',
-                    }}>
-                        <i className="pi pi-building" style={{ fontSize: '0.9rem' }} />
+                {/* Tabs */}
+                <div style={{ display: 'flex', borderBottom: '2px solid #e5e7eb', marginBottom: '2rem', backgroundColor: '#ffffff', borderRadius: '12px 12px 0 0', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                    <div style={TAB_STYLE(true)}>
+                        <i className="pi pi-building" style={{ marginRight: '0.5rem' }} />
                         All Rooms
                         <span style={{
                             marginLeft: '0.5rem',
@@ -408,65 +408,65 @@ const DepartmentDashboard: React.FC = () => {
                         </span>
                     </div>
                 </div>
-            </div>
 
-            {/* Room grid */}
-            <div style={{ padding: '2rem' }}>
-                {loadingDepartmentData ? (
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '20rem' }}>
-                        <ProgressSpinner />
-                    </div>
-                ) : rooms.length === 0 ? (
-                    <div style={{
-                        padding: '2rem',
-                        textAlign: 'center',
-                        background: '#f9fafb',
-                        borderRadius: '8px',
-                        border: '1px dashed #d1d5db',
-                    }}>
-                        <i className="pi pi-inbox" style={{ fontSize: '2rem', color: '#d1d5db', display: 'block', marginBottom: '0.5rem' }} />
-                        <p style={{ color: '#6b7280', margin: '0.5rem 0 0' }}>No rooms assigned to this department.</p>
-                    </div>
-                ) : (
-                    <div className="flex flex-wrap gap-3">
-                        {rooms.map(room => {
-                            const loadingRoom = room.id !== undefined && loadingRoomIds.has(room.id);
+                {/* Content */}
+                <div style={{ padding: '2rem', backgroundColor: '#ffffff', borderRadius: '0 12px 12px 12px', border: '1px solid #e5e7eb', borderTop: 'none' }}>
+                    {loadingDepartmentData ? (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '20rem' }}>
+                            <ProgressSpinner />
+                        </div>
+                    ) : rooms.length === 0 ? (
+                        <div style={{
+                            padding: '2rem',
+                            textAlign: 'center',
+                            background: '#f9fafb',
+                            borderRadius: '8px',
+                            border: '1px dashed #d1d5db',
+                        }}>
+                            <i className="pi pi-inbox" style={{ fontSize: '2rem', color: '#d1d5db', display: 'block', marginBottom: '0.5rem' }} />
+                            <p style={{ color: '#6b7280', margin: '0.5rem 0 0' }}>No rooms assigned to this department.</p>
+                        </div>
+                    ) : (
+                        <div className="flex flex-wrap gap-3">
+                            {rooms.map(room => {
+                                const loadingRoom = room.id !== undefined && loadingRoomIds.has(room.id);
 
-                            return (
-                                <div key={room.id} style={{ position: 'relative' }}>
-                                    <RoomCard
-                                        room={room}
-                                        measurements={room.id !== undefined ? measurementsByRoom[room.id] ?? [] : []}
-                                        violations={room.id !== undefined ? violationsByRoom[room.id] ?? [] : []}
-                                        historyRoute={ROUTES.DEPARTMENT_ROOM_HISTORY}
-                                    />
-                                    {loadingRoom && (
-                                        <div
-                                            style={{
-                                                position: 'absolute',
-                                                inset: 0,
-                                                background: 'rgba(255,255,255,0.78)',
-                                                borderRadius: '10px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                zIndex: 20,
-                                                color: '#1e3a8a',
-                                                fontWeight: 600,
-                                                pointerEvents: 'none',
-                                            }}
-                                        >
-                                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                <i className="pi pi-spin pi-spinner" />
-                                                Loading...
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
-                )}
+                                return (
+                                    <div key={room.id} style={{ position: 'relative' }}>
+                                        <RoomCard
+                                            room={room}
+                                            measurements={room.id !== undefined ? measurementsByRoom[room.id] ?? [] : []}
+                                            violations={room.id !== undefined ? violationsByRoom[room.id] ?? [] : []}
+                                            historyRoute={ROUTES.DEPARTMENT_ROOM_HISTORY}
+                                        />
+                                        {loadingRoom && (
+                                            <div
+                                                style={{
+                                                    position: 'absolute',
+                                                    inset: 0,
+                                                    background: 'rgba(255,255,255,0.78)',
+                                                    borderRadius: '10px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    zIndex: 20,
+                                                    color: '#1e3a8a',
+                                                    fontWeight: 600,
+                                                    pointerEvents: 'none',
+                                                }}
+                                            >
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                    <i className="pi pi-spin pi-spinner" />
+                                                    Loading...
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
