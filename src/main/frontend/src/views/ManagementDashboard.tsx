@@ -288,44 +288,47 @@ const ManagementDashboard: React.FC = () => {
     <div>
       <NavbarComponent />
 
-      <main style={{ padding: "1.5rem 2rem 2rem" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "flex-start", marginBottom: "1rem" }}>
-          <div>
-            <h2 style={{ margin: "0 0 0.25rem", color: "#111827" }}>
-              Welcome{currentUser?.firstName ? `, ${currentUser.firstName}` : ""}
-            </h2>
-            <p style={{ margin: 0, color: "#6b7280", fontSize: "0.95rem" }}>
-              <i className="pi pi-chart-bar" style={{ marginRight: "0.4rem" }} />
-              Department climate changes and warnings
-            </p>
-          </div>
-          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", justifyContent: "flex-end" }}>
-            <SummaryStat
-              icon="pi-sitemap"
-              label="Departments"
-              value={departments.length}
-              color="#0369a1"
-              onClick={handleDeptStatClick}
-              tooltip="Show all departments"
-            />
-            <SummaryStat
-              icon="pi-exclamation-triangle"
-              label="Active Violations"
-              value={dashboard?.totalActiveWarnings ?? 0}
-              color={(dashboard?.totalActiveWarnings ?? 0) > 0 ? "#dc2626" : "#16a34a"}
-              onClick={handleViolationsStatClick}
-              active={filterWarningsOnly}
-              tooltip="Filter departments with active violations"
-            />
-            <SummaryStat
-              icon="pi-building"
-              label="Departments affected"
-              value={warningDepartments}
-              color={warningDepartments > 0 ? "#f59e0b" : "#16a34a"}
-              onClick={handleAffectedStatClick}
-              active={filterWarningsOnly}
-              tooltip="Toggle filter: departments with warnings"
-            />
+      <div style={{ padding: '1.5rem 2rem', maxWidth: '1400px', margin: '0 auto' }}>
+        {/* Header */}
+        <div style={{ marginBottom: '2rem', padding: '1.5rem 2rem', backgroundColor: '#f8f9fa', borderRadius: '12px', border: '1px solid #e9ecef', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "flex-start" }}>
+            <div>
+              <h1 style={{ margin: '0 0 0.25rem', color: '#111827', fontSize: '2rem', fontWeight: 700 }}>
+                Welcome{currentUser?.firstName ? `, ${currentUser.firstName}` : ""}
+              </h1>
+              <p style={{ margin: 0, color: "#6b7280", fontSize: "0.95rem" }}>
+                <i className="pi pi-chart-bar" style={{ marginRight: "0.4rem" }} />
+                Department climate changes and warnings
+              </p>
+            </div>
+            <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", justifyContent: "flex-end" }}>
+              <SummaryStat
+                icon="pi-sitemap"
+                label="Departments"
+                value={departments.length}
+                color="#0369a1"
+                onClick={handleDeptStatClick}
+                tooltip="Show all departments"
+              />
+              <SummaryStat
+                icon="pi-exclamation-triangle"
+                label="Active Violations"
+                value={dashboard?.totalActiveWarnings ?? 0}
+                color={(dashboard?.totalActiveWarnings ?? 0) > 0 ? "#dc2626" : "#16a34a"}
+                onClick={handleViolationsStatClick}
+                active={filterWarningsOnly}
+                tooltip="Filter departments with active violations"
+              />
+              <SummaryStat
+                icon="pi-building"
+                label="Departments affected"
+                value={warningDepartments}
+                color={warningDepartments > 0 ? "#f59e0b" : "#16a34a"}
+                onClick={handleAffectedStatClick}
+                active={filterWarningsOnly}
+                tooltip="Toggle filter: departments with warnings"
+              />
+            </div>
           </div>
         </div>
 
@@ -358,6 +361,8 @@ const ManagementDashboard: React.FC = () => {
 
         {error && <Message severity="error" text={error} style={{ marginBottom: "1rem" }} />}
 
+        {/* Content */}
+        <div style={{ padding: '2rem', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb' }}>
         <div
           ref={deptGridRef}
           style={{
@@ -457,7 +462,8 @@ const ManagementDashboard: React.FC = () => {
             </div>
           )}
         </div>
-      </main>
+        </div>
+      </div>
 
       {/* Department detail dialog */}
       <Dialog
