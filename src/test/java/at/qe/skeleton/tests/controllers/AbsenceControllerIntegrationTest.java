@@ -10,6 +10,7 @@ import at.qe.skeleton.models.Absence;
 import at.qe.skeleton.models.AbsenceStatus;
 import at.qe.skeleton.models.AbsenceType;
 import at.qe.skeleton.services.AbsenceService;
+import at.qe.skeleton.services.EmailServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,6 +50,9 @@ class AbsenceControllerIntegrationTest {
 
     @MockitoBean
     private AbsenceCreateMapper absenceCreateMapper;
+
+    @MockitoBean
+    private EmailServiceImpl emailService;
 
     private ObjectMapper objectMapper;
 

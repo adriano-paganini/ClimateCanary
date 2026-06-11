@@ -9,6 +9,7 @@ import at.qe.skeleton.models.Absence;
 import at.qe.skeleton.models.Userx;
 import at.qe.skeleton.services.AbsenceService;
 import at.qe.skeleton.services.AuthenticatedUserService;
+import at.qe.skeleton.services.EmailServiceImpl;
 import at.qe.skeleton.services.UserxService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,6 +54,9 @@ class UserxControllerIntegrationTest {
 
     @MockitoBean
     private AbsenceService absenceService;
+
+    @MockitoBean
+    private EmailServiceImpl emailService;
 
     @Autowired
     private ObjectMapper objectMapper;

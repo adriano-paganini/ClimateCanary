@@ -602,7 +602,14 @@ const DeviceManagementView: React.FC = () => {
             <Toast ref={toast} />
             <ConfirmDialog />
 
-            <Card title="Device Management" className="m-4">
+            <div style={{ padding: '1.5rem 2rem', maxWidth: '1400px', margin: '0 auto' }}>
+                {/* Header */}
+                <div style={{ marginBottom: '2rem', padding: '1.5rem 2rem', backgroundColor: '#f8f9fa', borderRadius: '12px', border: '1px solid #e9ecef', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                    <h1 style={{ margin: 0, color: '#111827', fontSize: '2rem', fontWeight: 700 }}>Device Management</h1>
+                </div>
+
+                {/* Content */}
+                <div style={{ padding: '2rem', backgroundColor: '#ffffff', borderRadius: '12px', border: '1px solid #e5e7eb' }}>
                 <Button
                     label="Add Raspberry Pi"
                     icon="pi pi-plus"
@@ -753,7 +760,8 @@ const DeviceManagementView: React.FC = () => {
                         />
                     </DataTable>
                 </section>
-            </Card>
+                </div>
+            </div>
 
             {/* Raspberry Pi Create/Edit Dialog */}
             <Dialog

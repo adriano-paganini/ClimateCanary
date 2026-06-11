@@ -6,6 +6,7 @@ import at.qe.skeleton.mappers.ThresholdMapper;
 import at.qe.skeleton.models.Metric;
 import at.qe.skeleton.models.Threshold;
 import at.qe.skeleton.models.ThresholdType;
+import at.qe.skeleton.services.EmailServiceImpl;
 import at.qe.skeleton.services.ThresholdService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,6 +41,9 @@ public class ThresholdControllerIntegrationTest {
 
     @MockitoBean
     private ThresholdMapper thresholdMapper;
+
+    @MockitoBean
+    private EmailServiceImpl emailService;
 
     private ObjectMapper objectMapper;
 

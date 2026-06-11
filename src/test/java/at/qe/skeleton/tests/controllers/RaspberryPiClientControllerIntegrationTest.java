@@ -8,10 +8,7 @@ import at.qe.skeleton.helper.PiConfigYamlBuilder;
 import at.qe.skeleton.models.DeviceStatus;
 import at.qe.skeleton.models.Metric;
 import at.qe.skeleton.scheduled.AvailableSensorStationCleaner;
-import at.qe.skeleton.services.MeasurementService;
-import at.qe.skeleton.services.RaspberryPiService;
-import at.qe.skeleton.services.SensorStationService;
-import at.qe.skeleton.services.ThresholdViolationService;
+import at.qe.skeleton.services.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -64,6 +61,9 @@ class RaspberryPiClientControllerIntegrationTest {
 
     @MockitoBean
     private TaskScheduler taskScheduler;
+
+    @MockitoBean
+    private EmailServiceImpl emailService;
 
     @MockitoBean
     private AvailableSensorStationCleaner availableSensorStationCleaner;
