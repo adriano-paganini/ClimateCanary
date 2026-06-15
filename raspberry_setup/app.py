@@ -137,10 +137,17 @@ async def setup_station(piId: int, payload: SensorStationDTO):
     _check_pi_id(piId)
     db = _check_db()
     from setup_flow import run_setup
+    log.info(
+        f"[APP] setup requested: pi_id={piId}, station_id={payload.id}, "
+        f"ble_mac={payload.bleMac}, name={payload.name!r}, "
+        f"status={payload.deviceStatus}, interval={payload.measurementInterval}, "
+        f"room_id={payload.roomId}, raspberry_pi_id={payload.raspberryPiId}"
+    )
     success = await run_setup(
         station=payload.model_dump(),
         measurement_interval=payload.measurementInterval or 60,
     )
+    log.info(f"[APP] setup result for station_id={payload.id}, mac={payload.bleMac}: success={success}")
 
     if not success:
         raise HTTPException(status_code=500, detail="Setup failed — check Pi logs")

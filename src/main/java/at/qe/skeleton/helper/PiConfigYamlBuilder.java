@@ -11,7 +11,7 @@ public class PiConfigYamlBuilder {
 
     private final RaspberryPiService raspberryPiService;
 
-    @Value("${APP_BACKEND_URL:http://localhost:8080}")
+    @Value("${APP_BACKEND_URL:http://localhost}")
     private String appBackendUrl;
 
     public PiConfigYamlBuilder(RaspberryPiService raspberryPiService) {

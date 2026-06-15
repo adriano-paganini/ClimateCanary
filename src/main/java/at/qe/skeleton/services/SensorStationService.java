@@ -130,12 +130,17 @@ public class SensorStationService {
             }
 
             SensorStationDTO stationDTO = sensorStationMapper.mapTo(updatedStation);
+            log.info("Sending setup request to Raspberry Pi {} for sensor station {} with bleMac={}, interval={}, roomId={}",
+                    pi.getId(), stationDTO.id(), stationDTO.bleMac(), stationDTO.measurementInterval(), stationDTO.roomId());
             PiRequestResult result = raspberryPiServerService.setupStation(pi.getId(), stationDTO);
             debugInfo.append(", setupStationResult=").append(result);
 
             if (result == PiRequestResult.SUCCESS) {
+                log.info("Setup request succeeded; sending follow-up connect request to Raspberry Pi {} for sensor station {}",
+                        pi.getId(), stationDTO.id());
                 PiRequestResult connectResult = raspberryPiServerService.connectToStation(pi.getId(), stationDTO);
                 debugInfo.append(", connectToStationResult=").append(connectResult);
+                log.info("Follow-up connect request result for sensor station {}: {}", stationDTO.id(), connectResult);
             }
         }
 

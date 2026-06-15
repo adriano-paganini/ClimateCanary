@@ -122,10 +122,17 @@ async def ble_worker(
     db: aiosqlite.Connection,
 ) -> None:
     tag = client.address
+    auth_payload = _build_auth(config.PI_ID, config.ROOM_NAME)
 
+    log.info(
+        f"[BLE:{tag}] writing auth: char={AUTH_CHAR_UUID}, "
+        f"payload_len={len(auth_payload)}, pi_id={config.PI_ID}, "
+        f"room_name={config.ROOM_NAME!r}, room_len={len(config.ROOM_NAME.encode('ascii'))}, "
+        f"station_id={sensor_station_id}, room_id={room_id}"
+    )
     await client.write_gatt_char(
         AUTH_CHAR_UUID,
-        _build_auth(config.PI_ID, config.ROOM_NAME),
+        auth_payload,
         response=True,
     )
     log.info(f"[BLE:{tag}] authenticated (pi_id={config.PI_ID}, room={config.ROOM_NAME!r})")

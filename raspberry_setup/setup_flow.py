@@ -46,19 +46,24 @@ async def run_setup(
     payload = _build_setup_config(measurement_interval, config.PI_ID)
     log.info(
         f"[SETUP:{tag}] writing config: interval={measurement_interval}s "
-        f"pi_id={config.PI_ID}  payload={payload.hex()}"
+        f"pi_id={config.PI_ID} station_id={sensor_station_id} payload={payload.hex()}"
     )
+    log.info(f"[SETUP:{tag}] full station payload before setup: {station}")
 
     try:
         from ble_scanner import _scan_lock
+        log.info(f"[SETUP:{tag}] waiting for scanner lock before connecting")
         async with _scan_lock:
             pass
+        log.info(f"[SETUP:{tag}] scanner lock free; connecting to setup address")
 
         async with BleakClient(address, timeout=20.0) as client:
+            log.info(f"[SETUP:{tag}] connected to setup address; writing characteristic {SETUP_CONFIG_UUID}")
             await client.write_gatt_char(SETUP_CONFIG_UUID, payload, response=True)
             log.info(f"[SETUP:{tag}] config written. Arduino will reboot.")
             await asyncio.sleep(6.0)
 
+        log.info(f"[SETUP:{tag}] setup BLE connection closed after config write")
         return True
 
     except Exception as e:

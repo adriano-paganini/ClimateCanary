@@ -83,7 +83,8 @@ async def device_loop(
             log.info(
                 f"[BLE:{station.address}] connecting "
                 f"(pi_id={cfg.PI_ID}, sensor_station_id={station.sensor_station_id}, "
-                f"name={station.name!r})…"
+                f"room_id={station.room_id}, name={station.name!r}, "
+                f"status={station.device_status}, interval={station.measurement_interval})…"
             )
             async with BleakClient(station.address, timeout=20.0) as client:
                 log.info(f"[BLE:{station.address}] connected.")
@@ -152,7 +153,11 @@ async def station_manager(
 
         for station in stations:
             if station.address not in active_tasks:
-                log.info(f"[SYS] adding station {station.address}")
+                log.info(
+                    f"[SYS] adding station address={station.address} "
+                    f"id={station.sensor_station_id} room_id={station.room_id} "
+                    f"name={station.name!r} status={station.device_status}"
+                )
                 task = asyncio.create_task(
                     device_loop(station, queue, db),
                     name=f"ble-{station.address}",
