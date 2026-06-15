@@ -35,7 +35,7 @@ public class PiConfigYamlBuilder {
                 room.getId(),
                 escapeYaml(room.getName()),
                 escapeYaml(raspberryPi.getHostName()),
-                escapeYaml(appBackendUrl+":8080"),
+                escapeYaml(appBackendUrl),
                 room.getPrivacyMode()
         );
     }
