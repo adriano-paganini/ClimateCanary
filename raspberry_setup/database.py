@@ -96,6 +96,11 @@ async def db_writer(
             queue.task_done()
 
 async def save_station(db: aiosqlite.Connection, station: dict) -> None:
+    log.info(
+        f"[DB] saving station: address={station['bleMac']} id={station['id']} "
+        f"room_id={station['roomId']} name={station['name']!r} "
+        f"status={station['deviceStatus']} interval={station['measurementInterval']}"
+    )
     await db.execute(
         """
         INSERT INTO stations
@@ -165,6 +170,11 @@ async def load_stations(db: aiosqlite.Connection) -> list[dict]:
            FROM stations"""
     ) as cursor:
         rows = await cursor.fetchall()
+    for row in rows:
+        log.info(
+            f"[DB] loaded station row: address={row[0]} id={row[1]} "
+            f"room_id={row[2]} name={row[3]!r} status={row[4]} interval={row[5]}"
+        )
     return [
         {
             "address":             row[0],
