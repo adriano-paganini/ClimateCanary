@@ -132,13 +132,11 @@ async def trigger_scan(piId: int, background_tasks: BackgroundTasks):
     background_tasks.add_task(scan_for_stations)
     return {"status": "ok"}
 
-@app.post("/api/spi/{piId}/setup")
-async def setup_station(piId: int, payload: SensorStationDTO):
-    _check_pi_id(piId)
-    db = _check_db()
+
+async def _run_setup_station(payload: SensorStationDTO):
     from setup_flow import run_setup
     log.info(
-        f"[APP] setup requested: pi_id={piId}, station_id={payload.id}, "
+        f"[APP] setup started: station_id={payload.id}, "
         f"ble_mac={payload.bleMac}, name={payload.name!r}, "
         f"status={payload.deviceStatus}, interval={payload.measurementInterval}, "
         f"room_id={payload.roomId}, raspberry_pi_id={payload.raspberryPiId}"
@@ -150,8 +148,9 @@ async def setup_station(piId: int, payload: SensorStationDTO):
     log.info(f"[APP] setup result for station_id={payload.id}, mac={payload.bleMac}: success={success}")
 
     if not success:
-        raise HTTPException(status_code=500, detail="Setup failed — check Pi logs")
+        return
 
+    db = _check_db()
     data = payload.model_dump()
     data["measurementInterval"] = data.get("measurementInterval") or 60
     await save_station(db, data)
@@ -159,6 +158,18 @@ async def setup_station(piId: int, payload: SensorStationDTO):
     stations_event.set()
 
     return {"status": "ok"}
+
+
+@app.post("/api/spi/{piId}/setup")
+async def setup_station(piId: int, payload: SensorStationDTO, background_tasks: BackgroundTasks):
+    _check_pi_id(piId)
+    _check_db()
+    log.info(
+        f"[APP] setup accepted: pi_id={piId}, station_id={payload.id}, "
+        f"ble_mac={payload.bleMac}, interval={payload.measurementInterval}"
+    )
+    background_tasks.add_task(_run_setup_station, payload)
+    return {"status": "accepted"}
 
 
 @app.post("/api/spi/{piId}/stations")
