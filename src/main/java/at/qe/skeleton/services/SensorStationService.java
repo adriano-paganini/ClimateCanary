@@ -15,6 +15,21 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Service layer for managing {@link SensorStation} entities.
+ *
+ * <p>This service handles CRUD operations, state transitions, and synchronization
+ * of sensor stations with associated Raspberry Pi devices.</p>
+ *
+ * <p>Responsibilities include:
+ * <ul>
+ *     <li>Managing sensor station lifecycle (create, update, delete)</li>
+ *     <li>Assigning stations to Raspberry Pi and rooms</li>
+ *     <li>Synchronizing configuration with Raspberry Pi devices</li>
+ *     <li>Handling device status transitions</li>
+ * </ul>
+ * </p>
+ */
 @Slf4j
 @Service
 public class SensorStationService {
@@ -46,7 +61,6 @@ public class SensorStationService {
         return repo.findById(id).orElseThrow(() -> new NotFoundException(SENSOR_STATION_WITH_ID + id + " not found"));
     }
 
-
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public SensorStation create(SensorStation s) {
         SensorStation savedStation = repo.save(s);
@@ -64,6 +78,17 @@ public class SensorStationService {
         return savedStation;
     }
 
+    /**
+     * Updates the device status of a sensor station belonging to a specific Raspberry Pi.
+     *
+     * <p>This method ensures that the station is actually assigned to the given Pi.</p>
+     *
+     * @param piId Raspberry Pi ID
+     * @param id sensor station ID
+     * @param status new device status
+     * @return updated sensor station
+     * @throws NotFoundException if station does not belong to the given Pi
+     */
     public SensorStation update(Long piId,Long id, DeviceStatus status){
         SensorStation station = getByIdInternal(id);
         if (!Objects.equals(station.getRaspberryPi().getId(), piId)) throw new NotFoundException(SENSOR_STATION_WITH_ID + id + " not found");
@@ -71,6 +96,13 @@ public class SensorStationService {
         return repo.save(station);
     }
 
+    /**
+     * Updates sensor station properties using a DTO.
+     *
+     * @param id sensor station ID
+     * @param dto update payload
+     * @return updated sensor station
+     */
     @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public SensorStation update(Long id, SensorStationUpdateDTO dto) {
         SensorStation updated = internalUpdate(id, dto);
@@ -81,6 +113,15 @@ public class SensorStationService {
         return updatedStation;
     }
 
+    /**
+     * Applies updates from DTO to an existing sensor station without persisting changes.
+     *
+     * <p>This method only modifies the entity in memory. Persistence is handled by callers.</p>
+     *
+     * @param id sensor station ID
+     * @param dto update data
+     * @return modified sensor station entity (not yet saved)
+     */
     private SensorStation internalUpdate(Long id, SensorStationUpdateDTO dto) {
         SensorStation existing = getByIdInternal(id);
 
@@ -111,6 +152,17 @@ public class SensorStationService {
         return existing;
     }
 
+    /**
+     * Updates a sensor station including measurement interval and triggers Raspberry Pi synchronization
+     * if the station is in AVAILABLE state.
+     *
+     * <p>If the station is successfully set up on the Raspberry Pi, a follow-up connect request is sent.</p>
+     *
+     * @param id sensor station ID
+     * @param dto update data
+     * @param measurementInterval new measurement interval
+     * @return updated sensor station
+     */
     @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public SensorStation update(Long id, SensorStationUpdateDTO dto, Integer measurementInterval) {
         SensorStation existing = internalUpdate(id, dto);
@@ -150,9 +202,22 @@ public class SensorStationService {
         return updatedStation;
     }
 
+    /**
+     * Internal lookup for a sensor station by ID without authorization checks.
+     *
+     * @param id sensor station ID
+     * @return sensor station entity
+     * @throws NotFoundException if not found
+     */
     public SensorStation getByIdInternal(Long id) {
         return repo.findById(id).orElseThrow(()-> new NotFoundException(SENSOR_STATION_WITH_ID + id + "not found"));
     }
+
+    /**
+     * Soft-decommissions a sensor station by setting its status to {@link DeviceStatus#DECOMMISSIONED}.
+     *
+     * @param id sensor station ID
+     */
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public void delete(Long id) {
         SensorStation station = getByIdInternal(id);

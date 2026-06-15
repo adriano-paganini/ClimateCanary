@@ -17,6 +17,21 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Service responsible for calculating and updating room privacy mode.
+ *
+ * <p>
+ * Privacy mode is derived from business rules based on:
+ * <ul>
+ *     <li>Room type (e.g. OFFICE vs COMMON_AREAS)</li>
+ *     <li>Number of assigned employees</li>
+ *     <li>Current employee presence (excluding absences)</li>
+ * </ul>
+ *
+ * <p>
+ * After calculation, the updated state is persisted and optionally synchronized
+ * with a connected Raspberry Pi device asynchronously after transaction commit.
+ */
 @Slf4j
 @Service
 public class RoomPrivacyModeService {
@@ -36,6 +51,15 @@ public class RoomPrivacyModeService {
         this.roomPrivacyModePiSyncService = roomPrivacyModePiSyncService;
     }
 
+    /**
+     * Recalculates and updates privacy mode for a given room.
+     *
+     * <p>
+     * The new privacy mode is persisted to the database and, if a Raspberry Pi
+     * is assigned to the room, the update is asynchronously synchronized after commit.
+     *
+     * @param roomId ID of the room to update
+     */
     @Transactional
     public void updatePrivacyModeForRoom(Long roomId) {
         if (roomId == null) {
@@ -79,6 +103,25 @@ public class RoomPrivacyModeService {
         roomPrivacyModePiSyncService.synchronize(piId, roomId, privacyMode);
     }
 
+    /**
+     * Calculates whether privacy mode should be enabled for a room.
+     *
+     * <p>
+     * Rules:
+     * <ul>
+     *     <li>COMMON_AREAS → always false</li>
+     *     <li>Non-OFFICE rooms → always false</li>
+     *     <li>OFFICE rooms:
+     *         <ul>
+     *             <li>&lt; 5 assigned employees → privacy mode ON</li>
+     *             <li>&lt; 5 currently present employees (excluding absences) → ON</li>
+     *         </ul>
+     *     </li>
+     * </ul>
+     *
+     * @param room the room to evaluate
+     * @return true if privacy mode should be enabled
+     */
     private boolean calculatePrivacyMode(Room room) {
         if (room.getRoomType() == RoomType.COMMON_AREAS) {
             return false;

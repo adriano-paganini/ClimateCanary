@@ -15,6 +15,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Service handling absence business logic including:
+ * - CRUD operations for absence entities
+ * - validation of absence rules (e.g., date consistency)
+ * - access control for user-based visibility
+ */
 @Slf4j
 @Service
 public class AbsenceService {
@@ -85,6 +91,12 @@ public class AbsenceService {
         return savedAbsence;
     }
 
+    /**
+     * Updates an existing absence using partial update semantics.
+     * Only non-null fields in the DTO are applied.
+     * <p>
+     * Tracks the actor performing the update for audit purposes.
+     */
     public Absence update(Long id, AbsenceUpdateDTO dto) {
         Absence existing = getById(id);
         Long actorId = authenticatedUserService.getAuthenticatedUser().getId();

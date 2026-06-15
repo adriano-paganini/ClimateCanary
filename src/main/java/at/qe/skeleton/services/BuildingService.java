@@ -13,6 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Service for managing buildings.
+ * Handles building lifecycle operations including creation, updates,
+ * and safe deletion with relationship cleanup for associated rooms.
+ */
 @Slf4j
 @Service
 public class BuildingService {
@@ -51,6 +56,11 @@ public class BuildingService {
         return savedBuilding;
     }
 
+    /**
+     * Updates an existing building using partial update semantics.
+     * Only non-null fields in the DTO are applied.
+     * Supports changing the building's address via addressId lookup.
+     */
     @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public Building update(Long id, BuildingUpdateDTO dto) {
         Building building = getBuildingById(id);
@@ -76,6 +86,15 @@ public class BuildingService {
         return updatedBuilding;
     }
 
+    /**
+     * Deletes a building and safely detaches all associated rooms.
+     * <p>
+     * Before deletion:
+     * - All rooms referencing this building are detached
+     * - Room-building relationships are cleared to prevent foreign key violations
+     * <p>
+     * This operation is transactional to ensure consistency.
+     */
     @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     @Transactional
     public void delete(Long id) {

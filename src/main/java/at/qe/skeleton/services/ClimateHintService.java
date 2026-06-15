@@ -12,6 +12,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
 import java.util.List;
 
+/**
+ * Service for managing climate hints.
+ * Provides CRUD operations with role-based access control.
+ * Handles bidirectional relationships with thresholds during deletion.
+ */
 @Slf4j
 @Service
 public class ClimateHintService {
@@ -46,6 +51,10 @@ public class ClimateHintService {
         return savedClimateHint;
     }
 
+    /**
+     * Updates a climate hint using partial update semantics.
+     * Only non-null fields in the DTO are applied.
+     */
     @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public ClimateHint update(Long id, ClimateHintUpdateDTO dto) {
         ClimateHint climateHint = getClimateHintById(id);
@@ -71,6 +80,15 @@ public class ClimateHintService {
         return updatedClimateHint;
     }
 
+    /**
+     * Deletes a climate hint and removes all bidirectional links to thresholds.
+     * <p>
+     * Ensures consistency by:
+     * - Removing the climate hint from all associated thresholds
+     * - Clearing the threshold set before deletion
+     * <p>
+     * This operation is transactional to maintain data integrity.
+     */
     @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     @Transactional
     public void delete(Long id) {

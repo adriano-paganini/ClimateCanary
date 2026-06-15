@@ -15,6 +15,21 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Service layer responsible for managing Raspberry Pi devices and their relationships
+ * with rooms and sensor stations.
+ *
+ * <p>
+ * This service enforces business rules such as:
+ * <ul>
+ *     <li>Each room can have at most one Raspberry Pi</li>
+ *     <li>Sensor stations are managed and attached to Raspberry Pis</li>
+ *     <li>Device lifecycle states (ACTIVE, DECOMMISSIONED) are handled consistently</li>
+ * </ul>
+ *
+ * <p>
+ * It also provides internal methods that bypass security restrictions for system-level workflows.
+ */
 @Slf4j
 @Service
 public class RaspberryPiService {
@@ -52,6 +67,17 @@ public class RaspberryPiService {
         return repo.findById(id).orElseThrow(() -> new NotFoundException("RaspberryPi with id " + id + " not found"));
     }
 
+    /**
+     * Creates a new Raspberry Pi and assigns it to a room.
+     *
+     * <p>Business rules:
+     * <ul>
+     *     <li>Room must exist</li>
+     *     <li>Room must not already have a Raspberry Pi</li>
+     * </ul>
+     *
+     * @throws IllegalArgumentException if constraints are violated
+     */
     @Transactional
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public RaspberryPi create(RaspberryPi pi) {
@@ -91,6 +117,18 @@ public class RaspberryPiService {
         return sharedUpdate(id, dto);
     }
 
+    /**
+     * Shared update logic for both internal and secured update methods.
+     *
+     * <p>Updates:
+     * <ul>
+     *     <li>IP address</li>
+     *     <li>Device status</li>
+     *     <li>Hostname</li>
+     *     <li>Room assignment (ensures uniqueness constraint)</li>
+     *     <li>Sensor station associations</li>
+     * </ul>
+     */
     private RaspberryPi sharedUpdate(Long id, RaspberryPiUpdateDTO dto){
         RaspberryPi existing = getByIdInternal(id);
 
@@ -166,6 +204,15 @@ public class RaspberryPiService {
                 .toList();
     }
 
+    /**
+     * Decommissions a Raspberry Pi.
+     *
+     * <p>Instead of hard deletion:
+     * <ul>
+     *     <li>Removes room association</li>
+     *     <li>Marks device and sensor stations as DECOMMISSIONED</li>
+     * </ul>
+     */
     @Transactional
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public void delete(Long id) {
@@ -182,6 +229,12 @@ public class RaspberryPiService {
         log.info("Deleted raspberry pi with id={}", id);
     }
 
+    /**
+     * Adds or updates available sensor stations discovered during scanning.
+     *
+     * <p>
+     * If a station exists (by BLE MAC), it is updated; otherwise created.
+     */
     @Transactional
     public void addAvailableSensorStations(Long id, List<String> stationBleMacs) {
         RaspberryPi pi = getByIdInternal(id);
@@ -227,6 +280,11 @@ public class RaspberryPiService {
         log.info("Finished adding {} available sensor station(s) to raspberry pi with id={}", stationBleMacs.size(), id);
     }
 
+    /**
+     * Removes a sensor station after a scan timeout event.
+     *
+     * <p>Deletes station and removes association from Raspberry Pi.
+     */
     @Transactional
     public void removeAvailableSensorStationAfterScanTimeOut(Long piId, Long stationId) {
         log.info("Removing available sensor station after scan timeout: raspberryPiId={}, sensorStationId={}", piId, stationId);

@@ -10,6 +10,20 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Service responsible for synchronizing threshold configurations with Raspberry Pi devices.
+ *
+ * <p>This service ensures that threshold updates are properly propagated to the correct
+ * Raspberry Pi, including handling:</p>
+ * <ul>
+ *     <li>Deletion of old threshold configurations</li>
+ *     <li>Insertion of updated threshold configurations</li>
+ *     <li>Disabling of thresholds</li>
+ *     <li>Resolution of active violations when thresholds are disabled</li>
+ * </ul>
+ *
+ * <p>All synchronization operations are executed asynchronously.</p>
+ */
 @Slf4j
 @Service
 public class ThresholdPiSyncService {
@@ -20,6 +34,26 @@ public class ThresholdPiSyncService {
         this.raspberryPiServerService = raspberryPiServerService;
     }
 
+    /**
+     * Synchronizes threshold state between database and Raspberry Pi devices.
+     *
+     * <p>Workflow:
+     * <ul>
+     *     <li>Removes old threshold configuration from previous Pi (if applicable)</li>
+     *     <li>If threshold is disabled, resolves any active violations and stops</li>
+     *     <li>Sends updated threshold configuration to the new Pi (if applicable)</li>
+     * </ul>
+     * </p>
+     *
+     * @param thresholdId ID of the threshold being synchronized
+     * @param oldPiId previous Raspberry Pi ID (may be null)
+     * @param oldThresholdDTO previous threshold representation (may be null)
+     * @param newPiId new Raspberry Pi ID (may be null)
+     * @param updatedThresholdDTO updated threshold representation (may be null)
+     * @param climateHints list of climate hints associated with the threshold
+     * @param enabled whether the threshold is active
+     * @param resolvedViolations list of violations that should be resolved if threshold is disabled
+     */
     @Async
     public void synchronize(
             Long thresholdId,
@@ -75,6 +109,14 @@ public class ThresholdPiSyncService {
         }
     }
 
+    /**
+     * Sends violation resolution updates to a Raspberry Pi when a threshold is disabled.
+     *
+     * <p>Iterates over all resolved violations and notifies the Pi that they are no longer active.</p>
+     *
+     * @param piId Raspberry Pi ID
+     * @param resolvedViolations list of resolved violation DTOs
+     */
     private void resolveViolations(Long piId, List<ViolationResolvedDTO> resolvedViolations) {
         if (piId == null || resolvedViolations.isEmpty()) {
             return;

@@ -12,6 +12,21 @@ import org.springframework.web.client.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Service responsible for server-to-Raspberry Pi communication.
+ * <p>
+ * This service acts as an HTTP client that sends configuration updates,
+ * sensor commands, and system instructions to Raspberry Pi devices.
+ * <p>
+ * Responsibilities include:
+ * - Sending configuration and threshold updates
+ * - Managing sensor station connections and setup
+ * - Triggering scans and heartbeat checks
+ * - Resolving violations and updating occupancy state
+ * <p>
+ * All communication is performed via REST calls with robust error handling
+ * and mapped to {@link PiRequestResult} outcomes.
+ */
 @Slf4j
 @Service
 public class RaspberryPiServerService {
@@ -33,6 +48,13 @@ public class RaspberryPiServerService {
         return URL_PROTOCOL + pi.getIpAddress() + API_BASE_PATH + path;
     }
 
+    /**
+     * Sends a full configuration payload to a Raspberry Pi.
+     *
+     * @param piId ID of the Raspberry Pi
+     * @param config YAML or configuration payload
+     * @return result indicating success or failure type
+     */
     public PiRequestResult sendConfig(Long piId, String config) {
         RaspberryPi pi = raspberryPiService.getByIdInternal(piId);
         String url = buildPiUrl(pi, piId + "/config");
@@ -74,6 +96,12 @@ public class RaspberryPiServerService {
         }
     }
 
+    /**
+     * Verifies whether the Raspberry Pi recognizes the given ID in its configuration.
+     *
+     * @param piId Raspberry Pi identifier
+     * @return true if the Pi confirms the ID, false otherwise
+     */
     public boolean verifyPiIdInConfig(Long piId) {
         RaspberryPi pi = raspberryPiService.getByIdInternal(piId);
         String url = buildPiUrl(pi, "setup/verify/" + piId);
@@ -108,6 +136,14 @@ public class RaspberryPiServerService {
         }
     }
 
+    /**
+     * Sends occupancy/privacy mode information for a room to a Raspberry Pi.
+     *
+     * @param piId Raspberry Pi identifier
+     * @param roomId room identifier
+     * @param privacyMode whether privacy mode is active
+     * @return request result indicating success or failure type
+     */
     public PiRequestResult setOccupancy(Long piId, Long roomId, boolean privacyMode) {
         Room room = roomService.getByIdInternal(roomId);
         OccupancyDTO dto = new OccupancyDTO(room.getName(), privacyMode);
@@ -151,6 +187,12 @@ public class RaspberryPiServerService {
         }
     }
 
+    /**
+     * Checks whether a Raspberry Pi is reachable and responsive.
+     *
+     * @param piId Raspberry Pi identifier
+     * @return true if Pi responds successfully, false otherwise
+     */
     public Boolean getHeartbeat(Long piId) {
         RaspberryPi pi = raspberryPiService.getByIdInternal(piId);
         String url = buildPiUrl(pi, piId + "/heartbeat");
@@ -185,6 +227,12 @@ public class RaspberryPiServerService {
         }
     }
 
+    /**
+     * Triggers a scan on the Raspberry Pi to discover available sensor stations.
+     *
+     * @param piId Raspberry Pi identifier
+     * @return request result indicating success or failure type
+     */
     public PiRequestResult startScanForAvailableSensorStations(Long piId) {
         RaspberryPi pi = raspberryPiService.getByIdInternal(piId);
         String url = buildPiUrl(pi, piId + "/scan");
@@ -226,6 +274,13 @@ public class RaspberryPiServerService {
         }
     }
 
+    /**
+     * Connects a sensor station to a Raspberry Pi.
+     *
+     * @param piId Raspberry Pi identifier
+     * @param station sensor station data
+     * @return request result indicating success or failure type
+     */
     public PiRequestResult connectToStation(Long piId, SensorStationDTO station) {
         RaspberryPi pi = raspberryPiService.getByIdInternal(piId);
         String url = buildPiUrl(pi, piId + "/station");
@@ -267,6 +322,13 @@ public class RaspberryPiServerService {
         }
     }
 
+    /**
+     * Initializes a sensor station on a Raspberry Pi.
+     *
+     * @param piId Raspberry Pi identifier
+     * @param station sensor station configuration
+     * @return request result indicating success or failure type
+     */
     public PiRequestResult setupStation(Long piId, SensorStationDTO station) {
         RaspberryPi pi = raspberryPiService.getByIdInternal(piId);
         String url = buildPiUrl(pi, piId + "/setup");
@@ -308,6 +370,13 @@ public class RaspberryPiServerService {
         }
     }
 
+    /**
+     * Sends updated threshold configuration and associated climate hints to a Raspberry Pi.
+     *
+     * @param piId Raspberry Pi identifier
+     * @param completeThresholdInfo threshold-to-hint mapping
+     * @return request result indicating success or failure type
+     */
     public PiRequestResult informAboutNewThresholds(Long piId, Map<ThresholdDTO, List<ClimateHintDTO>> completeThresholdInfo) {
         RaspberryPi pi = raspberryPiService.getByIdInternal(piId);
         String url = buildPiUrl(pi, piId + "/config/thresholds");
@@ -349,6 +418,13 @@ public class RaspberryPiServerService {
         }
     }
 
+    /**
+     * Removes threshold configurations from a Raspberry Pi.
+     *
+     * @param piId Raspberry Pi identifier
+     * @param thresholdDTOS list of thresholds to remove
+     * @return request result indicating success or failure type
+     */
     public PiRequestResult deleteThresholds(Long piId, List<ThresholdDTO> thresholdDTOS) {
         RaspberryPi pi = raspberryPiService.getByIdInternal(piId);
         String url = buildPiUrl(pi, piId + "/config/thresholds/remove");
@@ -390,6 +466,13 @@ public class RaspberryPiServerService {
         }
     }
 
+    /**
+     * Notifies a Raspberry Pi that an active threshold violation has been resolved.
+     *
+     * @param piId Raspberry Pi identifier
+     * @param dto violation resolution data
+     * @return request result indicating success or failure type
+     */
     public PiRequestResult resolveActiveViolation(Long piId, ViolationResolvedDTO dto) {
         RaspberryPi pi = raspberryPiService.getByIdInternal(piId);
         String url = buildPiUrl(pi, piId + "/violation/resolve");
