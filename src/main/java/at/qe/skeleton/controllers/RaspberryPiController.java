@@ -19,6 +19,10 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 import java.util.List;
 
+/**
+ * REST controller for managing employee profiles.
+ * Provides CRUD operations and user-specific profile access.
+ */
 @RestController
 @RequestMapping("/api/bpi")
 public class RaspberryPiController {

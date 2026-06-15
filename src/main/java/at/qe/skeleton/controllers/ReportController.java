@@ -22,6 +22,11 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.regex.Pattern;
 
+/**
+ * REST controller responsible for handling report email requests.
+ * Validates PDF attachments and recipient addresses, enforces BUILDING_ADMIN access,
+ * and publishes events for asynchronous email delivery.
+ */
 @Slf4j
 @RestController
 @RequestMapping("/api/reports")
@@ -65,6 +70,7 @@ public class ReportController {
         }
 
         byte[] pdfBytes;
+
         try {
             pdfBytes = attachment.getBytes();
         } catch (IOException e) {
@@ -78,13 +84,9 @@ public class ReportController {
 
         log.info("ReportController | Publishing ReportEmailRequestedEvent → recipient={}, file={}, {}B",
                 recipient, filename, pdfBytes.length);
-
         log.info("Publishing report email event");
 
-        eventPublisher.publishEvent(
-                new ReportEmailRequestedEvent(to, pdfBytes, filename)
-        );
-
+        eventPublisher.publishEvent(new ReportEmailRequestedEvent(to, pdfBytes, filename));
         log.info("Published report email event");
 
         return ResponseEntity.accepted().build();

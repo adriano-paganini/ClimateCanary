@@ -12,6 +12,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * REST controller for managing threshold violations.
+ * Supports retrieval with filtering and basic CRUD operations.
+ */
 @RestController
 @RequestMapping("/api/thresholdviolation")
 public class ThresholdViolationController {
@@ -25,6 +29,10 @@ public class ThresholdViolationController {
         this.thresholdViolationMapper = thresholdViolationMapper;
     }
 
+    /**
+     * Returns threshold violations filtered by status, room, and department.
+     * All parameters are optional and can be combined.
+     */
     @GetMapping
     public ResponseEntity<List<ThresholdViolationDTO>> getAll(
             @RequestParam(required = false) ViolationStatus violationStatus,

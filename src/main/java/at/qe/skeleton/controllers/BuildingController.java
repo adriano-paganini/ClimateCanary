@@ -17,6 +17,11 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 import java.util.List;
 
+/**
+ * REST controller for managing buildings.
+ * Provides CRUD operations for buildings and
+ * access to rooms associated with a building.
+ */
 @RestController
 @RequestMapping("/api/building")
 public class BuildingController {
@@ -74,6 +79,12 @@ public class BuildingController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Retrieves all rooms belonging to the specified building.
+     *
+     * @param id building identifier
+     * @return list of rooms assigned to the building
+     */
     @GetMapping("/{id}/rooms")
     public ResponseEntity<List<RoomDTO>> getRooms(@PathVariable Long id) {
         List<RoomDTO> buildingRooms = buildingService.getBuildingById(id).getRooms()

@@ -13,6 +13,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * REST controller for managing threshold configurations.
+ * Supports CRUD operations and filtering by room and metric.
+ */
 @RestController
 @RequestMapping("/api/threshold")
 public class ThresholdController {
@@ -26,6 +30,10 @@ public class ThresholdController {
         this.thresholdMapper = thresholdMapper;
     }
 
+    /**
+     * Returns thresholds filtered optionally by room and metric.
+     * If no parameters are provided, returns all thresholds.
+     */
     @GetMapping
     public ResponseEntity<List<ThresholdDTO>> getAll(
             @RequestParam(required = false) Long roomId,

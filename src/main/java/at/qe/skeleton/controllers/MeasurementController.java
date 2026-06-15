@@ -14,6 +14,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * REST controller for managing measurements.
+ * Provides endpoints for querying, filtering, and retrieving latest sensor data.
+ */
 @RestController
 @RequestMapping("/api/measurement")
 public class MeasurementController {
@@ -28,12 +32,14 @@ public class MeasurementController {
     }
 
     /**
-     * GET /api/measurement
-     * GET /api/measurement?roomId=1
-     * GET /api/measurement?roomId=1&metric=TEMPERATURE
-     * GET /api/measurement?from=2025-01-01T00:00:00&to=2025-12-31T23:59:59
-     * GET /api/measurement?roomId=1&metric=TEMPERATURE&from=...&to=...
-     * All parameters are optional and combinable.
+     * Retrieves measurements with optional filtering.
+     * <p>
+     * Supports filtering by:
+     * - room ID
+     * - metric type
+     * - time range (from/to)
+     * <p>
+     * All filters are optional and can be combined.
      */
     @GetMapping
     public ResponseEntity<List<MeasurementDTO>> getAll(
