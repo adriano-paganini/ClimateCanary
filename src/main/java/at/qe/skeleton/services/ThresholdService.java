@@ -123,14 +123,13 @@ public class ThresholdService {
     /**
      * Updates an existing threshold and triggers Raspberry Pi synchronization.
      *
-     * <p>Also handles:
+     * <p>Also handles: </p>
      * <ul>
      *     <li>Validation against duplicate thresholds</li>
      *     <li>Updating climate hints</li>
      *     <li>Disabling violations if threshold is disabled</li>
      *     <li>Synchronizing changes with Raspberry Pi</li>
      * </ul>
-     * </p>
      *
      * @param id threshold ID
      * @param dto update data
@@ -291,13 +290,12 @@ public class ThresholdService {
     /**
      * Deletes a threshold and performs cleanup of all related associations.
      *
-     * <p>Before deletion:
+     * <p>Before deletion: </p>
      * <ul>
      *     <li>Detaches climate hints</li>
      *     <li>Detaches threshold violations</li>
      *     <li>Notifies Raspberry Pi (even if already removed)</li>
      * </ul>
-     * </p>
      *
      * @param id threshold ID
      */

@@ -21,14 +21,13 @@ import java.util.Objects;
  * <p>This service handles CRUD operations, state transitions, and synchronization
  * of sensor stations with associated Raspberry Pi devices.</p>
  *
- * <p>Responsibilities include:
+ * <p>Responsibilities include:</p>
  * <ul>
  *     <li>Managing sensor station lifecycle (create, update, delete)</li>
  *     <li>Assigning stations to Raspberry Pi and rooms</li>
  *     <li>Synchronizing configuration with Raspberry Pi devices</li>
  *     <li>Handling device status transitions</li>
  * </ul>
- * </p>
  */
 @Slf4j
 @Service

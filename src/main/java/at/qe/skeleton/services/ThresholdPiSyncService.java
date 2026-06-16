@@ -37,13 +37,12 @@ public class ThresholdPiSyncService {
     /**
      * Synchronizes threshold state between database and Raspberry Pi devices.
      *
-     * <p>Workflow:
+     * <p>Workflow:</p>
      * <ul>
      *     <li>Removes old threshold configuration from previous Pi (if applicable)</li>
      *     <li>If threshold is disabled, resolves any active violations and stops</li>
      *     <li>Sends updated threshold configuration to the new Pi (if applicable)</li>
      * </ul>
-     * </p>
      *
      * @param thresholdId ID of the threshold being synchronized
      * @param oldPiId previous Raspberry Pi ID (may be null)
