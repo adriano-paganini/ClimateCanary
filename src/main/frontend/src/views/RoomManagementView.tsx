@@ -488,7 +488,7 @@ const RoomManagementView: React.FC = () => {
 
     const roomTypeTemplate = (row: RoomDTO) => (
         <Tag
-            value={row.roomType === RoomType.COMMON_AREAS ? "Common area" : "Office"}
+            value={row.roomType === RoomType.COMMON_AREAS ? "Common" : "Office"}
             severity={row.roomType === RoomType.OFFICE ? "info" : "warning"}
         />
     );
