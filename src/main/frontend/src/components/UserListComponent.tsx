@@ -64,13 +64,13 @@ const UserListComponent: React.FC<UserListProps> = ({
         />
     );
 
-    const deleteButtonTemplate = (rowData: UserxDTO) => (
+    const deactivateButtonTemplate = (rowData: UserxDTO) => isCurrentUser(rowData) ? null : (
         <Button
-            label="Delete"
-            icon="pi pi-trash"
+            label="Deactivate"
+            icon="pi pi-ban"
             severity="danger"
             onClick={() => onDeleteUser(rowData)}
-            aria-label={`Delete ${rowData.username}`}
+            aria-label={`Deactivate ${rowData.username}`}
         />
     );
 
@@ -91,7 +91,7 @@ const UserListComponent: React.FC<UserListProps> = ({
             <Column field="lastName" header="Last Name" sortable/>
             <Column field="roles" header="Roles" body={rolesBodyTemplate}/>
             <Column body={editButtonTemplate} exportable={false} style={{minWidth: '8rem'}}/>
-            {showDeleteAction && <Column body={deleteButtonTemplate} exportable={false} style={{minWidth: '8rem'}}/>}
+            {showDeleteAction && <Column body={deactivateButtonTemplate} exportable={false} style={{minWidth: '8rem'}}/>}
             {onRestoreUser && <Column body={restoreButtonTemplate} exportable={false} style={{minWidth: '8rem'}}/>}
         </DataTable>
     );

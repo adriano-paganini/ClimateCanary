@@ -3,7 +3,9 @@ import {
     ThresholdViolationControllerApi,
     ThresholdViolationCreateDTO,
     ThresholdViolationDTO,
+    ThresholdViolationDTOViolationStatusEnum,
     ThresholdViolationUpdateDTO,
+    ThresholdViolationUpdateDTOViolationStatusEnum,
 } from "../generated-skeleton-api";
 import { apiConfig } from "./apiConfig";
 
@@ -30,4 +32,12 @@ export const ViolationService = {
 
     delete: (id: number): Promise<void> =>
         api._delete({ id }).then(() => undefined),
+
+    disable: (id: number): Promise<ThresholdViolationDTO> =>
+        api.update({
+            id,
+            thresholdViolationUpdateDTO: {
+                violationStatus: ThresholdViolationDTOViolationStatusEnum.DISABLED as unknown as ThresholdViolationUpdateDTOViolationStatusEnum,
+            },
+        }).then(r => r.data),
 };

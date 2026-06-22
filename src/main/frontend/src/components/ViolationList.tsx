@@ -2,6 +2,7 @@ import React from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Tag } from 'primereact/tag';
+import { Button } from 'primereact/button';
 import {
     ThresholdViolationDTO,
     ThresholdViolationDTOMetricEnum,
@@ -10,6 +11,7 @@ import {
 
 interface ViolationListProps {
     violations: ThresholdViolationDTO[];
+    onDisable?: (violation: ThresholdViolationDTO) => void;
 }
 
 const METRIC_LABEL: Record<string, string> = {
@@ -72,7 +74,7 @@ const statusTemplate = (row: ThresholdViolationDTO) => {
     );
 };
 
-const ViolationList: React.FC<ViolationListProps> = ({ violations }) => (
+const ViolationList: React.FC<ViolationListProps> = ({ violations, onDisable }) => (
     <DataTable
         value={violations}
         emptyMessage="Keine Warnungen vorhanden"
@@ -85,6 +87,24 @@ const ViolationList: React.FC<ViolationListProps> = ({ violations }) => (
         <Column header="Metrik / Messwert" body={metricTemplate} sortable sortField="metric" />
         <Column header="Zeitraum" body={zeitraumTemplate} sortable sortField="startTime" />
         <Column header="Status" body={statusTemplate} sortable sortField="violationStatus" style={{ width: '130px' }} />
+        {onDisable && (
+            <Column
+                header=""
+                style={{ width: '110px' }}
+                body={(row: ThresholdViolationDTO) =>
+                    row.violationStatus === ThresholdViolationDTOViolationStatusEnum.ACTIVE ? (
+                        <Button
+                            label="Deaktivieren"
+                            icon="pi pi-ban"
+                            size="small"
+                            severity="secondary"
+                            outlined
+                            onClick={() => onDisable(row)}
+                        />
+                    ) : null
+                }
+            />
+        )}
     </DataTable>
 );
 

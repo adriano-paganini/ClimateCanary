@@ -297,7 +297,13 @@ const AbsenceView: React.FC = () => {
                             <label style={labelStyle}>From</label>
                             <Calendar
                                 value={startDate}
-                                onChange={e => setStartDate(e.value as Date | null)}
+                                onChange={e => {
+                                    const newStart = e.value as Date | null;
+                                    setStartDate(newStart);
+                                    if (newStart && endDate && endDate <= newStart) {
+                                        setEndDate(null);
+                                    }
+                                }}
                                 showTime
                                 hourFormat="24"
                                 dateFormat="dd.mm.yy"

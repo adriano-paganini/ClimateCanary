@@ -261,48 +261,53 @@ const UserTable = () => {
 
         setValidation({valid: true});
 
+        let success: boolean;
         if (isNewUser) {
-            await createUser();
+            success = await createUser();
         } else {
-            await updateUser();
+            success = await updateUser();
         }
-        hideDialog();
+        if (success) hideDialog();
     };
 
     /**
      * Create a new user and update the state.
      */
-    const createUser = async () => {
-        if (!selectedUser) return;
+    const createUser = async (): Promise<boolean> => {
+        if (!selectedUser) return false;
 
-        // assert type of selectedUser to UserxCreateDTO
         const userToCreate = {...selectedUser, enabled: true} as UserxCreateDTO;
 
-        if (userToCreate.password === undefined) {
-            return;
-        }
+        if (userToCreate.password === undefined) return false;
 
         try {
             const adminControllerAPI = new AdminControllerApi();
             const newUser = await adminControllerAPI.createUser({userxCreateDTO: userToCreate}).then(response => response.data);
             await syncEmployeeProfile(newUser, userToCreate);
             setUsers([...users, newUser as UserxDTO]);
+            return true;
         } catch (err: any) {
             console.error('Error saving user:', err);
-            toast.current?.show({severity: 'error', summary: 'Error', detail: 'Error saving user', life: 3000});
+            const status = err?.response?.status;
+            const msg = err?.response?.data?.message ?? '';
+            let detail = 'Error saving user';
+            if (status === 409 || msg.toLowerCase().includes('username') || msg.toLowerCase().includes('already exists') || msg.toLowerCase().includes('duplicate')) {
+                detail = `Username "${(userToCreate.username as string) ?? ''}" is already taken. Please choose a different username.`;
+            }
+            toast.current?.show({severity: 'error', summary: 'Error', detail, life: 5000});
+            return false;
         }
     }
 
     /**
      * Update an existing user and update the state.
      */
-    const updateUser = async () => {
-        if (!selectedUser) return;
+    const updateUser = async (): Promise<boolean> => {
+        if (!selectedUser) return false;
 
-        // assert type of selectedUser to UserxDTO
         const userToUpdate = selectedUser as UserxDTO;
 
-        if (userToUpdate.id === undefined) return;
+        if (userToUpdate.id === undefined) return false;
 
         try {
             const adminControllerAPI = new AdminControllerApi();
@@ -315,7 +320,7 @@ const UserTable = () => {
             };
 
             const updatedUser = await adminControllerAPI.updateUser({
-                userxUpdateDTO,
+                userxUpdateDTO: userxUpdateDTO,
                 id: userToUpdate.id
             }).then(response => response.data);
             await syncEmployeeProfile(updatedUser, userToUpdate);
@@ -323,9 +328,11 @@ const UserTable = () => {
             if (!isNewUser && isCurrentUser(updatedUser)) {
                 await refreshCurrentUser();
             }
+            return true;
         } catch (err: any) {
             console.error('Error updating user:', err);
             toast.current?.show({severity: 'error', summary: 'Error', detail: 'Error updating user', life: 3000});
+            return false;
         }
     }
 
@@ -387,7 +394,7 @@ const UserTable = () => {
             const adminControllerAPI = new AdminControllerApi();
             await adminControllerAPI.deleteUser({id: user.id});
             setUsers(users.map(u => u.id === user.id ? {...u, enabled: false} : u));
-            toast.current?.show({severity: 'success', summary: 'Deleted', detail: `User "${user.username}" deleted`, life: 3000});
+            toast.current?.show({severity: 'success', summary: 'Deactivated', detail: `User "${user.username}" deactivated`, life: 3000});
         } catch (err: any) {
             console.error('Error deleting user:', err);
             toast.current?.show({severity: 'error', summary: 'Error', detail: 'Error deleting user', life: 3000});
@@ -459,8 +466,8 @@ const UserTable = () => {
         }
 
         confirmDialog({
-            message: `Are you sure you want to delete user "${user.username}"?`,
-            header: 'Confirm Delete',
+            message: `Are you sure you want to deactivate user "${user.username}"? They will no longer be able to log in.`,
+            header: 'Confirm Deactivation',
             icon: 'pi pi-exclamation-triangle',
             acceptClassName: 'p-button-danger',
             accept: () => deleteUser(user),
@@ -621,7 +628,7 @@ const UserTable = () => {
                     </section>
 
                     <section style={{marginTop: "2rem"}}>
-                        <h2 style={{fontSize: "1.15rem", margin: "0 0 0.75rem"}}>Deleted Users</h2>
+                        <h2 style={{fontSize: "1.15rem", margin: "0 0 0.75rem"}}>Deactivated Users</h2>
                         <UserListComponent
                             users={deletedUsers}
                             loading={loading}
@@ -631,7 +638,7 @@ const UserTable = () => {
                             onRestoreUser={restoreUser}
                             currentUserId={currentUserId}
                             currentUsername={currentUsername}
-                            emptyMessage="No deleted users found"
+                            emptyMessage="No deactivated users found"
                         />
                     </section>
                 </div>
