@@ -516,7 +516,7 @@ const DeviceManagementView: React.FC = () => {
                             <Column
                                 header="Actions"
                                 style={{ width: '7rem' }}
-                                body={(s: SensorStationDTO) => (
+                                body={(s: SensorStationDTO) => s.deviceStatus === 'DECOMMISSIONED' ? null : (
                                     <div style={{ display: 'flex', gap: '0.25rem' }}>
                                         <Button
                                             icon="pi pi-pencil"
