@@ -706,7 +706,7 @@ const DeviceManagementView: React.FC = () => {
                 </section>
 
                 <section style={{ marginTop: '2rem' }}>
-                    <h2 style={{ fontSize: '1.15rem', margin: '0 0 0.75rem' }}>Deleted Raspberry Pis</h2>
+                    <h2 style={{ fontSize: '1.15rem', margin: '0 0 0.75rem' }}>Decommissioned Raspberry Pis</h2>
                     <DataTable
                         value={decommissionedPis}
                         emptyMessage="No deleted Raspberry Pis."
@@ -724,7 +724,7 @@ const DeviceManagementView: React.FC = () => {
                 </section>
 
                 <section style={{ marginTop: '2rem' }}>
-                    <h2 style={{ fontSize: '1.15rem', margin: '0 0 0.75rem' }}>Deleted Sensor Stations</h2>
+                    <h2 style={{ fontSize: '1.15rem', margin: '0 0 0.75rem' }}>Decommissioned Sensor Stations</h2>
                     <DataTable
                         value={allStations.filter(s => s.deviceStatus === 'DECOMMISSIONED')}
                         emptyMessage="No deleted sensor stations."
