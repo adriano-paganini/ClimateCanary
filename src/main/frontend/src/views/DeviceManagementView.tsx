@@ -268,17 +268,6 @@ const DeviceManagementView: React.FC = () => {
         setRpiDialogVisible(true);
     };
 
-    const openEditRpi = (pi: RaspberryPiDTO) => {
-        setRpiIsNew(false);
-        setSelectedPi(pi);
-        setRpiForm({
-            hostName: pi.hostName ?? '',
-            roomId: pi.roomId ?? null,
-        });
-        setRpiError(null);
-        setRpiDialogVisible(true);
-    };
-
     const saveRpi = async () => {
         if (rpiIsNew) {
             if (!rpiForm.hostName.trim()) { setRpiError('Host Name is required'); return; }
@@ -652,14 +641,6 @@ const DeviceManagementView: React.FC = () => {
                                             {statusTag(pi.deviceStatus)}
                                         </div>
                                         <div style={{ display: 'flex', gap: '0.25rem' }}>
-                                            <Button
-                                                icon="pi pi-pencil"
-                                                text
-                                                size="small"
-                                                onClick={() => openEditRpi(pi)}
-                                                tooltip="Edit"
-                                                tooltipOptions={{ position: 'top' }}
-                                            />
                                             <Button
                                                 icon="pi pi-trash"
                                                 text
