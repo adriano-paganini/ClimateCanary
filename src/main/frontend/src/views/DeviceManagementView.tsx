@@ -183,7 +183,7 @@ const DeviceManagementView: React.FC = () => {
         if (scanPiId == null) return;
         setScanning(true);
         setScanTriggered(true);
-        setScanCountdown(10);
+        setScanCountdown(30);
         setAvailableStations([]);
         try {
             await SensorStationService.triggerScan(scanPiId);
@@ -204,7 +204,7 @@ const DeviceManagementView: React.FC = () => {
 
     useEffect(() => { availableStationsRef.current = availableStations; }, [availableStations]);
 
-    // Fire "no devices found" only after 25 s total - gives the RPI (ca 10s BLE scan)
+    // Fire "no devices found" only after 40 s total - gives the RPI (ca 30s BLE scan)
     // plus backend propagation time before giving up
     useEffect(() => {
         if (!scanTriggered) return;
@@ -218,7 +218,7 @@ const DeviceManagementView: React.FC = () => {
                     life: 6000,
                 });
             }
-        }, 25_000);
+        }, 40_000);
         return () => clearTimeout(id);
     }, [scanTriggered]);
 
@@ -885,7 +885,7 @@ const DeviceManagementView: React.FC = () => {
                 footer={scanFooter}
             >
                 <p style={{ color: 'var(--text-color-secondary)', fontSize: '0.875rem', marginBottom: '1rem' }}>
-                    The Raspberry Pi will scan for nearby Arduino devices in setup mode (takes ~10 seconds).
+                    The Raspberry Pi will scan for nearby Arduino devices in setup mode (takes ~30 seconds).
                     Select a found device to register it as a sensor station.
                 </p>
 
