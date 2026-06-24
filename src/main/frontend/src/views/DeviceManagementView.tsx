@@ -679,7 +679,7 @@ const DeviceManagementView: React.FC = () => {
                                                     <span>
                                                         Setup required: Download conf.yaml, copy it to this Raspberry Pi's SD card, and power it on — the Pi will appear Online once it has booted and connected to the backend.{' '}
                                                         See the{' '}
-                                                        <a href="/rpi-setup_tutorial.pdf" target="_blank" rel="noreferrer" style={{ color: 'inherit', fontWeight: 600 }}>
+                                                        <a href="/rpi-setup.pdf" target="_blank" rel="noreferrer" style={{ color: 'inherit', fontWeight: 600 }}>
                                                             Setup Tutorial (PDF)
                                                         </a>
                                                         {' '}for step-by-step guidance.
