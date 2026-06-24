@@ -19,6 +19,11 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 import java.util.List;
 
+/**
+ * REST controller for managing departments.
+ * Provides CRUD operations and access to related resources
+ * such as rooms and department leadership.
+ */
 @RestController
 @RequestMapping("/api/department")
 public class DepartmentController {
@@ -55,6 +60,12 @@ public class DepartmentController {
         return ResponseEntity.ok(departmentMapper.mapTo(departmentService.getDepartmentById(id)));
     }
 
+    /**
+     * Retrieves all rooms assigned to a department.
+     *
+     * @param id department id
+     * @return list of rooms belonging to the department
+     */
     @GetMapping("/{id}/rooms")
     public ResponseEntity<List<RoomDTO>> getRooms(@PathVariable Long id) {
         List<RoomDTO> rooms = departmentService.getDepartmentById(id).getRooms().stream()
@@ -63,6 +74,12 @@ public class DepartmentController {
         return ResponseEntity.ok(rooms);
     }
 
+    /**
+     * Retrieves the leader of a department.
+     *
+     * @param id department id
+     * @return department leader user
+     */
     @GetMapping("/{id}/leader")
     public ResponseEntity<UserxDTO> getDepartmentLeader(@PathVariable Long id) {
         Department department = departmentService.getDepartmentById(id);

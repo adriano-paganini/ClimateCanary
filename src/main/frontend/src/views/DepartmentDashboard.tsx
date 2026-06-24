@@ -1,14 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { addDays, format } from 'date-fns';
 import { ProgressSpinner } from 'primereact/progressspinner';
 import { Message } from 'primereact/message';
 import { Button } from 'primereact/button';
 import { Dropdown } from 'primereact/dropdown';
+import { Toast } from 'primereact/toast';
 import 'primeicons/primeicons.css';
 
 import NavbarComponent from '../components/NavbarComponent';
 import RoomCard from '../components/RoomCard';
+import ViolationList from '../components/ViolationList';
 import { useUser } from '../Contexts/AuthenticatedUserContext';
 import { useDepartment } from '../Contexts/DepartmentContext';
 import { ViolationService, ViolationStatusEnum } from '../services/ViolationService';
@@ -196,6 +198,8 @@ const DepartmentDashboard: React.FC = () => {
     const { departments, selectedDepartmentId, setSelectedDepartmentId, loading, error: deptError } = useDepartment();
     const navigate = useNavigate();
 
+    const toast = useRef<Toast>(null);
+
     const [loadingDepartmentData, setLoadingDepartmentData] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [rooms, setRooms] = useState<RoomDTO[]>([]);
@@ -203,6 +207,23 @@ const DepartmentDashboard: React.FC = () => {
     const [violationsByRoom, setViolationsByRoom] = useState<Record<number, ThresholdViolationDTO[]>>({});
     const [loadingRoomIds, setLoadingRoomIds] = useState<Set<number>>(new Set());
     const [hydrationStatus, setHydrationStatus] = useState<HydrationStatus | null>(null);
+
+    const handleDisableViolation = async (violation: ThresholdViolationDTO) => {
+        if (!violation.id) return;
+        try {
+            const updated = await ViolationService.disable(violation.id);
+            setViolationsByRoom(prev => {
+                const next = { ...prev };
+                for (const roomId of Object.keys(next)) {
+                    next[Number(roomId)] = next[Number(roomId)].map(v => v.id === updated.id ? updated : v);
+                }
+                return next;
+            });
+            toast.current?.show({ severity: 'success', summary: 'Deaktiviert', detail: 'Schwellenwertwarnung deaktiviert', life: 3000 });
+        } catch {
+            toast.current?.show({ severity: 'error', summary: 'Fehler', detail: 'Deaktivierung fehlgeschlagen', life: 3000 });
+        }
+    };
 
     useEffect(() => {
         if (!selectedDepartmentId) {
@@ -319,8 +340,11 @@ const DepartmentDashboard: React.FC = () => {
         );
     }
 
+    const allViolations = Object.values(violationsByRoom).flat();
+
     return (
         <div>
+            <Toast ref={toast} />
             <NavbarComponent />
 
             <div style={{ padding: '1.5rem 2rem', maxWidth: '1400px', margin: '0 auto' }}>
@@ -427,44 +451,56 @@ const DepartmentDashboard: React.FC = () => {
                             <p style={{ color: '#6b7280', margin: '0.5rem 0 0' }}>No rooms assigned to this department.</p>
                         </div>
                     ) : (
-                        <div className="flex flex-wrap gap-3">
-                            {rooms.map(room => {
-                                const loadingRoom = room.id !== undefined && loadingRoomIds.has(room.id);
+                        <>
+                            <div className="flex flex-wrap gap-3">
+                                {rooms.map(room => {
+                                    const loadingRoom = room.id !== undefined && loadingRoomIds.has(room.id);
 
-                                return (
-                                    <div key={room.id} style={{ position: 'relative' }}>
-                                        <RoomCard
-                                            room={room}
-                                            measurements={room.id !== undefined ? measurementsByRoom[room.id] ?? [] : []}
-                                            violations={room.id !== undefined ? violationsByRoom[room.id] ?? [] : []}
-                                            historyRoute={ROUTES.DEPARTMENT_ROOM_HISTORY}
-                                        />
-                                        {loadingRoom && (
-                                            <div
-                                                style={{
-                                                    position: 'absolute',
-                                                    inset: 0,
-                                                    background: 'rgba(255,255,255,0.78)',
-                                                    borderRadius: '10px',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    zIndex: 20,
-                                                    color: '#1e3a8a',
-                                                    fontWeight: 600,
-                                                    pointerEvents: 'none',
-                                                }}
-                                            >
-                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                    <i className="pi pi-spin pi-spinner" />
-                                                    Loading...
-                                                </span>
-                                            </div>
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
+                                    return (
+                                        <div key={room.id} style={{ position: 'relative' }}>
+                                            <RoomCard
+                                                room={room}
+                                                measurements={room.id !== undefined ? measurementsByRoom[room.id] ?? [] : []}
+                                                violations={room.id !== undefined ? violationsByRoom[room.id] ?? [] : []}
+                                                historyRoute={ROUTES.DEPARTMENT_ROOM_HISTORY}
+                                            />
+                                            {loadingRoom && (
+                                                <div
+                                                    style={{
+                                                        position: 'absolute',
+                                                        inset: 0,
+                                                        background: 'rgba(255,255,255,0.78)',
+                                                        borderRadius: '10px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        zIndex: 20,
+                                                        color: '#1e3a8a',
+                                                        fontWeight: 600,
+                                                        pointerEvents: 'none',
+                                                    }}
+                                                >
+                                                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                        <i className="pi pi-spin pi-spinner" />
+                                                        Loading...
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {allViolations.length > 0 && (
+                                <div style={{ marginTop: '2rem' }}>
+                                    <h3 style={{ margin: '0 0 1rem', color: '#111827', fontSize: '1.1rem', fontWeight: 600 }}>
+                                        <i className="pi pi-exclamation-triangle" style={{ marginRight: '0.5rem', color: '#dc2626' }} />
+                                        Schwellenwert-Warnungen
+                                    </h3>
+                                    <ViolationList violations={allViolations} onDisable={handleDisableViolation} />
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             </div>

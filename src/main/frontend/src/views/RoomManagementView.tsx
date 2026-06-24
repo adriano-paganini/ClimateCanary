@@ -49,6 +49,7 @@ import { RoomService } from "../services/RoomService";
 import { ThresholdService } from "../services/ThresholdService";
 import { ViolationService } from "../services/ViolationService";
 import NoDataOverlay from "../components/NoDataOverlay";
+import ViolationList from "../components/ViolationList";
 import { findGapRanges } from "../utilities/dataGapUtils";
 
 type TimeRange = "24h" | "7d" | "30d" | "90d" | "1y";
@@ -460,6 +461,17 @@ const RoomManagementView: React.FC = () => {
         }
     };
 
+    const handleDisableViolation = async (violation: ThresholdViolationDTO) => {
+        if (!violation.id) return;
+        try {
+            const updated = await ViolationService.disable(violation.id);
+            setViolations(prev => prev.map(v => v.id === updated.id ? updated : v));
+            toast.current?.show({ severity: "success", summary: "Deactivated", detail: "Threshold violation deactivated", life: 3000 });
+        } catch {
+            toast.current?.show({ severity: "error", summary: "Error", detail: "Failed to deactivate violation", life: 3000 });
+        }
+    };
+
     const buildGapPlugin = (): Plugin => {
         const points = (trend?.points ?? [])
             .filter(p => p.timestamp)
@@ -488,7 +500,7 @@ const RoomManagementView: React.FC = () => {
 
     const roomTypeTemplate = (row: RoomDTO) => (
         <Tag
-            value={row.roomType === RoomType.COMMON_AREAS ? "Common area" : "Office"}
+            value={row.roomType === RoomType.COMMON_AREAS ? "Common" : "Office"}
             severity={row.roomType === RoomType.OFFICE ? "info" : "warning"}
         />
     );
@@ -739,22 +751,10 @@ const RoomManagementView: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <DataTable
-                                        value={violations}
-                                        emptyMessage="No active or resolved threshold violations for this room."
-                                        stripedRows
-                                        paginator
-                                        rows={8}
-                                        sortField="startTime"
-                                        sortOrder={-1}
-                                        className="room-management-violations-table"
-                                    >
-                                        <Column field="metric" header="Metric" body={(row: ThresholdViolationDTO) => metricLabel(row.metric)} sortable />
-                                        <Column field="value" header="Value" body={(row: ThresholdViolationDTO) => formatNumber(row.value)} sortable />
-                                        <Column field="violationStatus" header="Status" body={violationStatusTemplate} sortable className="room-management-optional-column" />
-                                        <Column field="startTime" header="Started" body={(row: ThresholdViolationDTO) => dateTemplate(row.startTime)} sortable className="room-management-optional-column" />
-                                        <Column field="endTime" header="Ended" body={(row: ThresholdViolationDTO) => dateTemplate(row.endTime)} sortable className="room-management-optional-column" />
-                                    </DataTable>
+                                    <ViolationList
+                                        violations={violations}
+                                        onDisable={handleDisableViolation}
+                                    />
                                 </Card>
 
                                 {/* Thresholds card */}
@@ -870,6 +870,7 @@ const RoomManagementView: React.FC = () => {
                             onChange={e => setThresholdForm(f => ({ ...f, metric: e.value, boundValue: undefined }))}
                             placeholder="Select metric"
                             style={{ width: "100%" }}
+                            appendTo="self"
                         />
                     </div>
                     <div className="field">
@@ -881,6 +882,7 @@ const RoomManagementView: React.FC = () => {
                             onChange={e => setThresholdForm(f => ({ ...f, thresholdType: e.value }))}
                             placeholder="LOWER / UPPER"
                             style={{ width: "100%" }}
+                            appendTo="self"
                         />
                     </div>
                     <div className="field">

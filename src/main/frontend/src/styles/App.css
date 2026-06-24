@@ -72,6 +72,10 @@
 
 .room-management-room-card {
     min-width: 0;
+    position: sticky;
+    top: 1rem;
+    max-height: calc(100vh - 6rem);
+    overflow-y: auto;
 }
 
 .room-management-detail-stack {

@@ -15,6 +15,19 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Service responsible for managing rooms and their relationships to
+ * departments, buildings, employees, and IoT devices.
+ *
+ * <p>
+ * This service enforces key business rules such as:
+ * <ul>
+ *     <li>Rooms are soft-deleted (marked inactive instead of removed)</li>
+ *     <li>Rooms may have at most one Raspberry Pi</li>
+ *     <li>Device decommissioning is triggered on deletion</li>
+ *     <li>Employee assignment constraints are validated before deletion</li>
+ * </ul>
+ */
 @Slf4j
 @Service
 public class RoomService {
@@ -113,8 +126,17 @@ public class RoomService {
     }
 
     /**
-     * Soft delete policy
-     * @param id the id of the room to delete
+     * Soft deletes a room.
+     *
+     * <p>
+     * Business rules:
+     * <ul>
+     *     <li>Room must have no assigned employees</li>
+     *     <li>Sensor stations are decommissioned</li>
+     *     <li>Raspberry Pi is decommissioned if present</li>
+     *     <li>Room is detached from department and building</li>
+     *     <li>Room is marked inactive instead of physically deleted</li>
+     * </ul>
      */
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     @Transactional

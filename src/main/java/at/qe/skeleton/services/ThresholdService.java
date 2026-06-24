@@ -28,6 +28,21 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
+/**
+ * Service responsible for managing {@link Threshold} entities and their lifecycle.
+ *
+ * <p>This service handles creation, updates, deletion, and evaluation-related side effects
+ * such as threshold violation management and Raspberry Pi synchronization.</p>
+ *
+ * <p>Main responsibilities:</p>
+ * <ul>
+ *     <li>CRUD operations for thresholds</li>
+ *     <li>Validation of duplicate thresholds per room/metric/type</li>
+ *     <li>Management of climate hint associations</li>
+ *     <li>Handling active threshold violations</li>
+ *     <li>Synchronization with Raspberry Pi devices</li>
+ * </ul>
+ */
 @Slf4j
 @Service
 public class ThresholdService {
@@ -105,6 +120,21 @@ public class ThresholdService {
         return savedThreshold;
     }
 
+    /**
+     * Updates an existing threshold and triggers Raspberry Pi synchronization.
+     *
+     * <p>Also handles: </p>
+     * <ul>
+     *     <li>Validation against duplicate thresholds</li>
+     *     <li>Updating climate hints</li>
+     *     <li>Disabling violations if threshold is disabled</li>
+     *     <li>Synchronizing changes with Raspberry Pi</li>
+     * </ul>
+     *
+     * @param id threshold ID
+     * @param dto update data
+     * @return updated threshold entity
+     */
     @Transactional
     public Threshold update(Long id, ThresholdUpdateDTO dto) {
         Threshold entity = getThresholdById(id);
@@ -169,6 +199,17 @@ public class ThresholdService {
         return updatedThreshold;
     }
 
+    /**
+     * Prepares and sends threshold synchronization data to Raspberry Pi service.
+     *
+     * <p>Builds DTO representations and determines whether violations must be resolved
+     * when the threshold is disabled.</p>
+     *
+     * @param thresholdId threshold ID
+     * @param oldPiId previous Raspberry Pi ID (nullable)
+     * @param oldThresholdDTO previous threshold state (nullable)
+     * @param updatedThreshold updated threshold entity
+     */
     private void enqueueThresholdSync(
             Long thresholdId,
             Long oldPiId,
@@ -246,6 +287,18 @@ public class ThresholdService {
         );
     }
 
+    /**
+     * Deletes a threshold and performs cleanup of all related associations.
+     *
+     * <p>Before deletion: </p>
+     * <ul>
+     *     <li>Detaches climate hints</li>
+     *     <li>Detaches threshold violations</li>
+     *     <li>Notifies Raspberry Pi (even if already removed)</li>
+     * </ul>
+     *
+     * @param id threshold ID
+     */
     @Transactional
     public void delete(Long id) {
         Threshold entity = getThresholdById(id);

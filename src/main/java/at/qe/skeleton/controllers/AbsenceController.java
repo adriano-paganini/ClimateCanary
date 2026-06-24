@@ -15,6 +15,11 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 import java.util.List;
 
+/**
+ * REST controller for managing employee absences.
+ * Provides endpoints for creating, retrieving, updating,
+ * and deleting absence records.
+ */
 @RestController
 @RequestMapping("/api/absence")
 public class AbsenceController {
@@ -49,6 +54,12 @@ public class AbsenceController {
         return ResponseEntity.ok(absenceMapper.mapTo(absenceService.getById(id)));
     }
 
+    /**
+     * Creates a new absence record.
+     *
+     * @param dto absence data
+     * @return the created absence together with a Location header
+     */
     @PostMapping
     public ResponseEntity<AbsenceDTO> create(@Valid @RequestBody AbsenceCreateDTO dto) {
         Absence absence = absenceService.create(absenceCreateMapper.mapFrom(dto));

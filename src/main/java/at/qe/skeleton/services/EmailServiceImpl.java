@@ -13,6 +13,17 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
+/**
+ * SMTP-based implementation of EmailService.
+ * <p>
+ * Sends asynchronous emails using JavaMailSender.
+ * <p>
+ * Features:
+ * - HTML templated emails via EmailTemplateBuilder
+ * - Optional global email toggle via configuration
+ * - Supports attachments (PDF reports)
+ * - Runs asynchronously to avoid blocking request threads
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j

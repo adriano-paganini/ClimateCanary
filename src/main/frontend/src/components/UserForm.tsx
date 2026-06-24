@@ -214,7 +214,7 @@ const UserForm: React.FC<UserFormProps> =
                 <form>
                     <div className="card p-fluid flex flex-wrap gap-3">
                         <div className="flex-auto mb-3">
-                            <label htmlFor="username" className="font-bold block">Username</label>
+                            <label htmlFor="username" className="font-bold block">Username <span style={{ color: 'var(--red-500)' }}>*</span></label>
                             <InputText
                                 id="username"
                                 name="username"
@@ -235,7 +235,7 @@ const UserForm: React.FC<UserFormProps> =
                         </div>
 
                         <div className="flex-auto mb-3">
-                            <label htmlFor="firstName" className="font-bold block">First Name</label>
+                            <label htmlFor="firstName" className="font-bold block">First Name <span style={{ color: 'var(--red-500)' }}>*</span></label>
                             <InputText
                                 id="firstName"
                                 name="firstName"
@@ -249,7 +249,7 @@ const UserForm: React.FC<UserFormProps> =
                         </div>
 
                         <div className="flex-auto mb-3">
-                            <label htmlFor="lastName" className="font-bold block">Last Name</label>
+                            <label htmlFor="lastName" className="font-bold block">Last Name <span style={{ color: 'var(--red-500)' }}>*</span></label>
                             <InputText
                                 id="lastName"
                                 name="lastName"
@@ -263,7 +263,7 @@ const UserForm: React.FC<UserFormProps> =
                         </div>
 
                         <div className="flex-auto mb-3">
-                            <label htmlFor="email" className="font-bold block">E-Mail</label>
+                            <label htmlFor="email" className="font-bold block">E-Mail <span style={{ color: 'var(--red-500)' }}>*</span></label>
                             <InputText
                                 id="email"
                                 name="email"
@@ -278,7 +278,7 @@ const UserForm: React.FC<UserFormProps> =
 
                         {isNewUser && (
                             <div className="flex-auto mb-3">
-                                <label htmlFor="password" className="font-bold block">Password</label>
+                                <label htmlFor="password" className="font-bold block">Password <span style={{ color: 'var(--red-500)' }}>*</span></label>
                                 <Password
                                     inputId="password"
                                     name="password"
@@ -293,7 +293,7 @@ const UserForm: React.FC<UserFormProps> =
                         )}
 
                         <div className="flex-auto mb-3">
-                            <label htmlFor="roles" className="font-bold block">Roles</label>
+                            <label htmlFor="roles" className="font-bold block">Roles <span style={{ color: 'var(--red-500)' }}>*</span></label>
                             <MultiSelect
                                 inputId="roles"
                                 name="roles"
@@ -373,7 +373,7 @@ const UserForm: React.FC<UserFormProps> =
                         )}
 
                         <div className="flex-auto mb-3">
-                            <label htmlFor="phone" className="font-bold block">Phone</label>
+                            <label htmlFor="phone" className="font-bold block">Phone <span style={{ color: 'var(--red-500)' }}>*</span></label>
                             <div style={{ display: "grid", gridTemplateColumns: "12rem minmax(10rem, 1fr)", gap: "0.5rem" }}>
                                 <Dropdown
                                     inputId="phoneCountry"

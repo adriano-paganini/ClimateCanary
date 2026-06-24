@@ -15,6 +15,11 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 import java.util.List;
 
+/**
+ * REST controller for managing climate hints.
+ * Provides CRUD operations for climate-related suggestions
+ * used in the system.
+ */
 @RestController
 @RequestMapping("/api/climatehint")
 public class ClimateHintController {

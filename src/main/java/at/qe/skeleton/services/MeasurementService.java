@@ -16,6 +16,16 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * Service layer for managing measurements coming from sensor stations and Raspberry Pi devices.
+ * <p>
+ * Provides functionality for:
+ * - Retrieving measurements (all or filtered by room, metric, and time range)
+ * - Fetching latest measurements per metric for a room
+ * - Persisting measurement data received from Raspberry Pi devices
+ * <p>
+ * Acts as the central business logic layer between controllers and the measurement repository.
+ */
 @Slf4j
 @Service
 public class MeasurementService {
@@ -68,6 +78,12 @@ public class MeasurementService {
         return measurementRepository.findAll();
     }
 
+    /**
+     * Retrieves the most recent measurement for each metric in a given room.
+     *
+     * @param roomId the room to query
+     * @return map of metric -> latest measurement
+     */
     public Map<Metric, Measurement> getLatestPerMetric(Long roomId) {
         Map<Metric, Measurement> latestMeasurements = Arrays.stream(Metric.values())
                 .map(metric -> measurementRepository.findTopByRoomIdAndMetricOrderByTimestampDesc(roomId, metric))
@@ -81,6 +97,20 @@ public class MeasurementService {
         return latestMeasurements;
     }
 
+    /**
+     * Stores measurements received from a Raspberry Pi device.
+     * <p>
+     * Validates that:
+     * - The Raspberry Pi exists
+     * - The sensor station belongs to the Raspberry Pi
+     * - The referenced room exists
+     * <p>
+     * Then persists all measurements contained in the DTO.
+     *
+     * @param piId Raspberry Pi identifier
+     * @param dto measurement payload from device
+     * @throws NotFoundException if sensor station is not assigned to the given Raspberry Pi
+     */
     @Transactional
     public void saveMeasurementsFromRaspberryPi(Long piId, RPMeasurementDTO dto){
          List<Measurement> measurements = rPmeasurementMapper.mapFrom(dto);

@@ -793,16 +793,23 @@ const OrgStructureView: React.FC = () => {
         </div>
     );
 
-    const addressOptions = addresses.map(a => ({
-        label: addressLabel(a.id),
-        value: a.id,
-    }));
     const takenAddressIds = new Set(
         buildings
             .filter(b => editingBldg == null || b.id !== editingBldg.id)
             .map(b => b.addressId)
             .filter((id): id is number => id != null)
     );
+    const addressOptions = [...addresses]
+        .sort((a, b) => {
+            const aTaken = takenAddressIds.has(a.id!);
+            const bTaken = takenAddressIds.has(b.id!);
+            if (aTaken !== bTaken) return aTaken ? 1 : -1;
+            return addressLabel(a.id).localeCompare(addressLabel(b.id));
+        })
+        .map(a => ({
+            label: addressLabel(a.id),
+            value: a.id,
+        }));
     const addressItemTemplate = (option: { label: string; value: number }) => {
         const taken = takenAddressIds.has(option.value);
         return (
@@ -1188,6 +1195,7 @@ const OrgStructureView: React.FC = () => {
                             filter
                             itemTemplate={addressItemTemplate}
                             style={{ width: '100%' }}
+                            appendTo="self"
                         />
                     </div>
                 </div>
@@ -1221,6 +1229,7 @@ const OrgStructureView: React.FC = () => {
                             filter
                             disabled={editingDept !== null && !canChangeEditingDepartmentLead}
                             style={{ width: '100%' }}
+                            appendTo="self"
                         />
                         {editingDept !== null && !canChangeEditingDepartmentLead && (
                             <small style={{ color: '#b45309', display: 'block', marginTop: '0.4rem' }}>
@@ -1257,6 +1266,7 @@ const OrgStructureView: React.FC = () => {
                             onChange={e => setRoomForm(f => ({ ...f, roomType: e.value as RoomType }))}
                             placeholder="Select room type..."
                             style={{ width: '100%' }}
+                            appendTo="self"
                         />
                     </div>
                     <div>
@@ -1268,6 +1278,7 @@ const OrgStructureView: React.FC = () => {
                             placeholder="Select department..."
                             filter
                             style={{ width: '100%' }}
+                            appendTo="self"
                         />
                     </div>
                     <div>
@@ -1279,6 +1290,7 @@ const OrgStructureView: React.FC = () => {
                             placeholder="Select building..."
                             filter
                             style={{ width: '100%' }}
+                            appendTo="self"
                         />
                     </div>
                 </div>
@@ -1314,6 +1326,7 @@ const OrgStructureView: React.FC = () => {
                             filter
                             itemTemplate={assignUserItemTemplate}
                             style={{ width: '100%' }}
+                            appendTo="self"
                         />
                     </div>
                     <div>
@@ -1325,6 +1338,7 @@ const OrgStructureView: React.FC = () => {
                             placeholder="Select room..."
                             filter
                             style={{ width: '100%' }}
+                            appendTo="self"
                         />
                     </div>
                 </div>

@@ -12,6 +12,11 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+/**
+ * Service for managing addresses.
+ * Provides CRUD operations with security restrictions for system and building administrators.
+ * Ensures referential integrity with buildings before deletion.
+ */
 @Slf4j
 @Service
 public class AddressService {
@@ -53,6 +58,10 @@ public class AddressService {
         return savedAddress;
     }
 
+    /**
+     * Partially updates an existing address.
+     * Only non-null fields from the DTO are applied.
+     */
     @PreAuthorize("hasAnyAuthority('SYSTEM_ADMIN', 'BUILDING_ADMIN')")
     public Address update(Long id, AddressUpdateDTO dto) {
         Address existing = getById(id);

@@ -25,7 +25,7 @@ import java.util.Optional;
 /**
  * REST controllers for admin users.
  * This class is part of the skeleton project provided for students of the
-* course "Software Engineering" offered by Innsbruck University.
+ * course "Software Engineering" offered by Innsbruck University.
  */
 @Tag(name = "Admin Controller")
 @RestController

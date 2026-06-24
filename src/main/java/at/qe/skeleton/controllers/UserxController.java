@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * Userx endpoints exposed by the server.
  * This class is part of the skeleton project provided for students of the
-* course "Software Engineering" offered by Innsbruck University.
+ * course "Software Engineering" offered by Innsbruck University.
  */
 @RestController
 @RequestMapping("/api/userx")

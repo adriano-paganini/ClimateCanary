@@ -15,6 +15,10 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 import java.util.List;
 
+/**
+ * REST controller for managing rooms.
+ * Provides CRUD operations for room entities.
+ */
 @RestController
 @RequestMapping("/api/room")
 public class RoomController {

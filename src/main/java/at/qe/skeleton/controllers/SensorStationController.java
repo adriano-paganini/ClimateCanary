@@ -17,6 +17,10 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 import java.util.List;
 
+/**
+ * REST controller for managing sensor stations.
+ * Supports CRUD operations and Raspberry Pi integration for device discovery and updates.
+ */
 @RestController
 @RequestMapping("/api/sensorstation")
 public class SensorStationController {
@@ -69,6 +73,11 @@ public class SensorStationController {
         SensorStation updated = sensorStationService.update(id, dto);
         return ResponseEntity.ok(sensorStationMapper.mapTo(updated));
     }
+
+    /**
+     * Updates a sensor station including its measurement interval.
+     * Used during initial device configuration.
+     */
     @PatchMapping("/{id}/{measurementInterval}")
     public ResponseEntity<SensorStationDTO> initialUpdate(@PathVariable Long id,
                                                    @PathVariable Integer measurementInterval,
@@ -83,6 +92,10 @@ public class SensorStationController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Triggers Raspberry Pi scan for available sensor stations.
+     * Returns 202 if scan was successfully started, otherwise 400.
+     */
     @PostMapping("/find/{piId}")
     public ResponseEntity<Void> find(@PathVariable Long piId){
         if (PiRequestResult.SUCCESS== raspberryPiServerService.startScanForAvailableSensorStations(piId)){

@@ -910,7 +910,7 @@ const RoomClimateReportPanel: React.FC<RoomClimateReportPanelProps> = ({
                                     color: "#64748b",
                                 }}
                             >
-                                Attach the PDF to an email and send it to any address.
+                                Attach the PDF to an email and send it to any address. <br><small><b>Note: This will send a real email to the address specified as long as EmailService is activated</b></small></br>
                             </p>
 
                             <div

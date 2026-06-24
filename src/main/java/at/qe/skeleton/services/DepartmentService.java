@@ -14,6 +14,17 @@ import org.springframework.stereotype.Service;
 import java.util.HashSet;
 import java.util.List;
 
+/**
+ * Service for managing departments and their relationships.
+ * <p>
+ * Handles department CRUD operations, room assignments, employee assignments,
+ * and automatic management of department lead roles.
+ * <p>
+ * Includes cascading updates to maintain referential integrity across:
+ * - Rooms
+ * - Employee profiles
+ * - User roles (DEPARTMENT_LEAD)
+ */
 @Slf4j
 @Service
 public class DepartmentService {
@@ -54,6 +65,19 @@ public class DepartmentService {
         return savedDepartment;
     }
 
+    /**
+     * Updates department details including:
+     * - department name
+     * - assigned rooms
+     * - department leader
+     * <p>
+     * Side effects:
+     * - Updates room relationships
+     * - Adjusts DEPARTMENT_LEAD roles for users
+     * - Ensures referential integrity across assignments
+     *
+     * @throws NotFoundException if referenced leader does not exist
+     */
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public Department update(Long id, DepartmentUpdateDTO dto) {
         Department existing = getDepartmentById(id);
@@ -114,6 +138,16 @@ public class DepartmentService {
         }
     }
 
+    /**
+     * Deletes a department after validating that no employees are assigned.
+     * <p>
+     * Performs full cleanup:
+     * - Removes room associations
+     * - Removes employee profile associations
+     * - Updates department lead role if needed
+     *
+     * @throws ConflictException if employees are still assigned to the department
+     */
     @PreAuthorize("hasAuthority('SYSTEM_ADMIN')")
     public void delete(Long id) {
         Department department = getDepartmentById(id);

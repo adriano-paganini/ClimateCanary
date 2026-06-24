@@ -18,6 +18,16 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Service responsible for managing threshold violations triggered by
+ * sensor measurements and Raspberry Pi device reports.
+ * <p>
+ * Handles creation, resolution, and lifecycle updates of violations,
+ * including association with thresholds, rooms, and measurements.
+ * <p>
+ * Also coordinates synchronization with Raspberry Pi devices when
+ * violation state changes occur.
+ */
 @Slf4j
 @Service
 public class ThresholdViolationService {
@@ -62,6 +72,17 @@ public class ThresholdViolationService {
                 .orElseThrow(() -> new NotFoundException("There is no such threshold violation with id: " + id));
     }
 
+    /**
+     * Creates a new threshold violation from a manually constructed DTO.
+     * <p>
+     * This method is typically used for internal system creation where the violation
+     * data is already fully assembled and does not originate from a Raspberry Pi event.
+     * <p>
+     * It persists the violation without performing validation against device state.
+     *
+     * @param dto the pre-built violation creation DTO
+     * @return the persisted threshold violation
+     */
     public ThresholdViolation create(ThresholdViolationCreateDTO dto) {
         ThresholdViolation entity = thresholdViolationCreateMapper.mapFrom(dto);
         ThresholdViolation savedViolation = thresholdViolationRepository.save(entity);
@@ -79,8 +100,20 @@ public class ThresholdViolationService {
         return savedViolation;
     }
 
-
-
+    /**
+     * Creates a threshold violation based on data received from a Raspberry Pi device.
+     * <p>
+     * This method validates that the Raspberry Pi belongs to the expected room,
+     * determines the correct threshold based on current room configuration,
+     * and collects relevant measurement history before persisting the violation.
+     * <p>
+     * It represents the real-time ingestion path for detected threshold breaches.
+     *
+     * @param piId Raspberry Pi ID reporting the violation
+     * @param dto incoming violation event from the device
+     * @return the persisted threshold violation
+     * @throws NotFoundException if the Raspberry Pi does not belong to the specified room
+     */
     public ThresholdViolation create(Long piId, ViolationActiveDTO dto) {
         LocalDateTime time = LocalDateTime.parse(dto.startTime(), DateTimeFormatter.ISO_DATE_TIME);
 
@@ -349,6 +382,14 @@ public class ThresholdViolationService {
         };
     }
 
+    /**
+     * Deletes a threshold violation by its ID.
+     * <p>
+     * This permanently removes the violation from the database. No additional
+     * domain cleanup or Raspberry Pi synchronization is performed.
+     *
+     * @param id the ID of the threshold violation to delete
+     */
     public void delete(Long id) {
         thresholdViolationRepository.deleteById(id);
         log.info("Deleted threshold violation with id={}", id);

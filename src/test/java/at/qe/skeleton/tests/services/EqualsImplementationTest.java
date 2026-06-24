@@ -12,10 +12,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * Tests to ensure that each entity's implementation of equals conforms to the
- * contract. See {@linkplain http://www.jqno.nl/equalsverifier/} for more
- * information.
+ * contract. See <a href="http://www.jqno.nl/equalsverifier/">EqualsVerifier</a>
+ * for more information.
  *
- * This class is part of the skeleton project provided for students of the
+ * <p>This class is part of the skeleton project provided for students of the
  * course "Software Engineering" offered by the University of Innsbruck.
  */
 public class EqualsImplementationTest {

@@ -75,6 +75,7 @@ const App: React.FC = () => {
                             <Route path={ROUTES.BUILDINGS} Component={OrgStructureView}/>
                             <Route path={ManageUsersRoute.url} Component={ManageUsersRoute.component}/>
                             <Route path={ROUTES.DEVICES} Component={DeviceManagementView}/>
+                            <Route path={ROUTES.ROOMS} Component={RoomManagementView}/>
                         </Route>
                     </Routes>
                 </BrowserRouter>

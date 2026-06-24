@@ -16,6 +16,10 @@ import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * REST controller for managing employee profiles.
+ * Supports CRUD operations and retrieval of the authenticated user's profile.
+ */
 @RestController
 @RequestMapping("/api/employeeprofile")
 public class EmployeeProfileController {

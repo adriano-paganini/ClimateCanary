@@ -15,6 +15,11 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 import java.util.List;
 
+/**
+ * REST controller responsible for managing addresses.
+ * Provides CRUD endpoints for creating, retrieving,
+ * updating, and deleting address records.
+ */
 @RestController
 @RequestMapping("/api/address")
 public class AddressController {

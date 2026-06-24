@@ -183,7 +183,7 @@ const DeviceManagementView: React.FC = () => {
         if (scanPiId == null) return;
         setScanning(true);
         setScanTriggered(true);
-        setScanCountdown(10);
+        setScanCountdown(30);
         setAvailableStations([]);
         try {
             await SensorStationService.triggerScan(scanPiId);
@@ -204,7 +204,7 @@ const DeviceManagementView: React.FC = () => {
 
     useEffect(() => { availableStationsRef.current = availableStations; }, [availableStations]);
 
-    // Fire "no devices found" only after 25 s total - gives the RPI (ca 10s BLE scan)
+    // Fire "no devices found" only after 40 s total - gives the RPI (ca 30s BLE scan)
     // plus backend propagation time before giving up
     useEffect(() => {
         if (!scanTriggered) return;
@@ -218,7 +218,7 @@ const DeviceManagementView: React.FC = () => {
                     life: 6000,
                 });
             }
-        }, 25_000);
+        }, 40_000);
         return () => clearTimeout(id);
     }, [scanTriggered]);
 
@@ -264,17 +264,6 @@ const DeviceManagementView: React.FC = () => {
         setRpiIsNew(true);
         setSelectedPi(null);
         setRpiForm(EMPTY_RPI_FORM);
-        setRpiError(null);
-        setRpiDialogVisible(true);
-    };
-
-    const openEditRpi = (pi: RaspberryPiDTO) => {
-        setRpiIsNew(false);
-        setSelectedPi(pi);
-        setRpiForm({
-            hostName: pi.hostName ?? '',
-            roomId: pi.roomId ?? null,
-        });
         setRpiError(null);
         setRpiDialogVisible(true);
     };
@@ -527,7 +516,7 @@ const DeviceManagementView: React.FC = () => {
                             <Column
                                 header="Actions"
                                 style={{ width: '7rem' }}
-                                body={(s: SensorStationDTO) => (
+                                body={(s: SensorStationDTO) => s.deviceStatus === 'DECOMMISSIONED' ? null : (
                                     <div style={{ display: 'flex', gap: '0.25rem' }}>
                                         <Button
                                             icon="pi pi-pencil"
@@ -653,14 +642,6 @@ const DeviceManagementView: React.FC = () => {
                                         </div>
                                         <div style={{ display: 'flex', gap: '0.25rem' }}>
                                             <Button
-                                                icon="pi pi-pencil"
-                                                text
-                                                size="small"
-                                                onClick={() => openEditRpi(pi)}
-                                                tooltip="Edit"
-                                                tooltipOptions={{ position: 'top' }}
-                                            />
-                                            <Button
                                                 icon="pi pi-trash"
                                                 text
                                                 size="small"
@@ -698,7 +679,7 @@ const DeviceManagementView: React.FC = () => {
                                                     <span>
                                                         Setup required: Download conf.yaml, copy it to this Raspberry Pi's SD card, and power it on — the Pi will appear Online once it has booted and connected to the backend.{' '}
                                                         See the{' '}
-                                                        <a href="/rpi-setup_tutorial.pdf" target="_blank" rel="noreferrer" style={{ color: 'inherit', fontWeight: 600 }}>
+                                                        <a href="/rpi-setup.pdf" target="_blank" rel="noreferrer" style={{ color: 'inherit', fontWeight: 600 }}>
                                                             Setup Tutorial (PDF)
                                                         </a>
                                                         {' '}for step-by-step guidance.
@@ -725,7 +706,7 @@ const DeviceManagementView: React.FC = () => {
                 </section>
 
                 <section style={{ marginTop: '2rem' }}>
-                    <h2 style={{ fontSize: '1.15rem', margin: '0 0 0.75rem' }}>Deleted Raspberry Pis</h2>
+                    <h2 style={{ fontSize: '1.15rem', margin: '0 0 0.75rem' }}>Decommissioned Raspberry Pis</h2>
                     <DataTable
                         value={decommissionedPis}
                         emptyMessage="No deleted Raspberry Pis."
@@ -743,7 +724,7 @@ const DeviceManagementView: React.FC = () => {
                 </section>
 
                 <section style={{ marginTop: '2rem' }}>
-                    <h2 style={{ fontSize: '1.15rem', margin: '0 0 0.75rem' }}>Deleted Sensor Stations</h2>
+                    <h2 style={{ fontSize: '1.15rem', margin: '0 0 0.75rem' }}>Decommissioned Sensor Stations</h2>
                     <DataTable
                         value={allStations.filter(s => s.deviceStatus === 'DECOMMISSIONED')}
                         emptyMessage="No deleted sensor stations."
@@ -904,7 +885,7 @@ const DeviceManagementView: React.FC = () => {
                 footer={scanFooter}
             >
                 <p style={{ color: 'var(--text-color-secondary)', fontSize: '0.875rem', marginBottom: '1rem' }}>
-                    The Raspberry Pi will scan for nearby Arduino devices in setup mode (takes ~10 seconds).
+                    The Raspberry Pi will scan for nearby Arduino devices in setup mode (takes ~30 seconds).
                     Select a found device to register it as a sensor station.
                 </p>
 

@@ -18,6 +18,17 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * Service for managing employee profiles and their relationships.
+ * <p>
+ * Handles creation, updates, and deletion of employee profiles including:
+ * - user assignment
+ * - department and room relationships
+ * - role synchronization for EMPLOYEE users
+ * - privacy mode updates for affected rooms
+ * <p>
+ * Ensures consistency between User, Room, Department, and EmployeeProfile entities.
+ */
 @Slf4j
 @Service
 public class EmployeeProfileService {
@@ -43,6 +54,11 @@ public class EmployeeProfileService {
         this.roomPrivacyModeService = roomPrivacyModeService;
     }
 
+    /**
+     * Retrieves employee profiles filtered by optional user and department IDs.
+     * <p>
+     * If both parameters are null, all profiles are returned.
+     */
     public List<EmployeeProfile> getAll(Long userId, Long departmentId) {
 
         if (userId != null && departmentId != null) {
@@ -69,6 +85,15 @@ public class EmployeeProfileService {
                 .orElseThrow(() -> new NotFoundException("Employee profile with id " + id + " not found"));
     }
 
+    /**
+     * Creates a new employee profile for a user.
+     * <p>
+     * Business rules:
+     * - A user may only have one employee profile
+     * - Updates room privacy mode after creation
+     *
+     * @throws ConflictException if the user already has a profile
+     */
     @Transactional
     public EmployeeProfile create(EmployeeProfile employeeProfile) {
         Optional<EmployeeProfile> profile = employeeProfileRepository.findByUser(employeeProfile.getUser());
@@ -96,6 +121,20 @@ public class EmployeeProfileService {
         return savedProfile;
     }
 
+    /**
+     * Updates an existing employee profile.
+     * <p>
+     * Supported updates:
+     * - user assignment
+     * - department assignment
+     * - room assignment
+     * <p>
+     * Side effects:
+     * - triggers room privacy mode recalculation for old and new room
+     * - ensures consistency across room assignments
+     *
+     * @throws NotFoundException if referenced user/department/room does not exist
+     */
     @Transactional
     public EmployeeProfile update(Long id, EmployeeProfileUpdateDTO dto) {
         EmployeeProfile existing = getById(id);
@@ -137,6 +176,16 @@ public class EmployeeProfileService {
         return updatedProfile;
     }
 
+    /**
+     * Deletes an employee profile and cleans up all related references.
+     * <p>
+     * Side effects:
+     * - removes EMPLOYEE role from associated user
+     * - clears user-profile bidirectional relationship
+     * - updates room privacy mode for affected room
+     * <p>
+     * Ensures system consistency after profile removal.
+     */
     @Transactional
     public void delete(Long id) {
         EmployeeProfile ep = getById(id);

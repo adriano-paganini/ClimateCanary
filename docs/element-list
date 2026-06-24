@@ -1,0 +1,16 @@
+at.qe.skeleton
+at.qe.skeleton.common
+at.qe.skeleton.common.exceptions
+at.qe.skeleton.configs
+at.qe.skeleton.controllers
+at.qe.skeleton.dtos
+at.qe.skeleton.events
+at.qe.skeleton.helper
+at.qe.skeleton.mappers
+at.qe.skeleton.models
+at.qe.skeleton.repositories
+at.qe.skeleton.scheduled
+at.qe.skeleton.services
+at.qe.skeleton.tests.controllers
+at.qe.skeleton.tests.mappers
+at.qe.skeleton.tests.services
