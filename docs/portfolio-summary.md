@@ -11,10 +11,10 @@ ClimateCanary is a full-stack indoor environmental monitoring project built arou
 ## My Role
 
 - Designed and implemented the Arduino control logic for the sensor station.
-- Took primary responsibility for backend development and system integration.
-- Integrated the embedded hardware and Raspberry Pi gateway with the web platform.
-- Implemented or refined backend support for Pi configuration, threshold synchronization, violation handling, and occupancy/privacy updates.
-- Contributed to the React frontend where hardware and backend workflows had to surface correctly in the UI.
+- Contributed a substantial share of the backend and gateway-integration work, especially around Raspberry Pi communication and device coordination.
+- Implemented or refined backend support for Pi configuration, threshold synchronization, violation handling, sensor-station setup flows, and occupancy/privacy updates.
+- Worked on the boundary between the embedded/gateway stack and the web platform so device workflows were reflected in the backend and UI.
+- Contributed to selected React frontend features tied to routing, room views, privacy behavior, and administration flows.
 
 ## Technical Highlights
 

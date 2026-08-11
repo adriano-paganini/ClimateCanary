@@ -109,13 +109,10 @@ flowchart LR
 
 ## My Contribution
 
-- Designed and implemented the Arduino control logic, including device states, LCD/LED behavior, button handling, warning display flow, and local buffering behavior.
-- Took primary responsibility for backend development and the integration layer between the room gateway and the central platform.
-- Implemented and refined the Raspberry Pi to backend communication flow for boot/configuration updates, threshold synchronization, occupancy/privacy updates, and violation reporting.
-- Connected the embedded and gateway layers to the web platform so that hardware state, warnings, and room data reach the backend and frontend coherently.
-- Contributed to the React frontend, especially where backend and device workflows had to surface correctly in the UI.
-
-Git history in this repository supports substantial work on the Arduino branch and on backend/system-integration features, but ClimateCanary was still a team project and the repository should be read that way.
+- Designed and implemented the Arduino control logic, including device states, LCD/LED behavior, button handling, warning display flow, BLE-facing firmware behavior, and local buffering work.
+- Contributed a substantial share of the backend and system-integration work around Raspberry Pi communication, sensor-station setup/assignment flows, threshold synchronization, violation handling, and privacy-mode updates.
+- Worked on the integration boundary between the embedded/gateway side and the web platform so device state and room data could flow into the backend application model.
+- Contributed to the React frontend in areas such as role-based routing, management/privacy-related behavior, room-history behavior, and administration flows.
 
 ## Technology Stack
 
